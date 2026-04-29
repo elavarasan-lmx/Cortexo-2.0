@@ -3,7 +3,10 @@ import { z } from 'zod';
 import { eq, and, desc, like, or, ne, sql } from 'drizzle-orm';
 import { getDb } from '../lib/db.js';
 import { errors, errorEvents, deployments, rootCauses } from '@cortexo/db/schema';
-import { analyzeRootCause } from '../services/ai/root-cause-agent.js';
+// AI root cause analysis deferred — stub function
+const analyzeRootCause = async (..._args: unknown[]) => {
+  console.log('[AI] Root cause analysis not yet implemented');
+};
 import crypto from 'crypto';
 import { sendCriticalErrorAlert } from '../lib/email.js';
 import { incrementErrorCount } from '../middleware/usage-limits.js';
