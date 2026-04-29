@@ -19,17 +19,10 @@ import { errorRoutes } from './routes/errors.js';
 import { webhookRoutes } from './routes/webhooks.js';
 import { authRoutes } from './routes/auth.js';
 import { notificationRoutes } from './routes/notifications.js';
-import { rootCauseRoutes } from './routes/root-causes.js';
 import { logStreamRoutes } from './routes/log-stream.js';
 import { integrationRoutes } from './routes/integrations.js';
-import { canaryRoutes } from './routes/canary.js';
-import { postmortemRoutes } from './routes/postmortem.js';
 
-import { agentRoutes, agentAdvancedRoutes } from './routes/agent.js';
-import { agentMemoryRoutes } from './routes/agent-memory.js';
 import { credentialsRoutes } from './routes/credentials.js';
-import { profileRoutes } from './routes/profiles.js';
-import { agentEngineRoutes } from './routes/agent-engine.js';
 import { orgRoutes } from './routes/org.js';
 
 import { syncRoutes } from './routes/sync.js';
@@ -37,11 +30,8 @@ import { serverRoutes } from './routes/servers.js';
 import { logViewerRoutes } from './routes/log-viewer.js';
 import { dbMigrationRoutes } from './routes/db-migration.js';
 
-import { menuPermissionRoutes } from './routes/menu-permissions.js';
 import { serverMountRoutes } from './routes/server-mounts.js';
 import { deployConfigRoutes } from './routes/deploy-configs.js';
-import { auditRoutes } from './routes/audit.js';
-import { sslCheckRoutes } from './routes/ssl-check.js';
 import { sourceRegistryRoutes } from './routes/source-registry.js';
 import { usageLimitsPlugin } from './middleware/usage-limits.js';
 import { authPlugin } from './middleware/auth.js';
@@ -175,18 +165,10 @@ async function start() {
   await app.register(errorRoutes, { prefix: '/v1' });
   await app.register(webhookRoutes, { prefix: '/v1' });
   await app.register(notificationRoutes, { prefix: '/v1' });
-  await app.register(rootCauseRoutes, { prefix: '/v1' });
   await app.register(logStreamRoutes, { prefix: '/v1' });
   await app.register(integrationRoutes, { prefix: '/v1' });
-  await app.register(canaryRoutes, { prefix: '/v1' });
-  await app.register(postmortemRoutes, { prefix: '/v1' });
 
-  await app.register(agentRoutes, { prefix: '/v1' });
-  await app.register(agentMemoryRoutes, { prefix: "/v1" });
   await app.register(credentialsRoutes, { prefix: '/v1' });
-  await app.register(profileRoutes, { prefix: '/v1' });
-  await app.register(agentAdvancedRoutes, { prefix: "/v1" });
-  await app.register(agentEngineRoutes, { prefix: '/v1' });
   await app.register(orgRoutes, { prefix: '/v1' });
 
   await app.register(syncRoutes, { prefix: '/v1' });
@@ -194,11 +176,8 @@ async function start() {
   await app.register(logViewerRoutes, { prefix: '/v1' });
   await app.register(dbMigrationRoutes, { prefix: '/v1' });
 
-  await app.register(menuPermissionRoutes, { prefix: '/v1' });
   await app.register(serverMountRoutes, { prefix: '/v1' });
   await app.register(deployConfigRoutes, { prefix: '/v1' });
-  await app.register(auditRoutes, { prefix: '/v1' });
-  await app.register(sslCheckRoutes, { prefix: '/v1' });
   await app.register(sourceRegistryRoutes, { prefix: '/v1' });
   // Note: usageLimitsPlugin uses addHook — must be registered at root scope, not prefixed
   await app.register(usageLimitsPlugin);
@@ -249,31 +228,10 @@ async function start() {
       'GET  /v1/notifications',
       'PATCH /v1/notifications/:id/read',
       'POST /v1/notifications/read-all',
-      'GET  /v1/root-causes',
-      'POST /v1/root-causes/analyze',
-      'PATCH /v1/root-causes/:id/feedback',
       'POST /v1/webhooks/github',
       'POST /v1/webhooks/gitlab',
-      'GET  /v1/agent/memory',
-      'POST /v1/agent/memory',
-      'POST /v1/agent/memory/consolidate',
-      'GET  /v1/agent/skills',
-      'POST /v1/agent/skills/install',
-      'GET  /v1/agent/skills/:id/effectiveness',
-      'GET  /v1/agent/context/active',
-      'GET  /v1/agent/context/:id/health',
-      'POST /v1/agent/context/:id/compact',
-      'GET  /v1/agent/performance',
-      'GET  /v1/agent/sessions',
-      'GET  /v1/agent/sessions/:id',
       'GET  /v1/org/members',
       'POST /v1/org/members/invite',
-      'PUT  /v1/org/members/:id/role',
-      'DELETE /v1/org/members/:id',
-
-      'POST /v1/ssl/check',
-      'POST /v1/ssl/check-bulk',
-      'GET  /v1/ssl/scan',
     ],
   }));
 
