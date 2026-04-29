@@ -30,9 +30,12 @@ import { serverRoutes } from './routes/servers.js';
 import { logViewerRoutes } from './routes/log-viewer.js';
 import { dbMigrationRoutes } from './routes/db-migration.js';
 
+import { menuPermissionRoutes } from './routes/menu-permissions.js';
 import { serverMountRoutes } from './routes/server-mounts.js';
 import { deployConfigRoutes } from './routes/deploy-configs.js';
+import { auditRoutes } from './routes/audit.js';
 import { sourceRegistryRoutes } from './routes/source-registry.js';
+import { profileRoutes } from './routes/profiles.js';
 import { usageLimitsPlugin } from './middleware/usage-limits.js';
 import { authPlugin } from './middleware/auth.js';
 
@@ -176,9 +179,12 @@ async function start() {
   await app.register(logViewerRoutes, { prefix: '/v1' });
   await app.register(dbMigrationRoutes, { prefix: '/v1' });
 
+  await app.register(menuPermissionRoutes, { prefix: '/v1' });
   await app.register(serverMountRoutes, { prefix: '/v1' });
   await app.register(deployConfigRoutes, { prefix: '/v1' });
+  await app.register(auditRoutes, { prefix: '/v1' });
   await app.register(sourceRegistryRoutes, { prefix: '/v1' });
+  await app.register(profileRoutes, { prefix: '/v1' });
   // Note: usageLimitsPlugin uses addHook — must be registered at root scope, not prefixed
   await app.register(usageLimitsPlugin);
 

@@ -1,10 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getDb } from '../lib/db.js';
-// Inline audit logger (audit module removed during cleanup)
-const logAudit = (entry: Record<string, unknown>) => {
-  console.log('[AUDIT]', entry.action, entry.resource, entry.resourceId);
-};
+import { logAudit } from './audit.js';
 import { parsePagination, paginatedResponse } from '../lib/pagination.js';
 import { getOrgId, getUser } from '../lib/request-context.js';
 import { deployments, deployTargets, servers, winbullConfigs, projects, deployConfigs } from '@cortexo/db/schema';
