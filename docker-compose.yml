@@ -1,0 +1,107 @@
+services:
+  # ─── MariaDB ─────────────────────────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: cortexo-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-cortexo_root_2026}
+      MYSQL_DATABASE: ${DB_NAME:-cortexo}
+      MYSQL_USER: ${DB_USER:-cortexo}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-cortexo_dev_2026}
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --innodb-buffer-pool-size=256M
+      --slow-query-log=ON
+      --long-query-time=0.1
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis ───────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: cortexo-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── API Server ───────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      target: api
+    container_name: cortexo-api
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      API_PORT: 4000
+      DATABASE_URL: mysql://${DB_USER:-cortexo}:${DB_PASSWORD:-cortexo_dev_2026}@mysql:3306/${DB_NAME:-cortexo}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-32chars}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      ALERT_EMAIL: ${ALERT_EMAIL:-}
+      GITHUB_APP_ID: ${GITHUB_APP_ID:-}
+      GITHUB_APP_SECRET: ${GITHUB_APP_SECRET:-}
+      GITLAB_APP_ID: ${GITLAB_APP_ID:-}
+      GITLAB_APP_SECRET: ${GITLAB_APP_SECRET:-}
+    ports:
+      - '4000:4000'
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:4000/v1/health']
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ─── Web App ─────────────────────────────────────────────────────────────────
+  web:
+    build:
+      context: .
+      target: web
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api:4000/v1}
+    container_name: cortexo-web
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/v1}
+    ports:
+      - '3000:3000'
+
+volumes:
+  mysql_data:
+    driver: local
+    name: cortexo_mysql_data
+  redis_data:
+    driver: local
+    name: cortexo_redis_data
+
+networks:
+  default:
+    name: cortexo_network

@@ -1,0 +1,388 @@
+@charset "utf-8";
+/* CSS Document */
+
+body {
+	margin:0;
+	padding:0;
+	font:bold 14px "Times New Roman", Times, serif;
+	
+}
+.logout a {
+	color:#036;
+}
+#rtable {
+	width:400px;
+	border-left:#000 1px solid;
+	border-top:#000 1px solid;
+}
+#rtable td {
+	height:23px;
+	border-bottom:#000 1px solid;
+	border-right:#000 1px solid;
+	background-color:#87B3E9;
+	text-align:center;
+}
+#rtable .rdata {
+	background-color:#CCC;
+	width:75px;
+}
+.rtable2-box {
+	padding-left:10px;
+}
+#rtable2 {
+	border-left:#000 1px solid;
+	border-top:#000 1px solid;
+	width:225px;
+}
+#rtable2 td {
+	height:23px;
+	border-bottom:#000 1px solid;
+	border-right:#000 1px solid;
+	background-color:#87B3E9;
+	text-align:center;
+}
+#rtable2 .rdata {
+	background-color:#CCC;
+	width:65px;
+}
+#mcx_bank {
+	width:630px;
+	border-left:#000 1px solid;
+	border-top:#000 1px solid;
+}
+#mcx_bank td {
+	height:23px;
+	border-bottom:#000 1px solid;
+	border-right:#000 1px solid;
+	background-color:#87B3E9;
+	text-align:center;
+	width:105px;
+}
+#mcx_bank .rdata {
+	background-color:#CCC;
+	font-size:16px;
+}
+#manual {
+	width:630px;
+	border-left:#000 1px solid;
+	border-top:#000 1px solid;
+}
+#manual td {
+	height:23px;
+	border-bottom:#000 1px solid;
+	border-right:#000 1px solid;
+	background-color:#87B3E9;
+	text-align:center;
+	width:105px;
+}
+#manual .rdata {
+	background-color:#CCC;
+	font-size:16px;
+}
+
+#ch_mcx_bank {
+	width:630px;
+	border-left:#000 1px solid;
+	border-top:#000 1px solid;
+}
+#ch_mcx_bank td {
+	height:23px;
+	border-bottom:#000 1px solid;
+	border-right:#000 1px solid;
+	background-color:#87B3E9;
+	text-align:center;
+	width:105px;
+}
+#ch_mcx_bank .rdata {
+	background-color:#CCC;
+	font-size:16px;
+}
+#ch_manual {
+	width:630px;
+	border-left:#000 1px solid;
+	border-top:#000 1px solid;
+}
+#ch_manual td {
+	height:23px;
+	border-bottom:#000 1px solid;
+	border-right:#000 1px solid;
+	background-color:#87B3E9;
+	text-align:center;
+	width:105px;
+}
+#ch_manual .rdata {
+	background-color:#CCC;
+	font-size:16px;
+}
+#gold3_mcx_bank {
+	width:630px;
+	border-left:#000 1px solid;
+	border-top:#000 1px solid;
+}
+#gold3_mcx_bank td {
+	height:23px;
+	border-bottom:#000 1px solid;
+	border-right:#000 1px solid;
+	background-color:#87B3E9;
+	text-align:center;
+	width:105px;
+}
+#gold3_mcx_bank .rdata {
+	background-color:#CCC;
+	font-size:16px;
+}
+#gold3_manual {
+	width:630px;
+	border-left:#000 1px solid;
+	border-top:#000 1px solid;
+}
+#gold3_manual td {
+	height:23px;
+	border-bottom:#000 1px solid;
+	border-right:#000 1px solid;
+	background-color:#87B3E9;
+	text-align:center;
+	width:105px;
+}
+#gold3_manual .rdata {
+	background-color:#CCC;
+	font-size:16px;
+}
+
+#silver_mcx_bank {
+	width:630px;
+	border-left:#000 1px solid;
+	border-top:#000 1px solid;
+}
+#silver_mcx_bank td {
+	height:23px;
+	border-bottom:#000 1px solid;
+	border-right:#000 1px solid;
+	background-color:#87B3E9;
+	text-align:center;
+	width:105px;
+}
+#silver_mcx_bank .rdata {
+	background-color:#CCC;
+	font-size:16px;
+}
+#mcx_bank .white-highlight, #ch_mcx_bank .white-highlight, #silver_mcx_bank .white-highlight {
+	background-color:#FFF;
+	font-size:16px;
+}
+
+#silver_manual {
+	width:630px;
+	border-left:#000 1px solid;
+	border-top:#000 1px solid;
+}
+#silver_manual td {
+	height:23px;
+	border-bottom:#000 1px solid;
+	border-right:#000 1px solid;
+	background-color:#87B3E9;
+	text-align:center;
+	width:105px;
+}
+#silver_manual .rdata {
+	background-color:#CCC;
+	font-size:16px;
+}
+
+#manual .white-highlight,#ch_manual .white-highlight, #silver_manual .white-highlight {
+	background-color:#FFF;
+	font-size:16px;
+}
+
+#rtable2 .white-highlight {
+	background-color:#FFF;
+}
+.update-button-box {
+	margin-top:20px;
+	text-align:center;
+}
+.right-col {
+	padding-left:10px;
+	vertical-align:top;
+}
+.outbox {
+	position:relative;
+	background:url(../images/bg.jpg) no-repeat;
+	width:310px;
+	height:261px;
+	float:right;
+}
+.lable1 {
+	float:left;
+	position:relative;
+	height:25px;
+	left:10px;
+	top:23px;
+	text-align:center;
+	width:105px;
+	font-weight:bold;
+}
+.bank {
+	float:left;
+	position:relative;
+	height:25px;
+	left:10px;
+	top:23px;
+	width:105px;
+	text-align:center;
+	clear:both;
+	font-weight:bold;
+}
+.bank-svg {
+	float:left;
+	position:relative;
+	height:25px;
+	left:150px;
+	top:25px;
+	width:60px;
+	text-align:center;
+	clear:both;
+	font-weight:bold;
+	color:#ffffff;
+}
+.lable2 {
+	float:left;
+	position:relative;
+	height:25px;
+	left:10px;
+	top:28px;
+	text-align:center;
+	width:105px;
+	clear:both;
+	font-weight:bold;
+}
+.svg {
+color:#000000;
+	float:left;
+	position:relative;
+	height:25px;
+	left: 10px;
+	top:30px;
+	width:105px;
+	text-align:center;
+	clear: both;
+	font-weight:bold;
+}
+.bank-mcx {
+color:#FFFFFF;
+	float:left;
+	position:relative;
+	height:25px;
+	left:230px;
+	top:-7px;
+	width:60px;
+	text-align:center;
+	clear:both;
+	font-weight:bold;
+}
+.svg-mcx {
+	float:left;
+	position:relative;
+	height:25px;
+	left:150px;
+	top:3px;
+	width:60px;
+	text-align:center;
+	clear:both;
+	font-weight:bold;
+	color:#ffffff;
+}
+.lable3 {
+	float:left;
+	position:relative;
+	height:25px;
+	left:10px;
+	top:8px;
+	text-align:center;
+	width:105px;
+	clear:both;
+	font-weight:bold;
+}
+.mcx {
+	float:left;
+	position:relative;
+	height:25px;
+	left:10px;
+	top:8px;
+	width:105px;
+	text-align:center;
+	clear:both;
+	font-weight:bold;
+}
+.right-table2 {
+	padding-top:10px;
+}
+.helpdesk {
+	text-align:center;
+	font:bold 16px "Times New Roman", Times, serif;
+	height:40px;
+	margin-top:10px;
+	border:#000 1px solid;
+	line-height:35px;
+	vertical-align:middle;
+}
+.lastupdate {
+	font:bold 16px "Times New Roman", Times, serif;
+	text-align:center;
+}
+.txtlabel {
+	background-color:#CCCCCC;
+	border-style:none;
+	width:68px;
+	height:25px;
+	text-align:center;
+	font-weight:bold;
+}
+.txtlabel1 {
+	background-color:#CCCCCC;
+	border-style:none;
+	width:68px;
+	height:25px;
+	text-align:center;
+	font-weight:bold;
+}
+.txtlabelbold {
+	background-color:#CCCCCC;
+	border-style:none;
+	width:100px;
+	height:25px;
+	text-align:center;
+	font-size:18px;
+}
+
+.txtlabeltime {
+	background-color:#CCCCCC;
+	border-style:none;
+	width:68px;
+	height:25px;
+	text-align:center;
+}
+.tdTextBox1{
+	width:68px;
+	height:25px;
+	text-align:center;	
+	font-weight:bold;
+} 
+.tdBoldTextBox{
+	width:68px;
+	height:25px;
+	text-align:center;	
+	font-size:18px;
+}
+.tdBoldTextBox1{
+	width:104px;
+	height:25px;
+	text-align:center;	
+	font-size:18px;
+}
+.tdBoldTextBox2{
+	width:260px;
+	height:25px;
+	text-align:center;	
+	font-size:18px;
+}

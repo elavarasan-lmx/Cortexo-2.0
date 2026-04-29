@@ -1,0 +1,139 @@
+{
+  "name": "winbull",
+  "displayName": "Winbull — Bullion Trading Platform",
+  "version": "4.2.0",
+  "description": "White-label bullion/commodity trading platform for gold merchants. CodeIgniter + Laravel Lumen + Node.js WebSocket stack.",
+  "author": "Logimax Team",
+  "framework": {
+    "web": "CodeIgniter 3.x",
+    "admin": "CodeIgniter 3.x",
+    "mobileApi": "CodeIgniter 3.x",
+    "tradeEngine": "Laravel Lumen 8.x",
+    "websocket": "Node.js + Socket.io / Native WS"
+  },
+  "requirements": {
+    "php": ">=7.4",
+    "mysql": ">=5.7",
+    "node": ">=14.0.0",
+    "extensions": ["curl", "mbstring", "gd", "openssl", "pdo_mysql"]
+  },
+  "structure": {
+    "layers": [
+      {
+        "name": "web",
+        "displayName": "Client Website",
+        "path": ".",
+        "entryPoint": "index.php",
+        "framework": "CodeIgniter 3.x",
+        "description": "Public-facing website for end users — rates, booking, KYC, login",
+        "directories": {
+          "controllers": "application/controllers",
+          "models": "application/models",
+          "views": "application/views",
+          "config": "application/config",
+          "helpers": "application/helpers",
+          "libraries": "application/libraries",
+          "assets": "assets"
+        }
+      },
+      {
+        "name": "admin",
+        "displayName": "Admin Panel",
+        "path": "admin",
+        "entryPoint": "admin/index.php",
+        "framework": "CodeIgniter 3.x",
+        "description": "Back-office admin panel — commodity management, users, booking, rates, SMS, WhatsApp, RPanel",
+        "directories": {
+          "controllers": "admin/application/controllers",
+          "models": "admin/application/models",
+          "views": "admin/application/views",
+          "config": "admin/application/config",
+          "helpers": "admin/application/helpers",
+          "assets": "admin/assets"
+        }
+      },
+      {
+        "name": "mobileapi",
+        "displayName": "Mobile API",
+        "path": "mobileapi",
+        "entryPoint": "mobileapi/index.php",
+        "framework": "CodeIgniter 3.x",
+        "description": "REST API for Android/iOS mobile apps — admin trade, client trade",
+        "directories": {
+          "controllers": "mobileapi/application/controllers",
+          "models": "mobileapi/application/models",
+          "config": "mobileapi/application/config"
+        }
+      },
+      {
+        "name": "tradeEngine",
+        "displayName": "Trade Engine (Lumen)",
+        "path": "lmxtrade/winbullliteapi",
+        "entryPoint": "lmxtrade/winbullliteapi/index.php",
+        "framework": "Laravel Lumen 8.x",
+        "description": "Real-time trading engine — rate broadcasting, alerts, orders, limits, WebSocket events",
+        "directories": {
+          "controllers": "lmxtrade/winbullliteapi/app/Http/Controllers",
+          "models": "lmxtrade/winbullliteapi/app/Models",
+          "events": "lmxtrade/winbullliteapi/app/Events",
+          "jobs": "lmxtrade/winbullliteapi/app/Jobs",
+          "routes": "lmxtrade/winbullliteapi/routes",
+          "config": "lmxtrade/winbullliteapi/config"
+        }
+      },
+      {
+        "name": "api",
+        "displayName": "Public API",
+        "path": "api",
+        "description": "Public REST endpoints — rates, bank details, settings, contacts",
+        "directories": {
+          "root": "api"
+        }
+      },
+      {
+        "name": "client",
+        "displayName": "Client Socket Files",
+        "path": "client",
+        "description": "Client-side WebSocket scripts and encrypted rate data",
+        "directories": {
+          "root": "client"
+        }
+      }
+    ],
+    "configFile": "global_configs.php",
+    "configSchemaFile": "config-schema.json",
+    "perClientFiles": [
+      "global_configs.php",
+      "client/*.enc",
+      "client/*.js",
+      "client/*.txt",
+      "lmxtrade/winbullliteapi/.env",
+      "application/config/database.php",
+      "admin/application/config/database.php",
+      "mobileapi/application/config/database.php"
+    ],
+    "sharedFiles": [
+      "system/**",
+      "assets/**",
+      "application/core/**",
+      "application/libraries/**",
+      "admin/application/core/**",
+      "admin/application/libraries/**"
+    ]
+  },
+  "deployChecklist": [
+    "Verify global_configs.php client name and URLs",
+    "Ensure database exists and user has access",
+    "Confirm Lightstreamer credentials",
+    "Set OneSignal app ID and API key",
+    "Configure socket event prefixes (must match client name)",
+    "Set encryption key and .enc file path",
+    "Set proper rate feed type (bcrateType / rateFeed)",
+    "Verify WebSocket type (Socket.io vs Native)",
+    "Configure SMS/WhatsApp API credentials",
+    "Run Node.js WebSocket worker (lmxtrade/)",
+    "Set file permissions (storage, logs, cache)",
+    "Configure SSL certificate",
+    "Set up cron jobs for rate updates"
+  ]
+}

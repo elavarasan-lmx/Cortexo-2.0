@@ -1,0 +1,35 @@
+{
+  "name": "cortexo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cortexo — The brain for your code. DevOps platform for small teams.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "dev:web": "turbo dev --filter=@cortexo/web",
+    "dev:api": "turbo dev --filter=@cortexo/api",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "db:generate": "turbo db:generate --filter=@cortexo/db",
+    "db:migrate": "turbo db:migrate --filter=@cortexo/db",
+    "db:push": "turbo db:push --filter=@cortexo/db",
+    "db:studio": "turbo db:studio --filter=@cortexo/db",
+    "clean": "turbo clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "prettier": "^3.4.0",
+    "turbo": "^2.4.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "npm@10.0.0",
+  "dependencies": {
+    "@fastify/helmet": "^13.0.2",
+    "@fastify/rate-limit": "^10.3.0"
+  }
+}

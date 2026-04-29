@@ -1,0 +1,640 @@
+@charset "utf-8";
+
+/* Media Queries */
+@media only screen and (max-width: 1200px) { 
+/* .col-md-12.report-heading.paddingzero{
+	    width: 688px !important;
+} */
+
+
+.datetime {
+    margin-top: 127px!important;
+    margin-left: 213px!important;
+}
+
+}
+@media only screen and (max-width: 1050px) { 
+	.ios img {
+		margin-left: 20px;
+		margin-top: -24px;
+	}
+    .android {
+		margin-top: 6px;
+	}
+	.today_rate{
+		width: 251px;	
+	}
+	.liverate_contact{
+		width: 352px;
+	}
+	.add3 img{
+		width: 100%;
+	}
+	/****R.RBabu***/
+
+	.disclaimer{
+		margin-top: 72px !important;
+	}	
+#reports 
+{
+    padding: 0px !important;
+}
+.dataTables_length {
+    margin-top: 0px!important;
+}
+
+
+
+.datetime {
+    margin-top: 127px!important;
+    margin-left: 213px!important;
+}
+		/*****R.Babu*****/
+}
+
+@media only screen and (max-width: 850px) { 
+	.logo img {
+		margin-top: 0px;
+		width: 44%;
+		margin-left: -26px;
+	}
+	.menu{
+		margin-right: -21px;
+		margin-top: -8%;
+	}
+	.menu li{
+		margin-right: -6px;
+	}
+	.menu a{
+		font-size: 14px;
+	}
+	.navbar-nav{
+		margin-top: -9%;
+		margin-right: -50px;
+	}
+    .navbar-default .navbar-nav > li > a{
+	   font-size: 12px;
+    }
+	.today_rate{
+		margin-left: 0px !important;
+		margin-top: -10px !important;
+	}
+	.gold_rate{
+		margin-left: 13px;
+	}
+	.copyright{
+		text-align:center;
+		font-size: 12px;
+	}
+	.terms{
+		text-align:center;
+		margin-left: -7px;
+		font-size: 12px;
+	}
+	.powerdby{
+		text-align:center;	
+		font-size: 12px;		
+	}
+#reports 
+{
+    padding: 0px !important;
+}
+.datetime {
+    margin-top: 260px !important;
+    /* margin-left: 338px!important; */
+}
+
+
+.report_table {
+    display: block !important;
+    overflow: scroll !important;
+    /* border-collapse: separate; */
+    /* font-size: 13px; */
+}
+.dataTables_filter {
+    margin-top: 13px !important;
+}
+.dataTables_length {
+    margin-top: 16px !important;
+}
+.pending {
+    /* margin-left: -15px; */
+    text-align: center !important;
+    margin-top: 208px !important;
+}
+.panel {
+    margin-top: 155px !important;
+    background-color: #fff !important;
+    border: 1px solid transparent !important;
+    border-radius: 4px !important;
+    -webkit-box-shadow: 0 1px 1px rgba(0,0,0,.05) !important;
+    box-shadow: 0 1px 1px rgba(0,0,0,.05) !important;
+}
+.datetime {
+    margin-top: 260px !important;
+    margin-left: 53px!important;
+}
+}
+
+@media only screen and (max-width: 480px) { 
+	.logo_responstive img{
+		width: 81%;
+	}
+	.navbar-default .navbar-toggle {
+		border-color: #fff;
+		margin-top: -43px;
+	}
+	.marquee_head{
+		margin-top: 70px;
+	}
+	.headertable1 th {
+		font-size: 12px;
+	}
+	.table1 td{
+		font-size: 15px;
+		padding: 5px !important;
+	}
+	.table2 td{
+		font-size: 15px;
+		padding: 5px !important;
+	}
+	.table3 td{
+		font-size: 15px;
+		padding: 5px !important;
+	}
+	.ratevalue2 {
+		font-size: 17px !important;
+	}
+	.headertable2 th {
+		font-size: 13px;
+	}
+	.table4 td{
+		font-size: 15px;
+		padding: 5px !important;
+	}
+	.table5 td{
+		font-size: 18px;
+		padding: 5px !important;
+	}
+	.table6 td{
+		font-size: 18px;
+		padding: 5px !important;
+	}
+	.ratevalue5 {
+		font-size: 22px !important;
+	}
+	.headertable3 th {
+		font-size: 14px;
+	}
+	.table7 td{
+		font-size: 16px;
+		padding: 5px !important;
+	}
+	.table8 td{
+		font-size: 16px;
+		padding: 5px !important;
+	}
+	.copyright{
+		text-align:center;
+		font-size: 12px;
+	}
+	.terms{
+		text-align:center;
+		margin-left: -7px;
+		font-size: 12px;
+	}
+	.powerdby{
+		text-align:center;	
+		font-size: 12px;		
+	}
+	.contactliverate{
+		height: 231px;
+	}
+	.account{
+		margin-left: -31%;
+	}
+	.login_mbl{
+		margin-left: 9%;
+	}
+	.contact_liverate{
+		margin-top: 12px;
+	}
+	.banner{
+		margin-top: 50px;
+	}
+	.welcome{
+		margin-top: 59px;
+	}
+	.contactleft_head{
+		margin-top: 20%;
+	}
+	.contactrighr_head{
+		margin-top: 10px;
+	}
+	
+	.margin-container {
+    /* margin-top: -33px !important; */
+    height: 35px !important;
+    margin-bottom: 2px !important;
+    font-size: 14px !important;
+    padding: 0px !important;
+	/* background-image: url(../../../images/rateheading1.jpg) !important; */
+    color: #FFF !important;
+    /* WIDTH: 297PX !important; */
+}
+	.contant{
+		padding: 0px;
+	}
+	.rate-container{
+		padding-left: 5px;
+		padding-right: 5px;
+	}
+.comm-purchase {
+       /* width: 298px !important;
+    padding: 5px !important;
+    margin-top: -2px !important;
+    background: #FFF !important;
+    height: 328px !important; */
+  
+    /* width: 298px !important; */
+    padding: 5px !important;
+    margin-top: -2px !important;
+    background: #FFF !important;
+}
+#reports 
+{
+    padding: 0px !important;
+}
+.panel {
+    margin-top: 41px !important;
+    margin-bottom: 20px !important;
+    background-color: #fff !important;
+    border: 1px solid transparent !important;
+    border-radius: 4px !important;
+    -webkit-box-shadow: 0 1px 1px rgba(0,0,0,.05) !important;
+    box-shadow: 0 1px 1px rgba(0,0,0,.05) !important;
+}
+.datetime {
+    margin-top: 127px!important;
+    margin-left: 16px!important;
+}
+}
+@media only screen and (max-width: 400px) { 
+	.logo_responstive img{
+		width: 81%;
+	}
+	
+	.navbar-default .navbar-toggle {
+		border-color: #fff;
+		 margin-top: -12%;
+	/* 	margin-right: -91%;
+		   */
+	}
+	.marquee_head{
+		margin-top: 60px;
+	}
+	.headertable1 th {
+		font-size: 12px;
+		padding: 5px !important;
+	}
+	.table1 td{
+		font-size: 13px;
+		padding: 5px !important;
+	}
+	.table2 td{
+		font-size: 13px;
+		padding: 5px !important;
+	}
+	.table3 td{
+		font-size: 13px;
+		padding: 5px !important;
+	}
+	.ratevalue2 {
+		font-size: 15px !important;
+	}
+	.headertable2 th {
+		font-size: 13px;
+		padding: 5px !important;
+	}
+	.table4 td{
+		font-size: 13px;
+		padding: 5px !important;
+	}
+	.table5 td{
+		font-size: 13px;
+		padding: 5px !important;
+	}
+	.table6 td{
+		font-size: 16px;
+		padding: 5px !important;
+	}
+	.ratevalue5 {
+		font-size: 16px !important;
+	}
+	.headertable3 th {
+		font-size: 12px;
+		padding: 5px !important;
+	}
+	.table7 td{
+		font-size: 16px;
+		padding: 5px !important;
+	}
+	.table8 td{
+		font-size: 16px;
+		padding: 5px !important;
+	}
+	.ratevalue8 {
+		font-size: 15px !important;
+	}
+	.copyright{
+		text-align:center;
+		font-size: 13px;
+	}
+	.terms{
+		text-align:center;
+		margin-left: -7px;
+		font-size: 13px;
+	}
+	.powerdby{
+		text-align:center;	
+		font-size: 13px;		
+	}
+	#reports 
+	{
+		padding: 0px !important;
+	}
+	.panel {
+    margin-top: 41px !important;
+    margin-bottom: 20px !important;
+    background-color: #fff !important;
+    border: 1px solid transparent !important;
+    border-radius: 4px !important;
+    -webkit-box-shadow: 0 1px 1px rgba(0,0,0,.05) !important;
+    box-shadow: 0 1px 1px rgba(0,0,0,.05) !important;
+}
+.datetime {
+    width: 226px!important;
+    margin-top: 148px !important;
+    margin-left: 29px !important;
+}
+}
+@media only screen and (max-width: 360px) { 
+	.logo_responstive img{
+		width: 81%;
+	}
+	
+	.navbar-default .navbar-toggle {
+		border-color: #fff;
+		 margin-top: -12%;
+	/* 	margin-right: -91%;
+		   */
+	}
+	.marquee_head{
+		margin-top: 60px;
+	}
+	.headertable1 th {
+		font-size: 12px;
+		padding: 5px !important;
+	}
+	.table1 td{
+		font-size: 13px;
+		padding: 5px !important;
+	}
+	.table2 td{
+		font-size: 13px;
+		padding: 5px !important;
+	}
+	.table3 td{
+		font-size: 13px;
+		padding: 5px !important;
+	}
+	.ratevalue2 {
+		font-size: 15px !important;
+	}
+	.headertable2 th {
+		font-size: 13px;
+		padding: 5px !important;
+	}
+	.table4 td{
+		font-size: 16px;
+		padding: 5px !important;
+	}
+	.table5 td{
+		font-size: 16px;
+		padding: 5px !important;
+	}
+	.table6 td{
+		font-size: 16px;
+		padding: 5px !important;
+	}
+	.ratevalue5 {
+		font-size: 16px !important;
+	}
+	.headertable3 th {
+		font-size: 12px;
+		padding: 5px !important;
+	}
+	.table7 td{
+		font-size: 16px;
+		padding: 5px !important;
+	}
+	.table8 td{
+		font-size: 16px;
+		padding: 5px !important;
+	}
+	.ratevalue8 {
+		font-size: 15px !important;
+	}
+	.copyright{
+		text-align:center;
+		font-size: 13px;
+	}
+	.terms{
+		text-align:center;
+		margin-left: -7px;
+		font-size: 13px;
+	}
+	.powerdby{
+		text-align:center;	
+		font-size: 13px;		
+	}
+	.comm-purchase {
+	   /* width: 298px !important; */
+		padding: 5px !important;
+		margin-top: -2px !important;
+		background: #FFF !important;
+	}
+#reports 
+{
+    padding: 0px !important;
+}
+.datetime {
+    margin-top: 127px!important;
+    /* margin-left: 56px!important; */
+}
+.panel {
+    margin-top: 41px !important;
+    margin-bottom: 20px !important;
+    background-color: #fff !important;
+    border: 1px solid transparent !important;
+    border-radius: 4px !important;
+    -webkit-box-shadow: 0 1px 1px rgba(0,0,0,.05) !important;
+    box-shadow: 0 1px 1px rgba(0,0,0,.05) !important;
+}
+}
+@media only screen and (max-width: 320px) { 
+	
+	.logo_responstive img{
+		width: 81%;
+	}
+	
+	.navbar-default .navbar-toggle {
+		border-color: #fff;
+		 margin-top: -12%;
+	/* 	margin-right: -91%;
+		   */
+	}
+	.marquee_head{
+		margin-top: 60px;
+	}
+	.paddingTopBottom15 {
+		padding-top: 40px;
+		padding-bottom: 15px;
+	}
+	.headertable1 th {
+		font-size: 10px;
+		padding: 5px !important;
+	}
+	.table1 td{
+		font-size: 13px;
+		padding: 5px !important;
+	}
+	.table2 td{
+		font-size: 13px;
+		padding: 5px !important;
+	}
+	.table3 td{
+		font-size: 13px;
+		padding: 5px !important;
+	}
+	.ratevalue2 {
+		font-size: 13px !important;
+	}
+	.headertable2 th {
+		font-size: 12px;
+	}
+	.table4 td{
+		font-size: 13px;
+		padding: 5px !important;
+	}
+	.table5 td{
+		font-size: 13px;
+		padding: 5px !important;
+	}
+	.table6 td{
+		font-size: 13px;
+		padding: 5px !important;
+	}
+	.ratevalue5 {
+		font-size: 17px !important;
+	}
+	.headertable3 th {
+		font-size: 11px;
+	}
+	.table7 td{
+		font-size: 13px;
+		padding: 5px !important;
+	}
+	.table8 td{
+		font-size: 13px;
+		padding: 5px !important;
+	}
+	.ratevalue8 {
+		font-size: 13px !important;
+	}
+	.navbar-nav{
+		float:none;
+	}
+	.lastupdate{
+		font-size:12px;
+	}
+	.navbar{
+		position: absolute;
+	}
+	.copyright{
+		text-align:center;
+		font-size: 12px;
+	}
+	.terms{
+		text-align:center;
+		margin-left: -7px;
+		font-size: 12px;
+	}
+	.powerdby{
+		text-align:center;	
+		font-size: 12px;		
+	}
+.comm-purchase {
+    padding: 5px !important;
+    margin-top: -2px !important;
+    background: #FFF !important;
+}
+
+.headings-active {
+    width: 297px !important;
+    font-weight: bold !important;
+    background: #780A23 !important;
+    color: #fff !important;
+}
+.headings {
+    background: #F8E093 !important;
+    /* border: 1px dotted #ccc; */
+    padding: 0px !important;
+    text-align: center !important;
+    cursor: pointer !important;
+    color: #000 !important;
+    width: 297px !important;
+}
+.table>thead>tr>th{
+	padding:0px !important;
+} 
+.dataTables_filter {
+    margin-top: 11px !important;
+}
+.dataTables_length {
+    margin-top: -63px !important;
+}
+.reports 
+{
+    padding: 0px !important;
+}
+.pending
+{
+	text-align: center !important;
+    margin-top: 111px !important;
+}
+.panel {
+    margin-top: 41px !important;
+    margin-bottom: 20px !important;
+    background-color: #fff !important;
+    border: 1px solid transparent !important;
+    border-radius: 4px !important;
+    -webkit-box-shadow: 0 1px 1px rgba(0,0,0,.05) !important;
+    box-shadow: 0 1px 1px rgba(0,0,0,.05) !important;
+}
+.bookreport
+{
+	    text-align: center;
+    margin-top: 58px;
+   
+}
+.datetime {
+    margin-top: 127px !important;
+   
+}
+.Todate{
+	margin-left: 18px !important;
+}
+
+
+}

@@ -1,0 +1,87 @@
+/**
+ * Cortexo Database Schema — Central export
+ * All tables defined as Drizzle ORM schemas for MySQL 8.0 / MariaDB 10.11.
+ */
+
+// Phase 1: Foundation
+export { organizations } from './organizations';
+export type { Organization, NewOrganization } from './organizations';
+
+export { users } from './users';
+export type { User, NewUser } from './users';
+
+export { sessions } from './auth';
+
+export { projects } from './projects';
+export type { Project, NewProject } from './projects';
+
+export { notifications } from './notifications';
+export type { Notification, NewNotification } from './notifications';
+
+// Phase 2: CI/CD Engine
+export { pipelines, pipelineRuns, deployTargets, deployments } from './pipelines';
+export type {
+  Pipeline, NewPipeline,
+  PipelineRun, NewPipelineRun,
+  DeployTarget, NewDeployTarget,
+  Deployment, NewDeployment,
+} from './pipelines';
+
+// Phase 3: Bug Detection + AI Root Cause
+export { errors, errorEvents, rootCauses } from './errors';
+export type {
+  Error, NewError,
+  ErrorEvent, NewErrorEvent,
+  RootCause, NewRootCause,
+} from './errors';
+
+// Phase 6: Operations (Integrations)
+export { integrations } from './operations';
+export type {
+  Integration, NewIntegration,
+} from './operations';
+
+
+
+// Phase 8: Source Sync & Fleet Management
+export {
+  syncHistory, syncExcludeRules, syncClients,
+  divergenceAnalyses, monoDeployments, deploymentApprovals,
+} from './sync';
+export type {
+  SyncHistoryRow, NewSyncHistory, SyncExcludeRule,
+  SyncClient, DivergenceAnalysis,
+  MonoDeployment, DeploymentApproval,
+} from './sync';
+
+// Phase 9: Infrastructure (Servers, Metrics, Logs, Mounts, Deploy Configs)
+export { servers, serverResources, logSources, serverMounts, deployConfigs } from './infrastructure';
+export type {
+  Server, NewServer, ServerResource, LogSource,
+  ServerMount, NewServerMount,
+  DeployConfig, NewDeployConfig,
+} from './infrastructure';
+
+
+
+// Phase 11: Menu Permissions (per-user sidebar control)
+export { userMenuPermissions } from './menu-permissions';
+export type { UserMenuPermission, NewUserMenuPermission } from './menu-permissions';
+
+// Phase 12: Audit Trail
+export { auditLogs, type AuditLog, type NewAuditLog } from './audit';
+
+// Phase 13: Deployment Profiles (reusable credentials)
+export { sourceProfiles, dbProfiles } from './profiles';
+export type {
+  SourceProfile, NewSourceProfile,
+  DbProfile, NewDbProfile,
+} from './profiles';
+
+// Phase 14: Source Registry & Client Configs
+export { managedSources, clientConfigs, configChangeHistory } from './sources';
+export type {
+  ManagedSource, NewManagedSource,
+  ClientConfig, NewClientConfig,
+  ConfigChangeHistory, NewConfigChangeHistory,
+} from './sources';

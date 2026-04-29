@@ -1,0 +1,13 @@
+{
+  "name": "cortexo-react-native",
+  "version": "0.1.0",
+  "description": "Cortexo error capture SDK for React Native",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "keywords": ["cortexo", "error-tracking", "react-native", "monitoring"],
+  "author": "Cortexo Team",
+  "license": "MIT",
+  "peerDependencies": {
+    "react-native": ">=0.70"
+  }
+}
