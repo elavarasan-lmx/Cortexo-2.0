@@ -1,0 +1,53 @@
+<!-- <ion-header>
+  <ion-navbar>
+    <ion-row style="align-items: center;">
+      <ion-col col-2>
+        <button ion-button menuToggle>
+          <ion-icon class="topmenu" name="menu" class="menu-icon"></ion-icon>
+        </button>
+      </ion-col>
+      <ion-col col-8 style="padding: 0px !important;"><ion-title style="padding-top:15px !important;"><img alt="logo"
+            height="40" src="assets/imgs/header.svg"></ion-title></ion-col>
+      <ion-col col-2>
+
+      </ion-col>
+    </ion-row>
+  </ion-navbar>
+</ion-header> -->
+<ion-header>
+    <ion-navbar>
+        <button ion-button menuToggle clear>
+            <ion-icon name="menu" class="menu-icon"></ion-icon>
+        </button>
+        <ion-title>
+            CONTACT US
+        </ion-title>
+    </ion-navbar>
+</ion-header>
+
+<ion-content padding-bottom>
+    <!-- Contact Details Cards -->
+    <ion-card *ngFor="let contact of contactusdetails">
+        <ion-card-header text-center>
+            {{ contact.title }}
+        </ion-card-header>
+        <ion-card-content class="contact-us">
+            <ion-grid *ngFor="let dispdet of contact.content">
+                <ion-row>
+                    <ion-col col-1 class="small_icons"><ion-icon [name]="dispdet.icon"
+                            class="small_icons"></ion-icon></ion-col>
+                    <ion-col col-11 [innerHTML]="dispdet.displaytext | safeHtml"></ion-col>
+                </ion-row>
+            </ion-grid>
+        </ion-card-content>
+    </ion-card>
+
+    <!-- About Us Cards -->
+    <ion-card *ngFor="let about of aboutusdetails">
+        <ion-card-header text-center>
+            {{ about.title }}
+        </ion-card-header>
+        <ion-card-content class="contact-us" [innerHTML]="about.content | safeHtml">
+        </ion-card-content>
+    </ion-card>
+</ion-content>

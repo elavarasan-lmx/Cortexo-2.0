@@ -1,0 +1,27 @@
+page-socialshare {
+    .header-md::after{
+        background-image: none !important;
+      }
+    .logo_img{
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        width: 30%;
+    }
+    .share_head{
+        text-align: center !important;
+        font-size: 16px !important;
+    }
+    ion-card-header{
+        background: lightgrey !important;
+        color:#000 !important;
+        text-align:center;
+    }
+    .share_content{
+        color: #000 !important;
+        text-align: center !important;
+    }
+    ion-card{
+        background-color: #fff39b  !important;
+      }
+}

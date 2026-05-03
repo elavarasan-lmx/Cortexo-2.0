@@ -1,0 +1,31 @@
+<!--
+  Generated template for the GalleryPage page.
+
+  See http://ionicframework.com/docs/components/#navigation for more info on
+  Ionic pages and navigation.
+-->
+<ion-header align-title=”center”>
+  <ion-navbar align-title=”center”>
+    <button ion-button menuToggle>
+      <ion-icon name="menu"></ion-icon>
+    </button>
+    <ion-title align-title=”center” style="padding-top: 6px !important;"><img alt="logo" height="50" cache="true"
+        src="assets/imgs/header.svg"></ion-title>
+  </ion-navbar>
+</ion-header>
+
+
+<ion-content padding>
+  <ion-grid>
+    <h4>Products</h4>
+    <ion-row style="margin-bottom:20px;">
+      <ion-col col-6 [ngClass]="animateClass" *ngFor=" let item of galleyItems; let i=index "
+        (click)="openmodal(item.full_path,item.name)">
+        <ion-card no-margin>
+          <img style="" src='{{item.full_path}}' imageCache />
+          <div class="img_text">{{item.name}}</div>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>

@@ -1,0 +1,105 @@
+<!-- <ion-header>
+    <ion-navbar>
+        <ion-row style="align-items: center;">
+            <ion-col col-2>
+                <button ion-button menuToggle>
+                    <ion-icon class="topmenu" name="menu" class="menu-icon"></ion-icon>
+                </button>
+            </ion-col>
+            <ion-col col-8 style="padding: 0px !important;"><ion-title style="padding-top:15px !important;"><img
+                        alt="logo" height="40" src="assets/imgs/header.svg"></ion-title></ion-col>
+            <ion-col col-2>
+
+            </ion-col>
+        </ion-row>
+    </ion-navbar>
+</ion-header> -->
+
+<ion-header>
+    <ion-navbar>
+        <button ion-button menuToggle clear>
+            <ion-icon name="menu" class="menu-icon"></ion-icon>
+        </button>
+        <ion-title>
+            ENQUIRY
+        </ion-title>
+    </ion-navbar>
+</ion-header>
+
+<ion-content text-center padding>
+    <ion-card>
+        <ion-card-header text-center>
+            <b>GET IN TOUCH</b>
+        </ion-card-header>
+
+        <form [formGroup]="enquiryForm" (ngSubmit)="onSubmit(enquiryForm.value)" style="" novalidate>
+            <ion-list>
+                <ion-item class="errMsg" *ngIf="errorMessage != ''">{{errorMessage}}</ion-item>
+                <ion-item>
+                    <ion-label floating>Name(*)</ion-label>
+                    <ion-input [formControl]="name" type="text" maxlength="30"
+                        (input)="validateInput($event, 'name')"></ion-input>
+                </ion-item>
+                <div *ngIf="name.invalid && (name.dirty || name.touched)">
+                    <small class="errMsg" *ngIf="name.errors?.required">Name is required.</small>
+                    <small class="errMsg" *ngIf="name.errors?.minlength">Name must be at least 4 characters.</small>
+                    <small class="errMsg" *ngIf="name.errors?.maxlength">Name cannot exceed 50 characters.</small>
+                    <small class="errMsg" *ngIf="name.errors?.pattern">Name cannot start or end with spaces.</small>
+                </div>
+                <ion-item>
+                    <ion-label floating>Mobile Number(*)</ion-label>
+                    <ion-input [formControl]="mobile" type="tel" (input)="validateInput($event, 'mobile')"></ion-input>
+                </ion-item>
+                <div *ngIf="mobile.invalid && (mobile.dirty || mobile.touched)">
+                    <small class="errMsg" *ngIf="mobile.errors?.required">Mobile Number is required.</small>
+                    <small class="errMsg"
+                        *ngIf="mobile.errors?.pattern || mobile.errors?.minlength || mobile.errors?.maxlength">Mobile
+                        Number must be
+                        exactly 10 digits.</small>
+                </div>
+                <ion-item>
+                    <ion-label floating>Email (*)</ion-label>
+                    <ion-input [formControl]="emailid" type="email"
+                        (input)="validateInput($event, 'email')"></ion-input>
+                </ion-item>
+                <div *ngIf="emailid.invalid && (emailid.dirty || emailid.touched)">
+                    <small class="errMsg" *ngIf="emailid.errors?.required">Email is required.</small>
+                    <small class="errMsg" *ngIf="emailid.errors?.pattern">Please enter a valid email address.</small>
+                </div>
+                <ion-item>
+                    <ion-label floating>Address</ion-label>
+                    <ion-input type="text" [formControl]="address" maxlength="200"
+                        (input)="validateInput($event, 'address')"></ion-input>
+                </ion-item>
+                <div *ngIf="address.invalid && (address.dirty || address.touched)">
+                    <small class="errMsg" *ngIf="address.errors?.minlength">Address must be at least 4
+                        characters.</small>
+                    <small class="errMsg" *ngIf="address.errors?.maxlength">Address cannot exceed 200
+                        characters.</small>
+                    <small class="errMsg" *ngIf="address.errors?.pattern">Address cannot start or end with
+                        spaces.</small>
+                </div>
+                <ion-item>
+                    <ion-label floating>Message(*)</ion-label>
+                    <ion-textarea type="text" [formControl]="message" maxlength="200"
+                        (input)="validateInput($event, 'message')"></ion-textarea>
+                </ion-item>
+                <div *ngIf="message.invalid && (message.dirty || message.touched)">
+                    <small class="errMsg" *ngIf="message.errors?.required">Message is required.</small>
+                    <small class="errMsg" *ngIf="message.errors?.minlength">Message must be at least 10
+                        characters.</small>
+                    <small class="errMsg" *ngIf="message.errors?.maxlength">Message cannot exceed 200
+                        characters.</small>
+                </div>
+            </ion-list>
+            <br>
+
+            <div style="padding: 10px;">
+                <button ion-button block color="dark" class="btn_common" type="submit"
+                    [disabled]="!enquiryForm.valid || isDisabled">
+                    Submit
+                </button>
+            </div>
+        </form>
+    </ion-card>
+</ion-content>

@@ -1,0 +1,115 @@
+<!-- <ion-header align-title=”center”>
+  <ion-navbar align-title=”center”>
+    <ion-row style="align-items: center;">
+      <ion-col col-2>
+        <button ion-button menuToggle>
+          <ion-icon class="topmenu" name="menu" class="menu-icon"></ion-icon>
+        </button>
+      </ion-col>
+      <ion-col col-8 style="padding: 0px !important;"><ion-title align-title=”center”
+          style="padding-top:15px !important;"><img alt="logo" height="40"
+            src="assets/imgs/header.svg"></ion-title></ion-col>
+      <ion-col col-2>
+
+      </ion-col>
+    </ion-row>
+  </ion-navbar>
+</ion-header> -->
+<ion-header>
+  <ion-navbar>
+    <button ion-button menuToggle clear>
+      <ion-icon name="menu" class="menu-icon"></ion-icon>
+    </button>
+    <ion-title> LIVE CHARTS </ion-title>
+  </ion-navbar>
+</ion-header>
+<ion-content text-center>
+  <br />
+  <ion-grid>
+    <ion-row class="light-border-btm second-headercol">
+      <ion-col col-12>
+        <div class="header_title4">CHOOSE COMMODITY</div>
+      </ion-col>
+      <ion-col col-12 style="margin-top: -15px !important">
+        <div class="comodity">
+          <ion-select
+            [(ngModel)]="selected_comid"
+            placeholder="Select"
+            (ionChange)="getGraphReport()"
+          >
+            <ion-option
+              *ngFor="let value of liverates let i = index;"
+              [value]="value['com_id']"
+            >
+              {{value['com_name']}}
+            </ion-option>
+          </ion-select>
+        </div>
+      </ion-col>
+    </ion-row>
+
+    <!-- <ion-row style="display: flex;justify-content: center;align-items: center;">
+      <ion-col >Live Rate</ion-col>
+    </ion-row> -->
+
+    <ion-row class="light-border-btm second-headercol">
+      <ion-col col-12>
+        <div class="header_title3">LIVE RATE</div>
+      </ion-col>
+      <ng-container *ngFor="let liverate of live_rates; let i = index">
+        <!-- <ion-row style="display: flex;justify-content: center;align-items: center;"> -->
+        <ion-col col-12 style="margin-top: 10px !important">
+          <div
+            class="input_style12"
+            [ngClass]="{'ratehigh' : (liverate.selling_rate > oldliverates[i].selling_rate), 'ratelow':(liverate.selling_rate < oldliverates[i].selling_rate), 'ratenormal': (liverate.selling_rate == oldliverates[i].selling_rate)}"
+          >
+            {{liverate.selling_rate}}
+          </div>
+        </ion-col>
+        <!-- </ion-row> -->
+      </ng-container>
+    </ion-row>
+
+    <br />
+
+    <!-- <ion-row style="display: flex;justify-content: center;align-items: center;">
+      <div class="input_style12" [ngClass]="sell_color">{{curcomsellrate}}</div>
+  </ion-row><br/> -->
+
+    <ion-row>
+      <ion-col col-6>
+        <ion-select
+          [(ngModel)]="time"
+          placeholder="Select Time"
+          (ionChange)="getGraphReport()"
+          class="type"
+        >
+          <!-- <ion-option value="30mins">30 mins</ion-option>
+          <ion-option value="1hour">1 hour</ion-option>
+          <ion-option value="12hour">12 hour</ion-option> -->
+          <ion-option value="1day">1 day</ion-option>
+        </ion-select>
+      </ion-col>
+      <ion-col col-6>
+        <ion-select
+          [(ngModel)]="chartType"
+          placeholder="Select Chart Type"
+          (ionChange)="onCommodityChange()"
+          class="type"
+        >
+          <ion-option value="line">Line</ion-option>
+          <ion-option value="area">Area</ion-option>
+          <!-- <ion-option value="scatter">Bar</ion-option> -->
+        </ion-select>
+      </ion-col>
+    </ion-row>
+
+    <ion-row>
+      <ion-col>
+        <div id="chart-container" style="height: 400px; margin-top: 10px">
+          <div id="chart"></div>
+        </div>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>

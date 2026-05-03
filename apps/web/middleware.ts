@@ -1,38 +1,17 @@
-import { auth } from '@/lib/auth';
-import { NextResponse } from 'next/server';
+import NextAuth from 'next-auth';
+import { authConfig } from '@/lib/auth.config';
 
 /**
- * Middleware — Protects all dashboard routes.
- * Unauthenticated users are redirected to /login.
- * Auth pages (/login, /register, /forgot-password) are accessible without session.
- * API routes are excluded (they handle their own auth).
+ * Edge-compatible middleware — uses auth.config.ts (no Node.js modules).
+ *
+ * Route protection logic is in the `authorized` callback (auth.config.ts):
+ * - Unauthenticated users → redirect to /login
+ * - Logged-in users on auth pages → redirect to /dashboard
+ * - API routes & landing page → always allowed
  */
-export default auth((req) => {
-  const { nextUrl } = req;
-  const isLoggedIn = !!req.auth;
+const { auth } = NextAuth(authConfig);
 
-  // Public paths that don't require authentication
-  const publicPaths = ['/login', '/register', '/forgot-password'];
-  const isPublicPath = publicPaths.some((path) => nextUrl.pathname.startsWith(path));
-  const isApiRoute = nextUrl.pathname.startsWith('/api');
-
-  // Skip middleware for API routes (they handle auth internally)
-  if (isApiRoute) return NextResponse.next();
-
-  // Redirect logged-in users away from auth pages to dashboard
-  if (isPublicPath && isLoggedIn) {
-    return NextResponse.redirect(new URL('/dashboard', nextUrl));
-  }
-
-  // Redirect unauthenticated users to login
-  if (!isPublicPath && !isLoggedIn) {
-    const loginUrl = new URL('/login', nextUrl);
-    loginUrl.searchParams.set('callbackUrl', nextUrl.pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  return NextResponse.next();
-});
+export default auth;
 
 export const config = {
   matcher: [

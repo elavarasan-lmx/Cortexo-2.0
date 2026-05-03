@@ -1,0 +1,35 @@
+page-news {
+.megaphone{
+    background-image: linear-gradient(to bottom,#C99A42 20%,#AF7812) !important;
+	  color:#FFF;
+    border-radius: 10px !important;
+    
+}
+.event_name{
+    font-size: 16px !important;
+    font-weight: bold !important;
+}
+span{
+    display: block !important;
+}
+.megaphone,.ion-icon{
+   font-size: 30px !important;
+   text-align: center !important;
+   color: #57B4E0 !important;
+}
+.card-md,.card-ios{
+    background:linear-gradient(45deg, lightgrey, transparent) !important;
+}
+.empty_col{
+    border-right: 5px solid #57B4E0 !important;
+}
+.update_date{
+    font-weight: bold !important;
+    text-align:left;
+    background-image: linear-gradient(to bottom,#C99A42 20%,#AF7812) !important;
+	  color:#FFF;
+    margin: 5px !important;
+    padding:5px !important;
+    font-size: 16px;
+}
+}

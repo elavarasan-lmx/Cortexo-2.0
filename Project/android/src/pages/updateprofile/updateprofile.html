@@ -1,0 +1,86 @@
+<ion-header>
+    <ion-navbar>
+        <button ion-button menuToggle clear>
+            <ion-icon name="menu" class="menu-icon"></ion-icon>
+        </button>
+        <ion-title>Update Profile</ion-title>
+    </ion-navbar>
+</ion-header>
+
+<ion-content padding-bottom>
+    <form [formGroup]="updateprofileForm" (ngSubmit)="onSubmit(updateprofileForm.value)" novalidate padding>
+        <ion-list>
+            <ion-item class="errMsg" *ngIf="errorMessage != ''">{{errorMessage}}</ion-item>
+
+            <!-- Name -->
+            <ion-row>
+                <ion-col col-10 class="login_head">Name *</ion-col>
+                <ion-col col-2 class="icon_col"><ion-icon class="ionicon" name="person"></ion-icon></ion-col>
+            </ion-row>
+            <ion-row>
+                <ion-col col-12 class="component_col">
+                    <ion-input [formControl]="name" [(ngModel)]="u_name" type="text"
+                        maxlength="30" placeholder="Enter Your Name"
+                        (keypress)="noSpecialChars($event)"></ion-input>
+                </ion-col>
+                <div class="err" *ngIf="updateprofileForm.get('name').hasError('required') && updateprofileForm.get('name').touched">* Name is required</div>
+                <div class="err" *ngIf="updateprofileForm.get('name').hasError('minlength') && updateprofileForm.get('name').touched">* Minimum 4 characters</div>
+                <div class="err" *ngIf="updateprofileForm.get('name').hasError('maxlength') && updateprofileForm.get('name').touched">* Maximum 30 characters allowed</div>
+                <div class="err" *ngIf="updateprofileForm.get('name').hasError('pattern') && updateprofileForm.get('name').touched">* Special characters not allowed</div>
+            </ion-row>
+
+            <!-- Company Name -->
+            <ion-row>
+                <ion-col col-10 class="login_head">Company Name *</ion-col>
+                <ion-col col-2 class="icon_col"><ion-icon class="ionicon" name="ios-people"></ion-icon></ion-col>
+            </ion-row>
+            <ion-row>
+                <ion-col col-12 class="component_col">
+                    <ion-input [formControl]="company" [(ngModel)]="u_company" type="text"
+                        maxlength="50" placeholder="Enter Company Name"
+                        (keypress)="noSpecialChars($event)"></ion-input>
+                </ion-col>
+                <div class="err" *ngIf="updateprofileForm.get('company').hasError('required') && updateprofileForm.get('company').touched">* Company name is required</div>
+                <div class="err" *ngIf="updateprofileForm.get('company').hasError('minlength') && updateprofileForm.get('company').touched">* Minimum 4 characters</div>
+                <div class="err" *ngIf="updateprofileForm.get('company').hasError('maxlength') && updateprofileForm.get('company').touched">* Maximum 50 characters allowed</div>
+                <div class="err" *ngIf="updateprofileForm.get('company').hasError('pattern') && updateprofileForm.get('company').touched">* Special characters not allowed</div>
+            </ion-row>
+
+            <!-- Email -->
+            <ion-row>
+                <ion-col col-10 class="login_head">Email *</ion-col>
+                <ion-col col-2 class="icon_col"><ion-icon class="ionicon" name="mail"></ion-icon></ion-col>
+            </ion-row>
+            <ion-row>
+                <ion-col col-12 class="component_col">
+                    <ion-input [formControl]="email" [(ngModel)]="u_email" type="email"
+                        maxlength="100" placeholder="Enter Your Email"
+                        (keypress)="noSpecialCharsEmail($event)"></ion-input>
+                </ion-col>
+                <div class="err" *ngIf="updateprofileForm.get('email').hasError('required') && updateprofileForm.get('email').touched">* Email is required</div>
+                <div class="err" *ngIf="updateprofileForm.get('email').hasError('pattern') && updateprofileForm.get('email').touched">* Email id is invalid</div>
+            </ion-row>
+
+            <!-- Address -->
+            <ion-row>
+                <ion-col col-10 class="login_head">Address *</ion-col>
+                <ion-col col-2 class="icon_col"><ion-icon class="ionicon" name="pin"></ion-icon></ion-col>
+            </ion-row>
+            <ion-row>
+                <ion-col col-12 class="component_col">
+                    <ion-input [formControl]="address" [(ngModel)]="u_address" type="text"
+                        maxlength="200" placeholder="Enter Your Address"
+                        (keypress)="noSpecialChars($event)"></ion-input>
+                </ion-col>
+                <div class="err" *ngIf="updateprofileForm.get('address').hasError('required') && updateprofileForm.get('address').touched">* Address is required</div>
+                <div class="err" *ngIf="updateprofileForm.get('address').hasError('minlength') && updateprofileForm.get('address').touched">* Minimum 4 characters</div>
+                <div class="err" *ngIf="updateprofileForm.get('address').hasError('maxlength') && updateprofileForm.get('address').touched">* Maximum 200 characters allowed</div>
+                <div class="err" *ngIf="updateprofileForm.get('address').hasError('pattern') && updateprofileForm.get('address').touched">* Special characters not allowed</div>
+            </ion-row>
+
+        </ion-list>
+        <br>
+        <button [disabled]="!updateprofileForm.valid || isDisabled"
+            ion-button class="btn_common" block color="dark">Update</button>
+    </form>
+</ion-content>

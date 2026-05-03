@@ -1,0 +1,53 @@
+page-image-popup {
+
+  // full-screen darkened background for the modal
+  ion-content.image-popup-content {
+    --padding-start: 0;
+    --padding-end: 0;
+    --padding-top: 0;
+    --padding-bottom: 0;
+    background: rgba(0, 0, 0, 0.6); // dim overlay
+    position: relative;
+  }
+
+  // wrapper for image to center it
+  .img-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 16px;
+    box-sizing: border-box;
+  }
+
+  // responsive image
+  img {
+    width: 100%;
+    height: auto;
+    max-width: 960px; // optional cap for very large screens
+    max-height: 90vh; // never exceed viewport height
+    object-fit: contain; // preserve aspect ratio
+    display: block;
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  }
+
+  // close button
+  .close-icon {
+    position: absolute;
+    top: 35px;
+    right: 12px;
+    z-index: 999;
+    font-size: 32px;
+    color: #ffffff !important;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* Optional: tweak modal-wrapper background so the rounded/scoped modal looks nice */
+.my-popup .modal-wrapper {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+}

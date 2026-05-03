@@ -1,0 +1,71 @@
+page-simcard{ .my-popup{
+    @media (min-height: 500px) {
+        ion-backdrop {
+          visibility: visible;
+        }
+      }
+      .toolbar-title-md{
+        color: white;
+      }
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: $z-index-overlay;
+    
+      display: flex;
+    
+      align-items: center;
+      justify-content: center;
+    
+      contain: strict;
+      .modal-wrapper {
+        &,
+        .ion-page,
+        .ion-page .content,
+        .ion-page .content .scroll-content {
+          contain: content;
+          position: relative;
+          top: auto;
+          left: auto;
+        }
+    
+        z-index: $z-index-overlay-wrapper;
+        display: flex;
+        overflow: hidden;
+    
+        flex-direction: column;
+    
+        min-width: $alert-min-width;
+        max-height: $alert-max-height;
+    
+        opacity: 0;
+    
+        height: auto;
+        max-width: $alert-md-max-width;
+        border-radius: $alert-md-border-radius;
+        background-color: $alert-md-background-color;
+        box-shadow: $alert-md-box-shadow;
+    
+        .ion-page .content {
+          background-color: color($colors, light);
+        }
+      }
+      ion-content{
+        background-image: none !important;
+      }
+      ion-icon{
+        font-weight: bold !important;
+        padding-left:4px;
+        font-size:20px;
+      }
+}
+h6{
+  color:#F8BB46 !important;
+}
+.Modalbutton{
+  color: #52739D !important
+}
+
+}

@@ -4,9 +4,9 @@ import Google from 'next-auth/providers/google';
 import Credentials from 'next-auth/providers/credentials';
 import crypto from 'crypto';
 import { eq } from 'drizzle-orm';
-import type { NextAuthConfig } from 'next-auth';
 import { getDb } from './db';
 import { users } from '@cortexo/db/schema';
+import { authConfig } from './auth.config';
 
 /**
  * Verify a password against a scrypt hash (format: "salt:hash").
@@ -32,16 +32,20 @@ async function verifyPassword(password: string, stored: string): Promise<boolean
 }
 
 /**
- * NextAuth.js v5 configuration for Cortexo.
+ * NextAuth.js v5 full configuration for Cortexo (server-side only).
  *
- * Providers:
+ * Extends the edge-safe auth.config.ts with Node.js-only providers:
  * - GitHub OAuth (primary for developers)
  * - Google OAuth (secondary)
- * - Email/Password (Credentials provider with bcrypt + MariaDB)
- *
- * JWT strategy: 15min access, 7d refresh (per security design in 02_tech_architecture.md)
+ * - Email/Password (Credentials provider with scrypt/bcrypt + MariaDB)
  */
-const authConfig: NextAuthConfig = {
+export const {
+  handlers: { GET, POST },
+  auth,
+  signIn,
+  signOut,
+} = NextAuth({
+  ...authConfig,
   providers: [
     GitHub({
       clientId: process.env.GITHUB_CLIENT_ID,
@@ -102,43 +106,4 @@ const authConfig: NextAuthConfig = {
       },
     }),
   ],
-
-  pages: {
-    signIn: '/login',
-    newUser: '/register',
-    error: '/login',
-  },
-
-  session: {
-    strategy: 'jwt',
-    maxAge: 7 * 24 * 60 * 60, // 7 days
-  },
-
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user && token.id) {
-        session.user.id = token.id as string;
-      }
-      return session;
-    },
-    async redirect({ url, baseUrl }) {
-      // After sign in, redirect to dashboard
-      if (url.startsWith(baseUrl)) return url;
-      if (url.startsWith('/')) return `${baseUrl}${url}`;
-      return `${baseUrl}/dashboard`;
-    },
-  },
-};
-
-export const {
-  handlers: { GET, POST },
-  auth,
-  signIn,
-  signOut,
-} = NextAuth(authConfig);
+});

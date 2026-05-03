@@ -1,0 +1,123 @@
+<!--
+  Generated template for the UpdaterequestPage page.
+
+  See http://ionicframework.com/docs/components/#navigation for more info on
+  Ionic pages and navigation.
+-->
+<ion-header>
+  <ion-navbar>
+    <ion-title>Update Request</ion-title>
+  </ion-navbar>
+</ion-header>
+
+
+<ion-content padding>
+	<ion-card>
+	<div class="error div_info" ng-show="errormsg !=''" *ngIf="errormsg !=''" align="center">{{ errormsg }}</div>
+	<div class="comname">{{com_name}}</div><br>
+		
+	<!-- <ion-row>
+		<ion-col col-6 class="comlabel" style="padding-top:14px !important;"><span *ngIf="book_type == 0">RATE</span><span *ngIf="book_type == 1">BUY</span></ion-col>
+		<ion-col col-6 class="comdata_rate" style="font-size:27px !important;padding-left: 6px;"><span class="rates" *ngIf="book_type == 0">{{selling_rate}}</span><span class="rates" *ngIf="book_type == 1">{{buying_rate}}</span></ion-col>
+	</ion-row><br> -->
+	<ion-row *ngIf="dispcommditydetails.prem_selretail_premium!=0 || dispcommditydetails.prem_buy_premium!=0 || dispcommditydetails.prem_sel_premium!=0">
+		<ion-col col-6 class="comlabel" style="padding-top:14px !important;">
+			<span *ngIf="book_type == 0">RATE</span>
+			<span *ngIf="book_type == 1">BUY</span>
+		</ion-col>
+		<ion-col col-6 class="comdata_rate" style="font-size:27px !important;padding-left: 6px;">
+			<span class="rates"	*ngIf="book_type == 0">{{discsell_af}}</span>
+			<span class="rates" *ngIf="book_type == 1">{{discbuy_bf}}</span>
+			<span class="rates" *ngIf="book_type == 2">{{discsellretail}}</span>
+		</ion-col>
+	</ion-row><br>
+	
+<!-- 	<ion-row *ngIf="dispcommditydetails.cus_com_amountpurch=='1'  && dispcommditydetails.bar_selection == 0">
+		<ion-col col-6 class="tradebase" >TRADE TYPE</ion-col>
+		<ion-col col-3><ion-checkbox (click)="amountchange()" [checked]="!weightck"></ion-checkbox>&nbsp;Amount</ion-col>
+		<ion-col col-3><ion-checkbox (click)="weightchange()" [checked]="!Amountck"></ion-checkbox>&nbsp;Weight</ion-col>
+	</ion-row><br> -->
+	<ion-row  *ngIf="dispcommditydetails.bar_selection == 0 && purchasetype==1">
+		<ion-col col-6 class="comlabel" style="padding-top:14px !important;">ORDER @ PRICE<span *ngIf="dispcommditydetails.com_unit == 0">({{dispcommditydetails.weight}}grms)</span><span *ngIf="dispcommditydetails.com_unit == 1">({{dispcommditydetails.weight/1000}}kgs)</span></ion-col>
+		<ion-col col-4 style="padding-left: 10px;"><ion-input class="input_style" min="0" type="number" name="ordervalue" [(ngModel)]="orderDetails.ordervalue" (ionChange)="calculatetotal1(1)" required></ion-input></ion-col>
+	</ion-row>
+	<ion-row *ngIf="dispcommditydetails.bar_selection == 0 && purchasetype==1"> 
+		<ion-col col-6 class="comlabel1" style="margin-top: 12px;text-align: right;font-weight: bold;">ENTER AMOUNT</ion-col>
+		<ion-col col-6 style="padding-left: 10px !important;">
+			<ion-input class="input_style"  [(ngModel)]="Amountvalue" type="number" (ionChange)="calcAmount(1,$event)"></ion-input>
+		</ion-col>
+	</ion-row>
+
+	<ion-row *ngIf="purchasetype==1"> 
+		<ion-col col-6 class="comlabel" style="margin-top: 12px;"><span class="comlabel1">QUANTITY</span><!--<span *ngIf="dispcommditydetails.com_bar_type == 0">(grms)</span><span *ngIf="dispcommditydetails.com_bar_type == 1">(kgs)</span>--></ion-col>
+		<ion-col col-6 class="comdata" style="padding-left: 10px;">
+			<ion-input class="input_style" (ionChange)="calculatetotal(1,$event)" [(ngModel)]="orderDetails.requestqty" type="number" *ngIf="dispcommditydetails.bar_selection == 0" readonly></ion-input>
+			<ion-select class="input_style" [(ngModel)]="orderDetails.requestqty1" (ngModelChange)="calculatetotal(0)" placeholder="Select" *ngIf="dispcommditydetails.bar_selection == 1">
+				<ion-option *ngFor="let value of dispweights let i = index;" [value]="value['name']"> {{value['name']}} </ion-option>
+			</ion-select>
+		</ion-col>					
+		<!--<ion-col col-4 class="comdata"><ion-input class="input_style1" type="number" value="{{orderDetails.requestqty*(dispcommditydetails.denomination*1000)}}" readonly></ion-input></ion-col>			-->
+	</ion-row>
+	
+	<ion-row *ngIf="purchasetype==0">
+		<ion-col col-6 class="comlabel" style="margin-top: 12px;"><span class="comlabel1">QUANTITY</span><!--<span *ngIf="dispcommditydetails.com_bar_type == 0">(grms)</span><span *ngIf="dispcommditydetails.com_bar_type == 1">(kgs)</span>--></ion-col>
+		<ion-col col-6 class="comdata" style="padding-left: 10px;">
+			<ion-input class="input_style" (ionChange)="calculatetotal(0,$event)" [(ngModel)]="orderDetails.requestqty" type="number" *ngIf="dispcommditydetails.bar_selection == 0"></ion-input>
+			<ion-select class="input_style" [(ngModel)]="orderDetails.requestqty1" (ngModelChange)="calculatetotal(0)" placeholder="Select" *ngIf="dispcommditydetails.bar_selection == 1">
+				<ion-option *ngFor="let value of dispweights let i = index;" [value]="value['name']"> {{value['name']}} </ion-option>
+			</ion-select>
+		</ion-col>					
+		<!--<ion-col col-4 class="comdata"><ion-input class="input_style1" type="number" value="{{orderDetails.requestqty*(dispcommditydetails.denomination*1000)}}" readonly></ion-input></ion-col>			-->
+	</ion-row>
+
+	<ion-row class="min_max" *ngIf="dispcommditydetails.bar_selection == 1">
+		<ion-col col-6></ion-col>
+		<ion-col col-6 class="oty_set">
+			({{(orderDetails.requestqty*1000)}} <span *ngIf="dispcommditydetails.com_bar_type == 0">gms</span><span *ngIf="dispcommditydetails.com_bar_type == 1">kgs</span>)</ion-col>
+	</ion-row>
+	<ion-row class="min_max" *ngIf="dispcommditydetails.bar_selection == 0">
+		<ion-col col-6></ion-col>
+		<ion-col col-6 class="oty_set" *ngIf="orderDetails.requestqty!=NaN">
+			<span>({{(orderDetails.requestqty*dispcommditydetails.denomination)}}</span> <span *ngIf="dispcommditydetails.com_bar_type == 0">gms</span><span *ngIf="dispcommditydetails.com_bar_type == 1">kgs</span>)</ion-col>
+			<ion-col col-6 class="oty_set" *ngIf="orderDetails.requestqty==NaN">
+				<span>(0</span> <span *ngIf="dispcommditydetails.com_bar_type == 0">gms</span><span *ngIf="dispcommditydetails.com_bar_type == 1">kgs</span>)</ion-col>
+	</ion-row>
+	<ion-row class="min_max"  *ngIf="dispcommditydetails.bar_selection == 0">
+		<ion-col col-6></ion-col>
+		<ion-col col-6 style="font-size:9px;">1 QUANTITY = {{dispcommditydetails.denomination}}<span *ngIf="dispcommditydetails.com_bar_type == 0">gms</span><span *ngIf="dispcommditydetails.com_bar_type == 1">kgs</span></ion-col>
+	</ion-row><br>
+
+		<!--<div class="row margin_list2">
+			<div class="col label_left1 no_padding" align="right">BUY LIMIT PRICE(<span ng-if="dispcommditydetails.comtype == 1">{{dispcommditydetails.com_weight/1000}}kg</span><span ng-if="dispcommditydetails.comtype != 1">{{dispcommditydetails.com_weight}} grm</span>)</div>
+			<div class="col label_right" align="left">								
+				<input class="input_style small_input" min="0" type="number" name="ordervalue"  ng-model="orderDetails.ordervalue" ng-change="calculatetotal(1)" required> 
+			</div>
+		</div>-->
+
+		<ion-row  *ngIf="purchasetype==0">
+			<ion-col col-6 class="comlabel" style="padding-top:14px !important;">ORDER @ PRICE<span *ngIf="dispcommditydetails.com_unit == 0">({{dispcommditydetails.weight}}grms)</span><span *ngIf="dispcommditydetails.com_unit == 1">({{dispcommditydetails.weight/1000}}kgs)</span></ion-col>
+			<ion-col col-4 class="comdata" style="padding-left: 10px;"><ion-input class="input_style" min="0" type="number" name="ordervalue" [(ngModel)]="orderDetails.ordervalue" (ionChange)="calculatetotal(1)" required></ion-input></ion-col>
+		</ion-row><br>	
+		
+	<div class="min_max margin_list" *ngIf="has_allot_qty == 1" align="center">
+		Max Alloted Qty: {{dispcommditydetails.maxallotedqty}}
+	</div>
+	<ion-row> 
+		<ion-col col-3 class="comlabel1" style="margin-top: 12px;text-align: right;font-weight: bold;">Comment</ion-col>
+		<ion-col col-9 style="padding-left: 10px !important;">
+			<ion-input class="input_command"  [(ngModel)]="usercomment" type="text" maxlength="30"></ion-input>
+		</ion-col>
+	</ion-row>
+	<div class="div_btn" style="text-align:center">
+		<button class="buy_btn" ion-button [disabled]="!isvalid || !minmax_valid" (click)="postrequest(1, 0, bookingForm)" *ngIf="book_type == 0"><span class="custom_p_buy">UPDATE LIMIT</span></button><!--/{{isvalid}}/{{minmax_valid}}-->
+		<button class="buy_btn" ion-button [disabled]="!isvalid || !minmax_valid" (click)="postrequest(1, 1, bookingForm)" *ngIf="book_type == 1"><span class="custom_p_buy">UPDATE LIMIT</span></button><!--/{{isvalid}}/{{minmax_valid}}-->
+	</div>
+	<ion-row class="min_max margin_list" align="center">
+		<ion-col align="center" *ngIf="dispcommditydetails.minmax != ''"><span
+				class="txt_red">Min:</span>{{dispcommditydetails.min}} <span
+				class="txt_red">Max:</span>{{dispcommditydetails.max}}</ion-col>
+		<ion-col align="center" *ngIf="display_margin == 1"><span class="pg_txt">Available Margin:</span>
+			{{available_balance}}</ion-col>
+	</ion-row>
+</ion-card>
+</ion-content>

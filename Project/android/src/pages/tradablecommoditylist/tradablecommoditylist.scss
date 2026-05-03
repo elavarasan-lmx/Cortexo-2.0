@@ -1,0 +1,45 @@
+page-tradablecommoditylist {
+    .comname {
+        text-align: center;
+        color: #FFF;
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    .comrate {
+        font-size: 24px;
+        font-weight: bold;
+        text-align: center;
+        color: #FFF;
+    }
+
+    .card-content-ios {
+        padding: 0px !important;
+        background: #307812 !important;
+        color: #FFF !important;
+    }
+
+    .card-content-md {
+        background: #307812 !important;
+        color: #FFF !important;
+    }
+
+    .card-md {
+        background: #307812 !important;
+        color: #FFF !important;
+        padding: 0px !important;
+    }
+
+    .ion-card {
+        padding: 0px !important;
+    }
+
+    .ion-card-content {
+        padding: 0px !important;
+    }
+
+    ion-header>ion-navbar ion-icon {
+        color: #000 !important;
+    }
+
+}

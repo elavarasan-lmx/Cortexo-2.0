@@ -1,0 +1,30 @@
+page-videos {
+    video.videoPlayer{
+        height: 190px
+    }
+    ion-card{
+        text-align: center !important;
+    }
+    .card-md,.card-ios{
+        border-radius: 10px !important;
+    }
+    .log_img{
+        height:30px !important;
+
+    }
+    .text-content{
+        text-align: justify !important;
+        font-weight: bold !important;
+        font-size: 16px !important;
+        padding-top: 10px !important;
+        color: #000 !important;
+    }
+    .col_log{
+        text-align: left !important;
+    }
+    .fab-md,.fab-ios{
+        width:30px !important;
+        height: 30px !important;
+        background-color: #57B4E0 !important;
+    }
+}

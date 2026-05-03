@@ -1,0 +1,107 @@
+page-user_registration {
+    ion-card-header {
+        background: #307812 !important;
+        color: #FFF !important;
+        font-weight: bold;
+        border-bottom: 2px solid #9D9C9C !important;
+        text-transform: capitalize !important;
+    }
+
+    .err {
+        color: red !important;
+        text-align: left !important;
+    }
+
+    // .scroll-content {
+    //     margin-bottom: 25px !important;
+    // }
+
+    .item-ios {
+        background-color: none !important;
+    }
+
+    .item-input ion-input,
+    .item-input ion-textarea {
+        //background-color: #fff !important;
+        border-bottom: 1px solid #fff;
+        color: #fff;
+    }
+
+    .list-ios>.item-block {
+        border-top: none !important;
+        background: none !important;
+        background-color: none !important
+    }
+
+    .item-md {
+        padding-left: 0px !important;
+    }
+
+    .href_link {
+        text-decoration: underline;
+        font-weight: bold;
+        color: #212d47;
+    }
+
+    .input {
+        // min-height: 40px !important;
+        // margin-top: 10px !important;
+    }
+
+    .text-input-md {
+        margin: 15px !important;
+    }
+
+    .footer_tab {
+        text-align: center;
+        // font-weight: bold !important;
+        font-size: 16px !important;
+        color: #000;
+    }
+
+    .item-md {
+        background: none;
+    }
+
+    /*.toolbar-background-md {
+        background: #f8f8f8;
+    }*/
+
+    .component_col {
+        background: #ffff !important;
+        color: #000;
+        border: 1px solid #00adef;
+        padding: 0px !important;
+        border-radius: 5px !important;
+    }
+
+    .login_head {
+        padding-top: 15px !important;
+        font-size: medium;
+        font-size: 14px !important;
+        text-align: left !important;
+        color: #000 !important;
+    }
+
+    .business_type {
+        font-size: 18px;
+        margin-top: 15px;
+        border: 1px solid #307812;
+        border-radius: 10px !important;
+    }
+
+    .buiness_label {
+        color: #000 !important;
+        padding: 7px;
+    }
+
+    .hint_msg {
+        font-size: 15px;
+        color: #000;
+        white-space: pre-wrap;
+    }
+
+    ion-label.label.label-md {
+        white-space: normal;
+    }
+}

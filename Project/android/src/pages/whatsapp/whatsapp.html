@@ -1,0 +1,34 @@
+<ion-content >
+  <ion-row style="padding: 9px !important">
+    <!-- <ion-col col-1></ion-col> -->
+    <ion-col col-12 class="alert-title">WHATSAPP NO</ion-col>
+    <!-- <ion-col col-1></ion-col> -->
+  </ion-row>
+<div class="divcontent" *ngFor="let whatsapps of android; let i = index">
+  <ion-row class="rowcontent1" style="text-align: center !important;" *ngIf = "whatsapps.displayhead">
+    <!-- <ion-col col-2></ion-col> -->
+    <!-- <ion-col col-2><img style="height: 20px !important;" src='./assets/imgs/pointer.svg'/></ion-col> -->
+    <ion-col col-8 style="color: #000 !important;">{{ whatsapps.displayhead }}</ion-col>
+    <ion-col col-4></ion-col>
+  </ion-row>
+  <ion-row class="rowcontent" *ngIf = "whatsapps.displaytext">
+    <ion-col col-2></ion-col>
+    <ion-col col-2><img style="height: 20px !important;" src='./assets/imgs/pointer.svg'/></ion-col>
+    <ion-col col-8 style="color: #000 !important;" (click)="whatsapp(whatsapps)">{{ whatsapps.displaytext }}</ion-col>
+    <!-- <ion-col col-1></ion-col> -->
+  </ion-row>
+</div>
+  
+  <ion-row text-right>
+    <ion-col class="alert-button">
+        <button data-dismiss="modal" aria-label="Close" (click)="closeModal($event)" ion-button>
+  Close
+</button>
+    </ion-col>
+</ion-row>
+</ion-content>
+
+<!-- <ion-footer>
+
+</ion-footer> -->
+

@@ -1,0 +1,447 @@
+<!--
+  Generated template for the KycPage page.
+
+  See http://ionicframework.com/docs/components/#navigation for more info on
+  Ionic pages and navigation.
+-->
+<ion-header align-title="center">
+	<ion-navbar align-title="center">
+		<button ion-button menuToggle>
+			<ion-icon name="menu"></ion-icon>
+		</button>
+		<ion-title align-title=”center” style="padding-top: 6px !important;"><img alt="logo" height="50" cache="true"
+				src="assets/imgs/header.svg"></ion-title>
+	</ion-navbar>
+</ion-header>
+
+
+<ion-content no-padding>
+
+	<ion-card style="margin-bottom: 35px !important;" no-padding>
+		<ion-card-header>KYC REGISTRATION</ion-card-header>
+		<ion-card-content margin-top no-padding>
+			<form style="margin-bottom:35px !important;" [formGroup]="registrationForm"
+				(ngSubmit)="onSubmit(registrationForm.value)" novalidate no-padding>
+				<ion-list>
+					<ion-row class="errMsg" *ngIf="errorMessage != ''">{{errorMessage}}</ion-row>
+					<ion-row>
+						<ion-col col-2 class="kyc_col">
+							<ion-icon class="ionicon" name="contact"></ion-icon>
+						</ion-col>
+						<ion-col col-10 class="component_kyc">
+							<ion-item>
+								<ion-input [formControl]="cus_company_name" [(ngModel)]="userdata.company_name"
+									type="text" placeholder="Company Name *"></ion-input>
+							</ion-item>
+						</ion-col>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_company_name').hasError('minlength') && registrationForm.get('cus_company_name').touched">
+							*Minimum of 4 characters
+						</div>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_company_name').hasError('required') && registrationForm.get('cus_company_name').touched">
+							*Name field is required
+						</div>
+					</ion-row><br>
+					<ion-row style="padding-bottom: 15px !important;">
+						<ion-col col-2 class="kyc_col">
+							<ion-icon class="ionicon" name="pin"></ion-icon>
+						</ion-col>
+						<ion-col col-10 class="component_kyc">
+							<ion-item>
+								<ion-input type="text" [formControl]="cus_address" [(ngModel)]="userdata.address"
+									placeholder="Address *"></ion-input>
+							</ion-item>
+						</ion-col>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_address').hasError('minlength') && registrationForm.get('cus_address').touched">
+							*Address is invalid
+						</div>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_address').hasError('required') && registrationForm.get('cus_address').touched">
+							*Address is required
+						</div>
+					</ion-row><br>
+					<ion-row>
+						<ion-col class="title_card">Proprietor/Partner's Name</ion-col>
+					</ion-row><br>
+					<ion-row>
+						<ion-col col-2 class="kyc_col">
+							<ion-icon class="ionicon" name="person"></ion-icon>
+						</ion-col>
+						<ion-col col-10 class="component_kyc">
+							<ion-item>
+								<ion-input [formControl]="cus_name" type="text" [(ngModel)]="userdata.name"
+									placeholder="Name1 *"></ion-input>
+							</ion-item>
+						</ion-col>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_name').hasError('minlength') && registrationForm.get('cus_name').touched">
+							*Minimum of 4 characters
+						</div>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_name').hasError('required') && registrationForm.get('cus_name').touched">
+							*Name field is required
+						</div>
+					</ion-row><br>
+					<ion-row>
+						<ion-col col-2 class="kyc_col">
+							<ion-icon class="ionicon" name="phone-portrait"></ion-icon>
+						</ion-col>
+						<ion-col col-10 class="component_kyc">
+							<ion-item>
+								<ion-input maxlength="10" [formControl]="cus_mobile" [(ngModel)]="userdata.mobile"
+									type="tel" placeholder="Mobile *"></ion-input>
+							</ion-item>
+						</ion-col>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_mobile').hasError('minlength') && registrationForm.get('cus_mobile').touched">
+							*Minimum of 10 numbers
+						</div>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_mobile').hasError('required') && registrationForm.get('cus_mobile').touched">
+							*Mobile number is required
+						</div>
+					</ion-row><br>
+					<ion-row>
+						<ion-col col-2 class="kyc_col">
+							<ion-icon class="ionicon" name="person"></ion-icon>
+						</ion-col>
+						<ion-col col-10 class="component_kyc">
+							<ion-item>
+								<ion-input [formControl]="cus_name2" type="text" placeholder="Name 2"></ion-input>
+							</ion-item>
+						</ion-col>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_name2').hasError('minlength') && registrationForm.get('cus_name2').touched">
+							*Minimum of 4 characters
+						</div>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_name2').hasError('required') && registrationForm.get('cus_name2').touched">
+							*Name field is required
+						</div>
+					</ion-row><br>
+					<ion-row>
+						<ion-col col-2 class="kyc_col">
+							<ion-icon class="ionicon" name="phone-portrait"></ion-icon>
+						</ion-col>
+						<ion-col col-10 class="component_kyc">
+							<ion-item>
+								<ion-input maxlength="10" [formControl]="cus_mobile2" type="tel"
+									placeholder="Mobile"></ion-input>
+							</ion-item>
+						</ion-col>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_mobile2').hasError('minlength') && registrationForm.get('cus_mobile2').touched">
+							*Minimum of 10 numbers
+						</div>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_mobile2').hasError('required') && registrationForm.get('cus_mobile2').touched">
+							*Mobile number is required
+						</div>
+					</ion-row><br>
+					<ion-row>
+						<ion-col class="title_card">Phone Number</ion-col>
+					</ion-row><br>
+					<ion-row>
+						<ion-col col-2 class="kyc_col">
+							<ion-icon class="ionicon" name="call"></ion-icon>
+						</ion-col>
+						<ion-col col-10 class="component_kyc">
+							<ion-item>
+								<ion-input maxlength="10" [formControl]="cus_phone1" type="tel"
+									placeholder="Office 1 *"></ion-input>
+							</ion-item>
+						</ion-col>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_phone1').hasError('minlength') && registrationForm.get('cus_phone1').touched">
+							*Minimum of 10 numbers
+						</div>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_phone1').hasError('required') && registrationForm.get('cus_phone1').touched">
+							*Mobile number is required
+						</div>
+					</ion-row><br>
+					<ion-row>
+						<ion-col col-2 class="kyc_col">
+							<ion-icon class="ionicon" name="call"></ion-icon>
+						</ion-col>
+						<ion-col col-10 class="component_kyc">
+							<ion-item>
+								<ion-input maxlength="10" [formControl]="cus_phone2" type="tel"
+									placeholder="Office2"></ion-input>
+							</ion-item>
+						</ion-col>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_phone2').hasError('minlength') && registrationForm.get('cus_phone2').touched">
+							*Minimum of 10 numbers
+						</div>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_phone2').hasError('required') && registrationForm.get('cus_phone2').touched">
+							*Mobile number is required
+						</div>
+					</ion-row><br>
+					<ion-row>
+						<ion-col col-2 class="kyc_col">
+							<ion-icon class="ionicon" name="call"></ion-icon>
+						</ion-col>
+						<ion-col col-10 class="component_kyc">
+							<ion-item>
+								<ion-input maxlength="10" [formControl]="cus_res_phone" type="tel"
+									placeholder="Residence"></ion-input>
+							</ion-item>
+						</ion-col>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_res_phone').hasError('minlength') && registrationForm.get('cus_res_phone').touched">
+							*Minimum of 10 numbers
+						</div>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_res_phone').hasError('required') && registrationForm.get('cus_res_phone').touched">
+							*Mobile number is required
+						</div>
+					</ion-row><br>
+					<ion-row>
+						<ion-col col-2 class="kyc_col">
+							<ion-icon class="ionicon" name="mail"></ion-icon>
+						</ion-col>
+						<ion-col col-10 class="component_kyc">
+							<ion-item>
+								<ion-input [formControl]="cus_email" [(ngModel)]="userdata.email" type="email"
+									placeholder="E mail *"></ion-input>
+							</ion-item>
+						</ion-col>
+						<div class="err"
+							*ngIf=" registrationForm.get('cus_email').touched && registrationForm.get('cus_email').hasError('pattern') ">
+							*Mail id is invalid
+						</div>
+						<div class="err"
+							*ngIf=" registrationForm.get('cus_email').touched && registrationForm.get('cus_email').hasError('required') ">
+							*Mail id is required
+						</div>
+					</ion-row><br>
+					<ion-row>
+						<ion-col class="title_card">Bank Details</ion-col>
+					</ion-row><br>
+					<ion-row>
+						<ion-col col-2 class="kyc_col">
+							<ion-icon class="ionicon" name="person"></ion-icon>
+						</ion-col>
+						<ion-col col-10 class="component_kyc">
+							<ion-item>
+								<ion-input [formControl]="cus_bnkname" type="text" placeholder="Name *"></ion-input>
+							</ion-item>
+						</ion-col>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_bnkname').hasError('minlength') && registrationForm.get('cus_bnkname').touched">
+							*Minimum of 4 characters
+						</div>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_bnkname').hasError('required') && registrationForm.get('cus_bnkname').touched">
+							*Bank Name field is required
+						</div>
+					</ion-row><br>
+					<ion-row>
+						<ion-col col-2 class="kyc_col">
+							<ion-icon class="ionicon" name="git-branch"></ion-icon>
+						</ion-col>
+						<ion-col col-10 class="component_kyc">
+							<ion-item>
+								<ion-input [formControl]="cus_bnkbranch" type="text" placeholder="Branch *"></ion-input>
+							</ion-item>
+						</ion-col>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_bnkbranch').hasError('minlength') && registrationForm.get('cus_bnkbranch').touched">
+							*Minimum of 4 characters
+						</div>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_bnkbranch').hasError('required') && registrationForm.get('cus_bnkbranch').touched">
+							*Branch field is required
+						</div>
+					</ion-row><br>
+					<ion-row>
+						<ion-col col-2 class="kyc_col">
+							<ion-icon class="ionicon" name="card"></ion-icon>
+						</ion-col>
+						<ion-col col-10 class="component_kyc">
+							<ion-item>
+								<ion-input [formControl]="cus_accno" type="number" placeholder="A/C No *"></ion-input>
+							</ion-item>
+						</ion-col>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_accno').hasError('minlength') && registrationForm.get('cus_accno').touched">
+							*Minimum of 10 numbers
+						</div>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_accno').hasError('required') && registrationForm.get('cus_accno').touched">
+							*A/C No field is required
+						</div>
+					</ion-row><br>
+					<ion-row>
+						<ion-col col-2 class="kyc_col">
+							<ion-icon class="ionicon" name="code"></ion-icon>
+						</ion-col>
+						<ion-col col-10 class="component_kyc">
+							<ion-item>
+								<ion-input [formControl]="cus_ifsc" type="text" placeholder="IFSC Code *"></ion-input>
+							</ion-item>
+						</ion-col>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_ifsc').hasError('minlength') && registrationForm.get('cus_ifsc').touched">
+							*Minimum of 4 characters
+						</div>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_ifsc').hasError('required') && registrationForm.get('cus_ifsc').touched">
+							*IFSC Code field is required
+						</div>
+					</ion-row><br>
+					<ion-row style="padding-bottom: 15px !important;">
+						<ion-col col-2 class="kyc_col">
+							<ion-icon class="ionicon" name="barcode"></ion-icon>
+						</ion-col>
+						<ion-col col-10 class="component_kyc">
+							<ion-item>
+								<ion-input [ngModel]="GSTpattern" maxlength="15"
+									(ngModelChange)="GSTpattern= $event.toLocaleUpperCase()" [formControl]="gst_no"
+									type="text" placeholder="GST Number(Minimum 15 digit) *"></ion-input>
+							</ion-item>
+						</ion-col>
+						<div class="err"
+							*ngIf="registrationForm.get('gst_no').hasError('minlength') && registrationForm.get('gst_no').touched">
+							*Company GST number is invalid
+						</div>
+						<div class="err"
+							*ngIf="registrationForm.get('gst_no').hasError('required') && registrationForm.get('gst_no').touched">
+							*Company GST number is invalid
+						</div>
+					</ion-row>
+					<ion-row style="padding-bottom: 15px !important;">
+						<ion-col col-2 class="kyc_col">
+							<ion-icon class="ionicon" name="card"></ion-icon>
+						</ion-col>
+						<ion-col col-10 class="component_kyc">
+							<ion-item>
+								<ion-input maxlength="10" [ngModel]="PANpattern"
+									(ngModelChange)="PANpattern= $event.toLocaleUpperCase()" [formControl]="cus_panno"
+									type="text" placeholder="Pan Number(Minimum 10 digit) *" required></ion-input>
+							</ion-item>
+						</ion-col>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_panno').hasError('minlength') && registrationForm.get('cus_panno').touched">
+							*Pan number is invalid
+						</div>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_panno').hasError('required') && registrationForm.get('cus_panno').touched">
+							*Pan number is required
+						</div>
+					</ion-row>
+					<ion-row>
+						<ion-col col-2 class="kyc_col">
+							<ion-icon class="ionicon" name="person-add"></ion-icon>
+						</ion-col>
+						<ion-col col-10 class="component_kyc">
+							<ion-item>
+								<ion-input [formControl]="cus_ref" type="text" placeholder="Reference"></ion-input>
+							</ion-item>
+						</ion-col>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_ref').hasError('minlength') && registrationForm.get('cus_ref').touched">
+							*Minimum of 4 characters
+						</div>
+						<div class="err"
+							*ngIf="registrationForm.get('cus_ref').hasError('required') && registrationForm.get('cus_ref').touched">
+							*Name field is required
+						</div>
+					</ion-row><br>
+					<ion-card>
+						<fieldset>
+							<legend>Documents Required</legend>
+							<ion-row class="optional-Filed">
+								<ion-col class="highlights">Address proof copy *</ion-col>
+							</ion-row>
+							<ion-row>
+								<ion-col>
+									<div class="upload_button" (click)="presentActionSheet(1)">
+										<ion-icon name="camera"
+											style="color: #ffd200 !important;"></ion-icon>&nbsp;Upload
+									</div>
+								</ion-col>
+							</ion-row>
+							<ion-row>
+								<ion-col col-6 *ngFor="let targetPath of targetPaths; let id = index">
+									<ion-card>
+										<ion-icon name="trash" class="deleteIcon"
+											(click)="deletePhoto(id,1)"></ion-icon> <img *ngIf="targetPath"
+											[src]="targetPath" />
+									</ion-card>
+								</ion-col>
+							</ion-row>
+							<ion-row class="optional-Filed">
+								<ion-col class="highlights">PanNo scan copy *</ion-col>
+							</ion-row>
+							<ion-row>
+								<ion-col>
+									<div class="upload_button" (click)="presentActionSheet(2)">
+										<ion-icon name="camera"
+											style="color: #ffd200 !important;"></ion-icon>&nbsp;Upload
+									</div>
+								</ion-col>
+							</ion-row>
+							<ion-row>
+								<ion-col col-6 *ngFor="let targetPath1 of targetPaths1; let id = index">
+									<ion-card>
+										<ion-icon name="trash" class="deleteIcon"
+											(click)="deletePhoto(id,2)"></ion-icon> <img *ngIf="targetPath1"
+											[src]="targetPath1" />
+									</ion-card>
+								</ion-col>
+							</ion-row>
+							<ion-row class="optional-Filed">
+								<ion-col class="highlights">TinNo scan copy *</ion-col>
+							</ion-row>
+							<ion-row>
+								<ion-col>
+									<div class="upload_button" (click)="presentActionSheet(3)">
+										<ion-icon name="camera"
+											style="color: #ffd200 !important;"></ion-icon>&nbsp;Upload
+									</div>
+								</ion-col>
+							</ion-row>
+							<ion-row>
+								<ion-col col-6 *ngFor="let targetPath2 of targetPaths2; let id = index">
+									<ion-card>
+										<ion-icon name="trash" class="deleteIcon"
+											(click)="deletePhoto(id,3)"></ion-icon> <img *ngIf="targetPath2"
+											[src]="targetPath2" />
+									</ion-card>
+								</ion-col>
+							</ion-row>
+
+							<ion-row class="optional-Filed">
+								<ion-col class="highlights">partnership deal copy *</ion-col>
+							</ion-row>
+							<ion-row>
+								<ion-col>
+									<div class="upload_button" (click)="presentActionSheet(4)">
+										<ion-icon name="camera"
+											style="color: #ffd200 !important;"></ion-icon>&nbsp;Upload
+									</div>
+								</ion-col>
+							</ion-row>
+							<ion-row>
+								<ion-col col-6 *ngFor="let targetPath3 of targetPaths3; let id = index">
+									<ion-card>
+										<ion-icon name="trash" class="deleteIcon"
+											(click)="deletePhoto(id,4)"></ion-icon> <img *ngIf="targetPath3"
+											[src]="targetPath3" />
+									</ion-card>
+								</ion-col>
+							</ion-row>
+						</fieldset>
+					</ion-card>
+				</ion-list>
+				<button style="	background-color: #2f2f2f !important;
+			color: #ffd200 !important;" ion-button class="button-login" block color="dark">Submit</button>
+			</form>
+		</ion-card-content>
+	</ion-card>
+</ion-content>

@@ -1,0 +1,18 @@
+<ion-header>
+  <ion-navbar>
+    <button ion-button menuToggle clear>
+      <ion-icon name="menu" class="menu-icon"></ion-icon>
+    </button>
+    <ion-title>
+      Terms & Conditions
+    </ion-title>
+  </ion-navbar>
+</ion-header>
+
+<ion-content text-justify>
+  <ion-card style="margin-bottom: 85px !important;">
+    <ion-card-content>
+      <div class="contact-us" text-justify [innerHTML]="terms | safeHtml"></div>
+    </ion-card-content>
+  </ion-card>
+</ion-content>

@@ -1,0 +1,99 @@
+<!-- <ion-header align-title=”center”>
+	<ion-navbar align-title=”center”>
+		<ion-row style="align-items: center;">
+			<ion-col col-2>
+				<button ion-button menuToggle>
+					<ion-icon class="topmenu" name="menu" class="menu-icon"></ion-icon>
+				</button>
+			</ion-col>
+			<ion-col col-8 style="padding: 0px !important;"><ion-title align-title=”center”
+					style="padding-top:15px !important;"><img alt="logo" height="40"
+						src="assets/imgs/header.svg"></ion-title></ion-col>
+			<ion-col col-2>
+
+			</ion-col>
+		</ion-row>
+	</ion-navbar>
+</ion-header> -->
+
+<ion-header>
+	<ion-navbar>
+		<button ion-button menuToggle clear>
+			<ion-icon name="menu" class="menu-icon"></ion-icon>
+		</button>
+		<ion-title>
+			Rate Alert
+		</ion-title>
+	</ion-navbar>
+</ion-header>
+
+<ion-content text-center>
+	<ion-card>
+		<!-- <ion-card-header text-center>
+			Rate Alert
+		</ion-card-header> -->
+		<ion-card-content class="contact-us">
+
+			<ion-row>
+				<ion-col col-6>Commodity</ion-col>
+				<ion-col col-6>
+					<ion-select [(ngModel)]="selected_comid" (ngModelChange)="getAlertDetails(liverates)"
+						placeholder="Select">
+						<ion-option *ngFor="let value of liverates let i = index;" [value]="value['com_id']">
+							{{value['com_name']}} </ion-option>
+					</ion-select>
+				</ion-col>
+			</ion-row>
+
+			<ion-row>
+				<ion-col col-6>
+					<div>Current Rate</div>
+					<div class="rate">{{curcomsellrate}}</div>
+				</ion-col>
+				<ion-col col-6>
+					<div>Alert Rate</div>
+					<div><input style="width: 100%;" class="rate" type="tel" maxlength="{{maxlength}}" name="alertrate"
+							[(ngModel)]="alertrate" (keyup)="updateRate($event)" ng-change="calculatetotal()" required
+							focus-me /></div>
+				</ion-col>
+			</ion-row>
+
+			<ion-row *ngIf="curcomsellrate != '' && curcomsellrate !='-' && selected_comid != 0" style="color:red;">
+				Alert rate range should be between {{alertraterange}}
+			</ion-row>
+			<div><button class="btn_login" button-block ion-button (click)="postrequest()"
+					*ngIf="curcomsellrate != '' && curcomsellrate != 0 && isvalid == 1">Set Alert</button></div>
+		</ion-card-content>
+	</ion-card>
+
+	<ion-list *ngIf="requestedalerts_len != 0">
+		<ion-item-sliding *ngFor="let alerts of requestedalerts">
+			<ion-item class="rate-alert-row">
+				<ion-row>
+					<ion-col col-6 class="comm_cols"> {{alerts.commodity}} </ion-col>
+					<ion-col col-3
+						ng-class="{'status-processcolor' : alerts.status == 0,'status-execcolor' : alerts.status == 1}">
+						{{alerts.alertstatus}}</ion-col>
+					<ion-col col-3 class="alert-rates"> {{alerts.alert_rate}} </ion-col>
+				</ion-row>
+				<ion-row class="wrapper" style="margin-right: 8px !important;">
+					<ion-col class="arrow"></ion-col>
+				</ion-row>
+				<ion-row>
+					<ion-col col-6>Req : <span class="small_font">{{alerts.reqtime}}</span></ion-col>
+					<ion-col col-6>Exe : <span class="small_font">{{alerts.exctime}}</span></ion-col>
+				</ion-row>
+			</ion-item>
+			<ion-item-options side="right">
+				<button ion-button color="red" *ngIf="alerts.status==1">
+					<ion-icon class="btn_delete" name="trash" (click)="deletealert(alerts)"
+						*ngIf="alerts.status== 1"></ion-icon>
+				</button>
+				<button ion-button color="secondary" *ngIf="alerts.status==0">
+					<ion-icon class="btn_cancel" name="close-circle" (click)="deletealert(alerts)"
+						*ngIf="alerts.status==0"></ion-icon>
+				</button>
+			</ion-item-options>
+		</ion-item-sliding>
+	</ion-list>
+</ion-content>

@@ -1,0 +1,105 @@
+<div *ngIf="!isOnline" class="offline-overlay">
+    <div class="offline-box">
+        ⚠️ Please check your internet connection
+    </div>
+</div>
+<ion-menu [content]="content">
+    <ion-header class="ion_header">
+        <ion-toolbar class="ion_toolbar">
+            <ion-title>
+                <ion-row *ngIf="userlogged==0"><ion-col col-3><img class="logo1" alt="logo" cache="true"
+                            src="assets/imgs/user.png"></ion-col><ion-col menuClose="left" (click)="login()" col-9
+                        style="padding-top: 15px;text-align: left !important;"><span class="txt_logo">LOGIN /
+                            REGISTER</span>&nbsp;<span style="color: #000 !important;"><ion-icon
+                                style="color: #000 !important;display: inline-block;"
+                                name="arrow-forward"></ion-icon></span></ion-col></ion-row>
+                <ion-row *ngIf="userlogged==1"><ion-col col-3><img src="assets/imgs/man.svg" /></ion-col><ion-col
+                        style="text-align: left !important;"><span
+                            class="user_det">{{userData.name}}<br>{{userData.username}}</span><br><span><button
+                                class="btn_common" menuClose ion-button round small (click)="logout()"
+                                style="background: #ffc760 !important;color: #000 !important;">Logout</button></span></ion-col></ion-row>
+            </ion-title>
+        </ion-toolbar>
+    </ion-header>
+
+    <ion-content style="background-color:#980000 !important;">
+
+        <ion-list class="menulist-ios" menuClose ion-item *ngFor="let p of menulist" (click)="openPage(p)">
+            <ion-row>
+                <ion-col col-2>
+                    <img src="{{'assets/imgs/menuicons/'+ p.iconname + '.svg'}}" />
+                </ion-col>
+                <ion-col style="margin-top:10px !important">
+                    {{p.title}}
+                </ion-col>
+            </ion-row>
+
+        </ion-list>
+        <ion-list class="menulist-ios" menuClose ion-item (click)="deleteacc()" *ngIf="userlogged == 1 && delete == 1">
+            <ion-row>
+                <ion-col col-2 class="icon-col" text-center><ion-icon name="trash-outline"></ion-icon></ion-col>
+                <ion-col col-10 class="name-col">ACCOUNT DELETION</ion-col>
+            </ion-row>
+        </ion-list>
+        <!--         <ion-list class="menulist-ios" menuClose ion-item (click)="logout()" *ngIf="userlogged == 1">
+            <ion-icon name="log-out"></ion-icon> Logout
+        </ion-list> -->
+    </ion-content>
+</ion-menu>
+
+<ion-footer *ngIf="showFooter == 1">
+    <ion-row class="footer-tab-row">
+        <ion-col class="footer-tab-col" (click)="gotoHomePage()"
+            [ngClass]="{'tab_active': (component_name == 'HomePage'),'tab_inactive': (component_name != 'HomePage')}">
+            <div *ngIf="component_name=='HomePage'" class="center_align"><img class="menuimg" alt="logo" cache="true"
+                    src="assets/imgs/footer/liverate_white.svg" /></div>
+            <div class="center_align" *ngIf="component_name!='HomePage'"><img class="menuimg1" alt="logo" cache="true"
+                    src="assets/imgs/footer/liverate_yellow.svg" /></div>
+            <div class="center_align footer-tab-label">Live rate</div>
+        </ion-col>
+        <ion-col class="footer-tab-col" (click)="gotoTradeHistoryPage()"
+            [ngClass]="{'tab_active': (component_name == 'TradehistoryPage'),'tab_inactive': (component_name != 'TradehistoryPage')}">
+            <div *ngIf="component_name=='TradehistoryPage'" class="center_align"><img class="menuimg" alt="logo"
+                    cache="true" src="assets/imgs/footer/pending_orders.svg" /></div>
+            <div class="center_align" *ngIf="component_name!='TradehistoryPage'"><img class="menuimg1" alt="logo"
+                    cache="true" src="assets/imgs/footer/pending_orders_yellow.svg" /></div>
+            <div class="center_align footer-tab-label">Trade History</div>
+        </ion-col>
+        <ion-col class="footer-tab-col" (click)="gotoPendingordersPage()"
+            [ngClass]="{'tab_active': (component_name == 'PendingordersPage'),'tab_inactive': (component_name != 'PendingordersPage')}">
+            <div *ngIf="component_name=='PendingordersPage'" class="center_align"><img class="menuimg" alt="logo"
+                    cache="true" src="assets/imgs/footer/orderlist.svg" /></div>
+            <div class="center_align" *ngIf="component_name!='PendingordersPage'"><img class="menuimg1" alt="logo"
+                    cache="true" src="assets/imgs/footer/orderlist_yellow.svg" /></div>
+            <div class="center_align footer-tab-label">Order List</div>
+        </ion-col>
+        <ion-col class="footer-tab-col" (click)="gotoRatealertPage()"
+            [ngClass]="{'tab_active': (component_name == 'RatealertPage'),'tab_inactive': (component_name != 'RatealertPage')}">
+            <div *ngIf="component_name=='RatealertPage'" class="center_align"><img class="menuimg" alt="logo"
+                    cache="true" src="assets/imgs/footer/ratealert.svg" /></div>
+            <div class="center_align" *ngIf="component_name!='RatealertPage'"><img class="menuimg1" alt="logo"
+                    cache="true" src="assets/imgs/footer/ratealert_yellow.svg" /></div>
+            <div class="center_align footer-tab-label">Rate Alert</div>
+        </ion-col>
+        <ion-col class="footer-tab-col" (click)="gotoBankPage()"
+            [ngClass]="{'tab_active': (component_name == 'BankPage'),'tab_inactive': (component_name != 'BankPage')}">
+            <div *ngIf="component_name=='BankPage'" class="center_align"><img class="menuimg" alt="logo" cache="true"
+                    src="assets/imgs/footer/bank.svg" /></div>
+            <div class="center_align" *ngIf="component_name!='BankPage'"><img class="menuimg1" alt="logo" cache="true"
+                    src="assets/imgs/footer/bank_yellow.svg" /></div>
+            <div class="center_align footer-tab-label">Bank Detail</div>
+        </ion-col>
+    </ion-row>
+    <ion-row style="background-color: #fff;color: #000;">
+        <ion-col col-8 style="cursor:pointer;font-weight: 600;" (click)="openmaharajWebsite()">&nbsp;&nbsp;&copy;MAHARAJ
+            GOLD
+            SMITH.</ion-col>
+        <ion-col text-right col-4
+            style="display:flex;align-items:center;justify-content:flex-end;white-space:nowrap;"><img class="menuimg1"
+                alt="logo" cache="true" src="assets/imgs/logimax.png"
+                style="vertical-align:middle;margin-right:3px;cursor:pointer;"
+                (click)="openLogimaxWebsite()" /></ion-col>
+    </ion-row>
+</ion-footer>
+
+<ion-nav [root]="rootPage" #content swipeBackEnabled="false"></ion-nav>

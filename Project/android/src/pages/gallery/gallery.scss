@@ -1,0 +1,39 @@
+page-gallery {
+/*     ion-card.card.card-md{
+        margin: 0px !important;
+    } */
+    .img_text{
+        background:#307812 !important;
+        color:#FFF !important;
+        padding:5px;
+        font-weight: bold;
+        text-align: center;
+    }
+    .card-md{
+        width: calc(100% - 0px);
+    }
+    ion-card img {
+        display: block;
+        width: 100%;
+        height: 155px;
+    }
+    h4{
+        color: #d3b000 !important;
+        text-align: center !important;
+    }
+    .marquee {
+        margin: 0 auto;
+        // overflow: hidden;
+        white-space: nowrap;
+        box-sizing: border-box;
+        animation: marquee 10s linear infinite;
+        color:#000 !important;
+        font-size:1.8rem;
+        font-weight:bold;
+    }
+    .marquee-text{
+        background:#307812 !important;
+        color:#FFF !important;
+       vertical-align:middle;
+   }
+}

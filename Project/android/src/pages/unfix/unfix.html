@@ -1,0 +1,65 @@
+<!--
+  Generated template for the UnfixPage page.
+
+  See http://ionicframework.com/docs/components/#navigation for more info on
+  Ionic pages and navigation.
+-->
+<ion-header>	
+	<ion-navbar>
+    <button ion-button menuToggle>
+        <ion-icon name="menu"></ion-icon>
+      </button>
+  <ion-title>Unfix Report</ion-title>
+</ion-navbar>
+</ion-header>
+
+
+<ion-content padding>
+  <div class="diffamount">Pending Amount to Rate Cut: <span class="unfixdiffamount" [innerHTML]="unfixdiffamount | indianCurrency"></span></div>
+  <div class="tabletitle">Unfix Payment</div>
+  <ion-grid card-subtitle class="grid-table"
+		*ngIf="unfixpaymentlist_len != 0"
+		style="margin-top:2px !important;">
+		<ion-row class="light-border-btm headercol">
+      <ion-col col-2>S.NO</ion-col>
+      <ion-col col-3>DATE</ion-col>
+      <ion-col col-4>PURE WEIGHT</ion-col>
+      <ion-col col-3>AMOUNT</ion-col>
+    </ion-row>
+		<ion-row class="light-border-btm align-items raterow" *ngFor="let ufpayment of unfixpaymentlist; let i = index">
+			<ion-col col-2 class="com-name">{{i+1}}</ion-col>
+			<ion-col col-3 class="com-name">{{ufpayment.date}}</ion-col>
+			<ion-col col-4 class="fontalign">{{ufpayment.pure_weight}}</ion-col>
+			<ion-col col-3 class="fontalign">{{ufpayment.amount}}</ion-col>
+		</ion-row>
+    <ion-row class="light-border-btm footercol">
+      <ion-col col-5>TOTAL</ion-col>
+      <ion-col col-4 class="fontalign"><span [innerHTML]="unfixpaymenttotal.total_weight"></span></ion-col>
+      <ion-col col-3 class="fontalign"><span [innerHTML]="unfixpaymenttotal.total_amount | indianCurrency"></span></ion-col>
+    </ion-row>
+	</ion-grid>
+  <div class="tabletitle">Unfix Booking</div>
+	<ion-grid card-subtitle class="grid-table" *ngIf="unfixbooklist_len != 0" style="margin-top:2px !important;margin-bottom: 200px !important;" >
+		<ion-row class="light-border-btm headercol">
+      <ion-col col-1>BK No</ion-col>
+      <ion-col col-2>BOOK DATE</ion-col>
+      <ion-col col-3>BOOK WEIGHT</ion-col>
+      <ion-col col-3>BOOK RATE</ion-col>
+      <ion-col col-3>BOOK AMOUNT</ion-col>
+    </ion-row>
+		<ion-row class="light-border-btm align-items raterow" *ngFor="let ufbook of unfixbooklist; let i = index">
+      <ion-col col-1 class="com-name">{{ufbook.book_no}}</ion-col>
+			<ion-col col-2 class="book_datetime">{{ufbook.book_datetime}}</ion-col>
+			<ion-col col-3 class="fontalign">{{ufbook.book_qty}}</ion-col>
+			<ion-col col-3 class="fontalign">{{ufbook.book_rate}}</ion-col>
+			<ion-col col-3 class="fontalign">{{ufbook.book_totalcost}}</ion-col>
+		</ion-row>
+    <ion-row class="light-border-btm footercol">
+      <ion-col col-3>TOTAL</ion-col>
+      <ion-col col-3 class="fontalign"><span [innerHTML]="unfixbooktotal.totalbook_qty"></span></ion-col>
+      <ion-col col-3 class="fontalign"><span></span></ion-col>
+      <ion-col col-3 class="fontalign"><span [innerHTML]="unfixbooktotal.total_cost | indianCurrency"></span></ion-col>
+    </ion-row>
+	</ion-grid>
+	
+</ion-content>

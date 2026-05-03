@@ -1,0 +1,355 @@
+page-home {
+  // ─── Header / Toolbar ────────────────────────────────────────────────────
+  ion-header ion-toolbar {
+    background-color: #980000 !important;
+    color: #ffffff !important;
+  }
+
+  ion-header {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #a20202 !important;
+
+    ion-row {
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    ion-col {
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    &::after {
+      display: none !important;
+      background: none !important;
+    }
+
+    .toolbar-background {
+      background: transparent !important;
+    }
+  }
+
+  ion-toolbar {
+    background-color: #980000 !important;
+    color: #ffffff;
+    min-height: 30px !important;
+  }
+
+  .topmenu {
+    color: #000 !important;
+  }
+
+  // ─── Sub-Nav Row (Marquee + Online Trading) ──────────────────────────────
+  .subnav-row {
+    background-color: #ffc354;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 6px;
+  }
+
+  .marquee-col {
+    overflow: hidden;
+    height: 36px;
+    display: flex;
+    align-items: center;
+  }
+
+  .onlinetrading-col {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 4px;
+  }
+
+  .online-trading-btn {
+    background-color: #1e8a1e !important;
+    color: #ffffff !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    padding: 0 10px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    border-radius: 5px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: none !important;
+    margin: 0 !important;
+  }
+
+  .marquee {
+    margin: -5px !important;
+    white-space: nowrap;
+    box-sizing: border-box;
+    animation: marquee 10s linear infinite;
+    color: black !important;
+    font-size: 17px;
+  }
+
+  .marquee:hover {
+    animation-play-state: paused;
+  }
+
+  @keyframes marquee {
+    0% {
+      transform: translateX(100%);
+    }
+
+    100% {
+      transform: translateX(-100%);
+    }
+  }
+
+  // ─── Scroll Content ───────────────────────────────────────────────────────
+  .scroll-content {
+    margin-bottom: 30px !important;
+    padding-top: 0px !important;
+    background-color: #f5d693;
+  }
+
+  // ─── Rate Card Container ──────────────────────────────────────────────────
+  .rate-card {
+    background-color: #980000;
+    border-radius: 12px;
+    margin: 13px 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  }
+
+  .last-table {
+    margin-bottom: 20px;
+  }
+
+  // ─── Header Row ───────────────────────────────────────────────────────────
+  .rate-header-row {
+    background-color: #b40202 !important;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    padding: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+  }
+
+  .rate-header-col {
+    font-weight: 700;
+    font-size: 12px;
+    text-align: center;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 15px 2px;
+    font-family: "Segoe UI", Arial, sans-serif;
+    border-right: 1px solid rgba(255, 255, 255, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:last-child {
+      border-right: none;
+    }
+  }
+
+  // ─── Data Row ─────────────────────────────────────────────────────────────
+  .rate-data-row {
+    background-color: #c90108 !important;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    padding: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+  }
+
+  .rate-data-row:last-child {
+    border-bottom: none;
+  }
+
+  .rate-data-col {
+    font-weight: 700;
+    font-size: 15px;
+    text-align: center;
+    color: #ffb300;
+    font-family: "Segoe UI", Arial, sans-serif;
+    padding: 17px 2px;
+    border-right: 1px solid rgba(255, 255, 255, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:last-child {
+      border-right: none;
+    }
+  }
+
+  // ─── Column Width Helpers ─────────────────────────────────────────────────
+  // Table 1: Commodity (50%) | Buy (25%) | Sell (25%)
+  .col-commodity {
+    flex: 0 0 42%;
+    max-width: 42%;
+    text-align: left;
+    padding-left: 10px;
+  }
+
+  .col-rate {
+    flex: 0 0 29%;
+    max-width: 29%;
+  }
+
+  // Table 2 & 3: DESC (28%) | BID (24%) | ASK (24%) | H/L (24%)
+  .col-desc-4 {
+    flex: 0 0 28%;
+    max-width: 28%;
+    text-align: left;
+    padding-left: 10px;
+  }
+
+  .col-4col {
+    flex: 0 0 24%;
+    max-width: 24%;
+  }
+
+  .col-hl {
+    flex: 0 0 24%;
+    max-width: 24%;
+  }
+
+  // ─── H/L Stacked Cell ─────────────────────────────────────────────────────
+  .hl-cell {
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 4px 2px !important;
+    gap: 2px;
+  }
+
+  // ─── Commodity Name ───────────────────────────────────────────────────────
+  .com-name {
+    color: #ffffff !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  // ─── BID / ASK value styling ──────────────────────────────────────────────
+  .bid-ask-val {
+    color: #ffb300 !important;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  // ─── HIGH / LOW Pills ─────────────────────────────────────────────────────
+  .pill-high {
+    display: block;
+    font-weight: 700;
+    font-size: 11px;
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  .pill-low {
+    display: block;
+    font-weight: 700;
+    font-size: 11px;
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  // ─── Market Closed Message ────────────────────────────────────────────────
+  .marketclosemsg {
+    text-align: center;
+    margin: 60px 30px !important;
+    color: black !important;
+  }
+
+  // ─── Rate flash animation classes (functional – do not remove) ────────────
+  .ratehigh {
+    color: #ffffff !important;
+    background-color: rgb(0, 128, 0) !important;
+    animation: flashGreen 1s ease-in-out;
+  }
+
+  .ratelow {
+    color: #ffffff !important;
+    background-color: #980000 !important;
+    animation: flashRed 1s ease-in-out;
+  }
+
+  .ratenormal {
+    color: #ffb300 !important;
+  }
+
+  @keyframes flashGreen {
+    0% {
+      background-color: #00ff00;
+    }
+
+    100% {
+      background-color: transparent;
+    }
+  }
+
+  @keyframes flashRed {
+    0% {
+      background-color: #980000;
+    }
+
+    100% {
+      background-color: transparent;
+    }
+  }
+
+  .tradable {
+    text-decoration: underline !important;
+    cursor: pointer;
+  }
+
+  .notradable {
+    // opacity: 0.7;
+    cursor: default;
+  }
+
+  // ─── FAB Buttons ──────────────────────────────────────────────────────────
+  .fab-md,
+  .fab-ios {
+    background: #f5d693 !important;
+    opacity: 0.9 !important;
+  }
+
+  p {
+    margin: 0px !important;
+  }
+
+  // ─── Legacy / Unused classes kept for safety ──────────────────────────────
+  .headercol {
+    font-weight: bold;
+    text-align: center;
+    background-color: #e9e9eb;
+    color: #f98b00;
+  }
+
+  .grid-table {
+    padding: 1px;
+    margin-bottom: 5px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .light-border-btm {
+    border-bottom: 1px solid #94a1aa;
+  }
+
+  .align-items {
+    align-items: center;
+  }
+
+  .menu-col {
+    button,
+    ion-button {
+      width: 3.6rem !important;
+      height: 2.6rem !important;
+      -webkit-box-shadow: unset !important;
+      box-shadow: unset !important;
+    }
+  }
+}

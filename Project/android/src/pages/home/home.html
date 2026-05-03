@@ -1,0 +1,133 @@
+<ion-header align-title="center">
+  <ion-row style="background: #a20202 !important">
+    <ion-col col-12 style="padding: 0 !important">
+      <img alt="logo" style="width: 100%; height: 100px !important; display: block" cache="true"
+        src="assets/imgs/header.svg" />
+    </ion-col>
+  </ion-row>
+
+  <!-- Sub-nav: Marquee + Online Trading Button -->
+  <ion-row class="subnav-row">
+    <ion-col col-2 style="display: flex; align-items: center; height: 10px !important" class="menu-col">
+      <button ion-button menuToggle style="background-color: transparent; padding: 0">
+        <ion-icon class="topmenu" name="menu"></ion-icon>
+      </button>
+    </ion-col>
+    <ion-col col-6 class="marquee-col">
+      <p class="marquee" [innerHtml]="marqueetext"></p>
+    </ion-col>
+    <ion-col col-4 class="onlinetrading-col">
+      <button ion-button class="online-trading-btn" (click)="gotocusComListPg()">
+        ONLINE TRADING
+      </button>
+    </ion-col>
+  </ion-row>
+</ion-header>
+
+<ion-content (ionScrollStart)="scrollStart($event)" (ionScrollEnd)="scrollStart($event)">
+  <!-- Table 1: Live Rates (Commodity / Buying / Selling) -->
+  <div class="rate-card" *ngIf="liverates?.length != 0 && marketstatus == 1">
+    <div class="rate-header-row">
+      <div class="rate-header-col col-commodity">COMMODITY</div>
+      <div class="rate-header-col col-rate">BUYING RATE</div>
+      <div class="rate-header-col col-rate">SELLING RATE</div>
+    </div>
+    <div class="rate-data-row" *ngFor="let liverate of liverates; let i = index">
+      <div class="rate-data-col col-commodity com-name">
+        {{ liverate.com_name }}
+      </div>
+      <div class="rate-data-col col-rate"
+        [ngClass]="[liverate.currentbuy || 'ratenormal', (liverate.buy_status == 1 && liverate.buying_rate != '-' && trade_enable == 1) ? 'tradable' : 'notradable']"
+        (click)="gotoBookingPage1(liverate.com_id, '1', liverate.buying_rate)">
+        {{liverate.buying_rate == '-' ? '-' : liverate.buying_rate}}
+      </div>
+      <div class="rate-data-col col-rate"
+        [ngClass]="[liverate.currentsell || 'ratenormal', (liverate.sell_status == 1 && liverate.selling_rate != '-' && trade_enable == 1) ? 'tradable' : 'notradable']"
+        (click)="gotoBookingPage1(liverate.com_id, '0', liverate.selling_rate)">
+        {{liverate.selling_rate == '-' ? '-' : liverate.selling_rate}}
+      </div>
+    </div>
+  </div>
+
+  <!-- Market Closed -->
+  <ion-row class="marketclosemsg" *ngIf="marketstatus == 0">
+    <ion-col text-center [innerHTML]="marketclosedmsg"></ion-col>
+  </ion-row>
+
+  <!-- Table 2: Base Rates (DESC / BID / ASK / HIGH / LOW) -->
+  <div class="rate-card" *ngIf="base_rates?.length !== 0 && old_base_rates?.length !== 0">
+    <div class="rate-header-row">
+      <div class="rate-header-col col-desc-4">DESC</div>
+      <div class="rate-header-col col-4col">BID</div>
+      <div class="rate-header-col col-4col">ASK</div>
+      <div class="rate-header-col col-hl">H/L</div>
+    </div>
+    <div class="rate-data-row" *ngFor="let baserate of base_rates; let i = index">
+      <div class="rate-data-col col-desc-4 com-name">{{baserate.symbol}}</div>
+      <div class="rate-data-col col-4col bid-ask-val" [ngClass]="baserate.bidclass || 'ratenormal'">
+        {{baserate.bid}}
+      </div>
+      <div class="rate-data-col col-4col bid-ask-val" [ngClass]="baserate.askclass || 'ratenormal'">
+        {{baserate.ask}}
+      </div>
+      <div class="rate-data-col col-hl hl-cell">
+        <span class="pill-high">H:{{baserate.high}}</span>
+        <span class="pill-low">L:{{baserate.low}}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table 3: MCX Rates (DESC / BID / ASK / HIGH / LOW) -->
+  <div class="rate-card last-table" *ngIf="old_current_rates?.length != 0 && current_rates?.length != 0">
+    <div class="rate-header-row">
+      <div class="rate-header-col col-desc-4">DESC</div>
+      <div class="rate-header-col col-4col">BID</div>
+      <div class="rate-header-col col-4col">ASK</div>
+      <div class="rate-header-col col-hl">H/L</div>
+    </div>
+    <div class="rate-data-row" *ngFor="let contract of current_rates; let i = index">
+      <div class="rate-data-col col-desc-4 com-name">{{contract.symbol}}</div>
+      <div class="rate-data-col col-4col bid-ask-val" [ngClass]="contract.bidclass || 'ratenormal'">
+        {{contract.bid}}
+      </div>
+      <div class="rate-data-col col-4col bid-ask-val" [ngClass]="contract.askclass || 'ratenormal'">
+        {{contract.ask}}
+      </div>
+      <div class="rate-data-col col-hl hl-cell">
+        <span class="pill-high">H:{{contract.high}}</span>
+        <span class="pill-low">L:{{contract.low}}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- banner -->
+  <ion-row>
+    <ng-container>
+      <ion-slides initialSlide="0" autoplay="3000" pager="true" loop="true" speed="300"
+        *ngIf="sliderimage && sliderimage.length" style="
+          padding: 10px;
+          height: 180px;
+          margin-bottom: 10px !important;
+          margin-top: 15px;
+        ">
+        <ion-slide *ngFor="let slide1 of sliderimage;">
+          <img [src]="slide1.full_path" />
+        </ion-slide>
+      </ion-slides>
+    </ng-container>
+  </ion-row>
+  <!-- banner -->
+
+  <!-- Floating buttons -->
+  <ion-fab bottom left *ngIf="isShown" class="fabs">
+    <button ion-fab (click)="openCallMenu()">
+      <img src="./assets/imgs/quickcall.svg" />
+    </button>
+  </ion-fab>
+
+  <ion-fab bottom right *ngIf="isShown" class="fabs">
+    <button ion-fab (click)="openWhatsappMenu()">
+      <img src="./assets/imgs/whatsapp.svg" />
+    </button>
+  </ion-fab>
+</ion-content>

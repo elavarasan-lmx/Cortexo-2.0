@@ -1,0 +1,163 @@
+page-ratealert {
+  .contact-us {
+    padding: 0.5em;
+    line-height: 24px;
+    margin-bottom: 5px;
+  }
+
+  ion-app.md [padding] {
+    padding: 0px !important;
+  }
+
+  .select-md {
+    padding: 0px !important;
+    max-width: 100%;
+  }
+
+  .comm_cols {
+    color: #FF6600 !important;
+    white-space: break-spaces !important;
+  }
+
+  // .btn_login {
+  //   background: #fff39b !important;
+  //   color: #000 !important;
+  // }
+
+  .rate {
+    text-align: right !important;
+    font-size: 18px;
+    font-weight: bold;
+  }
+
+  .small_font {
+    font-size: 9px;
+  }
+
+  .center_align {
+    text-align: center;
+  }
+
+  .btn_delete {
+    color: red;
+  }
+
+  .btn_cancel {
+    color: #307812;
+  }
+
+  ion-list ion-item-sliding:first-child .rate-alert-row {
+    border-top: 1px solid #a9a9a9;
+  }
+
+  .rate-alert-row {
+    font-size: 12px !important;
+    border-bottom: 1px solid #a9a9a9;
+  }
+
+  .arrow.col {
+    //text-align: right !important;
+    background: url("../assets/imgs/arrow-point-to-right.png");
+    display: block;
+    width: 15px;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    right: 0px;
+    height: 15px;
+    position: absolute;
+    opacity: 1;
+  }
+
+  .arrow:before {
+    content: "";
+    background: url("../assets/imgs/arrow-point-to-right.png");
+    display: block;
+    width: 15px;
+    top: 0;
+    bottom: 0;
+    right: 10px;
+    height: 15px;
+    position: absolute;
+    opacity: 0.8;
+  }
+
+  .scroll-content {
+    margin-bottom: 80px !important;
+  }
+
+  .arrow:after {
+    content: "";
+    background: url("../assets/imgs/arrow-point-to-right.png");
+    display: block;
+    width: 15px;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    right: 20px;
+    height: 15px;
+    position: absolute;
+    opacity: 0.5;
+  }
+
+  .arrow:hover,
+  .arrow:before {
+    animation: animate-arrow-2 1s ease-in-out infinite 0.1s;
+  }
+
+  .arrow:hover,
+  .arrow:after {
+    animation: animate-arrow-3 1s ease-in-out infinite 0.2s;
+  }
+
+  .arrow:hover,
+  .arrow.col {
+    animation: animate-arrow-1 1s ease-in-out infinite;
+  }
+
+  @keyframes animate-arrow-1 {
+    0% {
+      transform: translateX(-40px);
+      opacity: 0;
+    }
+
+    70%,
+    100% {
+      transform: translateX(0px);
+      opacity: 1;
+    }
+  }
+
+  @keyframes animate-arrow-2 {
+    0% {
+      transform: translateX(-20px);
+      opacity: 0;
+    }
+
+    70%,
+    100% {
+      transform: translateX(0px);
+      opacity: 0.8;
+    }
+  }
+
+  @keyframes animate-arrow-3 {
+    0% {
+      transform: translateX(-10px);
+      opacity: 0;
+    }
+
+    70%,
+    100% {
+      transform: translateX(0px);
+      opacity: 0.5
+    }
+  }
+
+  .content-md,
+  .content-ios {
+    color: #000;
+    // background:url('../assets/imgs/bg_pat.jpg');
+  }
+
+}

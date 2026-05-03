@@ -1,0 +1,34 @@
+page-bank {
+
+
+    .contact-us {
+        padding: 8px;
+        line-height: 1.6;
+    }
+
+    .bank-logo {
+        width: 100%;
+        max-width: 150px;
+        display: block;
+        margin: 10px auto;
+    }
+
+    .bank-details {
+        color: #000;
+        font-size: 14px;
+    }
+
+    .detail-row {
+        border-bottom: 1px solid #eee;
+        padding: 6px 0;
+    }
+
+    .separator {
+        font-weight: bold;
+        text-align: center;
+    }
+
+    .scroll-content {
+        margin-bottom: 100px;
+    }
+}

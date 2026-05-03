@@ -1,0 +1,40 @@
+<ion-header align-title=”center”>
+  <ion-navbar align-title=”center”>
+    <ion-title align-title=”center” style="padding-top: 6px !important;"><img alt="logo" height="50" cache="true"
+        src="assets/imgs/header.svg"></ion-title>
+  </ion-navbar>
+</ion-header>
+
+<ion-content text-center padding>
+  <ion-card>
+    <ion-card-header text-center>
+      OTP Verify
+    </ion-card-header>
+    <form [formGroup]="otpverifyForm" (ngSubmit)="onSubmit(otpverifyForm.value)" style="" novalidate padding>
+      <ion-list>
+        <ion-item class="errMsg" *ngIf="errorMessage != ''">{{errorMessage}}</ion-item>
+        <ion-item>
+          <ion-label floating>OTP(*)</ion-label>
+          <ion-input [formControl]="receivedotp" type="number" minlength="4"></ion-input>
+        </ion-item>
+      </ion-list>
+      <br>
+      <button [disabled]="!otpverifyForm.valid || isDisabled" style="background:#E7BB36 !important;
+               color:#000 !important;" ion-button class="button-login" block color="dark">Submit</button>
+    </form>
+
+    <div style="">
+      <ion-note style="float: right">
+        <a (click)="resendotp()" style="text-transform: initial;" ion-button clear>Resend OTP </a>
+      </ion-note>
+    </div>
+  </ion-card>
+</ion-content>
+<ion-footer class="footer-bottom">
+  <ion-grid>
+    <ion-row>
+      <ion-col>&copy;MAHARAJ BULLION.</ion-col>
+      <ion-col text-right>Logimax</ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-footer>

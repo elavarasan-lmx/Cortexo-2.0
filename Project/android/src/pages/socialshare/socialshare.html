@@ -1,0 +1,47 @@
+<!--
+  Generated template for the SocialsharePage page.
+
+  See http://ionicframework.com/docs/components/#navigation for more info on
+  Ionic pages and navigation.
+-->
+<ion-header>
+
+  <ion-navbar [style.color]="headercolor">
+    <ion-row style="align-items: center;">
+      <ion-col col-2>
+        <button ion-button menuToggle>
+          <ion-icon class="topmenu" name="menu" class="menu-icon"></ion-icon>
+        </button>
+      </ion-col>
+      <ion-col col-8><ion-title align-title=”center”>SOCIAL SHARE</ion-title></ion-col>
+      <ion-col col-2></ion-col></ion-row>
+  </ion-navbar>
+
+</ion-header>
+
+
+<ion-content padding>
+  <ion-card>
+    <ion-row style="background: #980000;">
+      <ion-col><img alt="logo" style="height: 100%;" cache="true" src="assets/imgs/header.svg"></ion-col>
+    </ion-row>
+    <!-- <P class="share_head">Shiv Sahai &amp; Sons</P> -->
+    <ion-card-header>
+      {{share?.subject}}
+    </ion-card-header>
+    <ion-card-content margin-top no-padding>
+      <p class="share_content">
+        {{share?.message}} <a href="{{share?.link}}">{{share?.link}}</a>
+      </p>
+      <ion-row class="content_row">
+        <ion-col col-2 (click)="shareViaFb()"><img src="./assets/imgs/facebook.svg"></ion-col>
+        <ion-col col-2 (click)="shareViaInsta()"><img src="./assets/imgs/instagram.svg"></ion-col>
+        <ion-col col-2 (click)="shareViaTwitter()"><img src="./assets/imgs/twitter.svg"></ion-col>
+        <ion-col col-2 (click)="shareViaEmail()"><img src="./assets/imgs/gmail.svg"></ion-col>
+        <ion-col col-2 (click)="shareViaWatsapp()"><img src="./assets/imgs/whatsapp.svg"></ion-col>
+        <ion-col col-2 (click)="shareViaMessage()"><img src="./assets/imgs/dialogue.svg"></ion-col>
+      </ion-row>
+    </ion-card-content>
+  </ion-card>
+
+</ion-content>

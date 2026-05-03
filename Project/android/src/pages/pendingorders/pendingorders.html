@@ -1,0 +1,77 @@
+<!--
+  Generated template for the PendingordersPage page.
+
+  See http://ionicframework.com/docs/components/#navigation for more info on
+  Ionic pages and navigation.
+-->
+
+
+
+<ion-header>
+  <ion-navbar>
+    <ion-row style="align-items: center;">
+      <ion-col col-2>
+        <button ion-button menuToggle>
+          <ion-icon class="topmenu" name="menu" class="menu-icon"></ion-icon>
+        </button>
+      </ion-col>
+      <ion-col col-8 style="padding: 0px !important;"><ion-title >Limit Orders</ion-title></ion-col>
+      <ion-col col-2>
+
+      </ion-col>
+    </ion-row>
+  </ion-navbar>
+</ion-header>
+<ion-content padding>
+  <!--<ion-grid>
+    <ion-row>
+      <ion-col col-5>
+        <ion-datetime class="ion_datetime" [(ngModel)]="fromdate" placeholder="From" displayFormat="DD-MM-YYYY"></ion-datetime>
+      </ion-col>
+      <ion-col col-5>
+        <ion-datetime class="ion_datetime" [(ngModel)]="todate" placeholder="To" displayFormat="DD-MM-YYYY"></ion-datetime>
+      </ion-col>
+      <ion-col col-2 class="button_show">
+        <button ion-button style="background: #307812;color:#FFF" name="Show" small (click)="getAllOpenOrders()">GET</button>
+      </ion-col>
+    </ion-row>
+  </ion-grid>-->
+
+  <div *ngIf="dispbookinglist_len != 0"> 
+    <div align="right"><button ion-button class="btn_common" (click)="getAllOpenOrders();"><ion-icon name="refresh" class="ion-icon"></ion-icon>&nbsp;Refresh</button></div>
+    <ion-card class="no_padding" *ngFor="let booking of dispbookinglist" (click)="moredetails(booking.book_no)">
+      <ion-card-content class="">
+        <ion-row class="no_padding">
+		  <ion-col col-2 class="no_padding" text-center>
+			{{booking.book_no}}
+		  </ion-col>
+          <ion-col col-4 class="no_padding">
+            <div class="com_name">{{booking.com_name}}</div>
+            <ion-row class="tiny_text"><img class="small_icon" src="assets/imgs/calendar_icon.svg"/> {{booking.book_datetime}} | {{booking.type}}</ion-row>
+          </ion-col>
+          <ion-col col-3 class="no_padding" text-center><ion-row style="padding-top: 5px;" text-center><span class="label_grams" text-center>{{booking.qty}}</span><!--<img class="small_icon" src="assets/imgs/grams_icon.svg"/> --> </ion-row></ion-col>
+          <ion-col col-3 class="no_padding" text-center><span class="label_cost" style="padding-top: 5px;"  text-center>{{booking.book_rate | number}}</span></ion-col>
+          <!-- <ion-col col-1 class="col_symbol no_padding col15" text-center>
+            <ion-icon name="md-help"></ion-icon>
+          </ion-col> -->
+        </ion-row>
+        <ion-row>
+          <ion-col col-6  style="text-align:left !important"><span class="label_comment">User Comment : <b>{{booking.book_usercomment}}</b></span></ion-col>
+          <ion-col col-6 style="text-align:left !important"></ion-col>
+        </ion-row>
+        <div *ngIf="booking.show_details == 1" class="no_padding">
+          <ion-row class="no_padding">
+            <ion-col class="col hidden_details no_vpadding" align="center"><button ion-button class="button-block button-small btn_edit" (click)="editorder(booking.book_no, booking.book_rate, booking.book_qty, booking.com_name, booking.book_comid, booking.book_type,booking.book_totalcost,booking.book_request_amtwt,booking.book_usercomment);"><!--<ion-icon name="md-create"></ion-icon>--> Edit</button></ion-col>
+            <ion-col class="col hidden_details no_vpadding" align="center"><button ion-button class="button-block button-small btn_cancel" (click)="cancelorder(booking.book_no);"><!--<ion-icon name="ios-close-circle"></ion-icon>--> Cancel</button></ion-col>				
+          </ion-row>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <div *ngIf="dispbookinglist_len == 0">
+    <ion-card>
+      <ion-card-content style="text-align:center;">No pending limits</ion-card-content>
+    </ion-card>
+  </div>
+</ion-content>

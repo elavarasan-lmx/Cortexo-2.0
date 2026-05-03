@@ -1,0 +1,7 @@
+{
+  "name": "maharajbullion",
+  "integrations": {
+    "cordova": {}
+  },
+  "type": "ionic-angular"
+}

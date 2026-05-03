@@ -1,0 +1,321 @@
+<!-- Booking Page Template -->
+<ion-header>
+  <ion-navbar>
+    <ion-row>
+      <!-- Back button -->
+      <ion-col col-2>
+        <ion-icon class="menu-icon" name="arrow-round-back" (click)="gotoHomePage()"></ion-icon>
+      </ion-col>
+      <!-- Page Title -->
+      <ion-col col-10>
+        <ion-title>Market Booking</ion-title>
+      </ion-col>
+    </ion-row>
+  </ion-navbar>
+</ion-header>
+
+<ion-content>
+  <div padding>
+    <!-- Tabs for Market / Limit Orders (only visible if both enabled) -->
+    <ion-segment [(ngModel)]="pet" (ionChange)="segmentChanged()" *ngIf="limit_enable!=0 && clientlimit_enable!=0">
+      <ion-segment-button value="market">Market</ion-segment-button>
+      <ion-segment-button value="Limitorders">Limit Orders</ion-segment-button>
+    </ion-segment>
+  </div>
+
+  <!-- Segment switch -->
+  <div [ngSwitch]="pet">
+
+    <!-- ================== MARKET SECTION ================== -->
+    <ion-list *ngSwitchCase="'market'">
+      <ion-card style="border-radius:10px !important;">
+        
+        <!-- Commodity Name -->
+        <div class="comname">{{dispcommditydetails.com_name}}</div>
+
+        <!-- Trade Type Selection -->
+        <ion-row *ngIf="dispcommditydetails.cus_com_amountpurch=='1' && dispcommditydetails.bar_selection == 0">
+          <ion-col col-6 class="tradebase">TRADE TYPE</ion-col>
+          <ion-col col-3>
+            <ion-checkbox (click)="amountchange()" [checked]="!weightck"></ion-checkbox>&nbsp;Amount
+          </ion-col>
+          <ion-col col-3>
+            <ion-checkbox (click)="weightchange()" [checked]="!Amountck"></ion-checkbox>&nbsp;Weight
+          </ion-col>
+        </ion-row>
+
+        <!-- Amount Input -->
+        <ion-row *ngIf="!weightck && dispcommditydetails.bar_selection == 0">
+          <ion-col col-6 class="comlabel1" style="margin-top: 12px;text-align: right;font-weight: bold;">
+            ENTER AMOUNT
+          </ion-col>
+          <ion-col col-6>
+            <ion-input class="input_style" [(ngModel)]="Amountvalue" type="number" (ionChange)="calcAmount(0,$event)"></ion-input>
+          </ion-col>
+        </ion-row>
+
+        <!-- Discounted Rates Display -->
+        <ion-row *ngIf="dispcommditydetails.prem_selretail_premium!=0 || dispcommditydetails.prem_buy_premium!=0 || dispcommditydetails.prem_sel_premium!=0">
+          <ion-col col-6 class="comlabel">
+            <span class="pg_txt" *ngIf="booktype == 1">SELL RATE</span>
+            <span class="pg_txt" *ngIf="booktype == 0 || booktype == 2">BUY RATE</span>
+          </ion-col>
+          <ion-col col-6 class="comdata">
+            <span *ngIf="booktype == 1"><ion-input class="input_style11" value="{{discbuy_after}}" readonly></ion-input></span>
+            <span *ngIf="booktype == 0"><ion-input class="input_style11" value="{{discsell_after}}" readonly></ion-input></span>
+            <span *ngIf="booktype == 2"><ion-input class="input_style11" value="{{discsellretail}}" readonly></ion-input></span>
+          </ion-col>
+        </ion-row>
+
+        <!-- Quantity Section (Amount mode) -->
+        <ion-row *ngIf="!weightck">
+          <ion-col col-6 class="comlabel">
+            <span class="comlabel1">QUANTITY</span>
+          </ion-col>
+          <ion-col col-6 class="comdata">
+            <!-- Quantity input / dropdown -->
+            <ion-input class="input_style1" id="fixed2" (ionChange)="calculatetotal(0,$event)" (input)="validateInput($event)"
+                       type="number" *ngIf="dispcommditydetails.bar_selection == 0" readonly></ion-input>
+            <ion-select class="input_style" [(ngModel)]="orderDetails.requestqty1" (ionChange)="calculatetotal(0,$event)"
+                        placeholder="Select" *ngIf="dispcommditydetails.bar_selection == 1">
+              <ion-option *ngFor="let value of dispweights" [value]="value['name']" class="customlist">
+                {{value['name']}}
+              </ion-option>
+            </ion-select>
+          </ion-col>
+        </ion-row>
+
+        <!-- Quantity Section (Weight mode) -->
+        <ion-row *ngIf="weightck">
+          <ion-col col-6 class="comlabel">
+            <span class="comlabel1">QUANTITY</span>
+          </ion-col>
+          <ion-col col-6 class="comdata">
+            <ion-input class="input_style1" id="fixed2" [(ngModel)]="orderDetails.requestqty"
+                       (ionChange)="calculatetotal(0,$event)" (input)="validateInput($event)" type="number"
+                       *ngIf="dispcommditydetails.bar_selection == 0"></ion-input>
+            <ion-select class="input_style" [(ngModel)]="orderDetails.requestqty1" (ionChange)="calculatetotal(0,$event)"
+                        placeholder="Select" *ngIf="dispcommditydetails.bar_selection == 1">
+              <ion-option *ngFor="let value of dispweights" [value]="value['name']" class="customlist">
+                {{value['name']}}
+              </ion-option>
+            </ion-select>
+          </ion-col>
+        </ion-row>
+
+        <!-- Display calculated quantities -->
+        <ion-row class="min_max" *ngIf="dispcommditydetails.bar_selection == 1">
+          <ion-col col-6></ion-col>
+          <ion-col col-6 class="oty_set">
+            ({{(orderDetails.requestqty)}} <span *ngIf="dispcommditydetails.com_bar_type == 0">gms</span>
+             <span *ngIf="dispcommditydetails.com_bar_type == 1">kgs</span>)
+          </ion-col>
+        </ion-row>
+        <ion-row class="min_max" *ngIf="dispcommditydetails.bar_selection == 0">
+          <ion-col col-6></ion-col>
+          <ion-col col-6 class="oty_set">
+            ({{(orderDetails.requestqty*dispcommditydetails.denomination)}} 
+             <span *ngIf="dispcommditydetails.com_bar_type == 0">gms</span>
+             <span *ngIf="dispcommditydetails.com_bar_type == 1">kgs</span>)
+          </ion-col>
+        </ion-row>
+        <ion-row class="min_max" *ngIf="dispcommditydetails.bar_selection == 0">
+          <ion-col col-6></ion-col>
+          <ion-col col-6 style="font-size:9px;">
+            1 QUANTITY = {{dispcommditydetails.denomination}}
+            <span *ngIf="dispcommditydetails.com_bar_type == 0">gms</span>
+            <span *ngIf="dispcommditydetails.com_bar_type == 1">kgs</span>
+          </ion-col>
+        </ion-row>
+
+        <!-- Max Allotment -->
+        <div class="min_max margin_list" align="center" *ngIf="has_allot_qty == 1">
+          Max Alloted Qty: {{dispcommditydetails.maxallotedqty}}
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="div_btn" style="text-align:center">
+          <!-- Buy / Sell buttons -->
+          <button class="buy_btn" ion-button [disabled]="!isvalid || !minmax_valid" 
+                  (click)="postrequest(0, 0, bookingForm)" *ngIf="booktype == 0">
+            <span class="custom_p_buy">BUY</span>
+          </button>
+          <button class="buy_btn" ion-button [disabled]="!isvalid || !minmax_valid" 
+                  (click)="postrequest(0, 2, bookingForm)" *ngIf="booktype == 2">
+            <span class="custom_p_buy">BUY</span>
+          </button>
+          <button class="sell_btn" ion-button [disabled]="!isvalid || !minmax_valid" 
+                  (click)="postrequest(0, 1, bookingForm)" *ngIf="booktype == 1">
+            <span class="custom_p_buy">SELL</span>
+          </button>
+        </div>
+
+        <!-- Min/Max and Balance Info -->
+        <ion-row class="min_max margin_list" align="center">
+          <ion-col align="center" *ngIf="dispcommditydetails.minmax != ''">
+            <span class="txt_red">Min:</span>{{dispcommditydetails.min}} 
+            <span class="txt_red">Max:</span>{{dispcommditydetails.max}}
+          </ion-col>
+          <ion-col align="center" *ngIf="display_margin == 1">
+            <span class="pg_txt">Available Margin:</span> {{available_balance}}
+          </ion-col>
+        </ion-row>
+
+      </ion-card>
+    </ion-list>
+
+    <!-- ================== LIMIT ORDERS SECTION ================== -->
+    <ion-list *ngSwitchCase="'Limitorders'">
+      <ion-card style="border-radius:10px !important;">
+        
+        <!-- Error message display -->
+        <div class="error div_info" *ngIf="errormsg !=''" align="center">{{ errormsg }}</div>
+        
+        <!-- Commodity Name -->
+        <div class="comname">{{dispcommditydetails.com_name}}</div>
+
+        <!-- Trade Type -->
+        <ion-row *ngIf="dispcommditydetails.cus_com_amountpurch=='1'  && dispcommditydetails.bar_selection == 0">
+          <ion-col col-6 class="tradebase">TRADE TYPE</ion-col>
+          <ion-col col-3><ion-checkbox (click)="amountchange()" [checked]="!weightck"></ion-checkbox>&nbsp;Amount</ion-col>
+          <ion-col col-3><ion-checkbox (click)="weightchange()" [checked]="!Amountck"></ion-checkbox>&nbsp;Weight</ion-col>
+        </ion-row>
+
+        <!-- Order at Price + Amount -->
+        <ion-row *ngIf="!weightck && dispcommditydetails.bar_selection == 0">
+          <ion-col col-6 class="comlabel">
+            ORDER @ PRICE
+            <span *ngIf="dispcommditydetails.com_unit == 0">({{dispcommditydetails.weight}}grms)</span>
+            <span *ngIf="dispcommditydetails.com_unit == 1">({{dispcommditydetails.weight/1000}}kgs)</span>
+          </ion-col>
+          <ion-col col-4>
+            <ion-input class="input_style" min="0" type="number" name="ordervalue"
+                       [(ngModel)]="orderDetails.ordervalue" (ionChange)="calculatetotal(1)" required></ion-input>
+          </ion-col>
+        </ion-row>
+        <ion-row *ngIf="!weightck && dispcommditydetails.bar_selection == 0">
+          <ion-col col-6 class="comlabel1" style="margin-top: 12px;text-align: right;font-weight: bold;">
+            ENTER AMOUNT
+          </ion-col>
+          <ion-col col-6>
+            <ion-input class="input_style" [(ngModel)]="Amountvalue" type="number" (ionChange)="calcAmount(1,$event)"></ion-input>
+          </ion-col>
+        </ion-row>
+
+        <!-- Discounted Rates -->
+        <ion-row *ngIf="dispcommditydetails.prem_selretail_premium!=0 || dispcommditydetails.prem_buy_premium!=0 || dispcommditydetails.prem_sel_premium!=0">
+          <ion-col col-6 class="comlabel">
+            <span class="pg_txt" *ngIf="booktype == 1">SELL RATE</span>
+            <span class="pg_txt" *ngIf="booktype == 0 || booktype == 2">BUY RATE</span>
+          </ion-col>
+          <ion-col col-6 class="comdata">
+            <span *ngIf="booktype == 1"><ion-input class="input_style11" value="{{discbuy_after}}" readonly></ion-input></span>
+            <span *ngIf="booktype == 0"><ion-input class="input_style11" value="{{discsell_after}}" readonly></ion-input></span>
+            <span *ngIf="booktype == 2"><ion-input class="input_style11" value="{{discsellretail}}" readonly></ion-input></span>
+          </ion-col>
+        </ion-row>
+
+        <!-- Quantity Section -->
+        <ion-row *ngIf="!weightck">
+          <ion-col col-6 class="comlabel" style="margin-top: 12px;">
+            <span class="comlabel1">QUANTITY</span>
+          </ion-col>
+          <ion-col col-6 class="comdata">
+            <ion-input class="input_style1" (ionChange)="calculatetotal(1,$event)" (input)="validateInput($event)"
+                       [(ngModel)]="orderDetails.requestqty" type="number" *ngIf="dispcommditydetails.bar_selection == 0" readonly></ion-input>
+            <ion-select class="input_style" [(ngModel)]="orderDetails.requestqty1" (ngModelChange)="calculatetotal(0)"
+                        placeholder="Select" *ngIf="dispcommditydetails.bar_selection == 1">
+              <ion-option *ngFor="let value of dispweights" [value]="value['name']">{{value['name']}}</ion-option>
+            </ion-select>
+          </ion-col>
+        </ion-row>
+
+        <ion-row *ngIf="weightck">
+          <ion-col col-6 class="comlabel" style="margin-top: 12px;">
+            <span class="comlabel1">QUANTITY</span>
+          </ion-col>
+          <ion-col col-6 class="comdata" >
+            <ion-input class="input_style1" (ionChange)="calculatetotal(1,$event)" (input)="validateInput($event)"
+                       [(ngModel)]="orderDetails.requestqty" type="number" *ngIf="dispcommditydetails.bar_selection == 0"></ion-input>
+            <ion-select class="input_style" [(ngModel)]="orderDetails.requestqty1" (ngModelChange)="calculatetotal(0)"
+                        placeholder="Select" *ngIf="dispcommditydetails.bar_selection == 1">
+              <ion-option *ngFor="let value of dispweights" [value]="value['name']">{{value['name']}}</ion-option>
+            </ion-select>
+          </ion-col>
+        </ion-row>
+
+        <!-- Display calculated quantity -->
+        <ion-row class="min_max" *ngIf="dispcommditydetails.bar_selection == 1">
+          <ion-col col-6></ion-col>
+          <ion-col col-6 class="oty_set">
+            ({{(orderDetails.requestqty)}} <span *ngIf="dispcommditydetails.com_bar_type == 0">gms</span>
+             <span *ngIf="dispcommditydetails.com_bar_type == 1">kgs</span>)
+          </ion-col>
+        </ion-row>
+        <ion-row class="min_max" *ngIf="dispcommditydetails.bar_selection == 0">
+          <ion-col col-6></ion-col>
+          <ion-col col-6 class="oty_set">
+            ({{(orderDetails.requestqty*dispcommditydetails.denomination)}} 
+             <span *ngIf="dispcommditydetails.com_bar_type == 0">gms</span>
+             <span *ngIf="dispcommditydetails.com_bar_type == 1">kgs</span>)
+          </ion-col>
+        </ion-row>
+        <ion-row class="min_max" *ngIf="dispcommditydetails.bar_selection == 0">
+          <ion-col col-6></ion-col>
+          <ion-col col-6 style="font-size:9px;">
+            1 QUANTITY = {{dispcommditydetails.denomination}}
+            <span *ngIf="dispcommditydetails.com_bar_type == 0">gms</span>
+            <span *ngIf="dispcommditydetails.com_bar_type == 1">kgs</span>
+          </ion-col>
+        </ion-row><br>
+
+        <!-- Order at Price for weight mode -->
+        <ion-row *ngIf="weightck">
+          <ion-col col-6 class="comlabel" >
+            ORDER @ PRICE
+            <span *ngIf="dispcommditydetails.com_unit == 0">({{dispcommditydetails.weight}}grms)</span>
+            <span *ngIf="dispcommditydetails.com_unit == 1">({{dispcommditydetails.weight/1000}}kgs)</span>
+          </ion-col>
+          <ion-col col-4 class="comdata">
+            <ion-input class="input_style" min="0" type="number" name="ordervalue"
+                       [(ngModel)]="orderDetails.ordervalue" (ionChange)="calculatetotal(1)" required></ion-input>
+          </ion-col>
+        </ion-row><br><br>
+
+        <!-- Max Allotment -->
+        <div class="min_max margin_list" align="center" *ngIf="has_allot_qty == 1">
+          Max Alloted Qty: {{dispcommditydetails.maxallotedqty}}
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="div_btn" style="text-align:center">
+          <button class="sell_btn" ion-button [disabled]="!isvalid || !minmax_valid"
+                  (click)="postrequest(1, 1, bookingForm)" *ngIf="booktype == 1">
+            <span class="custom_p_buy">PLACE LIMIT SELL</span>
+          </button>
+          <button class="buy_btn" ion-button [disabled]="!isvalid || !minmax_valid"
+                  (click)="postrequest(1, 0, bookingForm)" *ngIf="booktype == 0">
+            <span class="custom_p_buy">PLACE LIMIT BUY</span>
+          </button>
+          <button class="buy_btn" ion-button [disabled]="!isvalid || !minmax_valid"
+                  (click)="postrequest(1, 2, bookingForm)" *ngIf="booktype == 2">
+            <span class="custom_p_buy">PLACE LIMIT BUY</span>
+          </button>
+        </div>
+
+        <!-- Min/Max and Balance Info -->
+        <ion-row class="min_max margin_list" align="center">
+          <ion-col align="center" *ngIf="dispcommditydetails.minmax != ''">
+            <span class="txt_red">Min:</span>{{dispcommditydetails.min}} 
+            <span class="txt_red">Max:</span>{{dispcommditydetails.max}}
+          </ion-col>
+          <ion-col align="center" *ngIf="display_margin == 1">
+            <span class="pg_txt">Available Margin:</span> {{available_balance}}
+          </ion-col>
+        </ion-row>
+
+      </ion-card>
+    </ion-list>
+
+  </div>
+</ion-content>

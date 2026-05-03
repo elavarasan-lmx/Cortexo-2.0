@@ -1,0 +1,93 @@
+{
+  "_from": "cordova-plugin-inappbrowser@^6.0.0",
+  "_id": "cordova-plugin-inappbrowser@6.0.0",
+  "_inBundle": false,
+  "_integrity": "sha512-nMJ67YQZwkx1WMfA4tKFdVdTg6FNkh/nQflP1uMw0RVe/cP2kfDrO3SbpUr8yKahpWdSQl1Lmd8D3KKzuAjucA==",
+  "_location": "/cordova-plugin-inappbrowser",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "cordova-plugin-inappbrowser@^6.0.0",
+    "name": "cordova-plugin-inappbrowser",
+    "escapedName": "cordova-plugin-inappbrowser",
+    "rawSpec": "^6.0.0",
+    "saveSpec": null,
+    "fetchSpec": "^6.0.0"
+  },
+  "_requiredBy": [
+    "#DEV:/"
+  ],
+  "_resolved": "https://registry.npmjs.org/cordova-plugin-inappbrowser/-/cordova-plugin-inappbrowser-6.0.0.tgz",
+  "_shasum": "d236ebef23543d128b0f5613d8b8fd3bbcb0dafc",
+  "_spec": "cordova-plugin-inappbrowser@^6.0.0",
+  "_where": "/run/media/logimax/LMX/Bullion/App/Git/MaharajaBullionJMJ/android",
+  "author": {
+    "name": "Apache Software Foundation"
+  },
+  "bugs": {
+    "url": "https://github.com/apache/cordova-plugin-inappbrowser/issues"
+  },
+  "bundleDependencies": false,
+  "cordova": {
+    "id": "cordova-plugin-inappbrowser",
+    "platforms": [
+      "android",
+      "browser",
+      "ios"
+    ]
+  },
+  "deprecated": false,
+  "description": "Cordova InAppBrowser Plugin",
+  "devDependencies": {
+    "@cordova/eslint-config": "^5.0.0"
+  },
+  "engines": {
+    "cordovaDependencies": {
+      "0.2.3": {
+        "cordova": ">=3.1.0"
+      },
+      "4.0.0": {
+        "cordova": ">=3.1.0",
+        "cordova-ios": ">=4.0.0"
+      },
+      "5.0.0": {
+        "cordova": ">=9.0.0",
+        "cordova-android": ">=9.0.0",
+        "cordova-ios": ">=6.0.0"
+      },
+      "6.0.0": {
+        "cordova": ">=9.0.0",
+        "cordova-android": ">=10.0.0",
+        "cordova-ios": ">=6.0.0"
+      },
+      "7.0.0": {
+        "cordova": ">100"
+      }
+    }
+  },
+  "homepage": "https://github.com/apache/cordova-plugin-inappbrowser#readme",
+  "keywords": [
+    "cordova",
+    "in",
+    "app",
+    "browser",
+    "inappbrowser",
+    "ecosystem:cordova",
+    "cordova-android",
+    "cordova-browser",
+    "cordova-ios"
+  ],
+  "license": "Apache-2.0",
+  "name": "cordova-plugin-inappbrowser",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/apache/cordova-plugin-inappbrowser.git"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "npm run lint"
+  },
+  "types": "./types/index.d.ts",
+  "version": "6.0.0"
+}

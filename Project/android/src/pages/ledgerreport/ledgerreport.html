@@ -1,0 +1,69 @@
+<!--
+  Generated template for the LedgerreportPage page.
+
+  See http://ionicframework.com/docs/components/#navigation for more info on
+  Ionic pages and navigation.
+-->
+<ion-header>
+  <ion-navbar>
+    <button ion-button menuToggle>
+      <ion-icon name="menu"></ion-icon>
+    </button>
+    <ion-title>Transactions</ion-title>
+  </ion-navbar>
+</ion-header>
+
+<ion-content padding>
+
+  <ion-row>
+    <ion-col col-4>
+      <ion-datetime class="ion_datetime" [(ngModel)]="fromdate" placeholder="From" displayFormat="DD-MM-YYYY" (ngModelChange)="displayfromdatepicker()"></ion-datetime>
+    </ion-col>
+    <ion-col col-4>
+      <ion-datetime class="ion_datetime" [(ngModel)]="todate" placeholder="To" displayFormat="DD-MM-YYYY" (ngModelChange)="displaytodatepicker()">
+    </ion-datetime>
+  </ion-col>
+    <ion-col col-2 class="button_show">
+      <button ion-button class="btn_common" name="Show" small (click)="getcustomer_transactions()">GET</button>
+    </ion-col>
+    <ion-col col-2 class="button_show">
+      <button ion-button class="btn_common" name="Show" small (click)="getcustomer_transactions()"><ion-icon name="refresh"></ion-icon></button>
+    </ion-col>
+  </ion-row>
+
+  <ng-container *ngIf="disptransactions_len != 0"> 
+    <ion-card>
+      <ion-card-content class="current_balance">
+        <span class="label_balance">Closing Balance: </span>{{currentbalance}}
+      </ion-card-content>
+    </ion-card>
+    <ion-card>
+      <ion-card-content>
+        <ion-row>
+          <ion-col col-2><span class="heading">Deal no.</span></ion-col>
+          <ion-col col-4><span class="heading">Date</span></ion-col>
+          <ion-col col-2><span class="heading">Credit</span></ion-col>
+          <ion-col col-2><span class="heading">Debit</span></ion-col>
+          <ion-col col-2><span class="heading">Balance</span></ion-col>
+        </ion-row> 
+      </ion-card-content>
+    </ion-card>
+    <ion-card *ngFor="let transactions of disptransactionslist" ><!--(click)="moredetails(transactions.book_no)"-->
+      <ion-card-content>
+        <ion-row>
+          <ion-col col-2><span class="tiny_text">{{transactions.trans_book_code}}</span></ion-col>
+          <ion-col col-4><span class="tiny_text">{{transactions.trans_date}}</span></ion-col>
+          <ion-col col-2><span class="label_cost">{{transactions.credit}}</span></ion-col>
+          <ion-col col-2><span class="label_cost">{{transactions.debit}}</span></ion-col>
+          <ion-col col-2><span class="label_cost_bal">{{transactions.closing_balance}}</span></ion-col>
+        </ion-row>
+        <div class="com_name" align="center">{{transactions.trans_desc}}</div>
+      </ion-card-content>
+    </ion-card> 
+  </ng-container>
+
+  <ion-card *ngIf="disptransactions_len == 0">
+      <ion-card-content>No transactions available for the selected dates</ion-card-content>
+  </ion-card>
+    
+</ion-content>
