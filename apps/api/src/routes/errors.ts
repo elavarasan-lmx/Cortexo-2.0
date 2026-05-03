@@ -3,10 +3,8 @@ import { z } from 'zod';
 import { eq, and, desc, like, or, ne, sql } from 'drizzle-orm';
 import { getDb } from '../lib/db.js';
 import { errors, errorEvents, deployments, rootCauses } from '@cortexo/db/schema';
-// AI root cause analysis deferred — stub function
-const analyzeRootCause = async (..._args: unknown[]) => {
-  console.log('[AI] Root cause analysis not yet implemented');
-};
+// AI root cause analysis engine (OpenAI / Anthropic / rule-based fallback)
+import { analyzeRootCause } from '../lib/ai-root-cause.js';
 import crypto from 'crypto';
 import { sendCriticalErrorAlert } from '../lib/email.js';
 import { incrementErrorCount } from '../middleware/usage-limits.js';
@@ -398,11 +396,51 @@ export async function errorRoutes(app: FastifyInstance) {
 
   // POST /ingest/performance — Receive performance metrics from SDK
   app.post('/ingest/performance', async (request, reply) => {
+    const apiKey = request.headers['x-api-key'] as string;
     const payload = request.body as any;
     if (!payload) return reply.code(400).send({ error: 'Missing payload' });
 
-    app.log.info({ type: 'performance_ingest', payload }, 'Performance data received');
-    // TODO: Store to time-series DB
+    try {
+      // Resolve project from API key
+      let projectId = 'unknown';
+      if (apiKey) {
+        const db = await getDb();
+        const project = await db.query.projects.findFirst({
+          where: (p: any, { eq: eqFn }: any) => eqFn(p.sdkApiKey, apiKey),
+        });
+        if (project) projectId = project.id;
+      }
+
+      // Store metrics in Redis sorted sets (timestamp as score for range queries)
+      const { getRedis } = await import('../lib/redis.js');
+      const redis = getRedis();
+      const timestamp = Date.now();
+      const metricsKey = `cortexo:metrics:${projectId}`;
+
+      // Store the metric data point
+      await redis.zadd(metricsKey, timestamp, JSON.stringify({
+        ...payload,
+        projectId,
+        receivedAt: new Date().toISOString(),
+      }));
+
+      // Keep only last 24 hours of metrics (cleanup old entries)
+      const dayAgo = timestamp - 86400000;
+      await redis.zremrangebyscore(metricsKey, 0, dayAgo);
+
+      // Publish for real-time dashboard subscribers
+      await redis.publish('cortexo:metrics:live', JSON.stringify({
+        projectId,
+        type: payload.type || 'performance',
+        timestamp,
+        data: payload,
+      }));
+
+      app.log.debug({ projectId, type: payload.type }, 'Performance metrics stored');
+    } catch (err) {
+      app.log.error(err, 'Failed to store performance metrics');
+    }
+
     return { status: 'received' };
   });
 
@@ -416,9 +454,53 @@ export async function errorRoutes(app: FastifyInstance) {
     const parsed = breadcrumbSchema.safeParse(request.body);
     if (!parsed.success) return reply.code(400).send({ error: 'Validation failed', details: parsed.error.flatten() });
 
-    app.log.info({ type: 'breadcrumb_ingest', count: parsed.data.breadcrumbs.length }, 'Breadcrumbs received');
-    // TODO: Associate breadcrumbs with error events
-    return { status: 'received', count: parsed.data.breadcrumbs.length };
+    const apiKey = (request.headers['x-api-key'] as string) || parsed.data.apiKey;
+    const breadcrumbs = parsed.data.breadcrumbs;
+    let associated = 0;
+
+    try {
+      if (apiKey) {
+        const db = await getDb();
+
+        // Resolve project from SDK API key
+        const project = await db.query.projects.findFirst({
+          where: (p: any, { eq: eqFn }: any) => eqFn(p.sdkApiKey, apiKey),
+        });
+
+        if (project) {
+          // Find the most recent error event for this project (within last 5 min)
+          const recentEvent = await db.query.errorEvents.findFirst({
+            where: (ev: any, { eq: eqFn }: any) => eqFn(ev.projectId, project.id),
+            orderBy: (ev: any, { desc: descFn }: any) => [descFn(ev.createdAt)],
+          });
+
+          if (recentEvent) {
+            // Merge new breadcrumbs with existing ones on the event
+            const existing = recentEvent.breadcrumbs
+              ? JSON.parse(recentEvent.breadcrumbs as unknown as string)
+              : [];
+            const merged = [...existing, ...breadcrumbs].slice(-50); // Keep last 50
+
+            await db.update(errorEvents)
+              .set({ breadcrumbs: JSON.stringify(merged) } as any)
+              .where(eq(errorEvents.id, (recentEvent as any).id));
+            associated = breadcrumbs.length;
+          }
+
+          // Also store in Redis for real-time breadcrumb trail
+          const { getRedis } = await import('../lib/redis.js');
+          const redis = getRedis();
+          const key = `cortexo:breadcrumbs:${project.id}`;
+          await redis.lpush(key, ...breadcrumbs.map((b: any) => JSON.stringify(b)));
+          await redis.ltrim(key, 0, 99); // Keep last 100 breadcrumbs
+        }
+      }
+    } catch (err) {
+      app.log.error(err, 'Failed to associate breadcrumbs');
+    }
+
+    app.log.info({ count: breadcrumbs.length, associated }, 'Breadcrumbs processed');
+    return { status: 'received', count: breadcrumbs.length, associated };
   });
 
   // Fetch AI Root Cause

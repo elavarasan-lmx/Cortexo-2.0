@@ -123,9 +123,43 @@ export async function webhookRoutes(app: FastifyInstance) {
       case 'Push Hook': {
         const branch = (payload.ref || '').replace('refs/heads/', '');
         const commits = payload.commits || [];
+        const headCommit = commits[0];
         app.log.info({ branch, commitCount: commits.length }, 'GitLab push event');
 
-        // TODO: Look up project by GitLab project ID and trigger pipeline
+        // Look up project by GitLab project ID and trigger pipeline
+        try {
+          const { getDb } = await import('../lib/db.js');
+          const { projects } = await import('@cortexo/db/schema');
+          const { eq } = await import('drizzle-orm');
+          const db = await getDb();
+
+          const project = await db.query.projects.findFirst({
+            where: (p: any, { eq: eqFn }: any) => eqFn(p.gitlabProjectId, String(payload.project?.id)),
+          });
+
+          if (project) {
+            const redis = getRedis();
+            await redis.lpush('cortexo:webhook:queue', JSON.stringify({
+              event: 'push',
+              source: 'gitlab',
+              deliveryId: request.headers['x-gitlab-event-uuid'] || crypto.randomUUID(),
+              repoFullName: payload.project?.path_with_namespace,
+              branch,
+              commitSha: headCommit?.id,
+              commitMessage: headCommit?.message,
+              authorName: headCommit?.author?.name,
+              authorEmail: headCommit?.author?.email,
+              projectId: project.id,
+              timestamp: new Date().toISOString(),
+            }));
+            app.log.info({ projectId: project.id, branch }, 'GitLab push queued for pipeline');
+          } else {
+            app.log.warn({ gitlabProjectId: payload.project?.id }, 'No matching Cortexo project for GitLab push');
+          }
+        } catch (err) {
+          app.log.error(err, 'Failed to process GitLab push event');
+        }
+
         return {
           status: 'received',
           event: 'push',

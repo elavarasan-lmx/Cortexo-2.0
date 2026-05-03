@@ -1,4 +1,10 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+// Load .env from monorepo root (2 levels up from apps/api/src/)
+const __dirname = dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: resolve(__dirname, '../../../.env') });
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
@@ -36,6 +42,16 @@ import { deployConfigRoutes } from './routes/deploy-configs.js';
 import { auditRoutes } from './routes/audit.js';
 import { sourceRegistryRoutes } from './routes/source-registry.js';
 import { profileRoutes } from './routes/profiles.js';
+
+// Phase 4+ modules
+import { cronJobRoutes } from './routes/cron-jobs.js';
+import { provisionRoutes } from './routes/provision.js';
+import { analyticsRoutes } from './routes/analytics.js';
+import { alertChannelRoutes } from './routes/alert-channels.js';
+import { deprecationRoutes } from './routes/deprecation.js';
+import { judgeScoreRoutes } from './routes/judge-scores.js';
+import { metricsStreamRoutes } from './routes/metrics-stream.js';
+import { winbullRoutes } from './routes/winbull.js';
 import { usageLimitsPlugin } from './middleware/usage-limits.js';
 import { authPlugin } from './middleware/auth.js';
 
@@ -185,6 +201,17 @@ async function start() {
   await app.register(auditRoutes, { prefix: '/v1' });
   await app.register(sourceRegistryRoutes, { prefix: '/v1' });
   await app.register(profileRoutes, { prefix: '/v1' });
+
+  // Phase 4+ modules
+  await app.register(cronJobRoutes, { prefix: '/v1' });
+  await app.register(provisionRoutes, { prefix: '/v1' });
+  await app.register(analyticsRoutes, { prefix: '/v1' });
+  await app.register(alertChannelRoutes, { prefix: '/v1' });
+  await app.register(deprecationRoutes, { prefix: '/v1' });
+  await app.register(judgeScoreRoutes, { prefix: '/v1' });
+  await app.register(metricsStreamRoutes, { prefix: '/v1' });
+  await app.register(winbullRoutes, { prefix: '/v1' });
+
   // Note: usageLimitsPlugin uses addHook — must be registered at root scope, not prefixed
   await app.register(usageLimitsPlugin);
 
@@ -238,6 +265,27 @@ async function start() {
       'POST /v1/webhooks/gitlab',
       'GET  /v1/org/members',
       'POST /v1/org/members/invite',
+      // Phase 4+
+      'GET  /v1/cron-jobs',
+      'POST /v1/cron-jobs',
+      'POST /v1/cron-jobs/:id/run',
+      'GET  /v1/provision/defaults',
+      'POST /v1/provision/start',
+      'GET  /v1/provision/status/:jobId',
+      'GET  /v1/analytics/summary',
+      'GET  /v1/analytics/daily',
+      'GET  /v1/analytics/health-score',
+      'GET  /v1/alert-channels',
+      'POST /v1/alert-channels',
+      'GET  /v1/alert-rules',
+      'GET  /v1/alert-history',
+      'GET  /v1/deprecation/results',
+      'GET  /v1/deprecation/summary',
+      'POST /v1/deprecation/scan',
+      'GET  /v1/judge-scores',
+      'POST /v1/judge-scores',
+      'GET  /v1/judge-scores/stats/aggregate',
+      'POST /v1/judge-scores/trigger',
     ],
   }));
 

@@ -6,7 +6,7 @@ import * as schema from '@cortexo/db/schema';
  * Singleton database connection for the Next.js web app.
  * Uses Drizzle ORM with mysql2 connection pool.
  */
-let db: ReturnType<typeof drizzle> | null = null;
+let db: any = null;
 let pool: mysql.Pool | null = null;
 
 export function getDb() {
@@ -24,4 +24,4 @@ export function getDb() {
   return db;
 }
 
-export type Database = ReturnType<typeof getDb>;
+export type Database = NonNullable<ReturnType<typeof getDb>>;

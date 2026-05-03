@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "worker": "tsx watch src/worker/index.ts",
+    "worker": "tsx watch src/workers/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "vitest run",

@@ -124,7 +124,7 @@ export async function pipelineRoutes(app: FastifyInstance) {
       if (!existing) return reply.code(404).send({ error: 'Pipeline not found' });
       await db.update(pipelinesTable).set({
         name: (body.name as string) || existing.name,
-        stages: body.stages || existing.stages,
+        stages: (body.stages || existing.stages) as any,
         yamlConfig: (body.yamlConfig as string) || existing.yamlConfig,
         isActive: body.isActive !== undefined ? Boolean(body.isActive) : existing.isActive,
       }).where(eq(pipelinesTable.id, id));

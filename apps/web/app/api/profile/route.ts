@@ -16,6 +16,7 @@ export async function GET() {
 
   try {
     const db = getDb();
+    if (!db) return NextResponse.json({ error: 'Database not available' }, { status: 503 });
     const result = await db
       .select({
         id: users.id,
@@ -34,7 +35,7 @@ export async function GET() {
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
     return NextResponse.json({ user });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Profile GET error:', err);
     return NextResponse.json({ error: 'Failed to load profile' }, { status: 500 });
   }
@@ -53,22 +54,28 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { name, email, phone } = body as { name?: string; email?: string; phone?: string };
 
-    if (!name && !email && phone === undefined) {
+    // Validate: at least one field must be present and non-empty (phone can be empty to clear it)
+    const hasName = typeof name === 'string' && name.trim().length > 0;
+    const hasEmail = typeof email === 'string' && email.trim().length > 0;
+    const hasPhone = phone !== undefined; // phone can be '' to clear
+
+    if (!hasName && !hasEmail && !hasPhone) {
       return NextResponse.json({ error: 'At least one field is required' }, { status: 400 });
     }
 
     const db = getDb();
+    if (!db) return NextResponse.json({ error: 'Database not available' }, { status: 503 });
     const updateData: Record<string, string | null> = {};
-    if (name) updateData.name = name;
-    if (email) updateData.email = email;
-    if (phone !== undefined) updateData.phone = phone || null;
+    if (hasName) updateData.name = name!.trim();
+    if (hasEmail) updateData.email = email!.trim();
+    if (hasPhone) updateData.phone = phone ? phone.trim() : null;
 
     await db.update(users).set(updateData).where(eq(users.id, session.user.id));
 
     return NextResponse.json({ success: true, message: 'Profile updated' });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Profile PUT error:', err);
-    if (err.code === 'ER_DUP_ENTRY') {
+    if (err && typeof err === 'object' && 'code' in err && (err as { code: string }).code === 'ER_DUP_ENTRY') {
       return NextResponse.json({ error: 'Email already in use' }, { status: 409 });
     }
     return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });
@@ -96,6 +103,7 @@ export async function POST(request: Request) {
     }
 
     const db = getDb();
+    if (!db) return NextResponse.json({ error: 'Database not available' }, { status: 503 });
     const result = await db.select().from(users).where(eq(users.id, session.user.id)).limit(1);
     const user = result[0];
 
@@ -114,7 +122,7 @@ export async function POST(request: Request) {
     await db.update(users).set({ passwordHash: newHash }).where(eq(users.id, session.user.id));
 
     return NextResponse.json({ success: true, message: 'Password changed successfully' });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Password change error:', err);
     return NextResponse.json({ error: 'Failed to change password' }, { status: 500 });
   }

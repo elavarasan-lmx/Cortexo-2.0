@@ -64,6 +64,7 @@ const authConfig: NextAuthConfig = {
 
         try {
           const db = getDb();
+          if (!db) return null;
 
           // Query user by email
           const result = await db

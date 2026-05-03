@@ -196,15 +196,15 @@ export async function credentialsRoutes(app: FastifyInstance) {
     let nextUrl: string | null = url;
 
     while (nextUrl) {
-      const res = await fetch(nextUrl, { headers });
+      const res: Response = await fetch(nextUrl, { headers });
       if (!res.ok) break;
 
       const page = await res.json() as any[];
       all.push(...page);
 
       // Parse Link header: <https://api.github.com/...?page=2>; rel="next"
-      const linkHeader = res.headers.get('link') || '';
-      const nextMatch = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
+      const linkHeader: string = res.headers.get('link') || '';
+      const nextMatch: RegExpMatchArray | null = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
       nextUrl = nextMatch ? nextMatch[1] : null;
     }
 

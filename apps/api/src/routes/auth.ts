@@ -450,8 +450,15 @@ export async function authRoutes(app: FastifyInstance) {
       resetTokenExpiresAt: resetExpiry,
     }).where(eq(users.id, user.id));
 
-    // TODO: Send email with reset link via Resend
-    app.log.debug(`[DEV] Password reset token generated for ${email}`);
+    // Send password reset email (falls back to console.log if no RESEND_API_KEY)
+    const { sendPasswordResetEmail } = await import('../lib/email.js');
+    sendPasswordResetEmail({
+      to: email,
+      resetToken,
+      userName: user.name,
+    }).catch((e: Error) => app.log.warn('Password reset email failed: ' + e.message));
+
+    app.log.info(`[Auth] Password reset token generated for ${email}`);
 
     return { message: 'If the email exists, a reset link has been sent' };
   });

@@ -3,55 +3,19 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
 import { useSidebarStore, SIDEBAR_WIDTH, SIDEBAR_COLLAPSED_WIDTH } from '@/lib/sidebar-store';
 import { useSidebarFeatures } from '@/lib/sidebar-features';
 import {
-  LayoutDashboard,
-  FolderGit2,
-  GitBranch,
-  Rocket,
-  RotateCcw,
-  Bug,
-  Search,
-  Brain,
-  BookOpen,
-  Target,
-  BarChart3,
-  TrendingUp,
-  FileText,
-  Settings,
   ChevronLeft,
   ChevronRight,
-  History,
-  Store,
-  Zap,
-  AlertTriangle,
-  FileCode,
-  Bot,
-  Database,
-  Settings2,
-  BookOpen as BookOpenIcon,
-  Server,
-  HardDrive,
-  ScrollText,
-  GitCompareArrows,
-  ArrowLeftRight,
-  Wand2,
-  FlaskConical,
-  Wifi,
-  ClipboardCheck,
-  Activity,
-  ShieldCheck,
-  Boxes,
-  FileCheck,
-  Layers,
+  X,
+  LogOut,
 } from 'lucide-react';
 
 interface NavItem {
   label: string;
   href: string;
-  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  emoji: string;
   badge?: number;
 }
 
@@ -60,177 +24,118 @@ interface NavSection {
   items: NavItem[];
 }
 
+/**
+ * Sidebar navigation — matches the new pencil.pen design system
+ * White background, emoji icons, clean Inter typography
+ */
 const navigation: NavSection[] = [
   {
-    title: '',
+    title: 'MAIN',
     items: [
-      { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { label: 'Dashboard',    href: '/dashboard',    emoji: '◉' },
+      { label: 'Projects',     href: '/projects',     emoji: '📁' },
+      { label: 'Deployments',  href: '/deployments',  emoji: '⬡' },
+      { label: 'Clients',      href: '/clients',      emoji: '👥' },
     ],
   },
   {
-    title: 'PROJECTS',
+    title: 'MONITORING',
     items: [
-      { label: 'All Projects', href: '/projects', icon: FolderGit2 },
-    ],
-  },
-  {
-    title: 'CI/CD',
-    items: [
-      { label: 'Pipelines',      href: '/pipelines',             icon: GitBranch },
-      { label: 'Pipeline Runs',  href: '/pipelines/runs',        icon: History },
-      { label: 'Pipeline Editor', href: '/pipelines/editor',     icon: FileCode },
-      { label: 'Deployments',    href: '/deployments',           icon: Rocket },
-      { label: 'Canary Releases', href: '/deployments/canary',   icon: Zap },
-      { label: 'Rollbacks',      href: '/rollbacks',             icon: RotateCcw },
-    ],
-  },
-  {
-    title: 'BUGS & ERRORS',
-    items: [
-      { label: 'Errors',         href: '/errors',        icon: Bug },
-      { label: 'Root Causes',    href: '/root-causes',   icon: Search },
-      { label: 'Scan Results',   href: '/scans',         icon: ShieldCheck },
-    ],
-  },
-  {
-    title: 'OPERATIONS',
-    items: [
-      { label: 'Postmortem',     href: '/postmortem',    icon: FileCheck },
-      { label: 'Deprecations',   href: '/deprecation',   icon: AlertTriangle },
+      { label: 'Heartbeat',     href: '/heartbeat',      emoji: '💓' },
+      { label: 'Logs',          href: '/logs',           emoji: '📋' },
+      { label: 'Error Tracker', href: '/errors',         emoji: '⚠' },
+      { label: 'Bug Tracker',   href: '/bugs',           emoji: '🐛' },
+      { label: 'Drift Monitor', href: '/drift-monitor',  emoji: '📡' },
     ],
   },
   {
     title: 'INFRASTRUCTURE',
     items: [
-      { label: 'Servers',        href: '/servers',       icon: Server },
-      { label: 'Server Mounts',  href: '/servers/mounts', icon: HardDrive },
-      { label: 'Log Viewer',     href: '/logs',          icon: ScrollText },
+      { label: 'Servers',      href: '/servers',       emoji: '🖥' },
+      { label: 'SSHFS',        href: '/servers/mounts', emoji: '📂' },
+      { label: 'Cron Jobs',    href: '/cron-jobs',     emoji: '⏰' },
+      { label: 'AI Agents',    href: '/agents',        emoji: '🤖' },
+      { label: 'Scaffolding',  href: '/scaffolding',   emoji: '🏗' },
+      { label: 'Auto Sync',    href: '/sync',          emoji: '🔄' },
     ],
   },
   {
-    title: 'AGENT INTELLIGENCE',
+    title: 'ADMIN',
     items: [
-      { label: 'Agent Memory',      href: '/agent/memory',       icon: Brain },
-      { label: 'Skill Library',     href: '/agent/skills',       icon: BookOpen },
-      { label: 'Context Monitor',   href: '/agent/context',      icon: Target },
-      { label: 'Agent Performance', href: '/agent/performance',  icon: BarChart3 },
-      { label: 'Agent Runner',      href: '/agent/runner',       icon: Bot },
-      { label: 'Marketplace',       href: '/agent/marketplace',  icon: Store },
-    ],
-  },
-  {
-    title: 'SYNC & MIGRATION',
-    items: [
-      { label: 'Source Sync',    href: '/sync',          icon: GitCompareArrows },
-      { label: 'DB Migration',   href: '/db-migration',  icon: ArrowLeftRight },
-    ],
-  },
-
-  {
-    title: 'ANALYTICS',
-    items: [
-      { label: 'Insights',       href: '/analytics',       icon: TrendingUp },
-      { label: 'Reports',        href: '/reports',         icon: FileText },
-      { label: 'Activity Log',   href: '/analytics/audit', icon: History },
-    ],
-  },
-  {
-    title: 'TOOLS',
-    items: [
-      { label: 'MySQL',        href: '/mysql',       icon: Database },
-
-      { label: 'Docs',         href: '/docs',        icon: BookOpenIcon },
-    ],
-  },
-  {
-    title: 'TESTING',
-    items: [
-      { label: 'Load Test',     href: '/testing/load',      icon: Activity },
-      { label: 'Socket Test',   href: '/testing/socket',    icon: Wifi },
-      { label: 'Module Test',   href: '/testing/module',    icon: Boxes },
-      { label: 'Checklist',     href: '/testing/checklist', icon: ClipboardCheck },
-      { label: 'API Health',    href: '/testing/api-health', icon: FlaskConical },
-      { label: 'SSL Monitor',   href: '/testing/ssl',       icon: ShieldCheck },
+      { label: 'Daily Stats',  href: '/analytics',           emoji: '📊' },
+      { label: 'API Keys',     href: '/settings/api-keys',   emoji: '🔑' },
+      { label: 'Audit Log',    href: '/audit-log',           emoji: '📜' },
+      { label: 'Testing',      href: '/testing/module',      emoji: '🧪' },
+      { label: 'Settings',     href: '/settings',            emoji: '⚙' },
     ],
   },
 ];
 
-const bottomNav: NavItem[] = [
-  { label: 'Settings',      href: '/settings',              icon: Settings },
-];
-
-/* ── Nav link shared between main + bottom ── */
+/* ── Nav link — matches pencil.pen navItem styling ── */
 function NavLink({
   item,
   isActive,
   collapsed,
+  onNavigate,
 }: {
   item: NavItem;
   isActive: boolean;
   collapsed: boolean;
+  onNavigate?: () => void;
 }) {
-  const Icon = item.icon;
   return (
     <Link
       href={item.href}
       title={collapsed ? item.label : undefined}
+      onClick={onNavigate}
       style={{
         display: 'flex',
         alignItems: 'center',
         gap: collapsed ? 0 : '10px',
         justifyContent: collapsed ? 'center' : 'flex-start',
-        padding: collapsed ? '9px 0' : '8px 10px 8px 12px',
-        borderRadius: '10px',
-        fontSize: '13px',
+        padding: collapsed ? '10px 0' : '0 12px',
+        borderRadius: '8px',
+        height: '40px',
+        fontSize: '14px',
         fontWeight: isActive ? 600 : 500,
+        fontFamily: 'Inter, system-ui, sans-serif',
         textDecoration: 'none',
-        position: 'relative',
-        transition: 'all 200ms ease',
-        /* active: semi-transparent primary bg + left accent bar */
-        backgroundColor: isActive
-          ? 'rgba(var(--sidebar-active), 0.15)'
-          : 'transparent',
-        color: isActive
-          ? 'rgb(var(--primary))'
-          : 'rgba(var(--sidebar-text), 1)',
-        /* left accent bar for active */
-        ...(isActive && !collapsed
-          ? { boxShadow: 'inset 3px 0 0 rgb(var(--primary))' }
-          : {}),
+        transition: 'all 180ms ease',
+        backgroundColor: isActive ? '#F3F0FF' : 'transparent',
+        color: isActive ? '#7C3AED' : '#64748B',
       }}
       onMouseEnter={(e) => {
         if (!isActive) {
-          e.currentTarget.style.backgroundColor = 'rgba(var(--sidebar-hover), 1)';
-          e.currentTarget.style.color = 'rgb(var(--sidebar-text))';
+          e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))';
+          e.currentTarget.style.color = '#475569';
         }
       }}
       onMouseLeave={(e) => {
         if (!isActive) {
           e.currentTarget.style.backgroundColor = 'transparent';
-          e.currentTarget.style.color = 'rgba(var(--sidebar-text), 1)';
+          e.currentTarget.style.color = '#64748B';
         }
       }}
     >
-      {/* Icon wrapper — glows when active */}
+      {/* Emoji icon */}
       <span style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        fontSize: collapsed ? '18px' : '14px',
+        lineHeight: 1,
         flexShrink: 0,
-        width: '28px',
-        height: '28px',
-        borderRadius: '8px',
-        backgroundColor: isActive ? 'rgba(var(--primary), 0.18)' : 'transparent',
-        transition: 'background-color 200ms',
+        width: collapsed ? 'auto' : '20px',
+        textAlign: 'center',
       }}>
-        <Icon
-          className="h-[16px] w-[16px] shrink-0"
-          style={{ color: isActive ? 'rgb(var(--primary))' : 'inherit' }}
-        />
+        {item.emoji}
       </span>
 
       {!collapsed && (
-        <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <span style={{
+          flex: 1,
+          minWidth: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}>
           {item.label}
         </span>
       )}
@@ -244,7 +149,7 @@ function NavLink({
           borderRadius: '20px',
           fontSize: '11px',
           fontWeight: 700,
-          backgroundColor: 'rgba(239,68,68,0.15)',
+          backgroundColor: 'rgba(239,68,68,0.1)',
           color: '#EF4444',
         }}>
           {item.badge}
@@ -254,258 +159,300 @@ function NavLink({
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ isMobile = false }: { isMobile?: boolean }) {
   const pathname = usePathname();
-  const { collapsed, toggle } = useSidebarStore();
+  const { collapsed, toggle, mobileOpen, setMobileOpen } = useSidebarStore();
   const { permissions, loaded, loadFromApi, sectionOrder, itemOrders, itemSectionMap } = useSidebarFeatures();
 
   // Load permissions from DB on first mount
   React.useEffect(() => { loadFromApi(); }, [loadFromApi]);
 
-  // Derive sorted navigation based on user preferences + cross-section moves
-  const sortedNavigation = React.useMemo(() => {
-    // Build a mutable copy of navigation items per section
-    const sectionItemsMap: Record<string, typeof navigation[0]['items']> = {};
-    navigation.forEach(s => { sectionItemsMap[s.title || '__dashboard'] = [...s.items]; });
+  // Close mobile drawer on navigation
+  const handleNavClick = () => {
+    if (isMobile) setMobileOpen(false);
+  };
 
-    // Apply cross-section reassignments from itemSectionMap
-    if (itemSectionMap && Object.keys(itemSectionMap).length > 0) {
-      for (const [menuKey, targetSectionTitle] of Object.entries(itemSectionMap)) {
-        // Find and remove item from its original section
-        let movedItem: (typeof navigation[0]['items'])[0] | null = null;
-        for (const secKey of Object.keys(sectionItemsMap)) {
-          const idx = sectionItemsMap[secKey].findIndex(i => i.href === menuKey);
-          if (idx !== -1) {
-            movedItem = sectionItemsMap[secKey][idx];
-            sectionItemsMap[secKey].splice(idx, 1);
-            break;
-          }
-        }
-        // Add to target section
-        if (movedItem && sectionItemsMap[targetSectionTitle]) {
-          sectionItemsMap[targetSectionTitle].push(movedItem);
-        }
-      }
-    }
-
-    // Rebuild navigation with reassigned items
-    const reassigned = navigation.map(s => ({
-      ...s,
-      items: sectionItemsMap[s.title || '__dashboard'] || [],
-    }));
-
-    return reassigned.sort((a, b) => {
-      if (!a.title) return -1;
-      if (!b.title) return 1;
-      const idxA = sectionOrder?.indexOf(a.title) ?? -1;
-      const idxB = sectionOrder?.indexOf(b.title) ?? -1;
-      return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
-    }).map(section => {
-      if (!section.title) return section;
-      const orderMap = itemOrders?.[section.title] || [];
-      const sortedItems = [...section.items].sort((a, b) => {
-        const idxA = orderMap.indexOf(a.href);
-        const idxB = orderMap.indexOf(b.href);
-        return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
-      });
-      return { ...section, items: sortedItems };
-    });
-  }, [sectionOrder, itemOrders, itemSectionMap]);
+  // Close mobile drawer on Escape
+  React.useEffect(() => {
+    if (!isMobile || !mobileOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileOpen(false);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isMobile, mobileOpen, setMobileOpen]);
 
   // Filter: per-item visibility + hide entire section if all items hidden
-  const visibleNav = sortedNavigation
+  const visibleNav = navigation
     .map((section) => ({
       ...section,
       items: section.items.filter((item) => {
-        // Dashboard + Settings always visible
         if (item.href === '/dashboard') return true;
         return permissions[item.href] !== false;
       }),
     }))
     .filter((section) => section.items.length > 0);
 
+  // Mobile: determine show/hide
+  const effectiveCollapsed = isMobile ? false : collapsed;
+  const sidebarW = isMobile ? SIDEBAR_WIDTH : (collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_WIDTH);
+
   return (
     <aside
       role="navigation"
       aria-label="Main navigation"
-      className="fixed left-0 top-0 z-40 flex h-screen flex-col transition-all duration-300"
+      className="sidebar-aside"
       style={{
-        width: collapsed ? `${SIDEBAR_COLLAPSED_WIDTH}px` : `${SIDEBAR_WIDTH}px`,
-        backgroundColor: 'rgb(var(--sidebar-bg))',
-        borderRight: '1px solid rgba(var(--border), 0.12)',
-        /* subtle gradient depth */
-        background: `linear-gradient(180deg, rgba(var(--primary), 0.04) 0%, rgb(var(--sidebar-bg)) 120px)`,
+        position: 'fixed',
+        left: 0,
+        top: 0,
+        zIndex: 40,
+        display: 'flex',
+        height: '100vh',
+        flexDirection: 'column',
+        width: `${sidebarW}px`,
+        backgroundColor: 'rgb(var(--card))',
+        borderRight: '1px solid rgb(var(--border))',
+        transition: isMobile
+          ? 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)'
+          : 'width 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+        transform: isMobile
+          ? (mobileOpen ? 'translateX(0)' : 'translateX(-100%)')
+          : 'translateX(0)',
+        boxShadow: isMobile && mobileOpen ? '4px 0 24px rgba(0,0,0,0.15)' : 'none',
       }}
     >
-      {/* ── Logo ── */}
+      {/* ── Logo Area — matches pencil.pen logoArea ── */}
       <div style={{
         height: '64px',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: collapsed ? 'center' : 'flex-start',
-        padding: collapsed ? '0' : '0 16px',
-        borderBottom: '1px solid rgba(var(--border), 0.1)',
+        justifyContent: isMobile ? 'space-between' : (effectiveCollapsed ? 'center' : 'flex-start'),
+        padding: effectiveCollapsed ? '0' : '0 20px',
         flexShrink: 0,
+        gap: '12px',
       }}>
         <Link
           href="/dashboard"
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '10px',
+            gap: '12px',
             textDecoration: 'none',
           }}
         >
-          {/* Logo icon */}
+          {/* Logo icon — purple square with rounded corners */}
           <div style={{
-            width: '34px',
-            height: '34px',
+            width: '32px',
+            height: '32px',
             flexShrink: 0,
-            borderRadius: '10px',
-            background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))',
+            borderRadius: '8px',
+            backgroundColor: '#7C3AED',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(var(--primary), 0.35)',
           }}>
-            <span style={{ fontSize: '15px', fontWeight: 800, color: '#fff', letterSpacing: '-0.5px' }}>C</span>
+            <span style={{
+              fontSize: '14px',
+              fontWeight: 800,
+              color: '#fff',
+              letterSpacing: '-0.5px',
+            }}>C</span>
           </div>
 
-          {/* Brand name — hidden when collapsed */}
-          {!collapsed && (
-            <div>
-              <span style={{
-                fontSize: '16px',
-                fontWeight: 700,
-                letterSpacing: '-0.3px',
-                color: 'rgb(var(--sidebar-text))',
-                lineHeight: 1,
-              }}>
-                Cortexo
-              </span>
-              <div style={{
-                fontSize: '10px',
-                fontWeight: 500,
-                letterSpacing: '0.08em',
-                color: 'rgba(var(--sidebar-text), 0.4)',
-                textTransform: 'uppercase',
-                lineHeight: 1,
-                marginTop: '2px',
-              }}>
-                DevOps Intelligence
-              </div>
-            </div>
+          {/* Brand name */}
+          {!effectiveCollapsed && (
+            <span style={{
+              fontSize: '20px',
+              fontWeight: 700,
+              color: '#1E1B4B',
+              fontFamily: 'Inter, system-ui, sans-serif',
+              lineHeight: 1,
+            }}>
+              Cortexo
+            </span>
           )}
         </Link>
+
+        {/* Mobile close button */}
+        {isMobile && (
+          <button
+            onClick={() => setMobileOpen(false)}
+            aria-label="Close navigation"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
+              border: 'none',
+              backgroundColor: '#F1F5F9',
+              color: '#64748B',
+              cursor: 'pointer',
+              transition: 'background-color 150ms',
+            }}
+          >
+            <X style={{ width: '16px', height: '16px' }} />
+          </button>
+        )}
       </div>
 
-      {/* ── Main Navigation ── */}
+      {/* ── Main Navigation — matches pencil.pen navSection ── */}
       <nav
         style={{
           flex: 1,
           overflowY: 'auto',
           overflowX: 'hidden',
-          padding: collapsed ? '8px 8px' : '8px 10px',
+          padding: effectiveCollapsed ? '8px 8px' : '0 12px',
           scrollbarWidth: 'none',
         }}
       >
         {visibleNav.map((section, idx) => (
-          <div key={idx} style={{ marginBottom: '4px' }}>
-            {/* Section label / divider */}
-            {section.title && !collapsed && (
+          <div key={idx} style={{ marginBottom: '2px' }}>
+            {/* Section label */}
+            {section.title && !effectiveCollapsed && (
               <p style={{
-                padding: '10px 12px 4px',
-                fontSize: '10px',
-                fontWeight: 700,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: 'rgba(var(--sidebar-text), 0.38)',
+                padding: '12px 12px 6px',
+                fontSize: '11px',
+                fontWeight: 600,
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase' as const,
+                color: '#94A3B8',
                 margin: 0,
+                fontFamily: 'Inter, system-ui, sans-serif',
               }}>
                 {section.title}
               </p>
             )}
-            {section.title && collapsed && (
+
+            {/* Separator line for collapsed mode */}
+            {section.title && effectiveCollapsed && idx > 0 && (
               <div style={{
                 margin: '8px auto',
                 height: '1px',
                 width: '24px',
-                backgroundColor: 'rgba(var(--border), 0.25)',
+                backgroundColor: '#F1F5F9',
               }} />
             )}
 
-            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '1px' }}>
+            {/* Separator line between sections */}
+            {!effectiveCollapsed && idx > 0 && (
+              <div style={{
+                height: '1px',
+                backgroundColor: '#F1F5F9',
+                margin: '4px 12px 8px',
+              }} />
+            )}
+
+            <ul style={{
+              listStyle: 'none',
+              margin: 0,
+              padding: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '2px',
+            }}>
               {section.items.map((item) => {
-                const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname?.startsWith(item.href + '/'));
+                const isActive = pathname === item.href ||
+                  (item.href !== '/dashboard' && pathname?.startsWith(item.href + '/'));
                 return (
                   <li key={item.href}>
-                    <NavLink item={item} isActive={isActive} collapsed={collapsed} />
+                    <NavLink
+                      item={item}
+                      isActive={isActive}
+                      collapsed={effectiveCollapsed}
+                      onNavigate={handleNavClick}
+                    />
                   </li>
                 );
               })}
             </ul>
           </div>
         ))}
+
+        {/* ── Logout button ── */}
+        {!effectiveCollapsed && (
+          <div style={{ marginTop: '8px' }}>
+            <div style={{
+              height: '1px',
+              backgroundColor: '#F1F5F9',
+              margin: '4px 12px 8px',
+            }} />
+            <button
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                width: 'calc(100% - 0px)',
+                padding: '0 12px',
+                height: '40px',
+                borderRadius: '8px',
+                border: 'none',
+                backgroundColor: 'transparent',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 500,
+                fontFamily: 'Inter, system-ui, sans-serif',
+                color: '#EF4444',
+                transition: 'background-color 180ms',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.06)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              <span style={{ fontSize: '14px', width: '20px', textAlign: 'center' }}>🚪</span>
+              Logout
+            </button>
+          </div>
+        )}
       </nav>
 
-      {/* ── Bottom Nav ── */}
-      <div style={{
-        borderTop: '1px solid rgba(var(--border), 0.12)',
-        padding: collapsed ? '8px 8px' : '8px 10px',
-        flexShrink: 0,
-      }}>
-        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '1px' }}>
-          {bottomNav.map((item) => {
-            const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
-            return (
-              <li key={item.href}>
-                <NavLink item={item} isActive={isActive} collapsed={collapsed} />
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-
-      {/* ── Collapse toggle ── */}
-      <button
-        onClick={toggle}
-        id="sidebar-collapse-toggle"
-        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        style={{
-          position: 'absolute',
-          right: '-13px',
-          top: '72px',
-          width: '26px',
-          height: '26px',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          border: '1px solid rgba(var(--border), 0.3)',
-          backgroundColor: 'rgb(var(--surface))',
-          color: 'rgb(var(--text-secondary))',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-          transition: 'all 200ms ease',
-          zIndex: 50,
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = 'rgb(var(--primary))';
-          e.currentTarget.style.color = '#fff';
-          e.currentTarget.style.borderColor = 'rgb(var(--primary))';
-          e.currentTarget.style.transform = 'scale(1.1)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = 'rgb(var(--surface))';
-          e.currentTarget.style.color = 'rgb(var(--text-secondary))';
-          e.currentTarget.style.borderColor = 'rgba(var(--border), 0.3)';
-          e.currentTarget.style.transform = 'scale(1)';
-        }}
-      >
-        {collapsed
-          ? <ChevronRight className="h-3.5 w-3.5" />
-          : <ChevronLeft className="h-3.5 w-3.5" />}
-      </button>
+      {/* ── Collapse toggle (desktop only) ── */}
+      {!isMobile && (
+        <button
+          onClick={toggle}
+          id="sidebar-collapse-toggle"
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          style={{
+            position: 'absolute',
+            right: '-13px',
+            top: '72px',
+            width: '26px',
+            height: '26px',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            border: '1px solid #E5E7EB',
+            backgroundColor: '#FFFFFF',
+            color: '#94A3B8',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+            transition: 'all 200ms ease',
+            zIndex: 50,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#7C3AED';
+            e.currentTarget.style.color = '#fff';
+            e.currentTarget.style.borderColor = '#7C3AED';
+            e.currentTarget.style.transform = 'scale(1.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgb(var(--card))';
+            e.currentTarget.style.color = '#94A3B8';
+            e.currentTarget.style.borderColor = 'rgb(var(--border))';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+        >
+          {collapsed
+            ? <ChevronRight className="h-3.5 w-3.5" />
+            : <ChevronLeft className="h-3.5 w-3.5" />}
+        </button>
+      )}
     </aside>
   );
 }

@@ -85,3 +85,24 @@ export type {
   ClientConfig, NewClientConfig,
   ConfigChangeHistory, NewConfigChangeHistory,
 } from './sources';
+
+// WinBull Configs (legacy client config lookup)
+export { winbullConfigs } from './winbull-configs';
+export type { WinbullConfig, NewWinbullConfig } from './winbull-configs';
+
+// Phase 15: Automation & Intelligence (cron, alerts, deprecation, AI judge)
+export {
+  cronJobs, cronExecutions,
+  alertChannels, alertRules, alertHistory,
+  deprecationResults,
+  judgeScores,
+} from './automation';
+export type {
+  CronJob, NewCronJob,
+  CronExecution, NewCronExecution,
+  AlertChannel, NewAlertChannel,
+  AlertRule, NewAlertRule,
+  AlertHistoryRow, NewAlertHistory,
+  DeprecationResult, NewDeprecationResult,
+  JudgeScore, NewJudgeScore,
+} from './automation';

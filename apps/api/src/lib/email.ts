@@ -212,3 +212,52 @@ export async function sendErrorSpikeAlert(opts: {
     text: `Error spike in ${opts.projectName}: ${opts.errorType} — ${opts.count} events in ${opts.windowMinutes}min.\n\nView: ${errorUrl}`,
   });
 }
+
+/**
+ * Password Reset — Send reset link to user
+ */
+export async function sendPasswordResetEmail(opts: {
+  to: string;
+  resetToken: string;
+  userName: string;
+}) {
+  const resetUrl = `${APP_URL}/auth/reset-password?token=${opts.resetToken}`;
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 0; background: #0f0f13; color: #e2e8f0; }
+    .container { max-width: 560px; margin: 32px auto; background: #1a1a2e; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+    .header { background: linear-gradient(135deg, #6366f1, #818cf8); padding: 24px 32px; }
+    .header h1 { margin: 0; font-size: 20px; color: #fff; }
+    .body { padding: 28px 32px; }
+    .cta { display: block; text-align: center; background: linear-gradient(135deg, #6366f1, #818cf8); color: #fff; text-decoration: none; padding: 14px 28px; border-radius: 10px; font-size: 14px; font-weight: 600; margin: 24px 0; }
+    .token-box { font-family: 'Courier New', monospace; font-size: 13px; background: rgba(255,255,255,0.05); padding: 12px 16px; border-radius: 8px; color: #818cf8; word-break: break-all; margin: 16px 0; }
+    .footer { padding: 16px 32px; border-top: 1px solid rgba(255,255,255,0.06); color: #475569; font-size: 11px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔐 Password Reset</h1>
+    </div>
+    <div class="body">
+      <p style="color:#94a3b8;margin:0 0 16px">Hi <strong style="color:#f1f5f9">${opts.userName}</strong>,</p>
+      <p style="color:#94a3b8;margin:0 0 16px">We received a request to reset your Cortexo password. Click the button below to set a new password:</p>
+      <a href="${resetUrl}" class="cta">Reset Password →</a>
+      <p style="color:#64748b;font-size:12px;margin:16px 0 0">This link expires in <strong>1 hour</strong>. If you didn't request this, you can safely ignore this email.</p>
+    </div>
+    <div class="footer">Cortexo DevOps Intelligence · <a href="${APP_URL}" style="color:#6366f1">cortexo.io</a></div>
+  </div>
+</body>
+</html>`;
+
+  return sendEmail({
+    to: opts.to,
+    subject: '🔐 Reset your Cortexo password',
+    html,
+    text: `Hi ${opts.userName},\n\nReset your Cortexo password:\n${resetUrl}\n\nThis link expires in 1 hour.`,
+  });
+}

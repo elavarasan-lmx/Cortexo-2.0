@@ -50,22 +50,34 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [changingPw, setChangingPw] = useState(false);
   const [toast, setToast] = useState<Toast>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Load user profile on mount via internal Next.js API route
-  useEffect(() => {
-    fetch('/api/profile')
-      .then(res => res.json())
-      .then(data => {
-        if (data.user) {
-          setProfile({
-            name: data.user.name || '',
-            email: data.user.email || '',
-            phone: data.user.phone || '',
-          });
-        }
-      })
-      .catch(() => {});
-  }, []);
+  async function loadProfile() {
+    setIsLoading(true);
+    setLoadError(null);
+    try {
+      const res = await fetch('/api/profile');
+      if (!res.ok) throw new Error(`Server error (${res.status})`);
+      const data = await res.json();
+      if (data.user) {
+        setProfile({
+          name: data.user.name || '',
+          email: data.user.email || '',
+          phone: data.user.phone || '',
+        });
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to load profile';
+      setLoadError(msg);
+      setToast({ type: 'error', message: `Could not load profile: ${msg}` });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => { loadProfile(); }, []);
 
   // Auto-hide toast
   useEffect(() => {
@@ -149,7 +161,56 @@ export default function SettingsPage() {
         </div>
       )}
 
+      {/* ─── Loading Skeleton ─── */}
+      {isLoading && (
+        <div style={cardStyle}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ width: '150px', height: '18px', borderRadius: '8px', backgroundColor: 'rgb(var(--surface-hover))', animation: 'pulse 1.5s ease-in-out infinite' }} />
+            <div style={{ display: 'flex', gap: '28px', flexWrap: 'wrap' as const }}>
+              <div style={{ width: '96px', height: '96px', borderRadius: '50%', backgroundColor: 'rgb(var(--surface-hover))', animation: 'pulse 1.5s ease-in-out infinite' }} />
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {[1, 2, 3].map(i => (
+                  <div key={i} style={{ height: '42px', borderRadius: '10px', backgroundColor: 'rgb(var(--surface-hover))', animation: 'pulse 1.5s ease-in-out infinite', animationDelay: `${i * 150}ms` }} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Error Banner ─── */}
+      {!isLoading && loadError && (
+        <div style={{
+          ...cardStyle,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
+          backgroundColor: 'rgba(239, 68, 68, 0.06)',
+          borderColor: 'rgba(239, 68, 68, 0.2)',
+          flexWrap: 'wrap' as const,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <AlertCircle style={{ width: '18px', height: '18px', color: '#EF4444', flexShrink: 0 }} />
+            <div>
+              <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: '#EF4444' }}>Failed to load profile</p>
+              <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'rgb(var(--text-muted))' }}>{loadError}</p>
+            </div>
+          </div>
+          <button
+            onClick={loadProfile}
+            style={{
+              padding: '8px 18px', borderRadius: '10px', border: 'none',
+              fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+              background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))',
+              color: '#fff', boxShadow: '0 2px 8px rgba(var(--primary), 0.2)',
+            }}
+          >
+            ↻ Retry
+          </button>
+        </div>
+      )}
+
       {/* ─── Profile Information Card ─── */}
+      {!isLoading && !loadError && (
+      <>
       <div style={cardStyle}>
         <h2 style={{ fontSize: '15px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: '0 0 20px 0' }}>
           Profile Information
@@ -368,6 +429,8 @@ export default function SettingsPage() {
           </button>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }

@@ -9,7 +9,7 @@ import {
   Store, Compass, BookOpen, Activity, Wifi, ClipboardCheck,
   FlaskConical, ShieldCheck, Boxes, TrendingUp, ArrowLeftRight,
   GitCompareArrows, FileCode, History, AlertTriangle,
-  Play, FileCheck, Wand2, Settings2, Command,
+  Play, FileCheck, Wand2, Settings2, Command, Heart,
 } from 'lucide-react';
 
 interface PaletteItem {
@@ -41,6 +41,7 @@ const PALETTE_ITEMS: PaletteItem[] = [
   { id: 'postmortem', label: 'Postmortem', href: '/postmortem', section: 'Operations', icon: FileText },
   { id: 'deprecation', label: 'Deprecations', href: '/deprecation', section: 'Operations', icon: AlertTriangle },
   // Infrastructure
+  { id: 'heartbeat', label: 'Heartbeat Monitor', href: '/heartbeat', section: 'Infrastructure', icon: Heart, keywords: ['health', 'uptime', 'status', 'monitor', 'pulse'] },
   { id: 'servers', label: 'Servers', href: '/servers', section: 'Infrastructure', icon: Server },
   { id: 'logs', label: 'Log Viewer', href: '/logs', section: 'Infrastructure', icon: ScrollText },
   { id: 'fleet', label: 'Client Fleet', href: '/fleet', section: 'Infrastructure', icon: Layers },

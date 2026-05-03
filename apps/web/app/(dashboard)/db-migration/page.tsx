@@ -175,7 +175,7 @@ export default function DbMigrationPage() {
   const handleConnect = async () => {
     setConnecting(true);
     try {
-      const res = await api.dbMigrationConnect({ oldDb, newDb }) as any;
+      const res = await (api.dbMigrationConnect as any)({ oldDb, newDb });
       setConnStatus({
         old: res.oldDb?.ok ? 'ok' : 'err',
         new: res.newDb?.ok ? 'ok' : 'err',

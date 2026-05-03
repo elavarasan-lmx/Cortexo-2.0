@@ -601,6 +601,102 @@ class ApiClient {
   createDbProfile(data: Record<string, unknown>)     { return this.request<Record<string, unknown>>('POST', '/db-profiles', data); }
   updateDbProfile(id: string, data: Record<string, unknown>) { return this.request<Record<string, unknown>>('PATCH', `/db-profiles/${id}`, data); }
   deleteDbProfile(id: string)                        { return this.request<{ success: boolean }>('DELETE', `/db-profiles/${id}`); }
+
+  // ─── Cron Jobs ────────────────────────────────────────────────────────────
+  getCronJobs(params?: Record<string, string>) {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    return this.request<Record<string, unknown>[]>('GET', `/cron-jobs${qs}`);
+  }
+  getCronJob(id: string)                               { return this.request<Record<string, unknown>>('GET', `/cron-jobs/${id}`); }
+  createCronJob(data: Record<string, unknown>)         { return this.request<Record<string, unknown>>('POST', '/cron-jobs', data); }
+  updateCronJob(id: string, data: Record<string, unknown>) { return this.request<Record<string, unknown>>('PUT', `/cron-jobs/${id}`, data); }
+  deleteCronJob(id: string)                            { return this.request<{ success: boolean }>('DELETE', `/cron-jobs/${id}`); }
+  runCronJob(id: string)                               { return this.request<Record<string, unknown>>('POST', `/cron-jobs/${id}/run`); }
+  getCronExecutions(jobId: string, params?: Record<string, string>) {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    return this.request<Record<string, unknown>[]>('GET', `/cron-jobs/${jobId}/executions${qs}`);
+  }
+
+  // ─── Analytics ────────────────────────────────────────────────────────────
+  getAnalyticsSummary()                                { return this.request<Record<string, unknown>>('GET', '/analytics/summary'); }
+  getAnalyticsDaily(days?: number)                     { return this.request<Record<string, unknown>[]>('GET', `/analytics/daily${days ? `?days=${days}` : ''}`); }
+  getAnalyticsErrorTrends(days?: number)               { return this.request<Record<string, unknown>[]>('GET', `/analytics/errors/trends${days ? `?days=${days}` : ''}`); }
+  getAnalyticsServerUsage()                            { return this.request<Record<string, unknown>[]>('GET', '/analytics/servers/usage'); }
+  getAnalyticsDeployFrequency()                        { return this.request<Record<string, unknown>[]>('GET', '/analytics/deployments/frequency'); }
+  getAnalyticsHealthScore()                            { return this.request<Record<string, unknown>>('GET', '/analytics/health-score'); }
+
+  // ─── Alert Channels ──────────────────────────────────────────────────────
+  getAlertChannels()                                   { return this.request<Record<string, unknown>[]>('GET', '/alert-channels'); }
+  createAlertChannel(data: Record<string, unknown>)    { return this.request<Record<string, unknown>>('POST', '/alert-channels', data); }
+  updateAlertChannel(id: string, data: Record<string, unknown>) { return this.request<Record<string, unknown>>('PUT', `/alert-channels/${id}`, data); }
+  deleteAlertChannel(id: string)                       { return this.request<{ success: boolean }>('DELETE', `/alert-channels/${id}`); }
+  testAlertChannel(id: string)                         { return this.request<{ success: boolean; message: string }>('POST', `/alert-channels/${id}/test`); }
+  getAlertRules()                                      { return this.request<Record<string, unknown>[]>('GET', '/alert-rules'); }
+  createAlertRule(data: Record<string, unknown>)       { return this.request<Record<string, unknown>>('POST', '/alert-rules', data); }
+  getAlertHistory(params?: Record<string, string>) {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    return this.request<Record<string, unknown>[]>('GET', `/alert-history${qs}`);
+  }
+
+  // ─── Deprecation Scanner ─────────────────────────────────────────────────
+  getDeprecationResults(params?: Record<string, string>) {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    return this.request<Record<string, unknown>[]>('GET', `/deprecation/results${qs}`);
+  }
+  getDeprecationSummary()                              { return this.request<Record<string, unknown>>('GET', '/deprecation/summary'); }
+  triggerDeprecationScan(data: { projectId: number; type?: string }) { return this.request<{ scanId: string }>('POST', '/deprecation/scan', data); }
+  suppressDeprecation(id: string, data?: { reason?: string; until?: string }) { return this.request<{ success: boolean }>('POST', `/deprecation/${id}/suppress`, data); }
+  getDeprecationScans(params?: Record<string, string>) {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    return this.request<Record<string, unknown>[]>('GET', `/deprecation/scans${qs}`);
+  }
+
+  // ─── AI Judge Scores ─────────────────────────────────────────────────────
+  getJudgeScores(params?: Record<string, string>) {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    return this.request<Record<string, unknown>[]>('GET', `/judge-scores${qs}`);
+  }
+  getJudgeScore(id: string)                            { return this.request<Record<string, unknown>>('GET', `/judge-scores/${id}`); }
+  submitJudgeScore(data: Record<string, unknown>)      { return this.request<Record<string, unknown>>('POST', '/judge-scores', data); }
+  getJudgeScoreStats()                                 { return this.request<Record<string, unknown>>('GET', '/judge-scores/stats/aggregate'); }
+  triggerJudgeScore(data: { targetType: string; targetId: string }) { return this.request<{ jobId: string }>('POST', '/judge-scores/trigger', data); }
+
+  // ─── Real-Time Metrics Stream ─────────────────────────────────────────
+  getMetricsSnapshot()                                 { return this.request<Record<string, unknown>>('GET', '/metrics/snapshot'); }
+
+  /**
+   * Subscribe to live metrics via SSE.
+   * Returns an EventSource instance — call .close() to unsubscribe.
+   *
+   * Usage:
+   *   const es = api.subscribeMetrics((event, data) => { console.log(event, data); });
+   *   // later: es.close();
+   */
+  subscribeMetrics(onMessage: (event: string, data: Record<string, unknown>) => void): EventSource {
+    const url = `${this.baseUrl}/v1/metrics/stream`;
+    const es = new EventSource(url);
+
+    const events = ['server_health', 'deploy_activity', 'alert_count', 'kpi_update', 'worker_status', 'metric'];
+    for (const evt of events) {
+      es.addEventListener(evt, (e: MessageEvent) => {
+        try { onMessage(evt, JSON.parse(e.data)); } catch { /* ignore parse errors */ }
+      });
+    }
+
+    es.addEventListener('connected', () => {
+      console.log('[metrics-stream] connected');
+    });
+
+    es.addEventListener('reconnect', () => {
+      console.log('[metrics-stream] server requested reconnect');
+    });
+
+    es.onerror = () => {
+      console.warn('[metrics-stream] connection error — will auto-reconnect');
+    };
+
+    return es;
+  }
 }
 
 class ApiError extends Error {

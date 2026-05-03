@@ -47,6 +47,9 @@ export async function POST(request: NextRequest) {
     }
 
     const db = getDb();
+    if (!db) {
+      return NextResponse.json({ error: 'Database not available.' }, { status: 503 });
+    }
 
     // --- Check for existing user ---
     const existing = await db
