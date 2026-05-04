@@ -1,12 +1,13 @@
 import {
-  mysqlTable,
-  char,
+  pgTable,
+  uuid,
   varchar,
   text,
-  int,
-  datetime,
+  integer,
+  timestamp,
+  serial,
   index,
-} from 'drizzle-orm/mysql-core';
+} from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { organizations } from './organizations';
 
@@ -14,13 +15,13 @@ import { organizations } from './organizations';
  * Source Profiles — reusable Git repo credentials for deployments.
  * Store once, select from dropdown during deploy.
  */
-export const sourceProfiles = mysqlTable(
+export const sourceProfiles = pgTable(
   'source_profiles',
   {
-    id: char('id', { length: 36 })
+    id: uuid('id')
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    orgId: char('org_id', { length: 36 })
+      .defaultRandom(),
+    orgId: uuid('org_id')
       .references(() => organizations.id)
       .notNull(),
     name: varchar('name', { length: 100 }).notNull(),
@@ -29,11 +30,11 @@ export const sourceProfiles = mysqlTable(
     authType: varchar('auth_type', { length: 20 }).default('token'),
     authValue: text('auth_value'),
     notes: text('notes'),
-    createdAt: datetime('created_at')
-      .default(sql`CURRENT_TIMESTAMP`)
+    createdAt: timestamp('created_at')
+      .defaultNow()
       .notNull(),
-    updatedAt: datetime('updated_at')
-      .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`)
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
       .notNull(),
   },
   (table) => [
@@ -42,30 +43,30 @@ export const sourceProfiles = mysqlTable(
 );
 
 /**
- * DB Profiles — reusable MySQL/database server credentials for deployments.
+ * DB Profiles — reusable database server credentials for deployments.
  * Store once, select from dropdown during deploy.
  */
-export const dbProfiles = mysqlTable(
+export const dbProfiles = pgTable(
   'db_profiles',
   {
-    id: char('id', { length: 36 })
+    id: uuid('id')
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    orgId: char('org_id', { length: 36 })
+      .defaultRandom(),
+    orgId: uuid('org_id')
       .references(() => organizations.id)
       .notNull(),
     name: varchar('name', { length: 100 }).notNull(),
     host: varchar('host', { length: 255 }).notNull(),
-    port: int('port').default(3306),
+    port: integer('port').default(3306),
     username: varchar('username', { length: 100 }).notNull(),
     password: text('password'),
     databaseName: varchar('database_name', { length: 100 }),
     notes: text('notes'),
-    createdAt: datetime('created_at')
-      .default(sql`CURRENT_TIMESTAMP`)
+    createdAt: timestamp('created_at')
+      .defaultNow()
       .notNull(),
-    updatedAt: datetime('updated_at')
-      .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`)
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
       .notNull(),
   },
   (table) => [

@@ -1,20 +1,23 @@
-import { drizzle } from 'drizzle-orm/mysql2';
-import mysql from 'mysql2/promise';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import pg from 'pg';
 import * as schema from './schema';
 
+const { Pool } = pg;
+
 /**
- * Creates a Drizzle ORM client connected to MySQL.
- * Uses connection pooling for production performance.
+ * Creates a Drizzle ORM client connected to PostgreSQL.
+ * Uses node-postgres (pg) connection pooling for production performance.
+ * Migrated from mysql2 to support RLS-based multi-tenant isolation.
  */
 export async function createDb(connectionString?: string) {
-  const pool = mysql.createPool({
-    uri: connectionString || process.env.DATABASE_URL,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
+  const pool = new Pool({
+    connectionString: connectionString || process.env.DATABASE_URL,
+    max: 10,
+    idleTimeoutMillis: 60000,
+    connectionTimeoutMillis: 10000,
   });
 
-  return drizzle(pool, { schema, mode: 'default' });
+  return drizzle(pool, { schema });
 }
 
 export type Database = Awaited<ReturnType<typeof createDb>>;

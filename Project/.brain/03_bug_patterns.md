@@ -139,3 +139,37 @@ GitHub Issues: #65-#119 at `github.com/elavarasan-lmx/WinBullSource/issues`
 2. **VALIDATION**: Add to BOTH `keyup` AND `submit` handlers
 3. **`accountdelete()`**: NO-OP stub — do NOT modify
 4. **Fix priority**: 🔴 Zoho client bugs → 🟠 User suggestions → 🟡 UI fixes → ⚪ Scan findings
+
+---
+
+## 🔒 Security Vulnerability Summary
+
+| # | Category | Count | Severity | Priority |
+|---|---|---|---|---|
+| 1 | Mobile API zero auth | 86 endpoints | 🔴 Critical | #1 |
+| 2 | SQL injection (raw `db->query()`) | 127+ queries | 🔴 Critical | #2 |
+| 3 | Plaintext passwords | 7 files | 🔴 Critical | #3 |
+| 4 | Raw `$_POST/$_GET` | 155 uses | 🟠 High | #4 |
+| 5 | CORS wildcard `*` | 12 controllers | 🟠 High | #5 |
+| 6 | Missing session check | 5 controllers | 🔴 Critical | #6 |
+| 7 | Missing rights check | 19 controllers | 🟠 High | #7 |
+| 8 | Missing audit log | 53 controllers | 🟠 High | #8 |
+
+### Security Fix Priority Order
+1. **Mobile API auth** (86 endpoints, ZERO protection)
+2. **SQL injection** (127+ queries, 52 models)
+3. **Plaintext passwords** (7 files — Login_model, MLogin_model, etc.)
+4. **Raw `$_POST`** (155 uses across 10+ files)
+5. **CORS wildcard** (12 controllers — allows any domain)
+
+---
+
+## ⚠️ Known Issues (By Design — Do NOT Fix)
+
+| Issue | Why |
+|---|---|
+| `accountdelete()` is empty | Intentional no-op for mobile API compliance |
+| book_type 0=Buy, 1=Sell | Legacy — all 77 clients depend on this |
+| market_status 0=Open, 1=Closed | Legacy — cannot change |
+| Server doesn't re-validate rate | KNOWN GAP — systemic, not a bug |
+| BZ-32 negative margin values | Shows credit balance correctly |

@@ -43,7 +43,7 @@ export default function AIAgentDetailPage() {
 
   return (
     <div>
-      <Link href="/ai-agents" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'rgb(var(--text-muted))', textDecoration: 'none', marginBottom: '16px' }}>
+      <Link href="/agents" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'rgb(var(--text-muted))', textDecoration: 'none', marginBottom: '16px' }}>
         <ArrowLeft style={{ width: '14px', height: '14px' }} /> Back to AI Agents
       </Link>
 

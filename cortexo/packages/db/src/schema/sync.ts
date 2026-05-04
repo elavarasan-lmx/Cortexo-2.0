@@ -1,16 +1,15 @@
 import {
-  mysqlTable,
-  char,
+  pgTable,
+  uuid,
   varchar,
   text,
-  int,
-  longtext,
-  datetime,
-  json,
+  integer,
+  timestamp,
+  jsonb,
   boolean,
-  mysqlEnum,
+  serial,
   index,
-} from 'drizzle-orm/mysql-core';
+} from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 /**
@@ -18,23 +17,23 @@ import { sql } from 'drizzle-orm';
  * Each row = one sync operation (hub repo → client repo via GitHub Actions).
  * Ported from BullionDevops sync.routes.js (679 lines).
  */
-export const syncHistory = mysqlTable(
+export const syncHistory = pgTable(
   'sync_history',
   {
-    id: int('id').primaryKey().autoincrement(),
+    id: serial('id').primaryKey(),
     clientId: varchar('client_id', { length: 100 }).notNull(),
     clientName: varchar('client_name', { length: 200 }),
     sourceBranch: varchar('source_branch', { length: 100 }).default('main'),
     targetBranch: varchar('target_branch', { length: 100 }).default('STAGING'),
-    status: mysqlEnum('status', ['pending', 'syncing', 'success', 'failed', 'conflict']).default('pending'),
+    status: varchar('status', { length: 20 }).default('pending'),
     commitSha: varchar('commit_sha', { length: 64 }),
-    prNumber: int('pr_number'),
+    prNumber: integer('pr_number'),
     prUrl: varchar('pr_url', { length: 500 }),
     errorMessage: text('error_message'),
     triggeredBy: varchar('triggered_by', { length: 100 }),
-    completedAt: datetime('completed_at'),
-    createdAt: datetime('created_at')
-      .default(sql`CURRENT_TIMESTAMP`)
+    completedAt: timestamp('completed_at'),
+    createdAt: timestamp('created_at')
+      .defaultNow()
       .notNull(),
   },
   (table) => [
@@ -47,18 +46,18 @@ export const syncHistory = mysqlTable(
 /**
  * Sync Exclude Rules — patterns to skip during sync (config files, .env, etc.)
  */
-export const syncExcludeRules = mysqlTable(
+export const syncExcludeRules = pgTable(
   'sync_exclude_rules',
   {
-    id: int('id').primaryKey().autoincrement(),
+    id: serial('id').primaryKey(),
     appCategory: varchar('app_category', { length: 50 }).default('all'),
     layer: varchar('layer', { length: 50 }).default('all'),
     pattern: varchar('pattern', { length: 300 }).notNull(),
     reason: varchar('reason', { length: 500 }),
     isActive: boolean('is_active').default(true),
     createdBy: varchar('created_by', { length: 100 }).default('system'),
-    createdAt: datetime('created_at')
-      .default(sql`CURRENT_TIMESTAMP`)
+    createdAt: timestamp('created_at')
+      .defaultNow()
       .notNull(),
   },
 );
@@ -66,10 +65,10 @@ export const syncExcludeRules = mysqlTable(
 /**
  * Sync Clients — client repos configured for sync
  */
-export const syncClients = mysqlTable(
+export const syncClients = pgTable(
   'sync_clients',
   {
-    id: int('id').primaryKey().autoincrement(),
+    id: serial('id').primaryKey(),
     clientId: varchar('client_id', { length: 100 }).unique().notNull(),
     clientName: varchar('client_name', { length: 200 }).notNull(),
     repoOrg: varchar('repo_org', { length: 200 }),
@@ -78,8 +77,8 @@ export const syncClients = mysqlTable(
     clientType: varchar('client_type', { length: 50 }).default('retail'),
     syncWorkflow: varchar('sync_workflow', { length: 200 }).default('sync-batch.yml'),
     isActive: boolean('is_active').default(true),
-    createdAt: datetime('created_at')
-      .default(sql`CURRENT_TIMESTAMP`)
+    createdAt: timestamp('created_at')
+      .defaultNow()
       .notNull(),
   },
   (table) => [index('idx_sync_clients_id').on(table.clientId)],
@@ -88,20 +87,20 @@ export const syncClients = mysqlTable(
 /**
  * Divergence Analysis — tracks how far each client has drifted from source
  */
-export const divergenceAnalyses = mysqlTable(
+export const divergenceAnalyses = pgTable(
   'divergence_analyses',
   {
-    id: int('id').primaryKey().autoincrement(),
+    id: serial('id').primaryKey(),
     clientId: varchar('client_id', { length: 100 }).notNull(),
     clientName: varchar('client_name', { length: 200 }),
-    divergenceScore: int('divergence_score').default(0),
-    filesAdded: int('files_added').default(0),
-    filesModified: int('files_modified').default(0),
-    filesDeleted: int('files_deleted').default(0),
-    moduleSummary: json('module_summary').$type<Record<string, unknown>>(),
-    fileDetails: json('file_details').$type<unknown[]>(),
-    analyzedAt: datetime('analyzed_at')
-      .default(sql`CURRENT_TIMESTAMP`)
+    divergenceScore: integer('divergence_score').default(0),
+    filesAdded: integer('files_added').default(0),
+    filesModified: integer('files_modified').default(0),
+    filesDeleted: integer('files_deleted').default(0),
+    moduleSummary: jsonb('module_summary').$type<Record<string, unknown>>(),
+    fileDetails: jsonb('file_details').$type<unknown[]>(),
+    analyzedAt: timestamp('analyzed_at')
+      .defaultNow()
       .notNull(),
   },
   (table) => [index('idx_divergence_client').on(table.clientId)],
@@ -110,21 +109,21 @@ export const divergenceAnalyses = mysqlTable(
 /**
  * Mono Deployments — deployment records with approval workflows
  */
-export const monoDeployments = mysqlTable(
+export const monoDeployments = pgTable(
   'mono_deployments',
   {
-    id: int('id').primaryKey().autoincrement(),
+    id: serial('id').primaryKey(),
     clientId: varchar('client_id', { length: 100 }).notNull(),
     clientName: varchar('client_name', { length: 200 }),
-    environment: mysqlEnum('environment', ['staging', 'production', 'support']).default('staging'),
+    environment: varchar('environment', { length: 20 }).default('staging'),
     branch: varchar('branch', { length: 100 }),
-    status: mysqlEnum('status', ['pending_approval', 'running', 'success', 'failed', 'cancelled']).default('pending_approval'),
+    status: varchar('status', { length: 20 }).default('pending_approval'),
     triggeredBy: varchar('triggered_by', { length: 100 }),
     deployNotes: text('deploy_notes'),
-    durationSeconds: int('duration_seconds'),
-    completedAt: datetime('completed_at'),
-    createdAt: datetime('created_at')
-      .default(sql`CURRENT_TIMESTAMP`)
+    durationSeconds: integer('duration_seconds'),
+    completedAt: timestamp('completed_at'),
+    createdAt: timestamp('created_at')
+      .defaultNow()
       .notNull(),
   },
   (table) => [
@@ -136,16 +135,16 @@ export const monoDeployments = mysqlTable(
 /**
  * Deployment Approvals — approval/rejection actions on deployments
  */
-export const deploymentApprovals = mysqlTable(
+export const deploymentApprovals = pgTable(
   'deployment_approvals',
   {
-    id: int('id').primaryKey().autoincrement(),
-    deploymentId: int('deployment_id').notNull(),
-    action: mysqlEnum('action', ['approved', 'rejected']).notNull(),
+    id: serial('id').primaryKey(),
+    deploymentId: integer('deployment_id').notNull(),
+    action: varchar('action', { length: 20 }).notNull(),
     actedBy: varchar('acted_by', { length: 100 }).notNull(),
     reason: text('reason'),
-    createdAt: datetime('created_at')
-      .default(sql`CURRENT_TIMESTAMP`)
+    createdAt: timestamp('created_at')
+      .defaultNow()
       .notNull(),
   },
   (table) => [index('idx_approval_deploy').on(table.deploymentId)],

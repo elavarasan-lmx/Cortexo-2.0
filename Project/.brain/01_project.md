@@ -49,6 +49,82 @@ WinBullSource/
 
 ---
 
+## 📂 Workspace Directory Mapping (Local Disk)
+
+> **Root:** `/run/media/lmx/LMX/Winbull/Personal/Devops/`
+
+```
+Devops/                              ← WORKSPACE ROOT (Git repo)
+├── .git/                            ← Version control
+├── .github/                         ← GitHub Actions/CI
+├── .gitignore
+│
+├── Project/                         ← 🏗️ WinBull Trade Platform
+│   ├── .brain/                      ← 🧠 Agent brain files
+│   │   ├── 00_index.md              ← Quick lookup
+│   │   ├── 01_project.md            ← THIS FILE
+│   │   ├── 02_modules.md            ← 82-module registry
+│   │   ├── 03_bug_patterns.md       ← 19 bug patterns + security vulns
+│   │   ├── 05_db_schema.md          ← 94-table MySQL schema + dependencies
+│   │   ├── rules/                   ← Business rules, rate formula, validation
+│   │   ├── workflows/               ← Audit + fix-bug procedures
+│   │   ├── templates/               ← Module brain template
+│   │   └── modules/                 ← Per-module brains (created during audits)
+│   │
+│   ├── Web/                         ← 🌐 WEB SOURCE (PHP CodeIgniter)
+│   │   ├── admin/                   ← Admin panel controllers/models/views
+│   │   ├── application/             ← Customer portal
+│   │   ├── mobileapi/               ← Mobile REST API
+│   │   ├── api/                     ← Public API endpoints
+│   │   ├── client/                  ← Client-side JS (rate display)
+│   │   ├── lmxtrade/                ← Socket.IO + Lumen rate server
+│   │   ├── assets/                  ← CSS/JS/images
+│   │   ├── system/                  ← CodeIgniter 3 core (NEVER EDIT)
+│   │   └── global_configs.php       ← Per-client config
+│   │
+│   └── android/                     ← 📱 MOBILE APP SOURCE (Ionic/Angular)
+│       ├── src/                     ← TypeScript source (pages, providers, etc)
+│       ├── platforms/               ← Native platform builds
+│       ├── plugins/                 ← Cordova plugins
+│       ├── resources/               ← Icons, splash screens
+│       ├── www/                     ← Built web assets
+│       ├── config.xml               ← Cordova config
+│       ├── package.json             ← Dependencies
+│       └── ionic.config.json        ← Ionic CLI config
+│
+└── cortexo/                         ← 🤖 CORTEXO 2.0 (Project Mgmt + DevOps)
+    ├── apps/
+    │   ├── web/                     ← Next.js dashboard (Turborepo)
+    │   └── api/                     ← Backend API
+    ├── packages/                    ← Shared packages
+    ├── docs/                        ← Documentation
+    ├── e2e/                         ← Playwright E2E tests
+    ├── sources/                     ← Data sources
+    ├── IDP_Architecture/            ← Architecture docs
+    ├── UI_Screens/                  ← Design screenshots
+    ├── docker-compose.yml           ← Docker setup
+    ├── Dockerfile                   ← Container build
+    ├── turbo.json                   ← Turborepo config
+    └── package.json                 ← Monorepo root
+```
+
+### Quick Reference Paths
+
+| What | Path |
+|------|------|
+| **Web Source** | `Project/Web/` |
+| **Admin Panel** | `Project/Web/admin/` |
+| **Customer Portal** | `Project/Web/application/` |
+| **Mobile API** | `Project/Web/mobileapi/` |
+| **Rate Engine** | `Project/Web/lmxtrade/` |
+| **Global Config** | `Project/Web/global_configs.php` |
+| **Mobile App Source** | `Project/android/src/` |
+| **Cortexo Dashboard** | `cortexo/apps/web/` |
+| **Cortexo API** | `cortexo/apps/api/` |
+| **Agent Brain** | `Project/.brain/` |
+
+---
+
 ## Coding Standards (CodeIgniter 3)
 
 | Rule | Detail |
@@ -68,69 +144,64 @@ WinBullSource/
 
 ---
 
-## Rate Calculation Pipeline
+## 📎 Detailed References
 
-```
-Lightstreamer MCX Feed → Lumen API → Redis → Socket.IO → Client JS → Display
-```
+> These topics are documented in detail in dedicated files:
 
-### Core Conversion Functions
-```javascript
-gold_conversion(value)     = (value / 10) × rpsg_weight     // MCX gold Rs/10g → display
-silver_conversion(value)   = (value / 1000) × rpss_weight    // MCX silver Rs/KG → display
-manual_roundoff(value, type, com_type):
-  ask → Math.ceil(value / roundoff) × roundoff    // SELL = ceiling
-  bid → Math.floor(value / roundoff) × roundoff   // BUY = floor
-```
+| Topic | File |
+|-------|------|
+| Rate calculation pipeline (8-step formula, 3 modes) | `rules/rate_formula.md` |
+| Business rules (25+ BR rules, order flow, edge cases) | `rules/business_rules.md` |
+| Validation patterns (keypress types, form validation) | `rules/validation_rules.md` |
+| Bug detection patterns + security vulns | `03_bug_patterns.md` |
+| DB schema + dependency map | `04_db_schema.md` |
+| Module audit procedure (6-round scan) | `workflows/audit_module.md` |
+| Bug fix procedure (surgical + rollback) | `workflows/fix_bug.md` |
 
-### Bank Rate (8-Step Formula)
-```
-Step 1: base = (CONTRACT_ASK + Premium + AskDiff) × (SPOT-INR_ASK + RupeePremium)
-Step 2: ± Conversion (troy oz → KG etc)
-Step 3: ± Extra Charges
-Step 4: + Custom (flat duty)
-Step 5: × Tax (GST %)
-Step 6: × TCS (%)
-Step 7: ÷ 0.995 (if Pure=Yes → 995→999 purity)
-Step 8: 1KG Rate = result | 1Grm Rate = result ÷ 1000
-```
-
-### R-Panel Commodity Rates (3 Modes)
-| Mode | `tradetype` | How Rate Is Calculated |
-|---|---|---|
-| **Future (MCX)** | 0 | `gold_conversion(MCX_ASK) + sell_diff → roundoff → ×GST → ×TCS` |
-| **Bank-based** | 1 | `gold_spotrateconversion(BANK_KGRATE) + sell_diff → roundoff` |
-| **Manual** | 2 | Admin enters sell_rate directly. Buy = sell - diff |
-
-### Client Booking Rate
-```
-Sell Rate = MCX Live + prem_sel_premium (from customer's premium group)
-Buy Rate  = MCX Live - prem_buy_premium
-Total Cost = Rate × Quantity × com_weight
-Margin = Total Cost × (margin_value / 100)  OR  flat per unit
-```
-
-### Rate Delivery Methods
-| Type | Method |
-|---|---|
-| `0` | HTTP Polling (POST every 1s) |
-| `1` | Encrypted HTTP (legacy) |
-| `2` | **WebSocket** (Socket.IO `rateUpdate` — production) |
-
----
-
-## Key Business Rules
+### Quick Reminders
 
 | Rule | Detail |
 |---|---|
-| **book_type** | 0=Buy (customer buys FROM company), 1=Sell (counterintuitive!) |
-| **Gold weight** | Stored in KG, displayed in Grams |
-| **Rate validation** | Server does NOT re-validate rate on order submission — client rate trusted ⚠️ |
-| **Sell roundoff** | Ceiling (round UP) |
-| **Buy roundoff** | Floor (round DOWN) |
-| **Purity** | ÷0.995 applied BEFORE roundoff |
-| **GST** | 3% for gold, 5% for silver (configurable) |
+| **book_type** | 0=Buy, 1=Sell (counterintuitive!) |
 | **market_status** | 0=OPEN, 1=CLOSED (counterintuitive!) |
+| **Gold weight** | Stored KG, displayed Grams |
+| **Purity** | ÷0.995 BEFORE roundoff |
+| **Sell roundoff** | Ceiling (UP) |
+| **Buy roundoff** | Floor (DOWN) |
+
+---
+
+## 🚨 Dangerous Files — Do NOT Touch Without Approval
+
+### ⛔ ABSOLUTE — Never Edit Without Jerry
+
+| File | Why | Size |
+|------|-----|------|
+| `system/application/helpers/trading_helper.php` | Core trading engine — one wrong line = ALL 77 clients down | 4,531 lines |
+| `C_booking.php` (`phone_booking` method) | 128KB monolith, every IF branch matters | ~3,200 lines |
+| `global_configs.php` | ALL client credentials — DB, keys, URLs | 190 lines |
+
+### ⚠️ HIGH RISK — Ask Before Touching
+
+| Area | What to Do |
+|------|-----------|
+| Rate calculation code | Read `rules/rate_formula.md` first, then ask |
+| Margin / hedge logic | Financial calcs — ask Jerry |
+| `dt_booking` INSERT/UPDATE | Show plan first |
+| SQL migrations (ALTER TABLE) | Must run on ALL 77 DBs — ask Jerry |
+| `trading.php` view | Core trading UI, JS tightly coupled |
+
+### ✅ ALWAYS SAFE
+
+| Type | Why |
+|------|-----|
+| `.brain/*.md` files | Documentation only |
+| View files (display only) | No DB writes |
+| CSS/JS assets | Low risk, browser test after |
+
+### CodeIgniter Core — NEVER EDIT `system/`
+
+Override via: `admin/application/core/MY_*.php` or `admin/application/libraries/MY_*.php`
 
 ---
 
@@ -167,3 +238,73 @@ Margin = Total Cost × (margin_value / 100)  OR  flat per unit
 | `dt_*` | Database table prefix |
 | `C_*` | Controller prefix |
 | `*_model.php` | Model suffix |
+
+---
+
+## 🌍 Client Registry
+
+> **Same codebase, different `global_configs.php` per client**
+> Every client gets their own: domain, database, socket channel, notification keys, timezone
+
+### What Differs Per Client (`global_configs.php`)
+
+| Config Category | Fields | Example (Maharaj) |
+|----------------|--------|-------------------|
+| **Identity** | `$client`, `$web_title`, `$web_copyright` | `maharaj`, `Maharaj Gold Smith` |
+| **URLs** | `$web_base_url`, `$app_base_url`, `$admin_base_url` | `maharajgoldsmith.com` |
+| **Database** | `$hostname`, `$username`, `$password`, `$database` | RDS endpoint, `maharaj` DB |
+| **Socket** | `$socket_base_url`, `$rate_socketurl`, `$nativesocketurl` | `ws://maharajgoldsmith.com/ws` |
+| **Socket Events** | `$evt_commupdate`, `$evt_bookupdate`, etc. | `maharajupdate*` prefix |
+| **Broadcast** | `$bcclient`, `$bcusername`, `$bcpassword` | `maharaj`, `maharaj-trade` |
+| **Rate Feed** | `$bcrateType`, `$rateFeed`, `$websocket_type` | 2 (websocket), 4 (native), 2 |
+| **Notifications** | `$app_id`, `$onesignalauth`, `$notification_title` | OneSignal keys |
+| **Timezone** | `$timezone` | `Asia/Kolkata` (India) / varies |
+| **Currency** | Implicit via DB locale settings | INR / MYR / AED etc. |
+| **Encryption** | `$key`, `$path` | Per-client enc key + file path |
+| **Versions** | `$web_version`, `$VERSIONNAME`, `$IOSVERSIONNAME` | May differ per client |
+| **WhatsApp** | `$whatsappurl`, `$instanceid` | Per-client instance |
+| **Hedge (Motilal)** | `$clientcode`, `$ApiKey`, etc. | Only Indian clients |
+
+### 🇮🇳 Indian Clients
+
+| # | Client | Domain | DB Name | Status | Notes |
+|---|--------|--------|---------|--------|-------|
+| 1 | Maharaj Gold Smith | maharajgoldsmith.com | maharaj | ✅ Active | Reference config in repo |
+| — | *70+ migrating clients* | varies | varies | 🔄 Migrating | Same template, different credentials |
+| — | *7 new clients* | varies | varies | 🆕 New | Being onboarded |
+
+### 🌏 Foreign Clients
+
+| # | Client | Country | Currency | Domain | Staging | Status | Special Notes |
+|---|--------|---------|----------|--------|---------|--------|---------------|
+| 1 | KVT Jewellers | 🇲🇾 Malaysia | MYR | kvtjewellers.com | stagingwt.kvtjewellers.com | 🔧 Staging | Timezone: `Asia/Kuala_Lumpur`, No MCX hedge, Different tax rules |
+
+### ⚠️ Foreign Client Differences (vs Indian)
+
+| Feature | Indian Client | Foreign Client |
+|---------|--------------|----------------|
+| **Currency** | INR (₹) | MYR (RM), AED (د.إ), etc. |
+| **Timezone** | `Asia/Kolkata` | `Asia/Kuala_Lumpur`, etc. |
+| **Tax** | GST 3%/5%, TCS/TDS | Local tax rules (Malaysia SST, etc.) |
+| **KYC** | Aadhaar + PAN | Passport / MyKad / IC Number |
+| **Hedge (Motilal)** | ✅ Available | ❌ Not applicable |
+| **Rate Feed** | MCX India | International spot / LBMA |
+| **Weight Units** | Grams/KG/Tola | Grams/KG/Troy Oz |
+| **SMS Provider** | Indian SMS gateway | International gateway |
+| **WhatsApp** | Indian instance | International instance |
+| **App Store** | India region | Malaysia/UAE region |
+
+### Adding a New Client Checklist
+
+```
+1. [ ] Clone global_configs.php → update ALL URLs, DB, socket events
+2. [ ] Create new MySQL database (same schema, empty data)
+3. [ ] Run seed data (commodity masters, admin user, settings)
+4. [ ] Configure Socket.IO channel with new $client prefix
+5. [ ] Setup OneSignal app (customer + admin)
+6. [ ] Configure domain + SSL
+7. [ ] Update Lumen rate broadcast for new client
+8. [ ] Test: Admin login → Commodity setup → Rate display → Customer booking
+9. [ ] Build & publish mobile app (update config.xml, package name)
+10. [ ] Add client to this registry ⬆️
+```

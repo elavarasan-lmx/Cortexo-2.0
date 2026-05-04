@@ -1,14 +1,14 @@
 import {
-  mysqlTable,
-  char,
+  pgTable,
+  uuid,
   varchar,
   text,
-  int,
+  integer,
   boolean,
-  datetime,
-  json,
+  timestamp,
+  jsonb,
   index,
-} from 'drizzle-orm/mysql-core';
+} from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { organizations } from './organizations';
 
@@ -16,13 +16,13 @@ import { organizations } from './organizations';
  * Projects table — connected repos / client panels.
  * Each project has a unique SDK API key for error ingestion.
  */
-export const projects = mysqlTable(
+export const projects = pgTable(
   'projects',
   {
-    id: char('id', { length: 36 })
+    id: uuid('id')
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    orgId: char('org_id', { length: 36 })
+      .defaultRandom(),
+    orgId: uuid('org_id')
       .references(() => organizations.id)
       .notNull(),
     name: varchar('name', { length: 100 }).notNull(),
@@ -32,14 +32,14 @@ export const projects = mysqlTable(
     repoFullName: varchar('repo_full_name', { length: 200 }),
     defaultBranch: varchar('default_branch', { length: 50 }).default('main'),
     sdkApiKey: varchar('sdk_api_key', { length: 64 }).unique().notNull(),
-    healthScore: int('health_score').default(100),
-    settings: json('settings').$type<Record<string, unknown>>().default({}),
+    healthScore: integer('health_score').default(100),
+    settings: jsonb('settings').$type<Record<string, unknown>>().default({}),
     isActive: boolean('is_active').default(true),
-    createdAt: datetime('created_at')
-      .default(sql`CURRENT_TIMESTAMP`)
+    createdAt: timestamp('created_at')
+      .defaultNow()
       .notNull(),
-    updatedAt: datetime('updated_at')
-      .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`)
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
       .notNull(),
   },
   (table) => [index('idx_projects_org').on(table.orgId)],

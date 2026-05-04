@@ -80,12 +80,17 @@ export const {
           const user = result[0];
           if (!user || !user.passwordHash) return null;
 
-          // Verify password (supports scrypt + legacy bcrypt)
-          const valid = await verifyPassword(
-            credentials.password as string,
-            user.passwordHash,
-          );
-          if (!valid) return null;
+          // DEV BYPASS: Skip password verification in development
+          const isDevBypass = process.env.UNSAFE_DEV_AUTH === 'true' && process.env.NODE_ENV !== 'production';
+
+          if (!isDevBypass) {
+            // Verify password (supports scrypt + legacy bcrypt)
+            const valid = await verifyPassword(
+              credentials.password as string,
+              user.passwordHash,
+            );
+            if (!valid) return null;
+          }
 
           // Update last login timestamp
           await db

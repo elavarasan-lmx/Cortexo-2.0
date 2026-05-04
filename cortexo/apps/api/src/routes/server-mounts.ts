@@ -212,8 +212,20 @@ export async function serverMountRoutes(app: FastifyInstance) {
       if (!server) return reply.code(404).send({ error: 'Associated server not found' });
 
       const localPath = expandHome(row.localMountPath);
-      const serverIp = server.privateIp || server.publicAddress || '';
-      if (!serverIp) return reply.code(400).send({ error: 'Server has no IP address configured' });
+
+      // Build SSH connection: publicAddress may be "user@ip" or just "ip"
+      // Prefer publicAddress (reachable from dev machine) over privateIp (VPC-only)
+      const rawAddr = server.publicAddress || server.privateIp || '';
+      if (!rawAddr) return reply.code(400).send({ error: 'Server has no IP address configured' });
+
+      // Extract user and host from address (handles "user@host" and plain "host")
+      let sshUser = row.sshUser;
+      let sshHost = rawAddr;
+      if (rawAddr.includes('@')) {
+        const parts = rawAddr.split('@');
+        sshUser = parts[0] || row.sshUser;  // prefer address user, fallback to mount config
+        sshHost = parts[1] || rawAddr;
+      }
 
       // Already mounted?
       if (isMounted(row.localMountPath)) {
@@ -227,14 +239,18 @@ export async function serverMountRoutes(app: FastifyInstance) {
 
       // Execute SSHFS mount (using spawnSync with arg array to prevent injection)
       try {
-        validateShellSafe(row.sshUser, 'sshUser');
-        validateShellSafe(serverIp, 'serverIp');
+        validateShellSafe(sshUser, 'sshUser');
+        validateShellSafe(sshHost, 'sshHost');
         validateShellSafe(row.remotePath, 'remotePath');
 
+        const sshKeyOpts = server.sshKey && server.sshKey.length > 0 && !server.sshKey.startsWith('ssh-')
+          ? `,IdentityFile=${server.sshKey}`
+          : '';
+
         const result = spawnSync('sshfs', [
-          `${row.sshUser}@${serverIp}:${row.remotePath}`,
+          `${sshUser}@${sshHost}:${row.remotePath}`,
           localPath,
-          '-o', 'reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,cache=yes,kernel_cache,auto_cache,compression=no,StrictHostKeyChecking=no',
+          '-o', `reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,cache=yes,kernel_cache,auto_cache,compression=no,StrictHostKeyChecking=no${sshKeyOpts}`,
         ], { timeout: 30000, encoding: 'utf-8' });
 
         if (result.status !== 0) {
@@ -257,9 +273,9 @@ export async function serverMountRoutes(app: FastifyInstance) {
         .where(eq(serverMounts.id, parseInt(id)));
 
       return { data: { status: 'mounted', message: `Mounted at ${localPath}` } };
-    } catch (err) {
+    } catch (err: any) {
       app.log.error(err);
-      return reply.code(500).send({ error: 'Mount operation failed' });
+      return reply.code(500).send({ error: 'Mount operation failed', details: err.message || String(err) });
     }
   });
 

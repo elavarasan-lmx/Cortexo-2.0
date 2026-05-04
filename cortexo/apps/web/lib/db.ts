@@ -1,26 +1,28 @@
-import { drizzle } from 'drizzle-orm/mysql2';
-import mysql from 'mysql2/promise';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import pg from 'pg';
 import * as schema from '@cortexo/db/schema';
+
+const { Pool } = pg;
 
 /**
  * Singleton database connection for the Next.js web app.
- * Uses Drizzle ORM with mysql2 connection pool.
+ * Uses Drizzle ORM with node-postgres (pg) connection pool.
+ * Migrated from mysql2 to PostgreSQL for RLS-based multi-tenant isolation.
  */
-let db: any = null;
-let pool: mysql.Pool | null = null;
+let db: ReturnType<typeof drizzle> | null = null;
+let pool: pg.Pool | null = null;
 
 export function getDb() {
   if (db) return db;
 
-  pool = mysql.createPool({
-    uri: process.env.DATABASE_URL,
-    waitForConnections: true,
-    connectionLimit: 5,
-    maxIdle: 2,
-    idleTimeout: 60000,
+  pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    max: 5,
+    idleTimeoutMillis: 60000,
+    connectionTimeoutMillis: 10000,
   });
 
-  db = drizzle(pool, { schema, mode: 'default' });
+  db = drizzle(pool, { schema });
   return db;
 }
 

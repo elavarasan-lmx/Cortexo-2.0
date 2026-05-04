@@ -1,8 +1,8 @@
 # Cortexo DevOps Platform — Master Reference
 
-> **Status:** PRD v134 LOCKED | 134 features | 21 categories | Architecture finalized
-> **Monorepo:** `D:\Cortexo`
-> **Last Updated:** 2026-04-23
+> **Status:** PRD v134 LOCKED | 134 features | 21 categories | ~30% built
+> **Monorepo:** `cortexo/` (inside Devops workspace)
+> **Last Updated:** 2026-05-04
 
 ---
 
@@ -11,7 +11,7 @@
 **Say this to the AI in any new session:**
 
 ```
-Read the Cortexo knowledge item and D:\Cortexo\docs\01_PRD.md — I want to continue working on Cortexo.
+Read the Cortexo knowledge item and cortexo/docs/01_PRD.md — I want to continue working on Cortexo.
 ```
 
 Or for specific work:
@@ -28,38 +28,41 @@ Read the Cortexo KI. I need to work on [specific feature/task].
 
 | File | What It Contains | When to Read |
 |:---|:---|:---|
-| `D:\Cortexo\docs\01_PRD.md` | **THE PRD** — 134 features, 21 categories, all audit enhancements | ALWAYS read first |
+| `cortexo/docs/01_PRD.md` | **THE PRD** — 134 features, 21 categories, all audit enhancements | ALWAYS read first |
 
-### 2. Architecture Docs (in conversation artifacts)
-
-| Doc | Path | Contents |
-|:---|:---|:---|
-| **Tech Architecture** | `brain/fb6f6300.../tech_architecture.md` | Dual stack, MySQL schema (22 tables), agent subsystem, security |
-| **UI/UX Design** | `brain/fb6f6300.../ui_ux_design.md` | Design system, 22 screens, 3 user flows, agent dashboards |
-| **SDK & API** | `brain/fb6f6300.../sdk_api_reference.md` | 5 SDKs (PHP/JS/Node/Python/Flutter), 50+ endpoints, agent API |
-| **Roadmap & GTM** | `brain/fb6f6300.../roadmap_gtm.md` | 7 phases (24 weeks), go-to-market, risks, budget |
-
-### 3. Audit Trail (in conversation artifacts)
+### 2. Architecture Docs (in project)
 
 | Doc | Path | Contents |
 |:---|:---|:---|
-| **Skills Final Comparison** | `brain/fb6f6300.../skills_final_comparison.md` | Cross-repo comparison matrix |
-| **Antigravity Skills Deep-dive** | `brain/fb6f6300.../antigravity_skills_deepdive.md` | 57 skills fully analyzed |
-| **Awesome Skills Features** | `brain/fb6f6300.../awesome_skills_features.md` | 1,431 skills categorized |
-| **Awesome Skills Usefulness** | `brain/fb6f6300.../awesome_skills_usefulness.md` | Gold/Silver/Skip classification |
-| **Awesome Skills Deep-dive** | `brain/fb6f6300.../awesome_skills_deepdive.md` | Key patterns extracted |
+| **Tech Architecture** | `cortexo/docs/02_tech_architecture.md` | Dual stack, MySQL schema (22 tables), agent subsystem, security |
+| **UI/UX Design** | `cortexo/docs/03_ui_ux_design.md` | Design system, 22 screens, 3 user flows, agent dashboards |
+| **SDK & API** | `cortexo/docs/04_sdk_api_reference.md` | 5 SDKs (PHP/JS/Node/Python/Flutter), 50+ endpoints, agent API |
+| **Roadmap & GTM** | `cortexo/docs/05_roadmap_gtm.md` | 7 phases (24 weeks), go-to-market, risks, budget |
 
-### 4. External Skill Repos (on disk, read-only reference)
+### 3. Audit Trail (archived — from Windows-era session `fb6f6300`)
 
-| Repo | Path | Skills | Key Value |
-|:---|:---|:---:|:---|
-| Antigravity Skills | `D:\lmx\antigravity-skills-main` | 57 | Memory systems, BDI, context engineering, verification |
-| Antigravity Awesome Skills | `D:\lmx\antigravity-awesome-skills-main` | 1,431 | PHP, MySQL, testing, observability, security patterns |
-| Awesome Claude Skills | `D:\lmx\awesome-claude-skills-master` | 833+ | SaaS automations (mostly CRM/social — limited DevOps value) |
-| Planning with Files | `D:\lmx\planning-with-files-master` | 3 | 2-Action Rule, hook system → F127 |
-| Flutter AI Rules | `D:\lmx\flutter-ai-rules-main` | 28+13 | MVVM architecture, Firebase patterns → F121 |
-| UI UX Pro Max | `D:\lmx\ui-ux-pro-max-skill-main` | 1 (complex) | 161 rules, 67 styles, 57 fonts, 16 stacks → F62-F68 |
-| Gentelella | `D:\lmx\gentelella-master` | — | Bootstrap 5 admin template, 10 color themes (UI reference only) |
+> These were generated during the initial PRD/architecture planning on Windows.
+> Key insights are already incorporated into the docs above.
+
+| Doc | Contents |
+|:---|:---|
+| Skills Final Comparison | Cross-repo comparison matrix |
+| Antigravity Skills Deep-dive | 57 skills fully analyzed |
+| Awesome Skills Features | 1,431 skills categorized |
+| Awesome Skills Usefulness | Gold/Silver/Skip classification |
+
+### 4. External Skill Repos (reference — installed as Antigravity skills)
+
+> These repos were analyzed during planning. Key patterns are now available as
+> Antigravity skills at `~/.gemini/antigravity/skills/`.
+
+| Repo | Skills | Key Value | Relevant Features |
+|:---|:---:|:---|:---|
+| Antigravity Skills | 57 | Memory systems, BDI, context engineering, verification | F107-F129 |
+| Antigravity Awesome Skills | 1,431 | PHP, MySQL, testing, observability, security patterns | F5-F8, F24-F25 |
+| Planning with Files | 3 | 2-Action Rule, hook system | F127 |
+| Flutter AI Rules | 28+13 | MVVM architecture, Firebase patterns | F121 |
+| UI UX Pro Max | 1 (complex) | 161 rules, 67 styles, 57 fonts, 16 stacks | F62-F68 |
 
 ---
 
@@ -74,7 +77,7 @@ SSH/SFTP deployment (single-server per client)
 
 ### New (Cortexo Platform)
 ```
-Next.js 14 + TypeScript + Shadcn/UI + Tailwind CSS 4
+Next.js 16 + TypeScript + Shadcn/UI + Tailwind CSS 4
 Fastify API + BullMQ + Redis 7
 MySQL 8.0 (primary DB) + Drizzle ORM
 OpenAI GPT-4o + Claude API (AI engine)
@@ -145,21 +148,30 @@ Start simple. Only escalate if retrieval degrades.
 
 ---
 
-## ⏭️ Next Steps (Implementation Phase)
+## 📈 Progress & Next Steps
 
-1. **Monorepo Scaffolding** — Create `apps/`, `packages/`, `.agent/` in `D:\Cortexo`
-2. **Pipeline Initialization** — F1 using GitHub Actions templates
-3. **Testing Core** — F12 Playwright E2E for 70+ client panels
-4. **Database Hardening** — F43-F44 MySQL optimization scripts
-5. **Flutter Integration** — F121 using flutter-ai-rules patterns
-6. **Agent Memory** — F110 starting with file-system, escalate to Mem0
+### ✅ Completed (~30%)
+- [x] Phase 1: Foundation (monorepo, auth, design system)
+- [x] Phase 2: CI/CD Engine scaffolding (schemas, UI, API)
+- [x] Phase 3: Bug Detection scaffolding (schemas, UI, API)
+- [x] Drizzle ORM schemas (14 tables)
+- [x] Fastify API routes (16 endpoints)
+- [x] Next.js dashboard UI (basic pages)
+
+### 🔲 Pending (~70%)
+- [ ] Phase 4: AI Root Cause Analysis (F26-F32)
+- [ ] Phase 5: Agent Intelligence (F107-F134)
+- [ ] SDK clients (PHP/JS/Node) — stubs only
+- [ ] Pipeline execution engine (Docker/Firecracker)
+- [ ] Billing & Monetization (F69-F78)
+- [ ] Production deployment (AWS ECS)
 
 ---
 
-## 🔗 Conversation ID
+## 🔗 Original Planning Session
 
 ```
-fb6f6300-4c3e-493b-bf76-ea1ab34d4092
+Conversation: fb6f6300-4c3e-493b-bf76-ea1ab34d4092 (Windows era)
 ```
 
-Use `@conversation fb6f6300` to reference this session's full logs.
+> PRD and architecture were finalized in this session. Project has since moved to Fedora Linux.

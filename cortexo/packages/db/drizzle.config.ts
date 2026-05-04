@@ -6,13 +6,10 @@ import { defineConfig } from 'drizzle-kit';
 export default defineConfig({
   schema: './src/schema/index.ts',
   out: './drizzle',
-  dialect: 'mysql',
+  dialect: 'postgresql',
   dbCredentials: {
-    host: '127.0.0.1',
-    port: 3306,
-    user: 'cortexo',
-    password: 'cortexo_dev_2026',
-    database: 'cortexo',
+    url: process.env.DATABASE_URL || 'postgresql://cortexo:cortexo_dev_2026@127.0.0.1:5432/cortexo',
+    ssl: false,
   },
   verbose: true,
   strict: false,

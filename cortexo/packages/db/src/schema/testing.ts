@@ -1,14 +1,14 @@
 import {
-  mysqlTable,
-  char,
+  pgTable,
+  uuid,
   varchar,
   text,
-  int,
+  integer,
   boolean,
-  datetime,
-  json,
+  timestamp,
+  jsonb,
   index,
-} from 'drizzle-orm/mysql-core';
+} from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { projects } from './projects';
 import { organizations } from './organizations';
@@ -17,26 +17,26 @@ import { organizations } from './organizations';
  * Load Test Runs — individual load test executions.
  * Stores configuration + aggregated results for each test run.
  */
-export const loadTestRuns = mysqlTable(
+export const loadTestRuns = pgTable(
   'load_test_runs',
   {
-    id: char('id', { length: 36 })
+    id: uuid('id')
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    projectId: char('project_id', { length: 36 })
+      .defaultRandom(),
+    projectId: uuid('project_id')
       .references(() => projects.id),
-    orgId: char('org_id', { length: 36 })
+    orgId: uuid('org_id')
       .references(() => organizations.id),
     name: varchar('name', { length: 200 }),
     url: varchar('url', { length: 1000 }).notNull(),
     method: varchar('method', { length: 10 }).default('GET'),
-    headers: json('headers').$type<Record<string, string>>(),
+    headers: jsonb('headers').$type<Record<string, string>>(),
     body: text('body'),
-    concurrency: int('concurrency').default(10),
-    duration: int('duration_seconds').default(10),
-    timeout: int('timeout_ms').default(10000),
+    concurrency: integer('concurrency').default(10),
+    duration: integer('duration_seconds').default(10),
+    timeout: integer('timeout_ms').default(10000),
     status: varchar('status', { length: 20 }).default('pending'),
-    results: json('results').$type<{
+    results: jsonb('results').$type<{
       totalRequests: number;
       successCount: number;
       failCount: number;
@@ -51,11 +51,11 @@ export const loadTestRuns = mysqlTable(
       statusCodes: Record<string, number>;
       latencyBuckets: number[];
     }>(),
-    startedAt: datetime('started_at'),
-    finishedAt: datetime('finished_at'),
-    durationMs: int('duration_ms'),
-    createdAt: datetime('created_at')
-      .default(sql`CURRENT_TIMESTAMP`)
+    startedAt: timestamp('started_at'),
+    finishedAt: timestamp('finished_at'),
+    durationMs: integer('duration_ms'),
+    createdAt: timestamp('created_at')
+      .defaultNow()
       .notNull(),
   },
   (table) => [
@@ -69,17 +69,17 @@ export const loadTestRuns = mysqlTable(
  * Module Test Suites — reusable test configurations.
  * Each suite contains a base URL and a list of module endpoints to test.
  */
-export const moduleTestSuites = mysqlTable(
+export const moduleTestSuites = pgTable(
   'module_test_suites',
   {
-    id: char('id', { length: 36 })
+    id: uuid('id')
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    orgId: char('org_id', { length: 36 })
+      .defaultRandom(),
+    orgId: uuid('org_id')
       .references(() => organizations.id),
     name: varchar('name', { length: 200 }).notNull(),
     baseUrl: varchar('base_url', { length: 500 }).notNull(),
-    modules: json('modules').$type<Array<{
+    modules: jsonb('modules').$type<Array<{
       name: string;
       endpoint: string;
       method?: string;
@@ -87,14 +87,14 @@ export const moduleTestSuites = mysqlTable(
       headers?: Record<string, string>;
       body?: string;
     }>>(),
-    lastRunAt: datetime('last_run_at'),
-    lastPassCount: int('last_pass_count'),
-    lastFailCount: int('last_fail_count'),
-    createdAt: datetime('created_at')
-      .default(sql`CURRENT_TIMESTAMP`)
+    lastRunAt: timestamp('last_run_at'),
+    lastPassCount: integer('last_pass_count'),
+    lastFailCount: integer('last_fail_count'),
+    createdAt: timestamp('created_at')
+      .defaultNow()
       .notNull(),
-    updatedAt: datetime('updated_at')
-      .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`)
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
       .notNull(),
   },
   (table) => [index('idx_suites_org').on(table.orgId)],
@@ -104,26 +104,26 @@ export const moduleTestSuites = mysqlTable(
  * Module Test Results — individual test execution results.
  * One row per module endpoint per test run.
  */
-export const moduleTestResults = mysqlTable(
+export const moduleTestResults = pgTable(
   'module_test_results',
   {
-    id: char('id', { length: 36 })
+    id: uuid('id')
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    suiteId: char('suite_id', { length: 36 })
+      .defaultRandom(),
+    suiteId: uuid('suite_id')
       .references(() => moduleTestSuites.id)
       .notNull(),
-    runId: char('run_id', { length: 36 }).notNull(),
+    runId: uuid('run_id').notNull(),
     moduleName: varchar('module_name', { length: 200 }).notNull(),
     endpoint: varchar('endpoint', { length: 500 }).notNull(),
     method: varchar('method', { length: 10 }).default('GET'),
     status: varchar('status', { length: 20 }).default('pending'),
-    latencyMs: int('latency_ms'),
-    statusCode: int('status_code'),
-    responseSize: int('response_size'),
+    latencyMs: integer('latency_ms'),
+    statusCode: integer('status_code'),
+    responseSize: integer('response_size'),
     error: text('error'),
-    createdAt: datetime('created_at')
-      .default(sql`CURRENT_TIMESTAMP`)
+    createdAt: timestamp('created_at')
+      .defaultNow()
       .notNull(),
   },
   (table) => [

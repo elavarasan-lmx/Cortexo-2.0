@@ -1,29 +1,30 @@
-import { drizzle, MySql2Database } from 'drizzle-orm/mysql2';
+import { drizzle } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
-import mysql from 'mysql2/promise';
+import pg from 'pg';
 import * as schema from '@cortexo/db/schema';
 
-let db: MySql2Database<typeof schema> | null = null;
+const { Pool } = pg;
+
+type PgDatabase = ReturnType<typeof drizzle>;
+let db: PgDatabase | null = null;
+let pool: pg.Pool | null = null;
 
 /**
- * Get or create a database connection pool.
- * Uses Drizzle ORM with mysql2 driver.
+ * Get or create a PostgreSQL connection pool.
+ * Uses Drizzle ORM with node-postgres (pg) driver.
+ * Migrated from mysql2 to support RLS-based multi-tenant isolation.
  */
 export async function getDb() {
   if (db) return db;
 
-  const pool = mysql.createPool({
-    uri: process.env.DATABASE_URL,
-    waitForConnections: true,
-    connectionLimit: 10,
-    maxIdle: 5,
-    idleTimeout: 60000,
-    enableKeepAlive: true,
-    keepAliveInitialDelay: 10000,
-    queueLimit: 0,
+  pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    max: 10,
+    idleTimeoutMillis: 60000,
+    connectionTimeoutMillis: 10000,
   });
 
-  db = drizzle(pool, { schema, mode: 'default' });
+  db = drizzle(pool, { schema });
   return db;
 }
 
@@ -39,5 +40,16 @@ export async function testDbConnection(): Promise<boolean> {
     return true;
   } catch {
     return false;
+  }
+}
+
+/**
+ * Gracefully close the connection pool (for clean shutdown).
+ */
+export async function closeDb(): Promise<void> {
+  if (pool) {
+    await pool.end();
+    pool = null;
+    db = null;
   }
 }

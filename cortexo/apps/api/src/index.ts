@@ -34,7 +34,8 @@ import { orgRoutes } from './routes/org.js';
 import { syncRoutes } from './routes/sync.js';
 import { serverRoutes } from './routes/servers.js';
 import { logViewerRoutes } from './routes/log-viewer.js';
-import { dbMigrationRoutes } from './routes/db-migration.js';
+// DISABLED: Uses mysql2 — Cortexo is fully PostgreSQL now
+// import { dbMigrationRoutes } from './routes/db-migration.js';
 
 import { menuPermissionRoutes } from './routes/menu-permissions.js';
 import { serverMountRoutes } from './routes/server-mounts.js';
@@ -193,7 +194,7 @@ async function start() {
   await app.register(syncRoutes, { prefix: '/v1' });
   await app.register(serverRoutes, { prefix: '/v1' });
   await app.register(logViewerRoutes, { prefix: '/v1' });
-  await app.register(dbMigrationRoutes, { prefix: '/v1' });
+  // await app.register(dbMigrationRoutes, { prefix: '/v1' }); // DISABLED: mysql2 dependency removed
 
   await app.register(menuPermissionRoutes, { prefix: '/v1' });
   await app.register(serverMountRoutes, { prefix: '/v1' });

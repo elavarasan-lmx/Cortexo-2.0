@@ -1,6 +1,7 @@
 /**
  * Cortexo Database Schema — Central export
- * All tables defined as Drizzle ORM schemas for MySQL 8.0 / MariaDB 10.11.
+ * All tables defined as Drizzle ORM schemas for PostgreSQL 18.3.
+ * Migrated from MySQL to enable native Row-Level Security (RLS).
  */
 
 // Phase 1: Foundation
@@ -106,3 +107,11 @@ export type {
   DeprecationResult, NewDeprecationResult,
   JudgeScore, NewJudgeScore,
 } from './automation';
+
+// Phase 16: Load Testing & Module Testing
+export { loadTestRuns, moduleTestSuites, moduleTestResults } from './testing';
+export type {
+  LoadTestRun, NewLoadTestRun,
+  ModuleTestSuite, NewModuleTestSuite,
+  ModuleTestResult, NewModuleTestResult,
+} from './testing';

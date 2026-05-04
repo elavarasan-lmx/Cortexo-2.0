@@ -1,12 +1,12 @@
 import {
-  mysqlTable,
+  pgTable,
   varchar,
-  char,
+  uuid,
   text,
-  datetime,
-  int,
+  timestamp,
+  serial,
   index,
-} from 'drizzle-orm/mysql-core';
+} from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { users } from './users';
 
@@ -16,11 +16,11 @@ import { users } from './users';
  * Each row = one action by one user.
  * Examples: deploy, provision, menu_change, login, error_resolve, pipeline_run
  */
-export const auditLogs = mysqlTable(
+export const auditLogs = pgTable(
   'audit_logs',
   {
-    id: int('id').primaryKey().autoincrement(),
-    userId: char('user_id', { length: 36 })
+    id: serial('id').primaryKey(),
+    userId: uuid('user_id')
       .notNull()
       .references(() => users.id),
     userName: varchar('user_name', { length: 100 }).notNull(),
@@ -30,8 +30,8 @@ export const auditLogs = mysqlTable(
     description: text('description'),
     metadata: text('metadata'), // JSON string for extra context
     ipAddress: varchar('ip_address', { length: 45 }),
-    createdAt: datetime('created_at')
-      .default(sql`CURRENT_TIMESTAMP`)
+    createdAt: timestamp('created_at')
+      .defaultNow()
       .notNull(),
   },
   (table) => [

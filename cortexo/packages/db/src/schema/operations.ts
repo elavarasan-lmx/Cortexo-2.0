@@ -1,13 +1,13 @@
 import {
-  mysqlTable,
-  char,
+  pgTable,
+  uuid,
   varchar,
   text,
   boolean,
-  datetime,
-  json,
+  timestamp,
+  jsonb,
   index,
-} from 'drizzle-orm/mysql-core';
+} from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { organizations } from './organizations';
 import { projects } from './projects';
@@ -16,13 +16,13 @@ import { projects } from './projects';
  * Integrations table (F134: Third-party Integrations)
  * Stores connected services (GitHub, GitLab, Slack, etc.) per organization.
  */
-export const integrations = mysqlTable(
+export const integrations = pgTable(
   'integrations',
   {
-    id: char('id', { length: 36 })
+    id: uuid('id')
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    orgId: char('org_id', { length: 36 })
+      .defaultRandom(),
+    orgId: uuid('org_id')
       .references(() => organizations.id)
       .notNull(),
     provider: varchar('provider', { length: 50 }).notNull(),
@@ -31,11 +31,11 @@ export const integrations = mysqlTable(
     refreshToken: text('refresh_token'),
     webhookUrl: varchar('webhook_url', { length: 500 }),
     webhookSecret: varchar('webhook_secret', { length: 100 }),
-    config: json('config').$type<Record<string, unknown>>().default({}),
+    config: jsonb('config').$type<Record<string, unknown>>().default({}),
     isActive: boolean('is_active').default(true),
-    lastSyncAt: datetime('last_sync_at'),
-    createdAt: datetime('created_at')
-      .default(sql`CURRENT_TIMESTAMP`)
+    lastSyncAt: timestamp('last_sync_at'),
+    createdAt: timestamp('created_at')
+      .defaultNow()
       .notNull(),
   },
   (table) => [

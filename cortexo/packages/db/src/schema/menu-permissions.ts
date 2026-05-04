@@ -1,12 +1,12 @@
 import {
-  mysqlTable,
+  pgTable,
   varchar,
-  char,
+  uuid,
   boolean,
-  datetime,
+  timestamp,
   index,
   uniqueIndex,
-} from 'drizzle-orm/mysql-core';
+} from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { users } from './users';
 
@@ -20,16 +20,16 @@ import { users } from './users';
  * menuKey uses the href path as unique identifier, e.g.:
  *   "/dashboard", "/pipelines", "/servers", "/provision"
  */
-export const userMenuPermissions = mysqlTable(
+export const userMenuPermissions = pgTable(
   'user_menu_permissions',
   {
-    userId: char('user_id', { length: 36 })
+    userId: uuid('user_id')
       .notNull()
       .references(() => users.id),
     menuKey: varchar('menu_key', { length: 100 }).notNull(),
     visible: boolean('visible').default(true).notNull(),
-    updatedAt: datetime('updated_at')
-      .default(sql`CURRENT_TIMESTAMP`)
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
       .notNull(),
   },
   (table) => [

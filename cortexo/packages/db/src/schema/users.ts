@@ -1,11 +1,10 @@
 import {
-  mysqlTable,
-  char,
+  pgTable,
+  uuid,
   varchar,
-  datetime,
+  timestamp,
   index,
-  text,
-} from 'drizzle-orm/mysql-core';
+} from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { organizations } from './organizations';
 
@@ -13,13 +12,13 @@ import { organizations } from './organizations';
  * Users table — team members belonging to an organization.
  * Supports email/password + OAuth providers (GitHub, Google).
  */
-export const users = mysqlTable(
+export const users = pgTable(
   'users',
   {
-    id: char('id', { length: 36 })
+    id: uuid('id')
       .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    orgId: char('org_id', { length: 36 }).references(() => organizations.id),
+      .defaultRandom(),
+    orgId: uuid('org_id').references(() => organizations.id),
     name: varchar('name', { length: 100 }).notNull(),
     email: varchar('email', { length: 255 }).unique().notNull(),
     passwordHash: varchar('password_hash', { length: 255 }),
@@ -30,10 +29,10 @@ export const users = mysqlTable(
     providerId: varchar('provider_id', { length: 100 }),
     githubId: varchar('github_id', { length: 100 }),
     resetToken: varchar('reset_token', { length: 255 }),
-    resetTokenExpiresAt: datetime('reset_token_expires_at'),
-    lastLoginAt: datetime('last_login_at'),
-    createdAt: datetime('created_at')
-      .default(sql`CURRENT_TIMESTAMP`)
+    resetTokenExpiresAt: timestamp('reset_token_expires_at'),
+    lastLoginAt: timestamp('last_login_at'),
+    createdAt: timestamp('created_at')
+      .defaultNow()
       .notNull(),
   },
   (table) => [
