@@ -2,14 +2,23 @@
 
 import { useState } from 'react';
 import { Building2, Save, Users, FolderGit2, Globe, Shield } from 'lucide-react';
+import { api } from '@/lib/api';
+import { useApiData, useAutoLoadToken } from '@/lib/hooks';
 
 const card: React.CSSProperties = { backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', borderRadius: '14px', padding: '24px' };
 const label: React.CSSProperties = { display: 'block', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.04em', color: 'rgb(var(--text-muted))', marginBottom: '6px' };
 const input: React.CSSProperties = { width: '100%', boxSizing: 'border-box' as const, padding: '10px 14px', fontSize: '13px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-primary))', outline: 'none' };
 
 export default function OrganizationPage() {
+  useAutoLoadToken();
   const [org, setOrg] = useState({ name: 'LogiMax India', slug: 'logimax', website: 'https://logimaxindia.com', industry: 'Fintech / Bullion Trading' });
   const [saved, setSaved] = useState(false);
+  const { data: users } = useApiData(() => api.getUsers(), { default: [] as any[] });
+  const { data: configs } = useApiData(() => api.getWinbullConfigs(), { default: [] as any[] });
+  const { data: projects } = useApiData(() => api.getProjects(), { default: [] as any[] });
+  const memberCount = (users || []).length || 0;
+  const clientCount = (configs || []).length || 0;
+  const projectCount = (projects || []).length || 0;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -22,9 +31,9 @@ export default function OrganizationPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
         {[
           { label: 'Plan', value: 'Pro', color: '#6366F1', icon: <Shield style={{ width: 16, height: 16 }} /> },
-          { label: 'Members', value: '3', color: '#10B981', icon: <Users style={{ width: 16, height: 16 }} /> },
-          { label: 'Projects', value: '12', color: '#F59E0B', icon: <FolderGit2 style={{ width: 16, height: 16 }} /> },
-          { label: 'Clients', value: '70+', color: '#E01E5A', icon: <Building2 style={{ width: 16, height: 16 }} /> },
+          { label: 'Members', value: String(memberCount), color: '#10B981', icon: <Users style={{ width: 16, height: 16 }} /> },
+          { label: 'Projects', value: String(projectCount), color: '#F59E0B', icon: <FolderGit2 style={{ width: 16, height: 16 }} /> },
+          { label: 'Clients', value: String(clientCount), color: '#E01E5A', icon: <Building2 style={{ width: 16, height: 16 }} /> },
         ].map(s => (
           <div key={s.label} style={{ ...card, display: 'flex', alignItems: 'center', gap: '14px', padding: '16px 18px' }}>
             <div style={{ width: 40, height: 40, borderRadius: '10px', backgroundColor: `${s.color}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: s.color }}>{s.icon}</div>
