@@ -62,13 +62,25 @@ function UptimeBar({ bars }: { bars: number[] }) {
 /* ── Main Page ── */
 export default function HeartbeatPage() {
   useAutoLoadToken();
-  const [endpoints, setEndpoints] = useState(demoEndpoints);
   const [refreshing, setRefreshing] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastRefreshTime, setLastRefreshTime] = useState(new Date());
 
   // Try to load real server data
-  const { data: servers } = useApiData(() => api.getServers());
+  const { data: servers, refetch: refetchServers } = useApiData(() => api.getServers(), { default: [] as any[] });
+
+  // Build endpoints from real data or fall back to demo
+  const endpoints = (servers && (servers as any[]).length > 0)
+    ? (servers as any[]).map((s: any) => ({
+        id: String(s.id),
+        name: s.name || s.label || `Server ${s.id}`,
+        url: `${s.host || s.ip}:${s.port || 22}`,
+        uptimePct: s.status === 'online' ? 99.9 : s.status === 'offline' ? 0 : 95,
+        latencyMs: 0,
+        lastChecked: 'Now',
+        group: s.environment || 'Production',
+      }))
+    : demoEndpoints;
 
   // Auto-refresh every 30s
   useEffect(() => {

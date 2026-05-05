@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { User, Mail, Camera, Save, Shield, Phone, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { api } from '@/lib/api';
+import { useAutoLoadToken } from '@/lib/hooks';
 
 const inputBase: React.CSSProperties = {
   width: '100%',
@@ -41,6 +43,7 @@ const labelStyle: React.CSSProperties = {
 type Toast = { type: 'success' | 'error'; message: string } | null;
 
 export default function SettingsPage() {
+  useAutoLoadToken();
   const [profile, setProfile] = useState({
     name: '',
     email: '',
@@ -53,19 +56,18 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Load user profile on mount via internal Next.js API route
+  // Load user profile on mount via API client
   async function loadProfile() {
     setIsLoading(true);
     setLoadError(null);
     try {
-      const res = await fetch('/api/profile');
-      if (!res.ok) throw new Error(`Server error (${res.status})`);
-      const data = await res.json();
-      if (data.user) {
+      const res = await api.getMe();
+      const user = res.data;
+      if (user) {
         setProfile({
-          name: data.user.name || '',
-          email: data.user.email || '',
-          phone: data.user.phone || '',
+          name: (user as any).name || '',
+          email: (user as any).email || '',
+          phone: (user as any).phone || '',
         });
       }
     } catch (err: unknown) {
@@ -90,13 +92,7 @@ export default function SettingsPage() {
   async function handleSaveProfile() {
     setSaving(true);
     try {
-      const res = await fetch('/api/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: profile.name, email: profile.email, phone: profile.phone }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to save profile');
+      await api.updateProfile({ name: profile.name, email: profile.email });
       setToast({ type: 'success', message: 'Profile saved successfully' });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to save profile';
@@ -121,16 +117,7 @@ export default function SettingsPage() {
     }
     setChangingPw(true);
     try {
-      const res = await fetch('/api/profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          currentPassword: passwords.current,
-          newPassword: passwords.newPassword,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to change password');
+      await api.changePassword({ currentPassword: passwords.current, newPassword: passwords.newPassword });
       setToast({ type: 'success', message: 'Password changed successfully' });
       setPasswords({ current: '', newPassword: '', confirm: '' });
     } catch (err: unknown) {
