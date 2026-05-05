@@ -1,8 +1,8 @@
 # Cortexo DevOps Platform — Master Reference
 
-> **Status:** PRD v134 LOCKED | 134 features | 21 categories | ~30% built
-> **Monorepo:** `cortexo/` (inside Devops workspace)
-> **Last Updated:** 2026-05-04
+> **Status:** Production-ready MVP | 90+ API endpoints | 18 DB schemas | 37 dashboard pages
+> **Monorepo:** `cortexo/` (Turborepo + npm workspaces)
+> **Last Updated:** 2026-05-05
 
 ---
 
@@ -28,45 +28,27 @@ Read the Cortexo KI. I need to work on [specific feature/task].
 
 | File | What It Contains | When to Read |
 |:---|:---|:---|
-| `cortexo/docs/01_PRD.md` | **THE PRD** — 134 features, 21 categories, all audit enhancements | ALWAYS read first |
+| `README.md` | Quick start, architecture diagram, tech stack, API table | Always read first |
+| `cortexo/docs/01_PRD.md` | **THE PRD** — 111 features, 21 categories | For feature planning |
 
 ### 2. Architecture Docs (in project)
 
 | Doc | Path | Contents |
 |:---|:---|:---|
-| **Tech Architecture** | `cortexo/docs/02_tech_architecture.md` | Dual stack, MySQL schema (22 tables), agent subsystem, security |
-| **UI/UX Design** | `cortexo/docs/03_ui_ux_design.md` | Design system, 22 screens, 3 user flows, agent dashboards |
-| **SDK & API** | `cortexo/docs/04_sdk_api_reference.md` | 5 SDKs (PHP/JS/Node/Python/Flutter), 50+ endpoints, agent API |
-| **Roadmap & GTM** | `cortexo/docs/05_roadmap_gtm.md` | 7 phases (24 weeks), go-to-market, risks, budget |
+| **Tech Architecture** | `docs/02_tech_architecture.md` | System design, agent subsystem, security *(note: SQL examples are MySQL-era, actual DB is PostgreSQL 16)* |
+| **UI/UX Design** | `docs/03_ui_ux_design.md` | Design system, 22 screens, 3 user flows |
+| **SDK & API** | `docs/04_sdk_api_reference.md` | SDKs (PHP/JS/Node), API reference *(note: now 90+ endpoints, doc shows ~50)* |
+| **Roadmap & GTM** | `docs/05_roadmap_gtm.md` | 7 phases (24 weeks), go-to-market, risks |
+| **IDP Architecture** | `docs/idp-architecture/` | 7 deep-dive docs (architecture, modules, workflows, data model, security, roadmap, UI/UX) |
+| **Server Mounts** | `docs/server_mount_deep_analysis.md` | SSHFS implementation deep dive |
 
-### 3. Audit Trail (archived — from Windows-era session `fb6f6300`)
+### 3. UI Screenshots
 
-> These were generated during the initial PRD/architecture planning on Windows.
-> Key insights are already incorporated into the docs above.
-
-| Doc | Contents |
-|:---|:---|
-| Skills Final Comparison | Cross-repo comparison matrix |
-| Antigravity Skills Deep-dive | 57 skills fully analyzed |
-| Awesome Skills Features | 1,431 skills categorized |
-| Awesome Skills Usefulness | Gold/Silver/Skip classification |
-
-### 4. External Skill Repos (reference — installed as Antigravity skills)
-
-> These repos were analyzed during planning. Key patterns are now available as
-> Antigravity skills at `~/.gemini/antigravity/skills/`.
-
-| Repo | Skills | Key Value | Relevant Features |
-|:---|:---:|:---|:---|
-| Antigravity Skills | 57 | Memory systems, BDI, context engineering, verification | F107-F129 |
-| Antigravity Awesome Skills | 1,431 | PHP, MySQL, testing, observability, security patterns | F5-F8, F24-F25 |
-| Planning with Files | 3 | 2-Action Rule, hook system | F127 |
-| Flutter AI Rules | 28+13 | MVVM architecture, Firebase patterns | F121 |
-| UI UX Pro Max | 1 (complex) | 161 rules, 67 styles, 57 fonts, 16 stacks | F62-F68 |
+> 45 dashboard screenshots in `docs/ui-screens/` covering all major pages.
 
 ---
 
-## 🏗️ Tech Stack Summary
+## 🏗️ Tech Stack (Current — as of May 2026)
 
 ### Existing (70+ Client Panels)
 ```
@@ -75,103 +57,70 @@ Flutter + Ionic (mobile)
 SSH/SFTP deployment (single-server per client)
 ```
 
-### New (Cortexo Platform)
+### Cortexo Platform
 ```
-Next.js 16 + TypeScript + Shadcn/UI + Tailwind CSS 4
-Fastify API + BullMQ + Redis 7
-MySQL 8.0 (primary DB) + Drizzle ORM
-OpenAI GPT-4o + Claude API (AI engine)
-Docker + Firecracker (pipeline isolation)
-AWS (ECS + RDS + ElastiCache)
+Next.js 16 + React 19 + TypeScript (strict)
+Fastify 5 + Zod + JWT + Helmet
+PostgreSQL 16 (primary DB) + Drizzle ORM
+Redis 7 + BullMQ (job queues)
+Vitest (testing) + GitHub Actions (CI/CD)
+Docker Compose (local dev)
 ```
+
+> ⚠️ **Note:** Some docs (01_PRD, 02_tech_architecture) still reference MySQL 8.0 and Next.js 14.
+> These were written during initial planning. The actual implementation uses **PostgreSQL 16** and **Next.js 16**.
 
 ---
 
-## 🧠 Agent Intelligence — Critical Implementation Details
+## 📊 Current State
 
-### Memory Escalation Path
-```
-File-system (baseline) → Mem0 (multi-tenant) → Zep/Graphiti (temporal KG)
-Start simple. Only escalate if retrieval degrades.
-```
+### What's Built
 
-### 8 Production Guardrails
+| Component | Details |
+|:---|:---|
+| **Dashboard** | Next.js 16 — 37 pages (App Router) |
+| **API** | Fastify 5 — 90+ REST endpoints across 32 route files |
+| **Database** | PostgreSQL 16 — 18 Drizzle ORM schema groups |
+| **Auth** | JWT + GitHub OAuth, scrypt hashing, rate limiting (5 req/min on auth) |
+| **Workers** | BullMQ pipeline worker with health endpoint (:4001) |
+| **SDKs** | JS (browser), Node.js (server), PHP (server) |
+| **Real-time** | WebSocket + SSE for live logs and metrics |
+| **CI/CD** | GitHub Actions (lint → build → test) |
+| **Tests** | Vitest integration tests (health, auth, projects) |
+| **Security** | Helmet, CORS, env validation, structured error codes |
+| **Docs** | Swagger UI at `/docs`, 45 UI screenshots |
 
-| # | Guardrail | Source | Rule |
-|:---|:---|:---|:---|
-| 1 | **2-Action Rule** | Planning-with-Files | Persist to disk after every 2 external operations |
-| 2 | **3-5 Sub-agent Cap** | multi-agent-patterns | Never exceed 5 sub-agents per supervisor |
-| 3 | **15x Token Budget** | multi-agent-patterns | Multi-agent = 15x single-agent cost |
-| 4 | **70% Compaction** | context-optimization | Trigger compaction at 70%, NEVER 90% |
-| 5 | **Iron Law** | verification-before-completion | 5-step verification gate before any completion claim |
-| 6 | **LLM-as-a-Judge** | evaluation | Different model family evaluates agent output |
-| 7 | **10-20 Tool Limit** | tool-design | Max tools per agent context |
-| 8 | **forward_message** | multi-agent-patterns | Direct sub-agent→user (prevent telephone game) |
+### Key Patterns
 
-### 5 Context Degradation Patterns (F127)
-
-| Pattern | Signal | Fix |
-|:---|:---|:---|
-| Lost-in-Middle | Model ignores correct info in context | Place critical info at start/end |
-| Context Poisoning | Hallucination enters context, compounds | Truncate to before poisoning point |
-| Context Distraction | Irrelevant docs degrade performance | Aggressive pre-filtering |
-| Context Confusion | Wrong-task constraints applied | Isolate task contexts |
-| Context Clash | Contradictory but correct sources | Priority rules, version filtering |
+| Pattern | Details |
+|:---|:---|
+| **Error handling** | Use `apiError()` from `lib/error-codes.ts` — never raw strings |
+| **Auth rate limiting** | Use `authRateLimit` config for any new auth routes (5 req/min) |
+| **Type safety** | Zero `any` in auth routes — use `unknown` + type guards |
+| **Env validation** | `lib/env.ts` validates required vars at startup |
+| **Components** | Deploy form uses modular `components/deploy/` directory |
 
 ---
 
-## 📊 PRD v134 — Category Index
+## 📈 Phases
 
-| # | Category | Features | Key Features |
-|:---|:---|:---:|:---|
-| 1 | CI/CD Pipeline Builder | F1-F4 | Pipeline builder, SSH deploy, rollback, GitOps |
-| 2 | Code Quality | F5-F8 | Linting, quality gate, PSR-12 |
-| 3 | Project Management | F9-F11 | Project setup, health score, docs |
-| 4 | Testing Automation | F12-F16 | Playwright E2E, k6 load, TDD, regression |
-| 5 | Database Management | F17 | Zero-downtime migrations (pt-online-schema-change) |
-| 6 | Bug Detection | F18-F23 | SDK error capture, fingerprinting, correlation |
-| 7 | Security Scanning | F24-F25 | SAST, CVE/Trivy, PHP security |
-| 8 | AI Root Cause | F26-F32 | Deploy-diff analysis, fix suggestions, patterns |
-| 9 | AI Code Review | F33-F39 | Uncle Bob checklists, structured review |
-| 10 | Documentation | F40-F42 | API docs, changelog, Obsidian |
-| 11 | Database Optimizer | F43-F44 | MySQL sys.schema_unused_indexes, slow query |
-| 12 | Architecture & Migration | F45-F52 | CI3→4, PHP 7.4→8.2, dependency audit |
-| 13 | Team & Collaboration | F53-F58 | RBAC, notifications, audit logs |
-| 14 | Notifications | F59-F61 | Email, Slack, webhook alerts |
-| 15 | Customization Engine | F62-F68 | White-label, themes, design tokens |
-| 16 | Billing & Monetization | F69-F78 | Stripe, usage metering, plans |
-| 17 | Observability | F79-F98 | RED/USE methods, Grafana-as-Code, chaos eng |
-| 18 | Landing & Marketing | F99-F106 | SEO, blog, onboarding |
-| 19 | Agent Intelligence | F107-F122 | Autonomous exec, memory, skills, verification |
-| 20 | Advanced Agent | F123-F129 | Context engineering, deprecation engine, orchestration |
-| 21 | AI Gateway | F130-F134 | Skill risk, accessibility, postmortem, marketplace |
-
----
-
-## 📈 Progress & Next Steps
-
-### ✅ Completed (~30%)
 - [x] Phase 1: Foundation (monorepo, auth, design system)
-- [x] Phase 2: CI/CD Engine scaffolding (schemas, UI, API)
-- [x] Phase 3: Bug Detection scaffolding (schemas, UI, API)
-- [x] Drizzle ORM schemas (14 tables)
-- [x] Fastify API routes (16 endpoints)
-- [x] Next.js dashboard UI (basic pages)
-
-### 🔲 Pending (~70%)
-- [ ] Phase 4: AI Root Cause Analysis (F26-F32)
-- [ ] Phase 5: Agent Intelligence (F107-F134)
-- [ ] SDK clients (PHP/JS/Node) — stubs only
-- [ ] Pipeline execution engine (Docker/Firecracker)
-- [ ] Billing & Monetization (F69-F78)
-- [ ] Production deployment (AWS ECS)
+- [x] Phase 2: CI/CD Engine (pipelines, deployments, canary)
+- [x] Phase 3: Bug Detection (error tracking, fingerprinting)
+- [x] Phase 4: AI Root Cause Analysis
+- [x] Phase 5: Agent Intelligence
+- [x] Phase 6-9: Operations, Sync, Infrastructure
+- [x] Phase 10-13: Permissions, Audit, Profiles, Sources
+- [x] Phase 14-16: Automation, Alerts, Testing
+- [ ] Phase 17: Production hardening + performance optimization
 
 ---
 
-## 🔗 Original Planning Session
+## 🔗 Historical Planning
 
 ```
-Conversation: fb6f6300-4c3e-493b-bf76-ea1ab34d4092 (Windows era)
+Original PRD session: fb6f6300-4c3e-493b-bf76-ea1ab34d4092 (Windows era)
 ```
 
-> PRD and architecture were finalized in this session. Project has since moved to Fedora Linux.
+> PRD and architecture were finalized in that session. Project has since moved to Fedora Linux.
+> Migrated from MySQL 8.0 → PostgreSQL 16, Next.js 14 → Next.js 16.
