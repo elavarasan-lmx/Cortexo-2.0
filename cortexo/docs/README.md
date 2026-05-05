@@ -1,8 +1,36 @@
-# Cortexo DevOps Platform — Master Reference
+# Cortexo DevOps Platform — Documentation
 
 > **Status:** Production-ready MVP | 90+ API endpoints | 18 DB schemas | 37 dashboard pages
 > **Monorepo:** `cortexo/` (Turborepo + npm workspaces)
 > **Last Updated:** 2026-05-05
+
+---
+
+## 📁 Documentation Structure
+
+```
+docs/
+├── README.md                 ← You are here
+├── planning/                 ← Product & design specs
+│   ├── 01_PRD.md             ← THE source of truth (111 features, 21 categories)
+│   ├── 03_ui_ux_design.md    ← Design tokens, 22 page wireframes, 3 user flows
+│   ├── 04_sdk_api_reference.md ← 5 SDKs, 90+ API endpoints, webhook payloads
+│   └── 05_roadmap_gtm.md    ← 7-phase roadmap, GTM strategy, budget
+├── architecture/             ← System architecture (7 deep-dive docs)
+│   ├── 01_architecture_overview.md  ← Executive summary, control/data plane
+│   ├── 02_module_design.md          ← 12 modules with failure modes
+│   ├── 03_workflows.md              ← CI/CD, promotion, incident workflows
+│   ├── 04_data_model.md             ← PostgreSQL schema (50+ tables)
+│   ├── 05_tradeoffs_risks_security.md ← Trade-offs, risk register
+│   ├── 06_roadmap.md                ← Phased implementation roadmap
+│   └── 07_ui_ux.md                  ← Command center, dashboards
+├── features/                 ← Feature-level deep dives
+│   └── server_mount_deep_analysis.md ← SSHFS implementation (462 lines)
+└── screenshots/              ← 45 dashboard screenshots
+    ├── 01_Dashboard.png
+    ├── 02_Deployments.png
+    └── ... (45 PNGs)
+```
 
 ---
 
@@ -11,40 +39,8 @@
 **Say this to the AI in any new session:**
 
 ```
-Read the Cortexo knowledge item and cortexo/docs/01_PRD.md — I want to continue working on Cortexo.
+Read the Cortexo knowledge item and docs/planning/01_PRD.md — I want to continue working on Cortexo.
 ```
-
-Or for specific work:
-
-```
-Read the Cortexo KI. I need to work on [specific feature/task].
-```
-
----
-
-## 📁 File Map — Where Everything Lives
-
-### 1. Source of Truth (in project)
-
-| File | What It Contains | When to Read |
-|:---|:---|:---|
-| `README.md` | Quick start, architecture diagram, tech stack, API table | Always read first |
-| `cortexo/docs/01_PRD.md` | **THE PRD** — 111 features, 21 categories | For feature planning |
-
-### 2. Architecture Docs (in project)
-
-| Doc | Path | Contents |
-|:---|:---|:---|
-| **Tech Architecture** | `docs/02_tech_architecture.md` | System design, agent subsystem, security *(note: SQL examples are MySQL-era, actual DB is PostgreSQL 16)* |
-| **UI/UX Design** | `docs/03_ui_ux_design.md` | Design system, 22 screens, 3 user flows |
-| **SDK & API** | `docs/04_sdk_api_reference.md` | SDKs (PHP/JS/Node), API reference *(note: now 90+ endpoints, doc shows ~50)* |
-| **Roadmap & GTM** | `docs/05_roadmap_gtm.md` | 7 phases (24 weeks), go-to-market, risks |
-| **IDP Architecture** | `docs/idp-architecture/` | 7 deep-dive docs (architecture, modules, workflows, data model, security, roadmap, UI/UX) |
-| **Server Mounts** | `docs/server_mount_deep_analysis.md` | SSHFS implementation deep dive |
-
-### 3. UI Screenshots
-
-> 45 dashboard screenshots in `docs/ui-screens/` covering all major pages.
 
 ---
 
@@ -67,14 +63,12 @@ Vitest (testing) + GitHub Actions (CI/CD)
 Docker Compose (local dev)
 ```
 
-> ⚠️ **Note:** Some docs (01_PRD, 02_tech_architecture) still reference MySQL 8.0 and Next.js 14.
+> ⚠️ **Note:** Some planning docs still reference MySQL 8.0 and Next.js 14.
 > These were written during initial planning. The actual implementation uses **PostgreSQL 16** and **Next.js 16**.
 
 ---
 
 ## 📊 Current State
-
-### What's Built
 
 | Component | Details |
 |:---|:---|
@@ -90,7 +84,9 @@ Docker Compose (local dev)
 | **Security** | Helmet, CORS, env validation, structured error codes |
 | **Docs** | Swagger UI at `/docs`, 45 UI screenshots |
 
-### Key Patterns
+---
+
+## 🔑 Key Patterns
 
 | Pattern | Details |
 |:---|:---|
