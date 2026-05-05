@@ -1,36 +1,18 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import {
-  Server, ArrowLeft, Activity, Cpu, MemoryStick, HardDrive,
-  Globe, Clock, Terminal, GitBranch, Shield, Wifi, RefreshCw,
+  Server as ServerIcon, ArrowLeft, Activity, Cpu, MemoryStick, HardDrive,
+  Globe, Clock, Terminal, GitBranch, Shield, Wifi, RefreshCw, Loader2, XCircle,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { api, type Server } from '@/lib/api';
+import { useAutoLoadToken } from '@/lib/hooks';
 
 const card: React.CSSProperties = {
   borderRadius: '14px', border: '1px solid rgb(var(--border))',
   backgroundColor: 'rgb(var(--surface))', overflow: 'hidden',
-};
-
-const demoServer = {
-  id: 1, name: 'prod-api-01', host: '103.21.58.92', port: '22',
-  username: 'ubuntu', environment: 'production', status: 'online',
-  os: 'Ubuntu 22.04 LTS', uptime: '45d 12h 30m',
-  cpu: { usage: 34, cores: 8, model: 'AMD EPYC 7502' },
-  memory: { used: 12.4, total: 32, percentage: 39 },
-  disk: { used: 180, total: 500, percentage: 36 },
-  network: { in: '2.4 GB/day', out: '8.1 GB/day' },
-  lastDeploys: [
-    { project: 'WinBull Web', branch: 'main', time: '2h ago', status: 'success' },
-    { project: 'Rate Engine', branch: 'hotfix-rate', time: '6h ago', status: 'success' },
-    { project: 'WinBull API', branch: 'feature/limit', time: '1d ago', status: 'failed' },
-  ],
-  services: [
-    { name: 'nginx', status: 'running', pid: 1234 },
-    { name: 'pm2 (node)', status: 'running', pid: 2345 },
-    { name: 'mysql', status: 'running', pid: 3456 },
-    { name: 'redis', status: 'running', pid: 4567 },
-    { name: 'cron', status: 'running', pid: 5678 },
-  ],
 };
 
 const statusColors: Record<string, { color: string; bg: string }> = {
@@ -40,7 +22,7 @@ const statusColors: Record<string, { color: string; bg: string }> = {
 };
 
 function MetricBar({ label, used, total, unit, color }: { label: string; used: number; total: number; unit: string; color: string }) {
-  const pct = Math.round((used / total) * 100);
+  const pct = total > 0 ? Math.round((used / total) * 100) : 0;
   return (
     <div style={{ marginBottom: '16px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
@@ -55,8 +37,74 @@ function MetricBar({ label, used, total, unit, color }: { label: string; used: n
 }
 
 export default function ServerDetailPage() {
-  const s = demoServer;
-  const st = statusColors[s.status] || statusColors.online;
+  useAutoLoadToken();
+  const params = useSearchParams();
+  const id = params.get('id');
+  const [server, setServer] = useState<Server | null>(null);
+  const [resources, setResources] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<string | null>(null);
+
+  const fetchData = () => {
+    if (!id) { setLoading(false); setError('No server ID provided'); return; }
+    const serverId = parseInt(id);
+    setLoading(true);
+    Promise.all([
+      api.getServer(serverId).then(r => setServer(r.data as Server)).catch(() => setError('Server not found')),
+      api.getServerResourcesLatest().then(r => {
+        const res = (r.data || []) as any[];
+        setResources(res.find((r: any) => r.serverId === serverId || r.server_id === serverId) || null);
+      }).catch(() => {}),
+    ]).finally(() => setLoading(false));
+  };
+
+  useEffect(() => { fetchData(); }, [id]);
+
+  const handleTestSSH = async () => {
+    if (!id) return;
+    setTesting(true); setTestResult(null);
+    try {
+      const res = await api.testServerSSH(parseInt(id));
+      setTestResult(res.data?.success ? '✅ SSH connected!' : `❌ ${res.data?.message || 'Failed'}`);
+    } catch (err: any) {
+      setTestResult(`❌ ${err?.message || 'Connection failed'}`);
+    }
+    setTesting(false);
+  };
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px', gap: '10px' }}>
+        <Loader2 style={{ width: '20px', height: '20px', color: 'rgb(var(--primary))', animation: 'spin 1s linear infinite' }} />
+        <span style={{ fontSize: '14px', color: 'rgb(var(--text-muted))' }}>Loading server...</span>
+        <style>{`@keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  if (error || !server) {
+    return (
+      <div>
+        <Link href="/servers" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'rgb(var(--text-muted))', textDecoration: 'none', marginBottom: '16px' }}>
+          <ArrowLeft style={{ width: '14px', height: '14px' }} /> Back to Servers
+        </Link>
+        <div style={{ ...card, padding: '40px', textAlign: 'center' }}>
+          <XCircle style={{ width: '32px', height: '32px', color: '#EF4444', marginBottom: '8px' }} />
+          <p style={{ fontSize: '14px', color: '#EF4444', margin: 0 }}>{error || 'Server not found'}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const s = server as any;
+  const st = statusColors[s.status || 'online'] || statusColors.online;
+  const cpuUsage = resources?.cpu_percent || resources?.cpuPercent || 0;
+  const memUsed = resources?.mem_used_gb || resources?.memUsedGb || 0;
+  const memTotal = resources?.mem_total_gb || resources?.memTotalGb || 0;
+  const diskUsed = resources?.disk_used_gb || resources?.diskUsedGb || 0;
+  const diskTotal = resources?.disk_total_gb || resources?.diskTotalGb || 0;
 
   return (
     <div>
@@ -68,30 +116,43 @@ export default function ServerDetailPage() {
       <div style={{ ...card, marginBottom: '20px', background: 'linear-gradient(135deg, rgba(249,115,22,0.05), rgba(var(--primary),0.03))' }}>
         <div style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
           <div style={{ width: '56px', height: '56px', borderRadius: '14px', backgroundColor: 'rgba(249,115,22,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Server style={{ width: '24px', height: '24px', color: '#F97316' }} />
+            <ServerIcon style={{ width: '24px', height: '24px', color: '#F97316' }} />
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-              <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>{s.name}</h1>
-              <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, backgroundColor: st.bg, color: st.color, textTransform: 'capitalize' }}>{s.status}</span>
-              <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, backgroundColor: 'rgba(239,68,68,0.1)', color: '#EF4444', textTransform: 'uppercase' }}>{s.environment}</span>
+              <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>{s.name || s.label || `Server #${s.id}`}</h1>
+              <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, backgroundColor: st.bg, color: st.color, textTransform: 'capitalize' }}>{s.status || 'online'}</span>
+              {s.environment && <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, backgroundColor: 'rgba(239,68,68,0.1)', color: '#EF4444', textTransform: 'uppercase' }}>{s.environment}</span>}
             </div>
-            <p style={{ fontSize: '13px', color: 'rgb(var(--text-muted))', margin: 0, fontFamily: "'JetBrains Mono', monospace" }}>{s.host}:{s.port} • {s.os}</p>
+            <p style={{ fontSize: '13px', color: 'rgb(var(--text-muted))', margin: 0, fontFamily: "'JetBrains Mono', monospace" }}>
+              {s.host || s.ip}:{s.port || 22} • {s.os || s.username || 'Ubuntu'}
+            </p>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', margin: '0 0 2px' }}>Uptime</p>
-            <p style={{ fontSize: '16px', fontWeight: 700, color: '#10B981', margin: 0 }}>{s.uptime}</p>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button onClick={handleTestSSH} disabled={testing} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', fontSize: '12px', fontWeight: 600, cursor: 'pointer', color: 'rgb(var(--text-muted))' }}>
+              {testing ? <Loader2 style={{ width: '13px', height: '13px', animation: 'spin 1s linear infinite' }} /> : <Terminal style={{ width: '13px', height: '13px' }} />}
+              Test SSH
+            </button>
+            <button onClick={fetchData} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', fontSize: '12px', fontWeight: 600, cursor: 'pointer', color: 'rgb(var(--text-muted))' }}>
+              <RefreshCw style={{ width: '13px', height: '13px' }} /> Refresh
+            </button>
           </div>
         </div>
       </div>
 
+      {testResult && (
+        <div style={{ ...card, padding: '12px 20px', marginBottom: '16px', fontSize: '13px', fontWeight: 600, color: testResult.includes('✅') ? '#10B981' : '#EF4444' }}>
+          {testResult}
+        </div>
+      )}
+
       {/* Quick Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '20px' }}>
         {[
-          { icon: Cpu, label: 'CPU', value: `${s.cpu.usage}%`, color: '#3B82F6', sub: `${s.cpu.cores} cores` },
-          { icon: MemoryStick, label: 'Memory', value: `${s.memory.percentage}%`, color: '#F59E0B', sub: `${s.memory.used}/${s.memory.total}GB` },
-          { icon: HardDrive, label: 'Disk', value: `${s.disk.percentage}%`, color: '#8B5CF6', sub: `${s.disk.used}/${s.disk.total}GB` },
-          { icon: Wifi, label: 'Network', value: s.network.out, color: '#10B981', sub: `In: ${s.network.in}` },
+          { icon: Cpu, label: 'CPU', value: resources ? `${Math.round(cpuUsage)}%` : '—', color: '#3B82F6', sub: s.cpu?.model || `${s.cpu?.cores || '—'} cores` },
+          { icon: MemoryStick, label: 'Memory', value: resources ? `${Math.round((memUsed / (memTotal || 1)) * 100)}%` : '—', color: '#F59E0B', sub: resources ? `${memUsed.toFixed(1)}/${memTotal.toFixed(1)}GB` : '—' },
+          { icon: HardDrive, label: 'Disk', value: resources ? `${Math.round((diskUsed / (diskTotal || 1)) * 100)}%` : '—', color: '#8B5CF6', sub: resources ? `${diskUsed.toFixed(0)}/${diskTotal.toFixed(0)}GB` : '—' },
+          { icon: Globe, label: 'Host', value: s.host || s.ip || '—', color: '#10B981', sub: `Port ${s.port || 22}` },
         ].map(m => (
           <div key={m.label} style={{ ...card, padding: '16px 18px', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: `${m.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -99,7 +160,7 @@ export default function ServerDetailPage() {
             </div>
             <div>
               <p style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgb(var(--text-muted))', margin: '0 0 2px' }}>{m.label}</p>
-              <p style={{ fontSize: '20px', fontWeight: 700, color: m.color, margin: 0, lineHeight: 1 }}>{m.value}</p>
+              <p style={{ fontSize: '18px', fontWeight: 700, color: m.color, margin: 0, lineHeight: 1 }}>{m.value}</p>
               <p style={{ fontSize: '10px', color: 'rgb(var(--text-muted))', margin: '2px 0 0' }}>{m.sub}</p>
             </div>
           </div>
@@ -113,52 +174,41 @@ export default function ServerDetailPage() {
             <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0, color: 'rgb(var(--text-primary))' }}>Resource Usage</h3>
           </div>
           <div style={{ padding: '20px' }}>
-            <MetricBar label="CPU" used={s.cpu.usage} total={100} unit="%" color="#3B82F6" />
-            <MetricBar label="Memory" used={s.memory.used} total={s.memory.total} unit="GB" color="#F59E0B" />
-            <MetricBar label="Disk" used={s.disk.used} total={s.disk.total} unit="GB" color="#8B5CF6" />
+            {resources ? (
+              <>
+                <MetricBar label="CPU" used={Math.round(cpuUsage)} total={100} unit="%" color="#3B82F6" />
+                <MetricBar label="Memory" used={parseFloat(memUsed.toFixed(1))} total={parseFloat(memTotal.toFixed(1))} unit="GB" color="#F59E0B" />
+                <MetricBar label="Disk" used={Math.round(diskUsed)} total={Math.round(diskTotal)} unit="GB" color="#8B5CF6" />
+              </>
+            ) : (
+              <p style={{ fontSize: '13px', color: 'rgb(var(--text-muted))', margin: 0 }}>No resource data available — install monitoring agent</p>
+            )}
           </div>
         </div>
 
-        {/* Running Services */}
+        {/* Server Info */}
         <div style={card}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(var(--border),0.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0, color: 'rgb(var(--text-primary))' }}>Services</h3>
-            <button style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '6px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '11px', color: 'rgb(var(--text-muted))' }}>
-              <RefreshCw style={{ width: '10px', height: '10px' }} /> Refresh
-            </button>
-          </div>
-          <div style={{ padding: '8px 20px' }}>
-            {s.services.map((svc, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: i < s.services.length - 1 ? '1px solid rgba(var(--border),0.1)' : 'none' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10B981' }} />
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-primary))' }}>{svc.name}</span>
-                </div>
-                <code style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', fontFamily: "'JetBrains Mono', monospace" }}>PID {svc.pid}</code>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Recent Deploys */}
-        <div style={{ ...card, gridColumn: 'span 2' }}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(var(--border),0.15)' }}>
-            <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0, color: 'rgb(var(--text-primary))' }}>Recent Deployments</h3>
+            <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0, color: 'rgb(var(--text-primary))' }}>Server Details</h3>
           </div>
           <div style={{ padding: '8px 20px' }}>
-            {s.lastDeploys.map((d, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: i < s.lastDeploys.length - 1 ? '1px solid rgba(var(--border),0.1)' : 'none' }}>
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: d.status === 'success' ? '#10B981' : '#EF4444' }} />
-                <span style={{ fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-primary))', flex: 1 }}>{d.project}</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'rgb(var(--text-muted))' }}>
-                  <GitBranch style={{ width: '11px', height: '11px' }} /> {d.branch}
-                </span>
-                <span style={{ fontSize: '12px', color: 'rgb(var(--text-muted))' }}>{d.time}</span>
+            {[
+              { label: 'Name', value: s.name || '—' },
+              { label: 'Host', value: s.host || s.ip || '—' },
+              { label: 'Port', value: String(s.port || 22) },
+              { label: 'Username', value: s.username || '—' },
+              { label: 'Environment', value: s.environment || '—' },
+              { label: 'Created', value: s.createdAt ? new Date(s.createdAt).toLocaleDateString() : '—' },
+            ].map((row, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: i < 5 ? '1px solid rgba(var(--border),0.1)' : 'none' }}>
+                <span style={{ fontSize: '13px', color: 'rgb(var(--text-muted))' }}>{row.label}</span>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-primary))', fontFamily: "'JetBrains Mono', monospace" }}>{row.value}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
+      <style>{`@keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
