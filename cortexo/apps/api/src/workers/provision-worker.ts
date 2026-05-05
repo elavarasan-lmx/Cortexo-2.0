@@ -39,8 +39,8 @@ const STEP_HANDLERS: Record<string, (host: string, user: string) => Promise<{ su
   'install-redis': async (host, user) => {
     return { success: true, output: 'Redis server installed' };
   },
-  'install-mysql': async (host, user) => {
-    return { success: true, output: 'MySQL 8.0 installed' };
+  'install-postgresql': async (host, user) => {
+    return { success: true, output: 'PostgreSQL 16 installed' };
   },
   'setup-firewall': async (host, user) => {
     // ssh user@host 'sudo ufw allow 22,80,443/tcp && sudo ufw enable'

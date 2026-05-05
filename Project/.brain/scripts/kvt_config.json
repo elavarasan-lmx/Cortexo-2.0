@@ -1,0 +1,19 @@
+{
+  "display_name": "KVT Jewellers",
+  "client_id": "kvt",
+  "domain": "kvtjewellers.com",
+  "web_url": "http://stagingwt.kvtjewellers.com/",
+  "db_host": "database-1.cb86ugsw4aax.ap-south-1.rds.amazonaws.com",
+  "db_user": "admin",
+  "db_pass": "admin2k25",
+  "db_name": "kvt",
+  "namespace": "KVT",
+  "rate_feed_type": 4,
+  "timezone": "Asia/Kuala_Lumpur",
+  "country_code": "60",
+  "onesignal_app_id": "",
+  "onesignal_auth": "",
+  "enc_key": "12@^tyh8901tt56789012345$y89012",
+  "currency_symbol": "RM",
+  "currency_name": "MYR"
+}

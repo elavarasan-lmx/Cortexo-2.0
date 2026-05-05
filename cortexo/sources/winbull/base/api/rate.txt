@@ -1,1 +1,0 @@
-{"goldrate_18ct":"4673","goldrate_22ct":"5705","goldrate_24ct":"-","silverrate_1gm":"78.70","silverrate_1kg":"-","updatetime":1683864130}

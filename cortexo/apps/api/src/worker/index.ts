@@ -41,8 +41,9 @@ async function main() {
         await job.updateProgress(100);
         console.log(`[Worker] Job ${job.id} completed successfully`);
         return { success: true, runId: job.data.runId };
-      } catch (err: any) {
-        console.error(`[Worker] Job ${job.id} failed:`, err.message);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(`[Worker] Job ${job.id} failed:`, message);
         throw err; // BullMQ will handle retry logic
       }
     },
@@ -100,6 +101,26 @@ async function main() {
 
   console.log('[Worker] Ready — processing pipeline jobs ✅');
   console.log(`[Worker] Queue: ${QUEUE_NAME} | Concurrency: 2 | Rate limit: 10/min`);
+
+  // ── Worker Health Endpoint ───────────────────────────────────────────────
+  // Minimal HTTP server for health checks (Docker, K8s, monitoring)
+  const HEALTH_PORT = parseInt(process.env.WORKER_HEALTH_PORT || '4001', 10);
+  const startedAt = Date.now();
+
+  const { createServer } = await import('http');
+  const healthServer = createServer((_req, res) => {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'healthy',
+      service: 'cortexo-worker',
+      queue: QUEUE_NAME,
+      uptime: Math.floor((Date.now() - startedAt) / 1000),
+      timestamp: new Date().toISOString(),
+    }));
+  });
+  healthServer.listen(HEALTH_PORT, () => {
+    console.log(`[Worker] Health endpoint: http://0.0.0.0:${HEALTH_PORT}/`);
+  });
 
   // Graceful shutdown
   const shutdown = async (signal: string) => {

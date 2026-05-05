@@ -1,70 +1,17 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { Rocket, Loader2, X, Globe, FolderKey, Database, Cpu, Shield, Plus, Minus, Webhook, ChevronRight, ChevronLeft, CheckCircle, Server, Trash2, Terminal, XCircle, Clock } from 'lucide-react';
+import { Loader2, X, Plus, Minus, CheckCircle, Server, Trash2, ChevronRight, ChevronLeft, Rocket } from 'lucide-react';
 import { api } from '@/lib/api';
+import { inp, lbl, ta, g2, g3, STEPS, Toggle, octalToRwx } from './deploy/shared';
+import type { CronEntry, FolderEntry } from './deploy/shared';
+import DeployTerminal from './deploy/deploy-terminal';
+import StepReview from './deploy/step-review';
 
-const inp: React.CSSProperties = { width:'100%',padding:'10px 14px',borderRadius:'10px',boxSizing:'border-box',border:'1px solid rgb(var(--border))',backgroundColor:'rgb(var(--surface-hover))',color:'rgb(var(--text-primary))',fontSize:'13px',outline:'none',fontFamily:"'JetBrains Mono',monospace",transition:'border-color 200ms' };
-const lbl: React.CSSProperties = { display:'block',fontSize:'11px',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:'6px',color:'rgb(var(--text-muted))' };
-const ta: React.CSSProperties = { ...inp,minHeight:'70px',resize:'vertical' as const };
-const g2: React.CSSProperties = { display:'grid',gridTemplateColumns:'1fr 1fr',gap:'14px' };
-const g3: React.CSSProperties = { display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'14px' };
+// Shared styles, types, constants, and components are now in ./deploy/shared.tsx
+// Re-export the interface for backward compatibility
+export type { DeployFormInitialData } from './deploy/shared';
 
-const STEPS = [
-  { id:'project', num:1, title:'Project & Server',   desc:'Select project and target server',      icon:Rocket, color:'#818CF8' },
-  { id:'nginx',   num:2, title:'Nginx Configuration', desc:'Domain, SSL, and proxy settings',       icon:Globe,  color:'#3B82F6' },
-  { id:'cron',    num:3, title:'Cron Jobs',           desc:'Scheduled tasks and automation',        icon:Webhook,color:'#F59E0B' },
-  { id:'perms',   num:4, title:'Folder Permissions',  desc:'Ownership and file access control',     icon:FolderKey,color:'#10B981' },
-  { id:'db',      num:5, title:'Database',            desc:'MySQL config, migrations, SQL import',  icon:Database,color:'#EC4899' },
-  { id:'pm2',     num:6, title:'PM2 / Services',      desc:'Process manager and service config',    icon:Cpu,    color:'#8B5CF6' },
-  { id:'hooks',   num:7, title:'Review & Deploy',   desc:'Review all settings and launch',        icon:Shield, color:'#EF4444' },
-] as const;
 
-type CronEntry = { schedule:string; command:string };
-type FolderEntry = { path:string; perm:string; owner:string; group:string };
-
-/** Convert octal permission string to rwx format, e.g. "755" → "rwxr-xr-x" */
-function octalToRwx(octal:string):string {
-  const map=['---','--x','-w-','-wx','r--','r-x','rw-','rwx'];
-  const d=octal.split('').map(Number);
-  if(d.length!==3||d.some(isNaN))return '---------';
-  return d.map(n=>map[n]||'---').join('');
-}
-
-const Toggle = ({ checked,onChange,label }:{ checked:boolean;onChange:(v:boolean)=>void;label:string }) => (
-  <label style={{ display:'flex',alignItems:'center',gap:'10px',cursor:'pointer',fontSize:'12px',color:'rgb(var(--text-secondary))' }}>
-    <div onClick={()=>onChange(!checked)} style={{ width:'38px',height:'20px',borderRadius:'10px',position:'relative',cursor:'pointer',backgroundColor:checked?'rgb(var(--primary))':'rgb(var(--border))',transition:'all 200ms' }}>
-      <div style={{ width:'16px',height:'16px',borderRadius:'50%',backgroundColor:'#fff',position:'absolute',top:'2px',left:checked?'20px':'2px',transition:'left 200ms',boxShadow:'0 1px 3px rgba(0,0,0,0.2)' }}/>
-    </div>
-    {label}
-  </label>
-);
-
-export interface DeployFormInitialData {
-  projectId?: string;
-  branch?: string;
-  environment?: string;
-  serverId?: number;
-  remotePath?: string;
-  // Nginx
-  nginxDomain?: string; nginxPort?: string; nginxRoot?: string; phpVer?: string;
-  socketPort?: string; rateSocketPort?: string; wsPort?: string;
-  sslCert?: string; sslKey?: string; nginxAutoGen?: boolean;
-  // Cron
-  crons?: { schedule: string; command: string }[];
-  // Permissions
-  permUser?: string; permGroup?: string; permFile?: string; permDir?: string;
-  permWritable?: string; permRecursive?: boolean;
-  folders?: { path: string; perm: string; owner: string; group: string }[];
-  // Database
-  dbHost?: string; dbPort?: string; dbName?: string; dbUser?: string; dbPass?: string;
-  dbMigrate?: boolean; dbMigrateCmd?: string; dbImportSql?: boolean; dbSqlPath?: string;
-  // PM2
-  pm2Name?: string; pm2Script?: string; pm2Interpreter?: string; pm2Instances?: string;
-  pm2Restart?: boolean; pm2Args?: string;
-  // Hooks
-  preDeployCmd?: string; postDeployCmd?: string;
-  healthCheckUrl?: string; notifyOnComplete?: boolean;
-}
 
 export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:()=>void;onSuccess:()=>void;initialData?:DeployFormInitialData }) {
   const [step,setStep] = useState(0);
@@ -413,83 +360,15 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
         </div>
 
         {/* ════════════ LIVE TERMINAL MODE ════════════ */}
-        {deployId ? (<>
-          {/* Terminal header */}
-          <div style={{padding:'16px 28px',borderBottom:'1px solid rgb(var(--border))',display:'flex',alignItems:'center',gap:'12px',flexShrink:0}}>
-            <div style={{width:'40px',height:'40px',borderRadius:'12px',display:'flex',alignItems:'center',justifyContent:'center',backgroundColor:deployResult?(deployResult.success?'rgba(16,185,129,0.12)':'rgba(239,68,68,0.12)'):'rgba(59,130,246,0.12)'}}>
-              {isRunning ? <Loader2 style={{width:'20px',height:'20px',color:'#3B82F6',animation:'spin 1s linear infinite'}}/> :
-               deployResult?.success ? <CheckCircle style={{width:'20px',height:'20px',color:'#10B981'}}/> :
-               <XCircle style={{width:'20px',height:'20px',color:'#EF4444'}}/>}
-            </div>
-            <div style={{flex:1}}>
-              <h3 style={{fontSize:'15px',fontWeight:700,color:'rgb(var(--text-primary))',margin:0}}>
-                {isRunning ? 'Deploying...' : deployResult?.success ? 'Deploy Successful' : 'Deploy Failed'}
-              </h3>
-              <p style={{fontSize:'12px',color:'rgb(var(--text-muted))',margin:'2px 0 0'}}>
-                {isRunning ? `${deployLogs.length} step${deployLogs.length!==1?'s':''} completed` :
-                 deployResult ? `Finished in ${((deployResult.totalDurationMs||0)/1000).toFixed(1)}s${deployResult.commitSha?` • ${deployResult.commitSha}`:''}` : 'Waiting...'}
-              </p>
-            </div>
-            {deployResult && (
-              <div style={{padding:'5px 12px',borderRadius:'8px',fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',backgroundColor:deployResult.success?'rgba(16,185,129,0.12)':'rgba(239,68,68,0.12)',color:deployResult.success?'#10B981':'#EF4444'}}>
-                {deployResult.status}
-              </div>
-            )}
-          </div>
-
-          {/* Terminal body */}
-          <div ref={termRef} style={{flex:1,overflowY:'auto',padding:'16px 28px',backgroundColor:'#0d1117',fontFamily:"'JetBrains Mono',monospace",fontSize:'12px',lineHeight:1.7}}>
-            {deployLogs.length === 0 && isRunning && (
-              <div style={{color:'#8b949e',textAlign:'center',padding:'40px 0'}}>
-                <Loader2 style={{width:'24px',height:'24px',animation:'spin 1s linear infinite',marginBottom:'8px'}}/><br/>
-                Connecting to server...
-              </div>
-            )}
-            {deployLogs.map((log,i) => {
-              const ok = log.exitCode === 0;
-              const stepLabel: Record<string,string> = {connect:'Connect',verify_path:'Verify Path',pre_deploy:'Pre-Deploy',git_pull:'Git Pull',post_deploy:'Post-Deploy',health_check:'Health Check',commit_sha:'Commit SHA'};
-              return (
-                <div key={i} style={{marginBottom:'16px',borderLeft:`2px solid ${ok?'#238636':'#f85149'}`,paddingLeft:'14px'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'4px'}}>
-                    {ok ? <CheckCircle style={{width:'13px',height:'13px',color:'#238636',flexShrink:0}}/> : <XCircle style={{width:'13px',height:'13px',color:'#f85149',flexShrink:0}}/>}
-                    <span style={{color:'#58a6ff',fontWeight:700,fontSize:'12px'}}>{stepLabel[log.step]||log.step}</span>
-                    <span style={{color:'#484f58',fontSize:'11px',marginLeft:'auto',display:'flex',alignItems:'center',gap:'4px'}}>
-                      <Clock style={{width:'10px',height:'10px'}}/> {(log.durationMs/1000).toFixed(1)}s
-                    </span>
-                  </div>
-                  {log.command && <div style={{color:'#484f58',fontSize:'11px',marginBottom:'4px'}}>$ {log.command}</div>}
-                  {log.stdout && <pre style={{color:'#c9d1d9',margin:'0 0 2px',whiteSpace:'pre-wrap',wordBreak:'break-all',fontSize:'11px'}}>{log.stdout}</pre>}
-                  {log.stderr && <pre style={{color:'#f85149',margin:0,whiteSpace:'pre-wrap',wordBreak:'break-all',fontSize:'11px'}}>{log.stderr}</pre>}
-                </div>
-              );
-            })}
-            {deployResult?.error && (
-              <div style={{padding:'12px 16px',borderRadius:'10px',backgroundColor:'rgba(248,81,73,0.1)',border:'1px solid rgba(248,81,73,0.3)',color:'#f85149',fontSize:'12px',marginTop:'8px'}}>
-                <strong>Error:</strong> {deployResult.error}
-              </div>
-            )}
-            {deployResult?.success && (
-              <div style={{padding:'12px 16px',borderRadius:'10px',backgroundColor:'rgba(35,134,54,0.1)',border:'1px solid rgba(35,134,54,0.3)',color:'#3fb950',fontSize:'12px',marginTop:'8px'}}>
-                ✓ Deployment completed successfully{deployResult.commitSha?` — commit ${deployResult.commitSha}`:''}
-              </div>
-            )}
-          </div>
-
-          {/* Terminal footer */}
-          <div style={{padding:'16px 28px',borderTop:'1px solid rgb(var(--border))',display:'flex',alignItems:'center',gap:'10px',flexShrink:0}}>
-            <div style={{flex:1}}/>
-            {!isRunning && (
-              <button onClick={()=>{onSuccess();}} style={{display:'flex',alignItems:'center',gap:'8px',padding:'10px 24px',borderRadius:'10px',border:'none',cursor:'pointer',fontSize:'13px',fontWeight:600,color:'#fff',background:deployResult?.success?'linear-gradient(135deg, #10B981, #059669)':'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))',boxShadow:'0 4px 12px rgba(0,0,0,0.2)'}}>
-                {deployResult?.success ? <><CheckCircle style={{width:'15px',height:'15px'}}/> Done</> : <><Rocket style={{width:'15px',height:'15px'}}/> Close</>}
-              </button>
-            )}
-            {isRunning && (
-              <div style={{display:'flex',alignItems:'center',gap:'8px',padding:'10px 24px',borderRadius:'10px',fontSize:'13px',fontWeight:600,color:'rgb(var(--text-muted))',backgroundColor:'rgb(var(--surface-hover))'}}>
-                <Loader2 style={{width:'14px',height:'14px',animation:'spin 1s linear infinite'}}/> Deploying...
-              </div>
-            )}
-          </div>
-        </>) : (<>
+        {deployId ? (
+          <DeployTerminal
+            deployLogs={deployLogs}
+            deployResult={deployResult}
+            isRunning={isRunning}
+            onClose={onClose}
+            onSuccess={onSuccess}
+          />
+        ) : (<>
 
         {/* ════════════ FORM MODE ════════════ */}
 
@@ -615,7 +494,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
             ))}
             <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
               <button onClick={addCron} style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 16px',borderRadius:'10px',border:'1px dashed rgb(var(--border))',backgroundColor:'transparent',color:'rgb(var(--text-secondary))',cursor:'pointer',fontSize:'12px',fontWeight:600}}><Plus style={{width:'13px',height:'13px'}}/>Add Cron Entry</button>
-              {[{label:'⚡ Rate Sync',schedule:'* * * * *',command:`cd ${remotePath||'/var/www/html/client'} && php index.php C_rates sync_rates`},{label:'💾 DB Backup',schedule:'0 2 * * *',command:`mysqldump -u ${dbUser||'admin'} -p ${dbName||'dbname'} > /backup/${dbName||'db'}_$(date +\%F).sql`},{label:'📜 Log Cleanup',schedule:'0 0 * * 0',command:`find ${remotePath||'/var/www/html/client'}/application/logs -name '*.php' -mtime +30 -delete`}].map(p=>(
+              {[{label:'⚡ Rate Sync',schedule:'* * * * *',command:`cd ${remotePath||'/var/www/html/client'} && php index.php C_rates sync_rates`},{label:'💾 DB Backup',schedule:'0 2 * * *',command:`db_dump -u ${dbUser||'admin'} -p ${dbName||'dbname'} > /backup/${dbName||'db'}_$(date +\%F).sql`},{label:'📜 Log Cleanup',schedule:'0 0 * * 0',command:`find ${remotePath||'/var/www/html/client'}/application/logs -name '*.php' -mtime +30 -delete`}].map(p=>(
                 <button key={p.label} onClick={()=>setCrons(c=>[...c,{schedule:p.schedule,command:p.command}])} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid rgba(var(--border),0.5)',backgroundColor:'rgba(var(--primary),0.04)',color:'rgb(var(--text-muted))',cursor:'pointer',fontSize:'11px',fontWeight:500}}>{p.label}</button>
               ))}
             </div>
@@ -729,88 +608,21 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
             <Toggle checked={pm2Restart} onChange={setPm2Restart} label="Auto-restart process on deploy"/>
           </>)}
 
-          {step===6&&(<>
-            {/* Review summary */}
-            <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
-              {/* Project & Server */}
-              <div style={{padding:'14px 16px',borderRadius:'12px',backgroundColor:'rgba(129,140,248,0.06)',border:'1px solid rgba(129,140,248,0.15)'}}>
-                <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'#818CF8',margin:'0 0 8px'}}>Project & Server</p>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'6px',fontSize:'12px',color:'rgb(var(--text-secondary))'}}>                  <div><span style={{color:'rgb(var(--text-muted))'}}>Project:</span> {projects.find((p:any)=>p.id===selectedProject)?.name||'—'}</div>
-                  <div><span style={{color:'rgb(var(--text-muted))'}}>Branch:</span> <span style={{color:'#10B981',fontWeight:600}}>{branch}</span></div>
-                  <div><span style={{color:'rgb(var(--text-muted))'}}>Server:</span> {serverList.find((s:any)=>s.id===serverId)?.name||'—'}</div>
-                  <div><span style={{color:'rgb(var(--text-muted))'}}>Environment:</span> <span style={{color:environment==='production'?'#EF4444':environment==='staging'?'#F59E0B':'#3B82F6',fontWeight:600}}>{environment}</span></div>
-                  <div style={{gridColumn:'1/-1'}}><span style={{color:'rgb(var(--text-muted))'}}>Remote Path:</span> <code style={{fontSize:'11px',backgroundColor:'rgba(var(--border),0.3)',padding:'2px 6px',borderRadius:'4px'}}>{remotePath||'—'}</code></div>
-                  {healthCheckUrl&&<div style={{gridColumn:'1/-1'}}><span style={{color:'rgb(var(--text-muted))'}}>Health Check:</span> {healthCheckUrl}</div>}
-                </div>
-              </div>
-
-              {/* Nginx */}
-              {nginxDomain&&(
-                <div style={{padding:'14px 16px',borderRadius:'12px',backgroundColor:'rgba(59,130,246,0.06)',border:'1px solid rgba(59,130,246,0.15)'}}>
-                  <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'#3B82F6',margin:'0 0 8px'}}>Nginx</p>
-                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'6px',fontSize:'12px',color:'rgb(var(--text-secondary))'}}>                    <div><span style={{color:'rgb(var(--text-muted))'}}>Domain:</span> {nginxDomain}</div>
-                    <div><span style={{color:'rgb(var(--text-muted))'}}>PHP:</span> {phpVer}</div>
-                    <div><span style={{color:'rgb(var(--text-muted))'}}>Root:</span> {nginxRoot||'—'}</div>
-                    <div><span style={{color:'rgb(var(--text-muted))'}}>Port:</span> {nginxPort}</div>
-                    {socketPort&&<div><span style={{color:'rgb(var(--text-muted))'}}>Socket:</span> :{socketPort}</div>}
-                    {wsPort&&<div><span style={{color:'rgb(var(--text-muted))'}}>WS:</span> :{wsPort}</div>}
-                    {sslCert&&<div style={{gridColumn:'1/-1'}}><span style={{color:'rgb(var(--text-muted))'}}>SSL:</span> ✓ Configured</div>}
-                  </div>
-                </div>
-              )}
-
-              {/* Cron */}
-              {crons.length>0&&(
-                <div style={{padding:'14px 16px',borderRadius:'12px',backgroundColor:'rgba(245,158,11,0.06)',border:'1px solid rgba(245,158,11,0.15)'}}>
-                  <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'#F59E0B',margin:'0 0 8px'}}>Cron Jobs ({crons.length})</p>
-                  <div style={{display:'flex',flexDirection:'column',gap:'4px',fontSize:'11px',fontFamily:"'JetBrains Mono',monospace",color:'rgb(var(--text-secondary))'}}>
-                    {crons.map((c,i)=><div key={i}><span style={{color:'#F59E0B'}}>{c.schedule}</span> → {c.command}</div>)}
-                  </div>
-                </div>
-              )}
-
-              {/* Database */}
-              {dbHost&&(
-                <div style={{padding:'14px 16px',borderRadius:'12px',backgroundColor:'rgba(236,72,153,0.06)',border:'1px solid rgba(236,72,153,0.15)'}}>
-                  <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'#EC4899',margin:'0 0 8px'}}>Database</p>
-                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'6px',fontSize:'12px',color:'rgb(var(--text-secondary))'}}>                    <div><span style={{color:'rgb(var(--text-muted))'}}>Host:</span> {dbHost}:{dbPort}</div>
-                    <div><span style={{color:'rgb(var(--text-muted))'}}>Database:</span> {dbName||'—'}</div>
-                    <div><span style={{color:'rgb(var(--text-muted))'}}>User:</span> {dbUser||'—'}</div>
-                    {dbMigrate&&<div><span style={{color:'rgb(var(--text-muted))'}}>Migrate:</span> ✓ {dbMigrateCmd}</div>}
-                  </div>
-                </div>
-              )}
-
-              {/* PM2 */}
-              {pm2Name&&(
-                <div style={{padding:'14px 16px',borderRadius:'12px',backgroundColor:'rgba(139,92,246,0.06)',border:'1px solid rgba(139,92,246,0.15)'}}>
-                  <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'#8B5CF6',margin:'0 0 8px'}}>PM2 Service</p>
-                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'6px',fontSize:'12px',color:'rgb(var(--text-secondary))'}}>                    <div><span style={{color:'rgb(var(--text-muted))'}}>Name:</span> {pm2Name}</div>
-                    <div><span style={{color:'rgb(var(--text-muted))'}}>Interpreter:</span> {pm2Interpreter}</div>
-                    <div><span style={{color:'rgb(var(--text-muted))'}}>Instances:</span> {pm2Instances}</div>
-                    {pm2Restart&&<div><span style={{color:'rgb(var(--text-muted))'}}>Auto-restart:</span> ✓</div>}
-                  </div>
-                </div>
-              )}
-
-              {/* Permissions */}
-              {(folders.length>0||permWritable)&&(
-                <div style={{padding:'14px 16px',borderRadius:'12px',backgroundColor:'rgba(16,185,129,0.06)',border:'1px solid rgba(16,185,129,0.15)'}}>
-                  <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'#10B981',margin:'0 0 8px'}}>Permissions</p>
-                  <div style={{fontSize:'12px',color:'rgb(var(--text-secondary))'}}>                    <div><span style={{color:'rgb(var(--text-muted))'}}>Owner:</span> {permUser}:{permGroup} | Files: {permFile} | Dirs: {permDir}</div>
-                    {folders.length>0&&<div style={{marginTop:'4px'}}><span style={{color:'rgb(var(--text-muted))'}}>Folders:</span> {folders.length} to create</div>}
-                  </div>
-                </div>
-              )}
-
-              {/* Nothing configured warning */}
-              {!nginxDomain&&crons.length===0&&!dbHost&&!pm2Name&&folders.length===0&&(
-                <div style={{padding:'20px',textAlign:'center',borderRadius:'12px',border:'1px dashed rgb(var(--border))',color:'rgb(var(--text-muted))',fontSize:'13px'}}>
-                  Only project, server, and git pull configured. Other steps are optional.
-                </div>
-              )}
-            </div>
-          </>)}
+          {step===6&&(
+            <StepReview
+              selectedProject={selectedProject} projects={projects} branch={branch}
+              environment={environment} serverId={serverId} serverList={serverList}
+              remotePath={remotePath} healthCheckUrl={healthCheckUrl}
+              nginxDomain={nginxDomain} nginxPort={nginxPort} nginxRoot={nginxRoot}
+              phpVer={phpVer} socketPort={socketPort} wsPort={wsPort} sslCert={sslCert}
+              crons={crons} dbHost={dbHost} dbPort={dbPort} dbName={dbName}
+              dbUser={dbUser} dbMigrate={dbMigrate} dbMigrateCmd={dbMigrateCmd}
+              pm2Name={pm2Name} pm2Interpreter={pm2Interpreter}
+              pm2Instances={pm2Instances} pm2Restart={pm2Restart}
+              permUser={permUser} permGroup={permGroup} permFile={permFile}
+              permDir={permDir} folders={folders} permWritable={permWritable}
+            />
+          )}
         </div>
 
         {/* Footer */}

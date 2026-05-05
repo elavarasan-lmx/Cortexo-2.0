@@ -88,11 +88,14 @@ function signRefreshToken(app: FastifyInstance, userId: string): string {
 }
 
 export async function authRoutes(app: FastifyInstance) {
+  // ── Stricter rate limits for auth endpoints (brute-force protection) ──
+  const authRateLimit = { config: { rateLimit: { max: 5, timeWindow: '1 minute' } } };
+
   /**
    * POST /auth/register
    * Creates user + org, returns signed JWT tokens
    */
-  app.post('/auth/register', async (request, reply) => {
+  app.post('/auth/register', authRateLimit, async (request, reply) => {
     const parsed = registerSchema.safeParse(request.body);
     if (!parsed.success) return reply.code(400).send({ error: 'Validation failed', details: parsed.error.flatten() });
     const { name, email, password, orgName } = parsed.data;
@@ -139,7 +142,7 @@ export async function authRoutes(app: FastifyInstance) {
         refreshToken,
         user: { id: userId, name, email, role: 'admin', orgId },
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
       app.log.error(err);
       return reply.code(500).send({ error: 'Failed to create account' });
     }
@@ -149,7 +152,7 @@ export async function authRoutes(app: FastifyInstance) {
    * POST /auth/login
    * Email + password login, returns signed JWT tokens
    */
-  app.post('/auth/login', async (request, reply) => {
+  app.post('/auth/login', authRateLimit, async (request, reply) => {
     const parsed = loginSchema.safeParse(request.body);
     if (!parsed.success) return reply.code(400).send({ error: 'Validation failed', details: parsed.error.flatten() });
     const { email, password } = parsed.data;
@@ -196,7 +199,7 @@ export async function authRoutes(app: FastifyInstance) {
           avatarUrl: user.avatarUrl,
         },
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
       app.log.error(err);
       return reply.code(500).send({ error: 'Login failed' });
     }
@@ -234,7 +237,7 @@ export async function authRoutes(app: FastifyInstance) {
           avatarUrl: user.avatarUrl,
         },
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
       return reply.code(401).send({ error: 'Invalid or expired token' });
     }
   });
@@ -256,7 +259,7 @@ export async function authRoutes(app: FastifyInstance) {
       const { name, email } = parsed.data;
 
       const db = await getDb();
-      const updateData: Record<string, any> = {};
+      const updateData: Record<string, string> = {};
       if (name) updateData.name = name;
       if (email) updateData.email = email;
 
@@ -278,8 +281,8 @@ export async function authRoutes(app: FastifyInstance) {
         token: newToken,
         user: { id: user.id, name: user.name, email: user.email, role: user.role, orgId: user.orgId },
       };
-    } catch (err: any) {
-      if (err.code === 'ER_DUP_ENTRY') return reply.code(409).send({ error: 'Email already in use' });
+    } catch (err: unknown) {
+      if (err instanceof Error && 'code' in err && (err as { code: string }).code === '23505') return reply.code(409).send({ error: 'Email already in use' });
       app.log.error(err);
       return reply.code(500).send({ error: 'Failed to update profile' });
     }
@@ -316,7 +319,7 @@ export async function authRoutes(app: FastifyInstance) {
       await db.update(users).set({ passwordHash: newHash }).where(eq(users.id, decoded.sub));
 
       return { message: 'Password changed successfully' };
-    } catch (err: any) {
+    } catch (err: unknown) {
       app.log.error(err);
       return reply.code(500).send({ error: 'Failed to change password' });
     }
@@ -350,14 +353,14 @@ export async function authRoutes(app: FastifyInstance) {
           code,
         }),
       });
-      const tokenData = await tokenRes.json() as any;
+      const tokenData = await tokenRes.json() as { access_token?: string };
       if (!tokenData.access_token) return reply.code(401).send({ error: 'GitHub auth failed' });
 
       // Get user profile
       const userRes = await fetch('https://api.github.com/user', {
         headers: { Authorization: `Bearer ${tokenData.access_token}` },
       });
-      const ghUser = await userRes.json() as any;
+      const ghUser = await userRes.json() as { id: number; login: string; name?: string; email?: string; avatar_url?: string };
 
       const db = await getDb();
       let user = await db.query.users.findFirst({ where: eq(users.email, ghUser.email || `${ghUser.login}@github`) });
@@ -371,7 +374,7 @@ export async function authRoutes(app: FastifyInstance) {
           email: ghUser.email || `${ghUser.login}@github`, role: 'admin',
           avatarUrl: ghUser.avatar_url, githubId: String(ghUser.id),
         });
-        user = { id: userId, email: ghUser.email || `${ghUser.login}@github`, orgId, name: ghUser.name || ghUser.login, role: 'admin' } as any;
+        user = { id: userId, email: ghUser.email || `${ghUser.login}@github`, orgId, name: ghUser.name || ghUser.login, role: 'admin' } as typeof user;
       }
 
       const token = signAccessToken(app, {
@@ -383,7 +386,7 @@ export async function authRoutes(app: FastifyInstance) {
       });
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
       return reply.redirect(`${frontendUrl}/auth/callback?token=${token}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       app.log.error(err);
       return reply.code(500).send({ error: 'GitHub OAuth failed' });
     }
@@ -431,7 +434,7 @@ export async function authRoutes(app: FastifyInstance) {
   /**
    * POST /auth/forgot-password — Send reset email
    */
-  app.post('/auth/forgot-password', async (request, reply) => {
+  app.post('/auth/forgot-password', authRateLimit, async (request, reply) => {
     const parsed = forgotPasswordSchema.safeParse(request.body);
     if (!parsed.success) return reply.code(400).send({ error: 'Validation failed', details: parsed.error.flatten() });
     const { email } = parsed.data;
@@ -466,13 +469,13 @@ export async function authRoutes(app: FastifyInstance) {
   /**
    * POST /auth/reset-password — Reset with token
    */
-  app.post('/auth/reset-password', async (request, reply) => {
+  app.post('/auth/reset-password', authRateLimit, async (request, reply) => {
     const parsed = resetPasswordSchema.safeParse(request.body);
     if (!parsed.success) return reply.code(400).send({ error: 'Validation failed', details: parsed.error.flatten() });
     const { token, password } = parsed.data;
 
     const db = await getDb();
-    const user = await db.query.users.findFirst({ where: eq(users.resetToken as any, token) });
+    const user = await db.query.users.findFirst({ where: eq(users.resetToken!, token) });
 
     if (!user) return reply.code(400).send({ error: 'Invalid or expired reset token' });
     if (user.resetTokenExpiresAt && new Date(user.resetTokenExpiresAt) < new Date()) {

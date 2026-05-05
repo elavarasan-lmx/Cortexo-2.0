@@ -1,1 +1,0 @@
-define(["LightstreamerClient"],function(d){var a=document.location.protocol!="file:"?document.location.protocol:"http:";var b=document.location.protocol=="https:"?"443":"8080";var c=new d(lsdata.url,lsdata.adapter);c.connectionOptions.setHttpExtraHeaders({username:lsdata.username});c.connectionOptions.setHttpExtraHeadersOnSessionCreationOnly(true);c.connect();return c});

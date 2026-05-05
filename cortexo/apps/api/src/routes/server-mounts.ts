@@ -138,10 +138,7 @@ export async function serverMountRoutes(app: FastifyInstance) {
     }
     try {
       const db = await getDb();
-      const [result] = await db.insert(serverMounts).values(parsed.data as any);
-      const row = await db.query.serverMounts.findFirst({
-        where: (m, { eq }) => eq(m.id, (result as any).insertId),
-      });
+      const [row] = await db.insert(serverMounts).values(parsed.data as any).returning();
       return reply.code(201).send({ data: row });
     } catch (err) {
       app.log.error(err);
@@ -186,9 +183,10 @@ export async function serverMountRoutes(app: FastifyInstance) {
           spawnSync('fusermount', ['-u', expandHome(row.localMountPath)], { timeout: 10000 });
         } catch { /* best-effort unmount */ }
       }
-      const result = await db.delete(serverMounts)
-        .where(eq(serverMounts.id, parseInt(id)));
-      if (!(result as any)[0]?.affectedRows) return reply.code(404).send({ error: 'Mount config not found' });
+      const deleted = await db.delete(serverMounts)
+        .where(eq(serverMounts.id, parseInt(id)))
+        .returning();
+      if (!deleted.length) return reply.code(404).send({ error: 'Mount config not found' });
       return { success: true };
     } catch (err) {
       app.log.error(err);
@@ -213,18 +211,46 @@ export async function serverMountRoutes(app: FastifyInstance) {
 
       const localPath = expandHome(row.localMountPath);
 
-      // Build SSH connection: publicAddress may be "user@ip" or just "ip"
-      // Prefer publicAddress (reachable from dev machine) over privateIp (VPC-only)
-      const rawAddr = server.publicAddress || server.privateIp || '';
-      if (!rawAddr) return reply.code(400).send({ error: 'Server has no IP address configured' });
+      // Build SSH connection:
+      // - privateIp is the actual server IP (target)
+      // - publicAddress may be a bastion/jump host like "user@ip"
+      // When both exist, use publicAddress as ProxyJump to reach privateIp
+      const privateIp = server.privateIp || '';
+      const publicAddr = server.publicAddress || '';
+      if (!privateIp && !publicAddr) return reply.code(400).send({ error: 'Server has no IP address configured' });
 
-      // Extract user and host from address (handles "user@host" and plain "host")
       let sshUser = row.sshUser;
-      let sshHost = rawAddr;
-      if (rawAddr.includes('@')) {
-        const parts = rawAddr.split('@');
-        sshUser = parts[0] || row.sshUser;  // prefer address user, fallback to mount config
-        sshHost = parts[1] || rawAddr;
+      let sshHost = privateIp || publicAddr;
+      let proxyJump = '';
+
+      // If publicAddress is set and different from privateIp, use it as ProxyJump bastion
+      if (publicAddr && privateIp) {
+        // publicAddress is the bastion (e.g. "ubuntu@13.201.238.28")
+        // privateIp is the actual server (e.g. "10.0.1.186")
+        const bastionHost = publicAddr.includes('@') ? publicAddr : `${sshUser}@${publicAddr}`;
+        if (publicAddr.includes('@')) {
+          const parts = publicAddr.split('@');
+          // Use bastion as proxy, connect to privateIp
+          if (parts[1] !== privateIp) {
+            proxyJump = bastionHost;
+            sshHost = privateIp;
+          } else {
+            // publicAddress points to same IP as privateIp, connect directly
+            sshUser = parts[0] || sshUser;
+            sshHost = parts[1];
+          }
+        } else {
+          sshHost = privateIp;
+        }
+      } else if (publicAddr && !privateIp) {
+        // Only publicAddress — connect directly
+        if (publicAddr.includes('@')) {
+          const parts = publicAddr.split('@');
+          sshUser = parts[0] || sshUser;
+          sshHost = parts[1];
+        } else {
+          sshHost = publicAddr;
+        }
       }
 
       // Already mounted?
@@ -247,10 +273,13 @@ export async function serverMountRoutes(app: FastifyInstance) {
           ? `,IdentityFile=${server.sshKey}`
           : '';
 
+        // Build ProxyJump option if bastion is configured
+        const proxyOpts = proxyJump ? `,ProxyJump=${proxyJump}` : '';
+
         const result = spawnSync('sshfs', [
           `${sshUser}@${sshHost}:${row.remotePath}`,
           localPath,
-          '-o', `reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,cache=yes,kernel_cache,auto_cache,compression=no,StrictHostKeyChecking=no${sshKeyOpts}`,
+          '-o', `reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,cache=yes,kernel_cache,auto_cache,compression=no,StrictHostKeyChecking=no${sshKeyOpts}${proxyOpts}`,
         ], { timeout: 30000, encoding: 'utf-8' });
 
         if (result.status !== 0) {

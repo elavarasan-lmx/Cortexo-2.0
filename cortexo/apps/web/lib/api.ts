@@ -291,7 +291,7 @@ class ApiClient {
   // ─── Deployments ──────────────────────────────────────────────────────────
   getDeployments()                                   { return this.request<Deployment[]>('GET', '/deployments'); }
   getDeployment(id: string)                          { return this.request<Deployment>('GET', `/deployments/${id}`); }
-  getDeploymentLogs(id: string)                      { return this.request<{ logs: any[]; result: any; isRunning: boolean }>('GET', `/deployments/${id}/logs`); }
+  getDeploymentLogs(id: string)                      { return this.request<{ logs: { step: string; command?: string; stdout: string; stderr: string; exitCode: number | null; durationMs: number; timestamp: string }[]; result: { success: boolean; status: string; totalDurationMs: number; error?: string; commitSha?: string } | null; isRunning: boolean }>('GET', `/deployments/${id}/logs`); }
   resolveDeployInfo(projectId: string)               { return this.request<{
     projectId: string; projectName: string; clientSlug: string; branch: string;
     matchedServerId: number | null; matchedServerName: string | null; matchedServerIp: string | null;
@@ -332,9 +332,9 @@ class ApiClient {
   // ─── Deploy Targets ───────────────────────────────────────────────────────
   getDeployTargets()                                 { return this.request<DeployTarget[]>('GET', '/deploy-targets'); }
   createDeployTarget(data: Partial<DeployTarget>)    { return this.request<DeployTarget>('POST', '/deploy-targets', data); }
-  testDeployTarget(id: string)                       { return this.request<{ success: boolean; message: string; details?: any; durationMs: number }>('POST', `/deploy-targets/${id}/test`); }
+  testDeployTarget(id: string)                       { return this.request<{ success: boolean; message: string; details?: Record<string, unknown>; durationMs: number }>('POST', `/deploy-targets/${id}/test`); }
   deleteDeployTarget(id: string)                     { return this.request<{ success: boolean }>('DELETE', `/deploy-targets/${id}`); }
-  testServerSSH(id: number)                          { return this.request<{ success: boolean; message: string; details?: any; durationMs: number }>('POST', `/servers/${id}/test-ssh`); }
+  testServerSSH(id: number)                          { return this.request<{ success: boolean; message: string; details?: Record<string, unknown>; durationMs: number }>('POST', `/servers/${id}/test-ssh`); }
 
   // ─── Errors ───────────────────────────────────────────────────────────────
   getErrors(params?: { projectId?: string; status?: string; severity?: string }) {
@@ -403,18 +403,18 @@ class ApiClient {
 
   // ─── Drift Detection ──────────────────────────────────────────────────────
   scanClientDrift(slug: string, sshData: { host: string; username: string; port?: number; privateKey?: string; password?: string; remotePath: string }) {
-    return this.request<any>('POST', `/client-configs/${slug}/scan-drift`, sshData);
+    return this.request<{ status: string; driftedFiles: number; totalFiles: number; details: Record<string, unknown>[] }>('POST', `/client-configs/${slug}/scan-drift`, sshData);
   }
-  getClientDriftReport(slug: string)                 { return this.request<any>('GET', `/client-configs/${slug}/drift-report`); }
+  getClientDriftReport(slug: string)                 { return this.request<Record<string, unknown>>('GET', `/client-configs/${slug}/drift-report`); }
   getClientDriftHistory(slug: string, limit?: number) {
-    return this.request<any[]>('GET', `/client-configs/${slug}/drift-history${limit ? `?limit=${limit}` : ''}`);
+    return this.request<Record<string, unknown>[]>('GET', `/client-configs/${slug}/drift-history${limit ? `?limit=${limit}` : ''}`);
   }
 
   // ─── Health Checks ───────────────────────────────────────────────────────
-  runHealthCheckAll()                                { return this.request<any>('POST', '/health/check-all'); }
-  checkSingleUrl(url: string)                       { return this.request<any>('POST', '/health/check-url', { url }); }
+  runHealthCheckAll()                                { return this.request<{ results: { url: string; status: number; ok: boolean; responseTimeMs: number }[] }>('POST', '/health/check-all'); }
+  checkSingleUrl(url: string)                       { return this.request<{ url: string; status: number; ok: boolean; responseTimeMs: number }>('POST', '/health/check-url', { url }); }
   controlHealthScheduler(action: 'start' | 'stop', intervalMinutes?: number) {
-    return this.request<any>('POST', '/health/scheduler', { action, intervalMinutes });
+    return this.request<{ action: string; intervalMinutes?: number; status: string }>('POST', '/health/scheduler', { action, intervalMinutes });
   }
 
   // ─── DB Schema Validation ────────────────────────────────────────────────
@@ -422,28 +422,28 @@ class ApiClient {
     goldenHost: string; goldenUsername: string; goldenPort?: number; goldenKey?: string; goldenPassword?: string; goldenDb: string;
     clientHost: string; clientUsername: string; clientPort?: number; clientKey?: string; clientPassword?: string; clientDb: string;
   }) {
-    return this.request<any>('POST', `/client-configs/${slug}/validate-schema`, data);
+    return this.request<{ match: boolean; missingTables: string[]; extraTables: string[]; columnDiffs: Record<string, { missing: string[]; extra: string[] }> }>('POST', `/client-configs/${slug}/validate-schema`, data);
   }
 
   // ─── Log Aggregation ─────────────────────────────────────────────────────
   tailClientLogs(slug: string, sshData: { host: string; username: string; port?: number; privateKey?: string; password?: string; logPath?: string; lines?: number }) {
-    return this.request<any>('POST', `/client-configs/${slug}/tail-logs`, sshData);
+    return this.request<{ lines: string[]; total: number }>('POST', `/client-configs/${slug}/tail-logs`, sshData);
   }
 
   // ─── Fix Propagation ─────────────────────────────────────────────────────
-  prepareSourceUpdate(sourceSlug: string)            { return this.request<any>('GET', `/sources/${sourceSlug}/prepare-update`); }
+  prepareSourceUpdate(sourceSlug: string)            { return this.request<{ ready: boolean; changes: string[]; version: string }>('GET', `/sources/${sourceSlug}/prepare-update`); }
   deployClientUpdate(slug: string, sshData: { host: string; username: string; port?: number; privateKey?: string; password?: string; remotePath: string }) {
-    return this.request<any>('POST', `/client-configs/${slug}/deploy-update`, sshData);
+    return this.request<{ success: boolean; filesUpdated: number; status: string }>('POST', `/client-configs/${slug}/deploy-update`, sshData);
   }
-  saveSourceCheckpoint(sourceSlug: string)           { return this.request<any>('POST', `/sources/${sourceSlug}/checkpoint`); }
+  saveSourceCheckpoint(sourceSlug: string)           { return this.request<{ success: boolean; version: string }>('POST', `/sources/${sourceSlug}/checkpoint`); }
 
   // ─── Module Testing ──────────────────────────────────────────────────────
-  discoverModules(sourceSlug: string)                { return this.request<any>('GET', `/sources/${sourceSlug}/modules`); }
+  discoverModules(sourceSlug: string)                { return this.request<{ modules: { controller: string; path: string }[] }>('GET', `/sources/${sourceSlug}/modules`); }
   testSingleModule(data: { clientSlug: string; clientUrl: string; sourceSlug: string; controller: string; sessionCookie?: string }) {
-    return this.request<any>('POST', '/module-test/single', data);
+    return this.request<{ controller: string; url: string; status: number; ok: boolean; responseTimeMs: number }>('POST', '/module-test/single', data);
   }
   testAllModules(data: { clientSlug: string; clientUrl: string; sourceSlug: string; sessionCookie?: string; layer?: 'admin' | 'web' }) {
-    return this.request<any>('POST', '/module-test/full', data);
+    return this.request<{ results: { controller: string; url: string; status: number; ok: boolean; responseTimeMs: number }[]; summary: { total: number; passed: number; failed: number } }>('POST', '/module-test/full', data);
   }
 
   // ─── Source Sync ──────────────────────────────────────────────────────────

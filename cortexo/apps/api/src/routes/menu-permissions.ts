@@ -67,7 +67,7 @@ const ALL_MENU_ITEMS = [
   { menuKey: '/reports',             label: 'Reports',           section: 'ANALYTICS' },
   { menuKey: '/analytics/audit',     label: 'Activity Log',      section: 'ANALYTICS' },
   // Tools
-  { menuKey: '/mysql',               label: 'MySQL',             section: 'TOOLS' },
+  { menuKey: '/postgres',            label: 'PostgreSQL',        section: 'TOOLS' },
   { menuKey: '/docs',                label: 'Docs',              section: 'TOOLS' },
   // Testing
   { menuKey: '/testing/load',        label: 'Load Test',         section: 'TESTING' },
@@ -141,7 +141,7 @@ export async function menuPermissionRoutes(app: FastifyInstance) {
           await db.execute(sql`
             INSERT INTO user_menu_permissions (user_id, menu_key, visible, updated_at)
             VALUES (${userId}, ${menuKey}, ${visible}, NOW())
-            ON DUPLICATE KEY UPDATE visible = ${visible}, updated_at = NOW()
+            ON CONFLICT (user_id, menu_key) DO UPDATE SET visible = ${visible}, updated_at = NOW()
           `);
         }
       }
@@ -210,7 +210,7 @@ export async function menuPermissionRoutes(app: FastifyInstance) {
           await db.execute(sql`
             INSERT INTO user_menu_permissions (user_id, menu_key, visible, updated_at)
             VALUES (${targetUserId}, ${menuKey}, ${visible}, NOW())
-            ON DUPLICATE KEY UPDATE visible = ${visible}, updated_at = NOW()
+            ON CONFLICT (user_id, menu_key) DO UPDATE SET visible = ${visible}, updated_at = NOW()
           `);
         }
       }

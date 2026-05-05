@@ -5,6 +5,11 @@ import { fileURLToPath } from 'url';
 // Load .env from monorepo root (2 levels up from apps/api/src/)
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: resolve(__dirname, '../../../.env') });
+
+// Validate required env vars BEFORE anything else boots
+import { validateEnv } from './lib/env.js';
+validateEnv();
+
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
@@ -58,6 +63,28 @@ import { authPlugin } from './middleware/auth.js';
 
 const PORT = parseInt(process.env.API_PORT || '4000', 10);
 const HOST = process.env.API_HOST || '0.0.0.0';
+
+// ─── CRITICAL: Dev Auth Safety Check ─────────────────────────────────────────
+if (process.env.UNSAFE_DEV_AUTH === 'true') {
+  if (process.env.NODE_ENV === 'production') {
+    console.error(`
+╔══════════════════════════════════════════════════════════════╗
+║  🚨 FATAL: UNSAFE_DEV_AUTH=true in PRODUCTION!             ║
+║  This bypasses ALL authentication — REFUSING TO START.      ║
+║  Remove UNSAFE_DEV_AUTH or set it to "false" in .env        ║
+╚══════════════════════════════════════════════════════════════╝
+`);
+    process.exit(1);
+  } else {
+    console.warn(`
+╔══════════════════════════════════════════════════════════════╗
+║  ⚠️  WARNING: UNSAFE_DEV_AUTH=true                          ║
+║  Authentication is BYPASSED — do NOT deploy this!           ║
+║  All requests will be treated as authenticated.             ║
+╚══════════════════════════════════════════════════════════════╝
+`);
+  }
+}
 
 async function start() {
   const app = Fastify({

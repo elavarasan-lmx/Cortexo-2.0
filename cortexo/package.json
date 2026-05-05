@@ -18,7 +18,10 @@
     "db:migrate": "turbo db:migrate --filter=@cortexo/db",
     "db:push": "turbo db:push --filter=@cortexo/db",
     "db:studio": "turbo db:studio --filter=@cortexo/db",
-    "clean": "turbo clean && rm -rf node_modules"
+    "clean": "turbo clean && rm -rf node_modules",
+    "test": "turbo test",
+    "test:coverage": "turbo test:coverage",
+    "seed": "turbo seed --filter=@cortexo/api"
   },
   "devDependencies": {
     "prettier": "^3.4.0",

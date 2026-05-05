@@ -1,5 +1,5 @@
 /**
- * DB Schema Validator — Compares a client's MySQL schema against the golden schema.
+ * DB Schema Validator — Compares a client's PostgreSQL schema against the golden schema.
  *
  * Detects:
  *   - Missing tables
@@ -7,7 +7,7 @@
  *   - Extra tables (client-specific additions)
  *   - Column type mismatches
  *
- * Uses SSH to run `SHOW TABLES` and `DESCRIBE` on the remote DB.
+ * Uses SSH to run information_schema queries on the remote DB.
  */
 import { sshConnect, sshExec, type SSHCredentials } from './ssh-executor.js';
 import type { Client } from 'ssh2';
@@ -49,10 +49,10 @@ export interface SchemaValidationReport {
 }
 
 /**
- * Get table list from a MySQL database via SSH.
+ * Get table list from a PostgreSQL database via SSH.
  */
 async function getRemoteTables(conn: Client, dbName: string): Promise<string[]> {
-  const cmd = `mysql -N -e "SHOW TABLES" ${dbName} 2>/dev/null`;
+  const cmd = `psql -t -c "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'" ${dbName} 2>/dev/null`;
   const { stdout } = await sshExec(conn, cmd, 15_000);
   return stdout.split('\n').map(t => t.trim()).filter(Boolean);
 }
@@ -61,7 +61,7 @@ async function getRemoteTables(conn: Client, dbName: string): Promise<string[]> 
  * Get column details for a table via SSH.
  */
 async function getRemoteColumns(conn: Client, dbName: string, table: string): Promise<SchemaColumn[]> {
-  const cmd = `mysql -N -e "DESCRIBE \\\`${table}\\\`" ${dbName} 2>/dev/null`;
+  const cmd = `psql -t -A -F'	' -c "SELECT column_name, data_type, is_nullable, '' as key, column_default FROM information_schema.columns WHERE table_name = '${table}'" ${dbName} 2>/dev/null`;
   const { stdout } = await sshExec(conn, cmd, 10_000);
   const columns: SchemaColumn[] = [];
 

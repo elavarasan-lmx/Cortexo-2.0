@@ -51,7 +51,7 @@ export async function provisionRoutes(app: FastifyInstance) {
           { id: 'install-pm2', name: 'Install PM2 Process Manager', required: false },
           { id: 'install-nginx', name: 'Install Nginx Reverse Proxy', required: false },
           { id: 'install-redis', name: 'Install Redis Server', required: false },
-          { id: 'install-mysql', name: 'Install MySQL 8.0', required: false },
+          { id: 'install-postgresql', name: 'Install PostgreSQL 16', required: false },
           { id: 'setup-firewall', name: 'Configure UFW Firewall', required: true },
           { id: 'setup-swap', name: 'Setup 2GB Swap', required: false },
           { id: 'install-certbot', name: 'Install Certbot (SSL)', required: false },

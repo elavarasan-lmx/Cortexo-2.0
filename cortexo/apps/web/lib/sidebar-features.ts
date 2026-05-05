@@ -88,7 +88,7 @@ export const SECTIONS: SectionMeta[] = [
   {
     title: 'TOOLS', color: '#6B7280',
     items: [
-      { menuKey: '/mysql', label: 'MySQL' },
+      { menuKey: '/postgres', label: 'PostgreSQL' },
       { menuKey: '/docs', label: 'Docs' },
     ],
   },

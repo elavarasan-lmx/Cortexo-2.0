@@ -56,10 +56,7 @@ export async function serverRoutes(app: FastifyInstance) {
     }
     try {
       const db = await getDb();
-      const [result] = await db.insert(servers).values(parsed.data as any);
-      const row = await db.query.servers.findFirst({
-        where: (s, { eq }) => eq(s.id, (result as any).insertId),
-      });
+      const [row] = await db.insert(servers).values(parsed.data as any).returning();
       return reply.code(201).send({ data: row });
     } catch (err) {
       app.log.error(err);
@@ -95,9 +92,10 @@ export async function serverRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     try {
       const db = await getDb();
-      const result = await db.delete(servers)
-        .where(eq(servers.id, parseInt(id)));
-      if (!(result as any)[0]?.affectedRows) return reply.code(404).send({ error: 'Server not found' });
+      const deleted = await db.delete(servers)
+        .where(eq(servers.id, parseInt(id)))
+        .returning();
+      if (!deleted.length) return reply.code(404).send({ error: 'Server not found' });
       return { success: true };
     } catch (err) {
       app.log.error(err);
