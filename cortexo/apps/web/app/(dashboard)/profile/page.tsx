@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   User, Mail, Shield, Calendar, Key, Activity, Globe,
   Edit3, Save, Camera, MapPin, Phone, Briefcase, Loader2,
 } from 'lucide-react';
+import { api, type AuthUser } from '@/lib/api';
+import { useAutoLoadToken } from '@/lib/hooks';
 
 const card: React.CSSProperties = {
   borderRadius: '14px', border: '1px solid rgb(var(--border))',
@@ -21,52 +23,66 @@ const inp: React.CSSProperties = {
   fontFamily: "'Inter', sans-serif", transition: 'border-color 200ms',
 };
 
-/* ─── Demo profile ─── */
-const profile = {
-  name: 'Jerry',
-  email: 'jerry@cortexo.dev',
-  role: 'Admin',
-  avatar: null,
-  phone: '+91 98765 43210',
-  location: 'Coimbatore, India',
-  company: 'Cortexo IDP',
-  timezone: 'Asia/Kolkata (IST)',
-  joinedAt: '2025-08-15',
-  lastLogin: '2026-05-02T12:30:00Z',
-  twoFactor: true,
-  apiKeys: 3,
-  totalDeploys: 147,
-  bugsFixed: 89,
-  activeProjects: 6,
-};
-
 export default function UserProfilePage() {
+  useAutoLoadToken();
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({
-    name: profile.name,
-    email: profile.email,
-    phone: profile.phone,
-    location: profile.location,
-    company: profile.company,
-  });
+  const [form, setForm] = useState({ name: '', email: '' });
   const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState('');
 
-  const handleSave = () => {
+  useEffect(() => {
+    api.getMe().then(res => {
+      if (res.data?.user) {
+        setUser(res.data.user);
+        setForm({ name: res.data.user.name, email: res.data.user.email });
+      }
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
     setSaving(true);
-    setTimeout(() => { setSaving(false); setEditing(false); }, 800);
+    setSaveMsg('');
+    try {
+      const res = await api.updateProfile(form);
+      if (res.data?.user) {
+        setUser(res.data.user);
+        setForm({ name: res.data.user.name, email: res.data.user.email });
+      }
+      setEditing(false);
+      setSaveMsg('Profile updated!');
+      setTimeout(() => setSaveMsg(''), 3000);
+    } catch (err: any) {
+      setSaveMsg(err?.message || 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const statCards = [
-    { label: 'Deployments', value: profile.totalDeploys, color: '#818CF8', icon: Activity },
-    { label: 'Bugs Fixed', value: profile.bugsFixed, color: '#10B981', icon: Shield },
-    { label: 'Active Projects', value: profile.activeProjects, color: '#3B82F6', icon: Briefcase },
-    { label: 'API Keys', value: profile.apiKeys, color: '#F59E0B', icon: Key },
-  ];
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px', gap: '10px' }}>
+        <Loader2 style={{ width: '20px', height: '20px', color: 'rgb(var(--primary))', animation: 'spin 1s linear infinite' }} />
+        <span style={{ fontSize: '14px', color: 'rgb(var(--text-muted))' }}>Loading profile...</span>
+      </div>
+    );
+  }
+
+  const name = user?.name || 'User';
+  const email = user?.email || '';
+  const role = user?.role || 'member';
 
   return (
     <div>
       <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 4px' }}>User Profile</h1>
       <p style={{ fontSize: '14px', color: 'rgb(var(--text-secondary))', margin: '0 0 24px' }}>Manage your account and preferences</p>
+
+      {saveMsg && (
+        <div style={{ padding: '10px 16px', borderRadius: '10px', marginBottom: '16px', fontSize: '13px', fontWeight: 600, backgroundColor: saveMsg.includes('Failed') ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)', color: saveMsg.includes('Failed') ? '#EF4444' : '#10B981' }}>
+          {saveMsg}
+        </div>
+      )}
 
       {/* Hero Card */}
       <div style={{
@@ -83,8 +99,11 @@ export default function UserProfilePage() {
               fontSize: '28px', fontWeight: 700, color: '#fff', flexShrink: 0,
               boxShadow: '0 4px 16px rgba(var(--primary),0.3)',
             }}>
-              {profile.name.charAt(0)}
+              {name.charAt(0).toUpperCase()}
             </div>
+            {user?.avatarUrl && (
+              <img src={user.avatarUrl} alt="avatar" style={{ position: 'absolute', top: 0, left: 0, width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover' }} />
+            )}
             <button style={{
               position: 'absolute', bottom: '-2px', right: '-2px',
               width: '28px', height: '28px', borderRadius: '50%',
@@ -96,13 +115,15 @@ export default function UserProfilePage() {
           </div>
 
           <div style={{ flex: 1, minWidth: '200px' }}>
-            <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 4px' }}>{profile.name}</h2>
-            <p style={{ fontSize: '13px', color: 'rgb(var(--text-muted))', margin: '0 0 8px' }}>{profile.email}</p>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 4px' }}>{name}</h2>
+            <p style={{ fontSize: '13px', color: 'rgb(var(--text-muted))', margin: '0 0 8px' }}>{email}</p>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, backgroundColor: 'rgba(var(--primary),0.1)', color: 'rgb(var(--primary))' }}>{profile.role}</span>
-              <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, backgroundColor: 'rgba(16,185,129,0.1)', color: '#10B981' }}>
-                {profile.twoFactor ? '2FA Enabled' : '2FA Disabled'}
-              </span>
+              <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, backgroundColor: 'rgba(var(--primary),0.1)', color: 'rgb(var(--primary))', textTransform: 'capitalize' }}>{role}</span>
+              {user?.orgId && (
+                <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, backgroundColor: 'rgba(16,185,129,0.1)', color: '#10B981' }}>
+                  Org: {user.orgId.slice(0, 8)}
+                </span>
+              )}
             </div>
           </div>
 
@@ -118,21 +139,6 @@ export default function UserProfilePage() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', marginBottom: '20px' }}>
-        {statCards.map(s => (
-          <div key={s.label} style={{ ...card, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: `${s.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <s.icon style={{ width: '16px', height: '16px', color: s.color }} />
-            </div>
-            <div>
-              <p style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgb(var(--text-muted))', margin: '0 0 2px' }}>{s.label}</p>
-              <p style={{ fontSize: '22px', fontWeight: 700, color: s.color, margin: 0, lineHeight: 1 }}>{s.value}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
         {/* Personal Info */}
         <div style={card}>
@@ -144,9 +150,6 @@ export default function UserProfilePage() {
               <>
                 <div><label style={lbl}>Full Name</label><input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} style={inp} /></div>
                 <div><label style={lbl}>Email</label><input value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} style={inp} /></div>
-                <div><label style={lbl}>Phone</label><input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} style={inp} /></div>
-                <div><label style={lbl}>Location</label><input value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} style={inp} /></div>
-                <div><label style={lbl}>Company</label><input value={form.company} onChange={e => setForm(f => ({ ...f, company: e.target.value }))} style={inp} /></div>
                 <button onClick={handleSave} disabled={saving} style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                   padding: '10px', borderRadius: '10px', border: 'none', cursor: 'pointer',
@@ -160,11 +163,10 @@ export default function UserProfilePage() {
             ) : (
               <>
                 {[
-                  { icon: User, label: 'Name', value: profile.name },
-                  { icon: Mail, label: 'Email', value: profile.email },
-                  { icon: Phone, label: 'Phone', value: profile.phone },
-                  { icon: MapPin, label: 'Location', value: profile.location },
-                  { icon: Briefcase, label: 'Company', value: profile.company },
+                  { icon: User, label: 'Name', value: name },
+                  { icon: Mail, label: 'Email', value: email },
+                  { icon: Shield, label: 'Role', value: role },
+                  { icon: Globe, label: 'User ID', value: user?.id?.slice(0, 12) + '...' || '-' },
                 ].map((row, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'rgb(var(--text-muted))' }}>
@@ -185,11 +187,9 @@ export default function UserProfilePage() {
           </div>
           <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {[
-              { icon: Shield, label: 'Role', value: profile.role },
-              { icon: Globe, label: 'Timezone', value: profile.timezone },
-              { icon: Calendar, label: 'Member Since', value: new Date(profile.joinedAt).toLocaleDateString() },
-              { icon: Activity, label: 'Last Login', value: new Date(profile.lastLogin).toLocaleString() },
-              { icon: Key, label: 'API Keys', value: `${profile.apiKeys} active` },
+              { icon: Shield, label: 'Role', value: role },
+              { icon: Globe, label: 'Organization', value: user?.orgId?.slice(0, 8) || '-' },
+              { icon: Calendar, label: 'User ID', value: user?.id || '-' },
             ].map((row, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'rgb(var(--text-muted))' }}>
