@@ -1,7 +1,7 @@
 # UI/UX Design & User Flows — Cortexo DevOps Platform
 
-> **Parent Document:** [PRD v134](file:///D:/Cortexo/docs/01_PRD.md)
-> **Last Updated:** 2026-04-23 | **Status:** Synced with PRD v134 (134 features / 21 categories)
+> **Parent Document:** [PRD v4.0](docs/01_PRD.md)
+> **Last Updated:** 2026-04-23 | **Status:** Synced with PRD v4.0 (111 features / 21 categories)
 
 ---
 

@@ -1,7 +1,7 @@
 # Roadmap & Go-to-Market Strategy — Cortexo DevOps Platform
 
-> **Parent Document:** [PRD v134](file:///D:/Cortexo/docs/01_PRD.md)
-> **Last Updated:** 2026-04-23 | **Status:** Synced with PRD v134 (134 features / 21 categories)
+> **Parent Document:** [PRD v4.0](docs/01_PRD.md)
+> **Last Updated:** 2026-04-23 | **Status:** Synced with PRD v4.0 (111 features / 21 categories)
 
 ---
 
@@ -11,7 +11,7 @@
 
 | Task | Details | Priority | PRD |
 |---|---|---|---|
-| Project setup | Next.js 14 + Fastify + MySQL 8.0 + Redis | Must | Core |
+| Project setup | Next.js 16 + Fastify + PostgreSQL 16 + Redis 7 | Must | Core |
 | Design system | Shadcn/UI components, dark/light mode, Cortexo theme | Must | F62-F68 |
 | Landing page | Hero, features, pricing, CTA | Must | — |
 | Auth system | GitHub OAuth + email login, JWT | Must | F56 |
@@ -243,19 +243,19 @@
 
 | Part | Document | Contents |
 |---|---|---|
-| **Part 1** | [PRD v134](file:///D:/Cortexo/docs/01_PRD.md) | Vision, 134 Features, 21 Categories, User Stories, Pricing, KPIs |
-| **Part 2** | [Technical Architecture](file:///C:/Users/LMX/.gemini/antigravity/brain/fb6f6300-4c3e-493b-bf76-ea1ab34d4092/tech_architecture.md) | Dual Stack, MySQL Schema (22 tables), Agent Subsystem, Security |
-| **Part 3** | [UI/UX Design](file:///C:/Users/LMX/.gemini/antigravity/brain/fb6f6300-4c3e-493b-bf76-ea1ab34d4092/ui_ux_design.md) | Design System, Navigation, 22 Screens, 3 User Flows |
-| **Part 4** | [SDK & API Reference](file:///C:/Users/LMX/.gemini/antigravity/brain/fb6f6300-4c3e-493b-bf76-ea1ab34d4092/sdk_api_reference.md) | 5 SDKs (PHP/JS/Node/Python/Flutter), 50+ API Endpoints, Agent API |
-| **Part 5** | [Roadmap & GTM](file:///C:/Users/LMX/.gemini/antigravity/brain/fb6f6300-4c3e-493b-bf76-ea1ab34d4092/roadmap_gtm.md) | 7-Phase Roadmap (24 weeks), GTM, Risks, Team, Budget |
+| **Part 1** | [PRD v4.0](01_PRD.md) | Vision, 111 Features, 21 Categories, User Stories |
+| **Part 2** | [IDP Architecture](idp-architecture/) | Architecture, 12 Modules, Workflows, PostgreSQL Data Model, Security |
+| **Part 3** | [UI/UX Design](03_ui_ux_design.md) | Design System, Navigation, 22 Screens, 3 User Flows |
+| **Part 4** | [SDK & API Reference](04_sdk_api_reference.md) | 5 SDKs (PHP/JS/Node/Python/Flutter), 90+ API Endpoints, Agent API |
+| **Part 5** | [Roadmap & GTM](05_roadmap_gtm.md) | 7-Phase Roadmap (24 weeks), GTM, Risks, Team, Budget |
 
 ---
 
 ## Audit Trail
 
-All 5 documents synced with findings from:
-- ✅ Antigravity Skills (57 skills) — [Deep-dive](file:///C:/Users/LMX/.gemini/antigravity/brain/fb6f6300-4c3e-493b-bf76-ea1ab34d4092/antigravity_skills_deepdive.md)
-- ✅ Antigravity Awesome Skills (1,431 skills) — [Comparison](file:///C:/Users/LMX/.gemini/antigravity/brain/fb6f6300-4c3e-493b-bf76-ea1ab34d4092/awesome_skills_usefulness.md)
+Planning docs synced with findings from:
+- ✅ Antigravity Skills (57 skills)
+- ✅ Antigravity Awesome Skills (1,431 skills)
 - ✅ Awesome Claude Skills (833+ skills)
 - ✅ Planning-with-Files (3-file pattern)
 - ✅ Flutter AI Rules (28 skills + 13 rules)

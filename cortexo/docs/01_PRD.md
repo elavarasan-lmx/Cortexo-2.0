@@ -12,7 +12,7 @@
 | **Product Name** | **Cortexo** ✅ — "The brain for your code" |
 | **Target Customer** | Small teams |
 | **Market** | India first → Global later |
-| **Tech Stack** | Next.js 14 + Node.js (Option A) |
+| **Tech Stack** | Next.js 16 + Fastify + PostgreSQL 16 + Redis 7 |
 | **Hosting** | Free tier: Vercel + Railway + Supabase + Upstash + R2 |
 | **Source Code Brain** | Private per project (Option A) |
 | **Testing** | All types — page load, form entry, visual, functional |
