@@ -2,10 +2,17 @@
 
 > **Parent Document:** [PRD v4.0](docs/01_PRD.md)
 > **Last Updated:** 2026-04-23 | **Status:** Synced with PRD v4.0 (111 features / 21 categories)
+>
+> ⚠️ **NOTE (2026-05-08 Audit):** The *development roadmap* in this document (24-week, SaaS-oriented)
+> has been **superseded** by the canonical roadmap at [`architecture/06_roadmap.md`](../architecture/06_roadmap.md)
+> which uses a month-based timeline aligned with the self-hosted IDP deployment model.
+> **The GTM strategy (Sections 2-6) below remains valid and current.**
 
 ---
 
-## 1. Development Roadmap (24 Weeks)
+## 1. Development Roadmap (24 Weeks) — ⚠️ SUPERSEDED
+
+> See [`architecture/06_roadmap.md`](../architecture/06_roadmap.md) for the canonical development timeline.
 
 ### Phase 1: Foundation (Week 1–3)
 
@@ -15,7 +22,7 @@
 | Design system | Shadcn/UI components, dark/light mode, Cortexo theme | Must | F62-F68 |
 | Landing page | Hero, features, pricing, CTA | Must | — |
 | Auth system | GitHub OAuth + email login, JWT | Must | F56 |
-| Database schema | All core tables (MySQL), migrations | Must | F43-F44 |
+| Database schema | All core tables (PostgreSQL 16 + Drizzle ORM), migrations | Must | F43-F44 |
 | Organization/team model | Multi-tenant data isolation | Must | F56 |
 | Monorepo scaffolding | `apps/`, `packages/`, `.agent/` in `D:\Cortexo` | Must | F117 |
 

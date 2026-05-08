@@ -14,26 +14,28 @@ export async function orgRoutes(app: FastifyInstance) {
   app.get('/org/members', async (request, reply) => {
     try {
       const db = await getDb();
-      const authHeader = request.headers.authorization;
-      // Decode org from token
-      let orgId = '';
-      if (authHeader?.startsWith('Bearer ')) {
-        try {
-          const payload = JSON.parse(Buffer.from(authHeader.replace('Bearer ', ''), 'base64url').toString());
-          orgId = payload.orgId || '';
-        } catch {}
-      }
-      if (!orgId) return reply.code(401).send({ error: 'Unauthorized' });
+      const orgId = (request as any).user?.orgId || '';
 
-      const members = await db.select({
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        role: users.role,
-        avatarUrl: users.avatarUrl,
-        createdAt: users.createdAt,
-        lastLoginAt: users.lastLoginAt,
-      }).from(users).where(eq(users.orgId, orgId));
+      // If orgId is set, filter by org; otherwise return all users (single-tenant / dev mode)
+      const members = orgId
+        ? await db.select({
+            id: users.id,
+            name: users.name,
+            email: users.email,
+            role: users.role,
+            avatarUrl: users.avatarUrl,
+            createdAt: users.createdAt,
+            lastLoginAt: users.lastLoginAt,
+          }).from(users).where(eq(users.orgId, orgId))
+        : await db.select({
+            id: users.id,
+            name: users.name,
+            email: users.email,
+            role: users.role,
+            avatarUrl: users.avatarUrl,
+            createdAt: users.createdAt,
+            lastLoginAt: users.lastLoginAt,
+          }).from(users);
 
       return { data: members, total: members.length };
     } catch (err) {
@@ -55,14 +57,7 @@ export async function orgRoutes(app: FastifyInstance) {
 
     try {
       const db = await getDb();
-      const authHeader = request.headers.authorization;
-      let orgId = '';
-      if (authHeader?.startsWith('Bearer ')) {
-        try {
-          const payload = JSON.parse(Buffer.from(authHeader.replace('Bearer ', ''), 'base64url').toString());
-          orgId = payload.orgId || '';
-        } catch {}
-      }
+      const orgId = (request as any).user?.orgId || 'default-org';
 
       // Check if user already exists
       const existing = await db.query.users.findFirst({ where: eq(users.email, email) });

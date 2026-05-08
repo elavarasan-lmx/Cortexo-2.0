@@ -211,39 +211,19 @@ export async function serverMountRoutes(app: FastifyInstance) {
 
       const localPath = expandHome(row.localMountPath);
 
-      // Build SSH connection:
-      // - privateIp is the actual server IP (target)
-      // - publicAddress may be a bastion/jump host like "user@ip"
-      // When both exist, use publicAddress as ProxyJump to reach privateIp
+      // Determine the SSH host to connect to.
+      // We prefer privateIp because ~/.ssh/config already has ProxyCommand
+      // rules for 10.0.*.* that handle bastion-jumping and key selection.
+      // Only fall back to publicAddress for direct connections.
       const privateIp = server.privateIp || '';
       const publicAddr = server.publicAddress || '';
       if (!privateIp && !publicAddr) return reply.code(400).send({ error: 'Server has no IP address configured' });
 
       let sshUser = row.sshUser;
       let sshHost = privateIp || publicAddr;
-      let proxyJump = '';
 
-      // If publicAddress is set and different from privateIp, use it as ProxyJump bastion
-      if (publicAddr && privateIp) {
-        // publicAddress is the bastion (e.g. "ubuntu@13.201.238.28")
-        // privateIp is the actual server (e.g. "10.0.1.186")
-        const bastionHost = publicAddr.includes('@') ? publicAddr : `${sshUser}@${publicAddr}`;
-        if (publicAddr.includes('@')) {
-          const parts = publicAddr.split('@');
-          // Use bastion as proxy, connect to privateIp
-          if (parts[1] !== privateIp) {
-            proxyJump = bastionHost;
-            sshHost = privateIp;
-          } else {
-            // publicAddress points to same IP as privateIp, connect directly
-            sshUser = parts[0] || sshUser;
-            sshHost = parts[1];
-          }
-        } else {
-          sshHost = privateIp;
-        }
-      } else if (publicAddr && !privateIp) {
-        // Only publicAddress — connect directly
+      // If no privateIp, extract user/host from publicAddress
+      if (!privateIp && publicAddr) {
         if (publicAddr.includes('@')) {
           const parts = publicAddr.split('@');
           sshUser = parts[0] || sshUser;
@@ -263,27 +243,43 @@ export async function serverMountRoutes(app: FastifyInstance) {
         mkdirSync(localPath, { recursive: true });
       }
 
-      // Execute SSHFS mount (using spawnSync with arg array to prevent injection)
+      // Execute SSHFS mount — defer to ~/.ssh/config for ProxyCommand,
+      // IdentityFile, and other per-host SSH options.
       try {
         validateShellSafe(sshUser, 'sshUser');
         validateShellSafe(sshHost, 'sshHost');
         validateShellSafe(row.remotePath, 'remotePath');
 
+        // Only add explicit IdentityFile if the server record has a private key *path*
+        // (skip public key strings that start with "ssh-")
         const sshKeyOpts = server.sshKey && server.sshKey.length > 0 && !server.sshKey.startsWith('ssh-')
-          ? `,IdentityFile=${server.sshKey}`
+          ? `,IdentityFile=${expandHome(server.sshKey)}`
           : '';
 
-        // Build ProxyJump option if bastion is configured
-        const proxyOpts = proxyJump ? `,ProxyJump=${proxyJump}` : '';
-
-        const result = spawnSync('sshfs', [
+        const sshfsArgs = [
           `${sshUser}@${sshHost}:${row.remotePath}`,
           localPath,
-          '-o', `reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,cache=yes,kernel_cache,auto_cache,compression=no,StrictHostKeyChecking=no${sshKeyOpts}${proxyOpts}`,
-        ], { timeout: 30000, encoding: 'utf-8' });
+          '-o', `reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,ConnectTimeout=20,cache=yes,kernel_cache,auto_cache,compression=no,StrictHostKeyChecking=no${sshKeyOpts}`,
+        ];
+
+        app.log.info(`SSHFS mount: sshfs ${sshfsArgs.join(' ')}`);
+
+        const result = spawnSync('sshfs', sshfsArgs, {
+          timeout: 60000,
+          encoding: 'utf-8',
+          env: { ...process.env, HOME: homedir() },
+        });
+
+        if (result.signal) {
+          const errMsg = `SSHFS timed out (killed by ${result.signal}). The remote server may be unreachable.`;
+          app.log.error(errMsg);
+          throw { stderr: '', message: errMsg };
+        }
 
         if (result.status !== 0) {
-          throw { stderr: result.stderr, message: result.stderr || 'sshfs failed' };
+          const errMsg = (result.stderr || '').trim() || (result.stdout || '').trim() || `sshfs exited with code ${result.status}`;
+          app.log.error(`SSHFS failed (exit ${result.status}): ${errMsg}`);
+          throw { stderr: result.stderr, message: errMsg };
         }
       } catch (execErr: any) {
         // Update status to error
@@ -292,7 +288,7 @@ export async function serverMountRoutes(app: FastifyInstance) {
           .where(eq(serverMounts.id, parseInt(id)));
         return reply.code(500).send({
           error: 'Mount failed',
-          details: execErr.stderr || execErr.message,
+          details: execErr.message || execErr.stderr || 'Unknown error',
         });
       }
 

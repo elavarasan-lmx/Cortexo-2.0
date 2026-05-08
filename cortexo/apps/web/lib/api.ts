@@ -538,6 +538,22 @@ class ApiClient {
   updateDeployConfig(id: number, data: Partial<DeployConfig>) { return this.request<DeployConfig>('PUT', `/deploy-configs/${id}`, data); }
   deleteDeployConfig(id: number)                     { return this.request<{ success: boolean }>('DELETE', `/deploy-configs/${id}`); }
 
+  // ─── Organization & Members ────────────────────────────────────────────────
+  getUsers()                                         { return this.request<Record<string, unknown>[]>('GET', '/org/members'); }
+  inviteMember(data: { email: string; role?: string }) { return this.request<Record<string, unknown>>('POST', '/org/members/invite', data); }
+  updateMemberRole(id: string, role: string)         { return this.request<Record<string, unknown>>('PUT', `/org/members/${id}/role`, { role }); }
+  removeMember(id: string)                           { return this.request<{ success: boolean }>('DELETE', `/org/members/${id}`); }
+
+  // ─── AI Agents ────────────────────────────────────────────────────────────
+  getAgents()                                        { return this.request<Record<string, unknown>[]>('GET', '/agents'); }
+  getAgent(id: string)                               { return this.request<Record<string, unknown>>('GET', `/agents/${id}`); }
+  createAgent(data: Record<string, unknown>)         { return this.request<Record<string, unknown>>('POST', '/agents', data); }
+  updateAgent(id: string, data: Record<string, unknown>) { return this.request<Record<string, unknown>>('PUT', `/agents/${id}`, data); }
+  deleteAgent(id: string)                            { return this.request<{ success: boolean }>('DELETE', `/agents/${id}`); }
+  getAgentRuns(id: string, limit?: number)           { return this.request<Record<string, unknown>[]>('GET', `/agents/${id}/runs${limit ? `?limit=${limit}` : ''}`); }
+  triggerAgentRun(id: string, input?: Record<string, unknown>) { return this.request<Record<string, unknown>>('POST', `/agents/${id}/run`, { input }); }
+  getAgentStats()                                    { return this.request<{ totalAgents: number; activeNow: number; totalRuns: number; avgAccuracy: string }>('GET', '/agents/stats'); }
+
   // ─── Audit Trail ──────────────────────────────────────────────────────────
   getAuditLogs(params?: Record<string, string>) {
     const qs = params ? '?' + new URLSearchParams(params).toString() : '';

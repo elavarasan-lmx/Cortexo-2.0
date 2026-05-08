@@ -42,14 +42,11 @@ function SettingsTab({
         textDecoration: 'none',
         position: 'relative',
         transition: 'all 250ms cubic-bezier(0.22, 1, 0.36, 1)',
-        backgroundColor: isActive
-          ? undefined
+        background: isActive
+          ? 'linear-gradient(135deg, rgb(var(--primary)), rgba(var(--primary), 0.82))'
           : hovered
             ? 'rgba(var(--primary), 0.06)'
             : 'transparent',
-        background: isActive
-          ? 'linear-gradient(135deg, rgb(var(--primary)), rgba(var(--primary), 0.82))'
-          : undefined,
         color: isActive
           ? '#fff'
           : hovered

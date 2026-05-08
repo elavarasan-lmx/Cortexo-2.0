@@ -24,16 +24,6 @@ const healthConfig: Record<HealthLevel, { color: string; bg: string; border: str
   down:     { color: '#EF4444', bg: 'rgba(239,68,68,0.08)',    border: 'rgba(239,68,68,0.2)',    label: 'Down',     Icon: XCircle },
 };
 
-/* ── Demo data matching design ── */
-const demoEndpoints = [
-  { id: 'prod-api-01',     name: 'prod-api-01',     url: 'https://api.cortexo.io',          uptimePct: 99.99, latencyMs: 12,  lastChecked: '3s ago',   group: 'Production' },
-  { id: 'prod-web-02',     name: 'prod-web-02',     url: 'https://app.cortexo.io',          uptimePct: 98.2,  latencyMs: 234, lastChecked: '5s ago',   group: 'Production' },
-  { id: 'staging-db-01',   name: 'staging-db-01',   url: 'mysql://staging-db.internal:3306', uptimePct: 0,     latencyMs: 0,   lastChecked: '2m ago',   group: 'Staging' },
-  { id: 'prod-redis-01',   name: 'prod-redis-01',   url: 'redis://redis.internal:6379',      uptimePct: 99.95, latencyMs: 2,   lastChecked: '1s ago',   group: 'Production' },
-  { id: 'staging-api-01',  name: 'staging-api-01',  url: 'https://staging-api.cortexo.io',   uptimePct: 97.8,  latencyMs: 89,  lastChecked: '10s ago',  group: 'Staging' },
-  { id: 'prod-worker-01',  name: 'prod-worker-01',  url: 'worker://bullmq.internal:6380',    uptimePct: 99.97, latencyMs: 5,   lastChecked: '2s ago',   group: 'Production' },
-];
-
 /* ── Uptime bar component ── */
 function UptimeBar({ bars }: { bars: number[] }) {
   return (
@@ -66,21 +56,19 @@ export default function HeartbeatPage() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastRefreshTime, setLastRefreshTime] = useState(new Date());
 
-  // Try to load real server data
+  // Load real server data from API
   const { data: servers, refetch: refetchServers } = useApiData(() => api.getServers(), { default: [] as any[] });
 
-  // Build endpoints from real data or fall back to demo
-  const endpoints = (servers && (servers as any[]).length > 0)
-    ? (servers as any[]).map((s: any) => ({
-        id: String(s.id),
-        name: s.name || s.label || `Server ${s.id}`,
-        url: `${s.host || s.ip}:${s.port || 22}`,
-        uptimePct: s.status === 'online' ? 99.9 : s.status === 'offline' ? 0 : 95,
-        latencyMs: 0,
-        lastChecked: 'Now',
-        group: s.environment || 'Production',
-      }))
-    : demoEndpoints;
+  // Build endpoints from real server data only
+  const endpoints = (servers as any[] || []).map((s: any) => ({
+    id: String(s.id),
+    name: s.name || s.label || `Server ${s.id}`,
+    url: `${s.host || s.ip}:${s.port || 22}`,
+    uptimePct: s.status === 'online' ? 99.9 : s.status === 'offline' ? 0 : 95,
+    latencyMs: 0,
+    lastChecked: 'Now',
+    group: s.environment || 'Production',
+  }));
 
   // Auto-refresh every 30s
   useEffect(() => {
@@ -105,7 +93,7 @@ export default function HeartbeatPage() {
     setTimeout(() => setRefreshing(false), 800);
   }, []);
 
-  // Generate fake uptime bars for demo
+  // Generate uptime bars visualization
   const uptimeBars = useCallback((pct: number) => {
     return Array.from({ length: 24 }, (_, i) => {
       const base = pct;
@@ -338,35 +326,17 @@ export default function HeartbeatPage() {
           <span style={{ fontSize: '12px', color: 'rgb(var(--text-muted))' }}>Last 7 days</span>
         </div>
         <div style={{ padding: '12px 18px' }}>
-          {[
-            { time: '2h ago',  endpoint: 'staging-db-01',  type: 'DOWN',     duration: 'Ongoing',  desc: 'Connection refused — MySQL not responding' },
-            { time: '1d ago',  endpoint: 'prod-web-02',    type: 'DEGRADED', duration: '12m',       desc: 'High latency spike detected (>500ms)' },
-            { time: '3d ago',  endpoint: 'staging-api-01', type: 'DOWN',     duration: '45s',       desc: 'Brief outage during deployment restart' },
-          ].map((inc, i) => (
-            <div key={i} style={{
-              display: 'flex', alignItems: 'flex-start', gap: '12px',
-              padding: '12px 0',
-              borderBottom: i < 2 ? '1px solid rgb(var(--border))' : 'none',
-            }}>
-              <div style={{
-                width: '8px', height: '8px', borderRadius: '50%', marginTop: '5px', flexShrink: 0,
-                backgroundColor: inc.type === 'DOWN' ? '#EF4444' : '#F59E0B',
-              }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-primary))' }}>{inc.endpoint}</span>
-                  <span style={{
-                    fontSize: '10px', fontWeight: 700, padding: '1px 6px', borderRadius: '4px',
-                    backgroundColor: inc.type === 'DOWN' ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)',
-                    color: inc.type === 'DOWN' ? '#EF4444' : '#F59E0B',
-                  }}>{inc.type}</span>
-                  <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>· {inc.duration}</span>
-                </div>
-                <p style={{ fontSize: '12px', color: 'rgb(var(--text-secondary))', marginTop: '2px' }}>{inc.desc}</p>
-              </div>
-              <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', whiteSpace: 'nowrap', flexShrink: 0 }}>{inc.time}</span>
+          {endpoints.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '24px', color: 'rgb(var(--text-muted))', fontSize: '13px' }}>
+              <Heart style={{ width: '24px', height: '24px', marginBottom: '8px', opacity: 0.5 }} />
+              <p style={{ margin: 0 }}>No incidents recorded — add servers to start monitoring</p>
             </div>
-          ))}
+          ) : (
+            <div style={{ textAlign: 'center', padding: '24px', color: 'rgb(var(--text-muted))', fontSize: '13px' }}>
+              <CheckCircle style={{ width: '24px', height: '24px', color: '#10B981', marginBottom: '8px' }} />
+              <p style={{ margin: 0 }}>No recent incidents — all systems operational 🎉</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

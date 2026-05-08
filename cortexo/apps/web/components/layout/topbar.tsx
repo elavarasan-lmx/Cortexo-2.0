@@ -70,7 +70,7 @@ export function Topbar({ isMobile = false }: { isMobile?: boolean }) {
         display: 'flex',
         alignItems: 'center',
         padding: isMobile ? '0 12px' : '0 20px',
-        backgroundColor: 'rgb(var(--card))',
+        backgroundColor: 'rgb(var(--surface))',
         borderBottom: '1px solid rgb(var(--border))',
         gap: '16px',
         fontFamily: 'Inter, system-ui, sans-serif',
@@ -107,7 +107,7 @@ export function Topbar({ isMobile = false }: { isMobile?: boolean }) {
           gap: '8px',
           padding: '0 12px',
           borderRadius: '8px',
-          backgroundColor: '#F1F5F9',
+          backgroundColor: 'rgb(var(--surface-hover))',
           height: '40px',
           width: isMobile ? '100%' : '400px',
           cursor: 'pointer',
@@ -116,10 +116,10 @@ export function Topbar({ isMobile = false }: { isMobile?: boolean }) {
           window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
         }}
       >
-        <span style={{ fontSize: '14px', color: '#94A3B8' }}>🔍</span>
+        <span style={{ fontSize: '14px', color: 'rgb(var(--text-muted))' }}>🔍</span>
         <span style={{
           fontSize: '14px',
-          color: '#94A3B8',
+          color: 'rgb(var(--text-muted))',
           fontWeight: 'normal',
           fontFamily: 'Inter, system-ui, sans-serif',
         }}>
@@ -149,12 +149,12 @@ export function Topbar({ isMobile = false }: { isMobile?: boolean }) {
               borderRadius: '20px',
               border: 'none',
               cursor: 'pointer',
-              backgroundColor: '#F1F5F9',
-              color: '#64748B',
+              backgroundColor: 'rgb(var(--surface-hover))',
+              color: 'rgb(var(--text-secondary))',
               transition: 'background-color 150ms',
             }}
-            onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#E2E8F0'; }}
-            onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#F1F5F9'; }}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgb(var(--border))'; }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))'; }}
           >
             <Bell style={{ width: '20px', height: '20px' }} />
             {/* Red notification badge */}
@@ -174,7 +174,7 @@ export function Topbar({ isMobile = false }: { isMobile?: boolean }) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                border: '2px solid rgb(var(--card))',
+                border: '2px solid rgb(var(--surface))',
               }}>
                 {unread > 9 ? '9+' : unread}
               </span>
@@ -186,19 +186,19 @@ export function Topbar({ isMobile = false }: { isMobile?: boolean }) {
             <div style={{
               position: 'absolute', right: 0, top: 'calc(100% + 8px)',
               width: '340px', maxHeight: '420px', overflowY: 'auto',
-              borderRadius: '12px', border: '1px solid #E5E7EB',
-              backgroundColor: 'rgb(var(--card))',
+              borderRadius: '12px', border: '1px solid rgb(var(--border))',
+              backgroundColor: 'rgb(var(--surface))',
               boxShadow: '0 16px 40px -8px rgba(0,0,0,0.15)',
               zIndex: 100,
             }}>
               <div style={{
                 padding: '12px 16px',
-                borderBottom: '1px solid #E5E7EB',
+                borderBottom: '1px solid rgb(var(--border))',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
               }}>
-                <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#1E293B' }}>Notifications</p>
+                <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'rgb(var(--text-primary))' }}>Notifications</p>
                 {unread > 0 && (
                   <button onClick={markAllRead} style={{
                     display: 'flex', alignItems: 'center', gap: '4px',
@@ -211,7 +211,7 @@ export function Topbar({ isMobile = false }: { isMobile?: boolean }) {
                 )}
               </div>
               {notifications.length === 0 ? (
-                <div style={{ padding: '32px 16px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>
+                <div style={{ padding: '32px 16px', textAlign: 'center', color: 'rgb(var(--text-muted))', fontSize: '13px' }}>
                   No notifications yet
                 </div>
               ) : (
@@ -223,8 +223,8 @@ export function Topbar({ isMobile = false }: { isMobile?: boolean }) {
                       <div key={n.id} style={{
                         display: 'flex', alignItems: 'flex-start', gap: '10px',
                         padding: '12px 16px',
-                        backgroundColor: isUnread ? '#F5F3FF' : 'transparent',
-                        borderBottom: '1px solid #F1F5F9',
+                        backgroundColor: isUnread ? 'rgba(var(--primary), 0.08)' : 'transparent',
+                        borderBottom: '1px solid rgb(var(--border))',
                         cursor: 'pointer',
                       }}>
                         <div style={{
@@ -235,9 +235,9 @@ export function Topbar({ isMobile = false }: { isMobile?: boolean }) {
                           <TypeIcon style={{ width: '15px', height: '15px', color: '#7C3AED' }} />
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ margin: 0, fontSize: '12px', fontWeight: isUnread ? 600 : 400, color: '#1E293B' }}>{n.title}</p>
-                          <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#94A3B8' }}>{n.message}</p>
-                          <p style={{ margin: '4px 0 0', fontSize: '10px', color: '#94A3B8' }}>{timeAgo(n.createdAt)}</p>
+                          <p style={{ margin: 0, fontSize: '12px', fontWeight: isUnread ? 600 : 400, color: 'rgb(var(--text-primary))' }}>{n.title}</p>
+                          <p style={{ margin: '2px 0 0', fontSize: '11px', color: 'rgb(var(--text-muted))' }}>{n.message}</p>
+                          <p style={{ margin: '4px 0 0', fontSize: '10px', color: 'rgb(var(--text-muted))' }}>{timeAgo(n.createdAt)}</p>
                         </div>
                         {isUnread && <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#7C3AED', flexShrink: 0, marginTop: '4px' }} />}
                       </div>
@@ -335,8 +335,8 @@ export function Topbar({ isMobile = false }: { isMobile?: boolean }) {
               top: 'calc(100% + 8px)',
               width: '220px',
               borderRadius: '12px',
-              border: '1px solid #E5E7EB',
-              backgroundColor: 'rgb(var(--card))',
+              border: '1px solid rgb(var(--border))',
+              backgroundColor: 'rgb(var(--surface))',
               boxShadow: '0 16px 40px -8px rgba(0,0,0,0.15)',
               overflow: 'hidden',
               zIndex: 100,
@@ -344,7 +344,7 @@ export function Topbar({ isMobile = false }: { isMobile?: boolean }) {
               {/* User identity header */}
               <div style={{
                 padding: '14px 16px',
-                borderBottom: '1px solid #E5E7EB',
+                borderBottom: '1px solid rgb(var(--border))',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
@@ -365,8 +365,8 @@ export function Topbar({ isMobile = false }: { isMobile?: boolean }) {
                   J
                 </div>
                 <div style={{ minWidth: 0 }}>
-                  <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: '#1E293B' }}>Jerry</p>
-                  <p style={{ margin: '1px 0 0', fontSize: '11px', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-primary))' }}>Jerry</p>
+                  <p style={{ margin: '1px 0 0', fontSize: '11px', color: 'rgb(var(--text-secondary))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     admin@cortexo.io
                   </p>
                   <span style={{
@@ -406,16 +406,16 @@ export function Topbar({ isMobile = false }: { isMobile?: boolean }) {
                       textDecoration: 'none',
                       fontSize: '13px',
                       fontWeight: 500,
-                      color: '#64748B',
+                      color: 'rgb(var(--text-secondary))',
                       transition: 'background-color 120ms, color 120ms',
                     }}
                     onMouseEnter={e => {
                       e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))';
-                      e.currentTarget.style.color = '#1E293B';
+                      e.currentTarget.style.color = 'rgb(var(--text-primary))';
                     }}
                     onMouseLeave={e => {
                       e.currentTarget.style.backgroundColor = 'transparent';
-                      e.currentTarget.style.color = '#64748B';
+                      e.currentTarget.style.color = 'rgb(var(--text-secondary))';
                     }}
                   >
                     <item.icon style={{ width: '15px', height: '15px', flexShrink: 0 }} />
@@ -425,7 +425,7 @@ export function Topbar({ isMobile = false }: { isMobile?: boolean }) {
               </div>
 
               {/* Sign out */}
-              <div style={{ padding: '6px', borderTop: '1px solid #E5E7EB' }}>
+              <div style={{ padding: '6px', borderTop: '1px solid rgb(var(--border))' }}>
                 <button
                   style={{
                     display: 'flex',

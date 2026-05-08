@@ -4,15 +4,6 @@ import { Database, Play, Clock, Table2, Search, AlertTriangle, CheckCircle, Zap 
 import { useAutoLoadToken } from '@/lib/hooks';
 import { useState } from 'react';
 
-const demoTables = [
-  { name: 'tbl_orders', rows: '2.4M', size: '456 MB', schema: 'public', lastAnalyzed: '2d ago' },
-  { name: 'tbl_rates', rows: '890K', size: '124 MB', schema: 'public', lastAnalyzed: '5d ago' },
-  { name: 'tbl_users', rows: '12K', size: '8 MB', schema: 'auth', lastAnalyzed: '1w ago' },
-  { name: 'tbl_transactions', rows: '5.1M', size: '1.2 GB', schema: 'public', lastAnalyzed: '3d ago' },
-  { name: 'tbl_audit_log', rows: '15M', size: '3.8 GB', schema: 'audit', lastAnalyzed: '1d ago' },
-  { name: 'tbl_client_config', rows: '450', size: '2 MB', schema: 'config', lastAnalyzed: '1w ago' },
-];
-
 export default function PostgreSQLPage() {
   useAutoLoadToken();
   const [query, setQuery] = useState('');
@@ -29,10 +20,10 @@ export default function PostgreSQLPage() {
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', marginBottom: '24px' }}>
         {[
-          { label: 'Total Tables', value: String(demoTables.length), color: '#336791' },
-          { label: 'Active Connections', value: '42', color: '#818CF8' },
-          { label: 'Database Size', value: '5.6 GB', color: '#10B981' },
-          { label: 'WAL Size', value: '128 MB', color: '#F59E0B' },
+          { label: 'Total Tables', value: '—', color: '#336791' },
+          { label: 'Active Connections', value: '—', color: '#818CF8' },
+          { label: 'Database Size', value: '—', color: '#10B981' },
+          { label: 'WAL Size', value: '—', color: '#F59E0B' },
         ].map((c) => (
           <div key={c.label} style={{ backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', borderRadius: '14px', padding: '18px', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', backgroundColor: c.color }} />
@@ -79,21 +70,12 @@ export default function PostgreSQLPage() {
               </tr>
             </thead>
             <tbody>
-              {demoTables.map((t) => (
-                <tr key={t.name} style={{ transition: 'background-color 200ms', cursor: 'pointer' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(var(--border), 0.1)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}>
-                  <td style={{ padding: '12px 16px', borderBottom: '1px solid rgb(var(--border))' }}>
-                    <code style={{ fontSize: '12px', fontWeight: 600, fontFamily: "'JetBrains Mono', monospace", color: '#336791' }}>{t.name}</code>
-                  </td>
-                  <td style={{ padding: '12px 16px', borderBottom: '1px solid rgb(var(--border))' }}>
-                    <span style={{ fontSize: '11px', backgroundColor: 'rgba(var(--border), 0.3)', padding: '2px 6px', borderRadius: '4px', color: 'rgb(var(--text-secondary))' }}>{t.schema}</span>
-                  </td>
-                  <td style={{ padding: '12px 16px', borderBottom: '1px solid rgb(var(--border))', color: 'rgb(var(--text-secondary))' }}>{t.rows}</td>
-                  <td style={{ padding: '12px 16px', borderBottom: '1px solid rgb(var(--border))', color: 'rgb(var(--text-secondary))' }}>{t.size}</td>
-                  <td style={{ padding: '12px 16px', borderBottom: '1px solid rgb(var(--border))', color: 'rgb(var(--text-muted))' }}>{t.lastAnalyzed}</td>
-                </tr>
-              ))}
+              <tr>
+                <td colSpan={5} style={{ padding: '40px 16px', textAlign: 'center', color: 'rgb(var(--text-muted))', fontSize: '13px' }}>
+                  <Database style={{ width: '24px', height: '24px', marginBottom: '8px', opacity: 0.5 }} />
+                  <p style={{ margin: 0 }}>Connect to a database to explore schema</p>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useApiData, useProjectLookup, useAutoLoadToken, resolveProjectName, timeAgo, formatDuration } from '@/lib/hooks';
+import { useState, useEffect } from 'react';
 
 const statusIcon: Record<string, { icon: typeof CheckCircle; color: string }> = {
   success: { icon: CheckCircle, color: '#10B981' },
@@ -31,6 +32,15 @@ export default function DashboardPage() {
   const { data: deployments } = useApiData(() => api.getDeployments());
   const { data: errors } = useApiData(() => api.getErrors());
   const { data: targets } = useApiData(() => api.getDeployTargets());
+  const { data: agentStats } = useApiData(() => api.getAgentStats());
+
+  // Load user name dynamically
+  const [userName, setUserName] = useState('Engineer');
+  useEffect(() => {
+    api.getMe().then(res => {
+      if (res?.data?.user?.name) setUserName(res.data.user.name.split(' ')[0]);
+    }).catch(() => { /* use fallback */ });
+  }, []);
 
   const projectCount = (projects || []).length;
   const avgHealth = projectCount > 0
@@ -77,7 +87,7 @@ export default function DashboardPage() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>
-              Welcome back, LMX 👋
+              Welcome back, {userName} 👋
             </h1>
             <p style={{ fontSize: '14px', color: 'rgb(var(--text-secondary))', marginTop: '4px' }}>
               Here&apos;s what&apos;s happening across your {projectCount} projects today.
@@ -111,7 +121,7 @@ export default function DashboardPage() {
         <StatCard label="Health Score" value={String(avgHealth)} suffix="/100" icon={Shield} color="#10B981" />
         <StatCard label="Deployments" value={String(deployCount)} icon={Rocket} color="#818CF8" />
         <StatCard label="Unresolved Errors" value={String(errorCount)} icon={Bug} color="#EF4444" />
-        <StatCard label="Agent Score" value="—" icon={Brain} color="#A78BFA" subtitle="Phase 5" />
+        <StatCard label="Agent Score" value={agentStats ? String(Math.round(parseFloat(agentStats.avgAccuracy || '0'))) : '—'} suffix={agentStats ? '/100' : ''} icon={Brain} color="#A78BFA" subtitle={agentStats?.totalRuns ? `${agentStats.totalRuns} runs` : 'No runs yet'} />
       </div>
 
       {/* ─── Main Content Grid ─── */}
@@ -303,7 +313,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Agent Activity */}
+          {/* Agent Activity — data-driven, no fake entries */}
           <div style={cardBase}>
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -313,39 +323,47 @@ export default function DashboardPage() {
                 <Brain style={{ width: '14px', height: '14px', color: '#A78BFA' }} />
                 Agent Activity
               </h2>
-              <a href="/agent/performance" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 500, color: 'rgb(var(--primary))', textDecoration: 'none' }}>
+              <a href="/agents" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 500, color: 'rgb(var(--primary))', textDecoration: 'none' }}>
                 View all <ArrowRight style={{ width: '12px', height: '12px' }} />
               </a>
             </div>
             <div style={{ padding: '0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px', borderBottom: '1px solid rgba(var(--border), 0.5)' }}>
-                <div style={{ width: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '10px', backgroundColor: 'rgba(167,139,250,0.12)', flexShrink: 0 }}>
-                  <Sparkles style={{ width: '14px', height: '14px', color: '#A78BFA' }} />
+              {agentStats && Number(agentStats.totalRuns) > 0 ? (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px', borderBottom: '1px solid rgba(var(--border), 0.5)' }}>
+                    <div style={{ width: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '10px', backgroundColor: 'rgba(167,139,250,0.12)', flexShrink: 0 }}>
+                      <Sparkles style={{ width: '14px', height: '14px', color: '#A78BFA' }} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: '13px', fontWeight: 500, color: 'rgb(var(--text-primary))', margin: 0 }}>
+                        {agentStats.totalAgents} agent{Number(agentStats.totalAgents) !== 1 ? 's' : ''} configured
+                      </p>
+                      <p style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', margin: '2px 0 0' }}>
+                        {agentStats.totalRuns} total runs • Avg accuracy: {agentStats.avgAccuracy || '—'}
+                      </p>
+                    </div>
+                  </div>
+                  {Number(agentStats.activeNow) > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px' }}>
+                      <div style={{ width: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '10px', backgroundColor: 'rgba(59,130,246,0.12)', flexShrink: 0 }}>
+                        <Activity style={{ width: '14px', height: '14px', color: '#3B82F6' }} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontSize: '13px', fontWeight: 500, color: 'rgb(var(--text-primary))', margin: 0 }}>
+                          {agentStats.activeNow} agent{Number(agentStats.activeNow) !== 1 ? 's' : ''} running now
+                        </p>
+                      </div>
+                      <Loader2 style={{ width: '14px', height: '14px', color: '#3B82F6', animation: 'spin 1s linear infinite' }} />
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '40px 20px', textAlign: 'center' }}>
+                  <Brain style={{ width: '28px', height: '28px', color: 'rgb(var(--text-muted))', opacity: 0.4 }} />
+                  <p style={{ fontSize: '13px', color: 'rgb(var(--text-muted))', margin: 0 }}>No agent runs yet</p>
+                  <a href="/agents" style={{ fontSize: '12px', color: 'rgb(var(--primary))', textDecoration: 'none', fontWeight: 500 }}>Configure agents →</a>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: '13px', fontWeight: 500, color: 'rgb(var(--text-primary))', margin: 0 }}>
-                    Code review completed
-                  </p>
-                  <p style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', margin: '2px 0 0' }}>
-                    Score: 92/100 • PSR-12 compliant
-                  </p>
-                </div>
-                <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>2m ago</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px' }}>
-                <div style={{ width: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '10px', backgroundColor: 'rgba(59,130,246,0.12)', flexShrink: 0 }}>
-                  <Activity style={{ width: '14px', height: '14px', color: '#3B82F6' }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: '13px', fontWeight: 500, color: 'rgb(var(--text-primary))', margin: 0 }}>
-                    Root cause analyzing...
-                  </p>
-                  <p style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', margin: '2px 0 0' }}>
-                    Error #142 • booking API
-                  </p>
-                </div>
-                <Loader2 style={{ width: '14px', height: '14px', color: '#3B82F6', animation: 'spin 1s linear infinite' }} />
-              </div>
+              )}
             </div>
           </div>
         </div>

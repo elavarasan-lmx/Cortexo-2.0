@@ -1,8 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getDb } from '../lib/db.js';
-import { eq, desc, sql } from 'drizzle-orm';
-import { parsePagination, paginatedResponse } from '../lib/pagination.js';
+import { eq, desc, sql, inArray } from 'drizzle-orm';
+import { winbullConfigs } from '@cortexo/db/schema';
 import { getOrgId, getUserId } from '../lib/request-context.js';
 import { createNotification } from './notifications.js';
 
@@ -19,10 +19,18 @@ const createWinbullSchema = z.object({
 
 const updateWinbullSchema = createWinbullSchema.partial();
 
+const batchUpdateSchema = z.object({
+  slugs: z.array(z.string().min(1)).min(1, 'slugs array required'),
+  updates: z.object({
+    migrationStatus: z.enum(['pending', 'in_progress', 'completed', 'failed']).optional(),
+    serverIp: z.string().max(45).optional(),
+  }),
+});
+
 /**
  * WinBull Config Manager — /v1/winbull
  * Manages WinBull client configurations for deployment lookups.
- * Maps to the legacy winbull_configs table via Drizzle ORM.
+ * Uses Drizzle ORM typed queries — NO raw SQL string concatenation.
  */
 export async function winbullRoutes(app: FastifyInstance) {
 
@@ -30,16 +38,11 @@ export async function winbullRoutes(app: FastifyInstance) {
   app.get('/winbull', async (request, reply) => {
     try {
       const db = await getDb();
-      const [rows] = await db.execute(sql`SELECT * FROM winbull_configs ORDER BY created_at DESC`) as any;
-      return { data: rows || [] };
+      const rows = await db.select().from(winbullConfigs).orderBy(desc(winbullConfigs.createdAt));
+      return { data: rows };
     } catch (err) {
-      app.log.warn(err, 'winbull_configs table may not exist — returning mock data');
-      const mockConfigs = [
-        { id: '1', clientSlug: 'vijaybullion', clientId: 'VB001', displayName: 'Vijay Bullion', domain: 'vijaybullion.com', serverIp: '10.0.1.15', migrationStatus: 'completed', configJson: { rateSource: 'MCX', marginType: 'fixed' }, createdAt: '2026-01-15T10:00:00Z' },
-        { id: '2', clientSlug: 'goldtraders', clientId: 'GT002', displayName: 'Gold Traders India', domain: 'goldtraders.in', serverIp: '10.0.1.20', migrationStatus: 'completed', configJson: { rateSource: 'MCX', marginType: 'percentage' }, createdAt: '2026-02-20T12:00:00Z' },
-        { id: '3', clientSlug: 'mnttraders', clientId: 'MNT003', displayName: 'MNT Traders', domain: 'mnttraders.com', serverIp: '10.0.1.25', migrationStatus: 'in_progress', configJson: { rateSource: 'MCX', marginType: 'fixed' }, createdAt: '2026-03-10T08:30:00Z' },
-      ];
-      return { data: mockConfigs };
+      app.log.error(err, 'Failed to fetch winbull_configs');
+      return reply.code(500).send({ error: 'Database error fetching configs' });
     }
   });
 
@@ -48,9 +51,9 @@ export async function winbullRoutes(app: FastifyInstance) {
     const { slug } = request.params as { slug: string };
     try {
       const db = await getDb();
-      const [rows] = await db.execute(sql`SELECT * FROM winbull_configs WHERE client_slug = ${slug} LIMIT 1`) as any;
-      if (!rows?.[0]) return reply.code(404).send({ error: 'WinBull config not found' });
-      return { data: rows[0] };
+      const [row] = await db.select().from(winbullConfigs).where(eq(winbullConfigs.clientSlug, slug)).limit(1);
+      if (!row) return reply.code(404).send({ error: 'WinBull config not found' });
+      return { data: row };
     } catch (err) {
       app.log.error(err);
       return reply.code(500).send({ error: 'Database error' });
@@ -67,11 +70,15 @@ export async function winbullRoutes(app: FastifyInstance) {
     try {
       const db = await getDb();
       const data = parsed.data;
-      const id = crypto.randomUUID();
-      await db.execute(sql`
-        INSERT INTO winbull_configs (id, client_slug, client_id, display_name, domain, config_json, server_ip, migration_status)
-        VALUES (${id}, ${data.clientSlug}, ${data.clientId}, ${data.displayName}, ${data.domain || null}, ${JSON.stringify(data.configJson || {})}, ${data.serverIp || null}, ${data.migrationStatus})
-      `);
+      const [row] = await db.insert(winbullConfigs).values({
+        clientSlug: data.clientSlug,
+        clientId: data.clientId,
+        displayName: data.displayName,
+        domain: data.domain || null,
+        configJson: data.configJson || {},
+        serverIp: data.serverIp || null,
+        migrationStatus: data.migrationStatus,
+      }).returning();
 
       await createNotification({
         orgId: getOrgId(request),
@@ -82,14 +89,14 @@ export async function winbullRoutes(app: FastifyInstance) {
         link: `/clients`,
       });
 
-      return reply.code(201).send({ data: { id, ...data } });
+      return reply.code(201).send({ data: row });
     } catch (err) {
       app.log.error(err);
       return reply.code(500).send({ error: 'Failed to create config' });
     }
   });
 
-  // ── Update config ───────────────────────────────────────────────
+  // ── Update config (parameterized — NO raw SQL) ─────────────────
   app.put('/winbull/:slug', async (request, reply) => {
     const { slug } = request.params as { slug: string };
     const parsed = updateWinbullSchema.safeParse(request.body);
@@ -99,17 +106,33 @@ export async function winbullRoutes(app: FastifyInstance) {
     try {
       const db = await getDb();
       const data = parsed.data;
-      const sets: string[] = [];
-      if (data.displayName !== undefined) sets.push(`display_name = '${data.displayName}'`);
-      if (data.domain !== undefined) sets.push(`domain = '${data.domain}'`);
-      if (data.serverIp !== undefined) sets.push(`server_ip = '${data.serverIp}'`);
-      if (data.migrationStatus !== undefined) sets.push(`migration_status = '${data.migrationStatus}'`);
-      if (data.configJson !== undefined) sets.push(`config_json = '${JSON.stringify(data.configJson)}'`);
 
-      if (sets.length === 0) return reply.code(400).send({ error: 'No fields to update' });
+      // Build update object with only provided fields
+      const updates: Record<string, unknown> = {};
+      if (data.displayName !== undefined) updates.displayName = data.displayName;
+      if (data.domain !== undefined) updates.domain = data.domain;
+      if (data.serverIp !== undefined) updates.serverIp = data.serverIp;
+      if (data.migrationStatus !== undefined) updates.migrationStatus = data.migrationStatus;
+      if (data.configJson !== undefined) updates.configJson = data.configJson;
+      if (data.clientId !== undefined) updates.clientId = data.clientId;
 
-      await db.execute(sql.raw(`UPDATE winbull_configs SET ${sets.join(', ')}, updated_at = NOW() WHERE client_slug = '${slug}'`));
-      return { success: true };
+      if (Object.keys(updates).length === 0) {
+        return reply.code(400).send({ error: 'No fields to update' });
+      }
+
+      // Always set updatedAt on modification
+      updates.updatedAt = new Date();
+
+      const result = await db.update(winbullConfigs)
+        .set(updates)
+        .where(eq(winbullConfigs.clientSlug, slug))
+        .returning();
+
+      if (result.length === 0) {
+        return reply.code(404).send({ error: 'Config not found' });
+      }
+
+      return { data: result[0], success: true };
     } catch (err) {
       app.log.error(err);
       return reply.code(500).send({ error: 'Failed to update config' });
@@ -121,7 +144,12 @@ export async function winbullRoutes(app: FastifyInstance) {
     const { slug } = request.params as { slug: string };
     try {
       const db = await getDb();
-      await db.execute(sql`DELETE FROM winbull_configs WHERE client_slug = ${slug}`);
+      const deleted = await db.delete(winbullConfigs)
+        .where(eq(winbullConfigs.clientSlug, slug))
+        .returning();
+      if (deleted.length === 0) {
+        return reply.code(404).send({ error: 'Config not found' });
+      }
       return { success: true };
     } catch (err) {
       app.log.error(err);
@@ -138,17 +166,21 @@ export async function winbullRoutes(app: FastifyInstance) {
     }
     try {
       const db = await getDb();
-      // Fetch original
-      const [rows] = await db.execute(sql`SELECT * FROM winbull_configs WHERE client_slug = ${slug} LIMIT 1`) as any;
-      if (!rows?.[0]) return reply.code(404).send({ error: 'Source config not found' });
+      // Fetch original using Drizzle
+      const [src] = await db.select().from(winbullConfigs).where(eq(winbullConfigs.clientSlug, slug)).limit(1);
+      if (!src) return reply.code(404).send({ error: 'Source config not found' });
 
-      const src = rows[0];
-      const id = crypto.randomUUID();
-      await db.execute(sql`
-        INSERT INTO winbull_configs (id, client_slug, client_id, display_name, domain, config_json, server_ip, migration_status)
-        VALUES (${id}, ${body.newSlug}, ${src.client_id + '-clone'}, ${body.newName}, ${src.domain}, ${JSON.stringify(src.config_json || {})}, ${src.server_ip}, 'pending')
-      `);
-      return reply.code(201).send({ data: { id, clientSlug: body.newSlug, displayName: body.newName } });
+      const [row] = await db.insert(winbullConfigs).values({
+        clientSlug: body.newSlug,
+        clientId: `${src.clientId}-clone`,
+        displayName: body.newName,
+        domain: src.domain,
+        configJson: src.configJson || {},
+        serverIp: src.serverIp,
+        migrationStatus: 'pending',
+      }).returning();
+
+      return reply.code(201).send({ data: row });
     } catch (err) {
       app.log.error(err);
       return reply.code(500).send({ error: 'Failed to clone config' });
@@ -164,21 +196,31 @@ export async function winbullRoutes(app: FastifyInstance) {
     return { valid: true, errors: [] };
   });
 
-  // ── Batch update ────────────────────────────────────────────────
+  // ── Batch update (parameterized — NO raw SQL) ──────────────────
   app.post('/winbull/batch/update', async (request, reply) => {
-    const body = request.body as { slugs: string[]; updates: Record<string, unknown> };
-    if (!body.slugs?.length) return reply.code(400).send({ error: 'slugs array required' });
+    const parsed = batchUpdateSchema.safeParse(request.body);
+    if (!parsed.success) {
+      return reply.code(400).send({ error: 'Validation failed', details: parsed.error.flatten() });
+    }
     try {
       const db = await getDb();
-      const sets: string[] = [];
-      if (body.updates.migrationStatus) sets.push(`migration_status = '${body.updates.migrationStatus}'`);
-      if (body.updates.serverIp) sets.push(`server_ip = '${body.updates.serverIp}'`);
+      const { slugs, updates } = parsed.data;
 
-      if (sets.length === 0) return reply.code(400).send({ error: 'No valid update fields' });
+      const updateFields: Record<string, unknown> = {};
+      if (updates.migrationStatus !== undefined) updateFields.migrationStatus = updates.migrationStatus;
+      if (updates.serverIp !== undefined) updateFields.serverIp = updates.serverIp;
 
-      const placeholders = body.slugs.map(s => `'${s}'`).join(', ');
-      await db.execute(sql.raw(`UPDATE winbull_configs SET ${sets.join(', ')}, updated_at = NOW() WHERE client_slug IN (${placeholders})`));
-      return { updated: body.slugs.length };
+      if (Object.keys(updateFields).length === 0) {
+        return reply.code(400).send({ error: 'No valid update fields' });
+      }
+
+      updateFields.updatedAt = new Date();
+
+      await db.update(winbullConfigs)
+        .set(updateFields)
+        .where(inArray(winbullConfigs.clientSlug, slugs));
+
+      return { updated: slugs.length };
     } catch (err) {
       app.log.error(err);
       return reply.code(500).send({ error: 'Batch update failed' });
@@ -189,26 +231,26 @@ export async function winbullRoutes(app: FastifyInstance) {
   app.get('/winbull/stats/summary', async (request, reply) => {
     try {
       const db = await getDb();
-      const [rows] = await db.execute(sql`
-        SELECT 
-          COUNT(*) as total,
-          SUM(CASE WHEN migration_status = 'completed' THEN 1 ELSE 0 END) as completed,
-          SUM(CASE WHEN migration_status = 'in_progress' THEN 1 ELSE 0 END) as in_progress,
-          SUM(CASE WHEN migration_status = 'pending' THEN 1 ELSE 0 END) as pending,
-          SUM(CASE WHEN migration_status = 'failed' THEN 1 ELSE 0 END) as failed
-        FROM winbull_configs
-      `) as any;
-      return rows?.[0] || { total: 0, completed: 0, in_progress: 0, pending: 0, failed: 0 };
+      const rows = await db.select().from(winbullConfigs);
+
+      const stats = {
+        total: rows.length,
+        completed: rows.filter(r => r.migrationStatus === 'completed').length,
+        in_progress: rows.filter(r => r.migrationStatus === 'in_progress').length,
+        pending: rows.filter(r => r.migrationStatus === 'pending').length,
+        failed: rows.filter(r => r.migrationStatus === 'failed').length,
+      };
+      return stats;
     } catch (err) {
-      app.log.warn(err, 'Stats query failed — returning mock');
-      return { total: 3, completed: 2, in_progress: 1, pending: 0, failed: 0 };
+      app.log.error(err, 'Stats query failed');
+      return reply.code(500).send({ error: 'Failed to fetch stats' });
     }
   });
 
   // ── Changelog ───────────────────────────────────────────────────
   app.get('/winbull/changelog', async (request, reply) => {
     const query = request.query as Record<string, string>;
-    const limitVal = parseInt(query.limit || '20', 10);
+    const limitVal = Math.min(parseInt(query.limit || '20', 10), 100);
     try {
       const db = await getDb();
       const [rows] = await db.execute(sql`

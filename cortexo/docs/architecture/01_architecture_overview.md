@@ -327,3 +327,29 @@ All cross-module communication happens via events — direct worker-to-worker fu
 - **Zero-trust DB query panel**: Parameterized queries only, read-only DB role (SELECT only), per-query audit log, admin-only access
 - **Rate limiting**: Per-tenant and per-user, configurable by tenant admin. API returns 429 with Retry-After header on breach.
 - **Terminal security**: Role-gated (developer+), full command log to ClickHouse, session recorded, alert on session > 2h
+
+### WebSocket Authentication & Authorization
+
+> Added during documentation audit (2026-05-08). Closes the gap between the 5 WS channel patterns
+> defined in `07_ui_ux.md` and the auth strategy.
+
+**Connection Authentication:**
+1. Client connects to `/ws` endpoint with JWT in `Sec-WebSocket-Protocol` header or `?token=` query param
+2. Server validates JWT on `connection` event — reject with 4001 if invalid/expired
+3. Tenant ID extracted from JWT claims and set as connection metadata
+4. Connection registered in Redis set `ws::connections::{tenant_id}` with TTL = token expiry
+
+**Channel Subscription Authorization:**
+1. Client sends `subscribe` message with channel pattern (e.g., `tenant::{id}::client::{id}`)
+2. Server validates: (a) `tenant_id` in channel matches JWT, (b) user role permits entity access
+3. Unauthorized subscribe → `error` frame with reason, connection stays alive
+4. All channel subscriptions logged to audit (level=info, not persisted to DB)
+
+**Connection Lifecycle:**
+- Max connections per tenant: configurable (default 100)
+- Max connections per user: configurable (default 10)
+- Idle timeout: 5 minutes without activity → server disconnect
+- Client heartbeat: every 30s ping/pong — 2 missed = disconnect
+- Token refresh: client re-authenticates via `auth_refresh` message before JWT expires
+- On role change: server revokes all WS connections for user (via `sessions` table event)
+

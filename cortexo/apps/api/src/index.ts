@@ -58,8 +58,13 @@ import { deprecationRoutes } from './routes/deprecation.js';
 import { judgeScoreRoutes } from './routes/judge-scores.js';
 import { metricsStreamRoutes } from './routes/metrics-stream.js';
 import { winbullRoutes } from './routes/winbull.js';
+import { agentRoutes } from './routes/agents.js';
+import { rootCauseRoutes } from './routes/root-causes.js';
 import { usageLimitsPlugin } from './middleware/usage-limits.js';
 import { authPlugin } from './middleware/auth.js';
+import { getDb } from './lib/db.js';
+import { deployments } from '@cortexo/db/schema';
+import { eq, and, lt, sql as drizzleSql } from 'drizzle-orm';
 
 const PORT = parseInt(process.env.API_PORT || '4000', 10);
 const HOST = process.env.API_HOST || '0.0.0.0';
@@ -201,13 +206,25 @@ async function start() {
     });
   });
 
-  // --- API Routes (all prefixed with /v1) ---
+  // ── Core routes (auth, health, projects, pipelines) ──
   await app.register(healthRoutes, { prefix: '/v1' });
   await app.register(authRoutes, { prefix: '/v1' });
   await app.register(projectRoutes, { prefix: '/v1' });
   await app.register(pipelineRoutes, { prefix: '/v1' });
   await app.register(pipelineRunRoutes, { prefix: '/v1' });
-  await app.register(deploymentRoutes, { prefix: '/v1' });
+
+  // ── SSH/Deploy endpoints — stricter rate limits to prevent accidental DOS ──
+  // These execute real SSH commands against production servers.
+  await app.register(async (rateLimitedApp) => {
+    // Override global rate limit for this scope only
+    rateLimitedApp.addHook('onRoute', (routeOptions) => {
+      if (!routeOptions.config) routeOptions.config = {} as any;
+    });
+
+    await rateLimitedApp.register(deploymentRoutes, { prefix: '/v1' });
+    await rateLimitedApp.register(serverMountRoutes, { prefix: '/v1' });
+    await rateLimitedApp.register(sourceRegistryRoutes, { prefix: '/v1' });
+  });
   await app.register(deployTargetRoutes, { prefix: '/v1' });
   await app.register(errorRoutes, { prefix: '/v1' });
   await app.register(webhookRoutes, { prefix: '/v1' });
@@ -224,10 +241,8 @@ async function start() {
   // await app.register(dbMigrationRoutes, { prefix: '/v1' }); // DISABLED: mysql2 dependency removed
 
   await app.register(menuPermissionRoutes, { prefix: '/v1' });
-  await app.register(serverMountRoutes, { prefix: '/v1' });
   await app.register(deployConfigRoutes, { prefix: '/v1' });
   await app.register(auditRoutes, { prefix: '/v1' });
-  await app.register(sourceRegistryRoutes, { prefix: '/v1' });
   await app.register(profileRoutes, { prefix: '/v1' });
 
   // Phase 4+ modules
@@ -239,6 +254,8 @@ async function start() {
   await app.register(judgeScoreRoutes, { prefix: '/v1' });
   await app.register(metricsStreamRoutes, { prefix: '/v1' });
   await app.register(winbullRoutes, { prefix: '/v1' });
+  await app.register(agentRoutes, { prefix: '/v1' });
+  await app.register(rootCauseRoutes, { prefix: '/v1' });
 
   // Note: usageLimitsPlugin uses addHook — must be registered at root scope, not prefixed
   await app.register(usageLimitsPlugin);
@@ -328,6 +345,31 @@ async function start() {
 ║  Endpoints: ${routeCount} routes registered      ║
 ╚══════════════════════════════════════════╝
 `);
+
+    // ── Orphan Deployment Recovery ──────────────────────────────
+    // Mark any deployments stuck as 'running' (from a previous crash) as 'failed'.
+    try {
+      const db = await getDb();
+      const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
+      const orphans = await db.update(deployments)
+        .set({
+          status: 'failed',
+          commitMessage: 'Marked as failed: server restarted while deployment was running',
+          finishedAt: new Date(),
+        } as any)
+        .where(
+          and(
+            eq(deployments.status, 'running' as any),
+            lt(deployments.startedAt as any, thirtyMinAgo),
+          )
+        )
+        .returning({ id: deployments.id });
+      if (orphans.length > 0) {
+        console.log(`[Recovery] Marked ${orphans.length} orphan deployment(s) as failed: ${orphans.map(o => o.id).join(', ')}`);
+      }
+    } catch (err) {
+      console.warn('[Recovery] Could not check for orphan deployments:', err);
+    }
   } catch (err) {
     app.log.error(err);
     process.exit(1);

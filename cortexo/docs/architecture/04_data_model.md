@@ -1068,26 +1068,17 @@ CREATE INDEX idx_config_history_client ON config_history(client_config_id, creat
 
 ## Domain 9: Code Quality & Deprecation
 
-### `rca_patterns`
+### `rca_patterns` ⚠️ DEPRECATED
+
+> **DEPRECATED**: Use `root_cause_patterns` (Domain 10, Module 25) instead.
+> This table is superseded by the richer `root_cause_patterns` schema which includes
+> identical columns plus better indexing. Do NOT create this table in new deployments.
+> Existing data should be migrated to `root_cause_patterns` during Phase 1 Month 1.
+
 ```sql
-CREATE TABLE rca_patterns (
-    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id           UUID NOT NULL REFERENCES tenants(id),
-    error_fingerprint   VARCHAR(64) NOT NULL,
-    error_message       TEXT NOT NULL,
-    root_cause          TEXT NOT NULL,
-    suggested_fix       TEXT,
-    language            VARCHAR(50) NOT NULL,
-    framework           VARCHAR(50),
-    tags                TEXT[] DEFAULT '{}',
-    confidence          SMALLINT NOT NULL DEFAULT 50,
-    usage_count         INT NOT NULL DEFAULT 0,
-    confirmed_by        UUID REFERENCES users(id),
-    last_matched_at     TIMESTAMPTZ,
-    created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-CREATE INDEX idx_rca_patterns_fingerprint ON rca_patterns(error_fingerprint);
-CREATE INDEX idx_rca_patterns_tenant ON rca_patterns(tenant_id, usage_count DESC);
+-- DEPRECATED — see root_cause_patterns in Domain 10
+-- CREATE TABLE rca_patterns (...)
+-- Retained here for migration reference only.
 ```
 
 ### `schema_baselines`
@@ -1157,19 +1148,9 @@ CREATE TABLE deprecation_findings (
 CREATE INDEX idx_deprecation_findings_scan ON deprecation_findings(scan_id);
 ```
 
-### `user_menu_permissions`
-```sql
-CREATE TABLE user_menu_permissions (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id       UUID NOT NULL REFERENCES tenants(id),
-    user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    menu_key        VARCHAR(100) NOT NULL,
-    is_visible      BOOLEAN NOT NULL DEFAULT true,
-    updated_by      UUID REFERENCES users(id),
-    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-    UNIQUE(tenant_id, user_id, menu_key)
-);
-```
+<!-- REMOVED: Duplicate user_menu_permissions definition.
+     Canonical definition is in Domain 13 (Notifications & Menu Permissions).
+     See line ~1883. Removed during audit 2026-05-08. -->
 
 ### `module_test_reports`
 ```sql
@@ -1943,5 +1924,62 @@ CREATE INDEX idx_menu_perms ON user_menu_permissions(tenant_id, user_id);
 | **Deploy configs** | **Permanent (project config)** |
 | **Notifications** | **90 days** |
 | **Menu permissions** | **Permanent (user preferences)** |
+| **Rate limit configs** | **Permanent (operational config)** |
+| **DLQ items** | **90 days (operational review)** |
 
+---
+
+## Domain 14: Rate Limiting Configuration
+
+> Added during documentation audit (2026-05-08). Referenced in `05_tradeoffs_risks_security.md` §4 (Rate Limiting) but previously missing from schema.
+
+### `rate_limit_configs`
+```sql
+CREATE TABLE rate_limit_configs (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id       UUID NOT NULL REFERENCES tenants(id),
+    resource        VARCHAR(100) NOT NULL, -- 'deployments', 'pipeline_runs', 'query_panel', 'api_global'
+    max_per_hour    INT NOT NULL DEFAULT 100,
+    max_concurrent  INT NOT NULL DEFAULT 5,
+    burst_limit     INT NOT NULL DEFAULT 20,
+    updated_by      UUID REFERENCES users(id),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE(tenant_id, resource)
+);
+CREATE INDEX idx_rate_limits ON rate_limit_configs(tenant_id, resource);
+-- Default configs seeded during tenant creation.
+-- API middleware reads from Redis cache (refreshed every 60s from DB).
+-- Returns HTTP 429 with Retry-After header on breach.
+```
+
+### `dlq_items`
+
+> Added during documentation audit (2026-05-08). BullMQ manages DLQ in Redis,
+> but the review UI and audit trail require a PostgreSQL shadow table.
+> Worker writes to this table when a job lands in DLQ.
+
+```sql
+CREATE TABLE dlq_items (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id       UUID NOT NULL REFERENCES tenants(id),
+    queue_name      VARCHAR(100) NOT NULL, -- 'deploy', 'pipeline', 'notification', 'sync', 'migration'
+    job_id          VARCHAR(255) NOT NULL, -- BullMQ job ID
+    job_type        VARCHAR(100) NOT NULL, -- 'deployment.execute', 'pipeline.step', etc.
+    payload         JSONB NOT NULL DEFAULT '{}',
+    error_message   TEXT,
+    attempt_count   INT NOT NULL DEFAULT 0,
+    max_attempts    INT NOT NULL DEFAULT 3,
+    status          VARCHAR(20) NOT NULL DEFAULT 'pending', -- pending, replayed, discarded, acknowledged
+    replayed_at     TIMESTAMPTZ,
+    replayed_by     UUID REFERENCES users(id),
+    acknowledged_at TIMESTAMPTZ,
+    acknowledged_by UUID REFERENCES users(id),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_dlq_tenant ON dlq_items(tenant_id, status, created_at DESC);
+CREATE INDEX idx_dlq_queue ON dlq_items(queue_name, status);
+-- DLQ review SLA: < 4h acknowledgement (see 05_tradeoffs_risks_security.md)
+-- Admin replays via POST /api/admin/dlq/:id/replay → re-enqueues original job
+```
 

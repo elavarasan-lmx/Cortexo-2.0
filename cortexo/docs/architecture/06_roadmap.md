@@ -85,7 +85,7 @@ curl -X POST http://localhost:3000/api/test-cases \
 |------|---------|
 | **Vitest** | Unit test runner (fast, ESM native) |
 | **Supertest** | API endpoint testing |
-| **Prisma** | Test DB with reset between runs |
+| **Drizzle ORM** | Test DB with schema push + reset between runs |
 
 ### What Gets Tested
 

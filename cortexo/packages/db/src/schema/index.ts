@@ -115,3 +115,10 @@ export type {
   ModuleTestSuite, NewModuleTestSuite,
   ModuleTestResult, NewModuleTestResult,
 } from './testing';
+
+// Phase 17: AI Agents
+export { agents, agentRuns } from './agents';
+export type {
+  Agent, NewAgent,
+  AgentRun, NewAgentRun,
+} from './agents';

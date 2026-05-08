@@ -211,7 +211,39 @@ export async function authRoutes(app: FastifyInstance) {
    */
   app.get('/auth/me', async (request, reply) => {
     const authHeader = request.headers.authorization;
+
+    // Support dev bypass: if UNSAFE_DEV_AUTH is on and middleware set request.user
     if (!authHeader?.startsWith('Bearer ')) {
+      const devUser = (request as any).user;
+      if (process.env.UNSAFE_DEV_AUTH === 'true' && devUser) {
+        // In dev mode, return the dev user from the database if possible, else synthetic
+        try {
+          const db = await getDb();
+          const user = await db.query.users.findFirst();
+          if (user) {
+            return {
+              user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                orgId: user.orgId,
+                avatarUrl: user.avatarUrl,
+              },
+            };
+          }
+        } catch { /* fall through to synthetic user */ }
+        return {
+          user: {
+            id: devUser.sub,
+            name: devUser.name,
+            email: devUser.email,
+            role: devUser.role,
+            orgId: devUser.orgId,
+            avatarUrl: null,
+          },
+        };
+      }
       return reply.code(401).send({ error: 'Not authenticated' });
     }
 

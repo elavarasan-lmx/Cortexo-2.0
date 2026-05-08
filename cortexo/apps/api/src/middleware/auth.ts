@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { getDb } from '../lib/db.js';
 
 /**
  * JWT user payload — the decoded token content attached to every request.
@@ -24,20 +25,46 @@ export async function authMiddleware(
 ) {
   // Skip auth for health checks, webhooks, SDK ingest, and auth endpoints
   const publicPaths = ['/v1/health', '/v1/webhooks/', '/v1/ingest/', '/v1/auth/'];
-  const isPublic = publicPaths.some((p) => request.url.startsWith(p));
+  const protectedAuthPaths = ['/v1/auth/me', '/v1/auth/profile', '/v1/auth/change-password'];
+  const isProtectedAuth = protectedAuthPaths.some((p) => request.url.startsWith(p));
+  const isPublic = !isProtectedAuth && publicPaths.some((p) => request.url.startsWith(p));
+
   if (isPublic || request.url === '/') return;
 
   const authHeader = request.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     // Development bypass — only when explicitly opted in via env flag
     if (process.env.UNSAFE_DEV_AUTH === 'true') {
-      (request as any).user = {
-        sub: 'dev-user',
-        email: 'dev@cortexo.local',
-        name: 'Dev User',
-        orgId: 'default-org',
-        role: 'admin',
-      } satisfies JwtUser;
+      // Load real user from database for dev mode so queries work correctly
+      try {
+        const db = await getDb();
+        const devUser = await db.query.users.findFirst();
+        if (devUser) {
+          (request as any).user = {
+            sub: devUser.id,
+            email: devUser.email,
+            name: devUser.name,
+            orgId: devUser.orgId || '',
+            role: devUser.role || 'admin',
+          } satisfies JwtUser;
+        } else {
+          (request as any).user = {
+            sub: 'dev-user',
+            email: 'dev@cortexo.local',
+            name: 'Dev User',
+            orgId: '',
+            role: 'admin',
+          } satisfies JwtUser;
+        }
+      } catch {
+        (request as any).user = {
+          sub: 'dev-user',
+          email: 'dev@cortexo.local',
+          name: 'Dev User',
+          orgId: '',
+          role: 'admin',
+        } satisfies JwtUser;
+      }
       return;
     }
 

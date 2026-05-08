@@ -8,10 +8,36 @@ import { deployments, deployTargets, servers, winbullConfigs, projects, deployCo
 import { eq, desc, sql, and } from 'drizzle-orm';
 import { decrypt } from '../lib/crypto.js';
 import { runDeploySequence, type DeployLog, type DeployResult, type SSHCredentials, type DeployOptions } from '../lib/ssh-executor.js';
+import { getRedis } from '../lib/redis.js';
 
-// In-memory deploy log store (keyed by deployment ID)
-// In production, this should be Redis or stored in DB
-const deployLogStore = new Map<string, { logs: DeployLog[]; result?: DeployResult }>();
+// ── Redis-backed deploy log store ────────────────────────────────────────
+// Survives server restarts. Logs expire after 2 hours via TTL.
+const DEPLOY_LOG_PREFIX = 'cortexo:deploy-logs:';
+const DEPLOY_LOG_TTL = 7200; // 2 hours
+
+async function getDeployLogs(deploymentId: string): Promise<{ logs: DeployLog[]; result?: DeployResult } | null> {
+  try {
+    const redis = getRedis();
+    const data = await redis.get(`${DEPLOY_LOG_PREFIX}${deploymentId}`);
+    return data ? JSON.parse(data) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function setDeployLogs(deploymentId: string, entry: { logs: DeployLog[]; result?: DeployResult }): Promise<void> {
+  try {
+    const redis = getRedis();
+    await redis.set(`${DEPLOY_LOG_PREFIX}${deploymentId}`, JSON.stringify(entry), 'EX', DEPLOY_LOG_TTL);
+  } catch { /* best-effort — don't fail deploys if Redis has issues */ }
+}
+
+async function deleteDeployLogs(deploymentId: string): Promise<void> {
+  try {
+    const redis = getRedis();
+    await redis.del(`${DEPLOY_LOG_PREFIX}${deploymentId}`);
+  } catch { /* best-effort */ }
+}
 
 const createDeploySchema = z.object({
   projectId: z.string().min(1),
@@ -175,10 +201,10 @@ export async function deploymentRoutes(app: FastifyInstance) {
     }
   });
 
-  // ── Get deployment logs ────────────────────────────────────
+  // ── Get deployment logs (from Redis) ────────────────────────
   app.get('/deployments/:id/logs', async (request, reply) => {
     const { id } = request.params as { id: string };
-    const entry = deployLogStore.get(id);
+    const entry = await getDeployLogs(id);
     if (!entry) {
       return { logs: [], status: 'no_logs', message: 'No logs available for this deployment' };
     }
@@ -206,7 +232,7 @@ export async function deploymentRoutes(app: FastifyInstance) {
       if (!existing) return reply.code(404).send({ error: 'Deployment not found' });
 
       await db.delete(deployments).where(eq(deployments.id, id));
-      deployLogStore.delete(id);
+      await deleteDeployLogs(id);
 
       const user = getUser(request);
       logAudit({
@@ -331,8 +357,8 @@ export async function deploymentRoutes(app: FastifyInstance) {
 
       app.log.info({ id, projectId: parsed.data.projectId, target: targetName }, '🚀 Deployment started');
 
-      // Initialize log store
-      deployLogStore.set(id, { logs: [] });
+      // Initialize log store in Redis
+      await setDeployLogs(id, { logs: [] });
 
       // ── Execute async (don't block HTTP response) ──
       const deployOpts: DeployOptions = {
@@ -435,12 +461,11 @@ async function executeDeployAsync(
   try {
     const result = await runDeploySequence(creds, opts);
 
-    // Store logs
-    const entry = deployLogStore.get(deploymentId);
-    if (entry) {
-      entry.logs = result.logs;
-      entry.result = result;
-    }
+    // Store logs in Redis (survives restarts)
+    await setDeployLogs(deploymentId, {
+      logs: result.logs,
+      result,
+    });
 
     // Update deployment record
     await db.update(deployments)
@@ -472,10 +497,7 @@ async function executeDeployAsync(
       metadata: { target: targetName, durationMs: result.totalDurationMs },
     });
 
-    // Clean up old logs after 1 hour
-    setTimeout(() => {
-      deployLogStore.delete(deploymentId);
-    }, 60 * 60 * 1000);
+    // Logs auto-expire via Redis TTL (2 hours) — no cleanup needed
 
   } catch (err: any) {
     app.log.error({ deploymentId, err }, 'Deploy execution threw');

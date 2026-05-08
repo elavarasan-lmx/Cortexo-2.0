@@ -94,7 +94,10 @@ export default function ServerMountsPage() {
 
   const handleMount = async (id: number) => {
     setAction(id, 'mounting');
-    try { await api.mountServer(id); await refetch(); } catch (e: any) { alert(e.message); }
+    try { await api.mountServer(id); await refetch(); } catch (e: any) {
+      const details = e.details?.details || e.details?.error || '';
+      alert(`Mount failed${details ? ':\n' + details : ': ' + e.message}`);
+    }
     clearAction(id);
   };
 

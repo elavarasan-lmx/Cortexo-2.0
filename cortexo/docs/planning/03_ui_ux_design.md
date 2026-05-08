@@ -2,6 +2,11 @@
 
 > **Parent Document:** [PRD v4.0](docs/01_PRD.md)
 > **Last Updated:** 2026-04-23 | **Status:** Synced with PRD v4.0 (111 features / 21 categories)
+>
+> **Scope**: This document covers the **SaaS product UI** — public-facing pages (landing, pricing),
+> user dashboard, agent intelligence screens, and end-user flows.
+> For the **self-hosted IDP operator views** (Command Center, Pipeline DAG, Drift UI, Log Viewer),
+> see [`architecture/07_ui_ux.md`](../architecture/07_ui_ux.md).
 
 ---
 

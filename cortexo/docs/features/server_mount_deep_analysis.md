@@ -459,3 +459,31 @@ sequenceDiagram
 ---
 
 > **Summary**: The Server Mounts feature is a fully functional, secure SSHFS-based remote file access system with 10 API endpoints, a rich dashboard UI with inline file viewer, and proper security guards. The primary limitation is Linux-only host requirement due to SSHFS/FUSE dependency. For Windows sharing, consider implementing an SFTP-based alternative using the existing `ssh2` library.
+
+---
+
+## 13. Migration Note: MySQL → PostgreSQL (v4 Architecture)
+
+> **Added**: 2026-05-08 (Documentation audit)
+
+The server mounts feature was built against the **v1 prototype** which used **MySQL + Drizzle ORM** (`mysqlTable`).
+The **v4 architecture** mandates **PostgreSQL 16** with RLS for all tenant-scoped tables.
+
+### Changes Required for v4:
+
+| Area | Current (v1) | Target (v4) |
+|---|---|---|
+| Schema helper | `mysqlTable(...)` | `pgTable(...)` |
+| Primary key | `int('id').autoincrement()` | `uuid('id').default(sql\`gen_random_uuid()\`)` |
+| Datetime | `datetime(...)` | `timestamp(..., { withTimezone: true })` |
+| Tenant isolation | None (`server_id` only) | Add `tenant_id UUID NOT NULL REFERENCES tenants(id)` + RLS |
+| Index | `index(...)` | Same syntax, add `tenant_id` to compound indexes |
+
+### v4 Schema (Target):
+The v4 equivalent is `server_mount_sessions` in [`04_data_model.md`](../architecture/04_data_model.md) (Domain 6),
+which already uses PostgreSQL patterns with `tenant_id`, `BIGINT IDENTITY` PK, and proper FK references.
+
+> ⚠️ The v1 `server_mounts` MySQL table and the v4 `server_mount_sessions` PostgreSQL table serve
+> slightly different purposes (config vs session tracking). During migration, both may coexist as
+> `server_mount_configs` (CRUD) and `server_mount_sessions` (active session tracking).
+

@@ -2,6 +2,11 @@
 
 > **Source**: IDP_Master_Prompt_v4 Part 8 (§25–32) — Full specification
 > Dark-first theme throughout. AAA accessible contrast ratios. Risk indicators use shape + colour (never colour alone).
+>
+> **Scope**: This document specifies the **self-hosted IDP operator views** (Command Center, Pipeline DAG,
+> Drift UI, Log Viewer, etc.) for internal DevOps teams managing 70+ clients.
+> For the **SaaS product UI** (landing page, billing, agent intelligence dashboard), see
+> [`planning/03_ui_ux_design.md`](../planning/03_ui_ux_design.md).
 
 ---
 

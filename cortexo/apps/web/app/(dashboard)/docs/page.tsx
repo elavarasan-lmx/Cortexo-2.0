@@ -5,12 +5,12 @@ import { useAutoLoadToken } from '@/lib/hooks';
 import { useState } from 'react';
 
 const docSections = [
-  { id: '1', title: 'Getting Started', icon: BookOpen, description: 'Platform setup, authentication, and first deployment', articles: 12, color: '#818CF8' },
-  { id: '2', title: 'API Reference', icon: Code2, description: 'REST API endpoints, authentication, and rate limits', articles: 34, color: '#3B82F6' },
-  { id: '3', title: 'Infrastructure', icon: Server, description: 'Server management, scaling, and monitoring setup', articles: 18, color: '#10B981' },
-  { id: '4', title: 'CI/CD Pipelines', icon: GitBranch, description: 'Pipeline configuration, stages, and deployment strategies', articles: 22, color: '#F59E0B' },
-  { id: '5', title: 'Agent Intelligence', icon: FileText, description: 'Agent configuration, skill development, and memory management', articles: 15, color: '#A78BFA' },
-  { id: '6', title: 'Troubleshooting', icon: FileText, description: 'Common issues, debugging guides, and FAQ', articles: 28, color: '#EF4444' },
+  { id: '1', title: 'Getting Started', icon: BookOpen, description: 'Platform setup, authentication, and first deployment', color: '#818CF8' },
+  { id: '2', title: 'API Reference', icon: Code2, description: 'REST API endpoints, authentication, and rate limits', color: '#3B82F6' },
+  { id: '3', title: 'Infrastructure', icon: Server, description: 'Server management, scaling, and monitoring setup', color: '#10B981' },
+  { id: '4', title: 'CI/CD Pipelines', icon: GitBranch, description: 'Pipeline configuration, stages, and deployment strategies', color: '#F59E0B' },
+  { id: '5', title: 'Agent Intelligence', icon: FileText, description: 'Agent configuration, skill development, and memory management', color: '#A78BFA' },
+  { id: '6', title: 'Troubleshooting', icon: FileText, description: 'Common issues, debugging guides, and FAQ', color: '#EF4444' },
 ];
 
 export default function DocsPage() {
@@ -49,7 +49,7 @@ export default function DocsPage() {
                 <div style={{ flex: 1 }}>
                   <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: 0 }}>{doc.title}</h3>
                   <p style={{ fontSize: '12px', color: 'rgb(var(--text-secondary))', margin: '6px 0 0', lineHeight: 1.5 }}>{doc.description}</p>
-                  <p style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', margin: '8px 0 0' }}>{doc.articles} articles</p>
+                  <p style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', margin: '8px 0 0' }}>Coming soon</p>
                 </div>
                 <ChevronRight style={{ width: '16px', height: '16px', color: 'rgb(var(--text-muted))', flexShrink: 0, marginTop: '4px' }} />
               </div>
