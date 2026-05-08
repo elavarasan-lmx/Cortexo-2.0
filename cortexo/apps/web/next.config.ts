@@ -1,3 +1,4 @@
+import path from 'path';
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
@@ -6,6 +7,11 @@ const nextConfig: NextConfig = {
 
   // Strict mode for catching React issues early
   reactStrictMode: true,
+
+  // Silence turbopack workspace root warning caused by multiple lockfiles
+  turbopack: {
+    root: path.resolve(__dirname, '../..'),
+  },
 
   // Image optimization domains (for avatar URLs from OAuth providers)
   images: {
