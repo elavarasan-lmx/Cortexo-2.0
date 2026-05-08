@@ -57,8 +57,8 @@ export async function sourceRegistryRoutes(app: FastifyInstance) {
       templatePath: body.templatePath,
       manifestPath: body.manifestPath,
       deployChecklist: body.deployChecklist,
-    });
-    return reply.code(201).send({ data: { id: result.insertId, ...body } });
+    }).returning();
+    return reply.code(201).send({ data: { id: (result as any).id, ...body } });
   });
 
   /** Get the config schema JSON for a source */
@@ -147,11 +147,11 @@ export async function sourceRegistryRoutes(app: FastifyInstance) {
       notes: body.notes,
       status: 'draft',
       migrationStatus: 'pending',
-    });
+    }).returning();
 
     // Record creation in history
     await db.insert(configChangeHistory).values({
-      clientConfigId: result.insertId,
+      clientConfigId: (result as any).id,
       changedBy: 'system',
       changeType: 'create',
       newValues: body.configData,
@@ -159,7 +159,7 @@ export async function sourceRegistryRoutes(app: FastifyInstance) {
     });
 
     return reply.code(201).send({
-      data: { id: result.insertId, clientSlug: body.clientSlug },
+      data: { id: (result as any).id, clientSlug: body.clientSlug },
     });
   });
 
@@ -253,10 +253,10 @@ export async function sourceRegistryRoutes(app: FastifyInstance) {
       status: 'draft',
       migrationStatus: 'pending',
       notes: `Cloned from ${slug}`,
-    });
+    }).returning();
 
     await db.insert(configChangeHistory).values({
-      clientConfigId: result.insertId,
+      clientConfigId: (result as any).id,
       changedBy: 'system',
       changeType: 'create',
       newValues: newConfigData,
@@ -264,7 +264,7 @@ export async function sourceRegistryRoutes(app: FastifyInstance) {
     });
 
     return reply.code(201).send({
-      data: { id: result.insertId, clientSlug: newSlug },
+      data: { id: (result as any).id, clientSlug: newSlug },
     });
   });
 

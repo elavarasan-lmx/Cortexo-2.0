@@ -1,152 +1,136 @@
 /**
  * RCA Worker — cortexo:rca (Root Cause Analysis)
- * Uses AI (OpenAI/Anthropic) to analyze error events, stack traces,
- * and system context to determine root causes and suggest fixes.
+ * Sprint 2 expanded — Uses the full AI root cause engine with deploy
+ * correlation and similar bugs context for richer analysis.
  */
 import type { Job } from 'bullmq';
 import { createWorker, QUEUE_NAMES } from './shared.js';
+import { analyzeRootCause } from '../lib/ai-root-cause.js';
+import { correlateWithDeploy } from '../lib/deploy-correlator.js';
+import { findSimilarBugs } from '../lib/similar-bugs.js';
+import { getDb } from '../lib/db.js';
+import { errors, rootCauses } from '@cortexo/db/schema';
+import { eq } from 'drizzle-orm';
 
 interface RCAJobData {
   orgId: string;
   errorId: string;
-  errorMessage: string;
+  rootCauseId?: string;       // if pre-created; otherwise worker creates one
+  errorMessage?: string;
   stackTrace?: string;
   errorType?: string;
   filePath?: string;
   projectId?: string;
   environment?: string;
-  recentDeployments?: Array<{ id: string; version: string; deployedAt: string }>;
-  recentChanges?: Array<{ file: string; author: string; commitSha: string }>;
 }
 
-interface RCAResult {
-  errorId: string;
-  rootCause: string;
-  confidence: number;
-  category: string;
-  suggestedFix: string;
-  affectedFiles: string[];
-  relatedErrors: string[];
-  preventionSteps: string[];
-  aiModel: string;
-  analysisTime: string;
-}
+async function processRCAJob(job: Job<RCAJobData>): Promise<void> {
+  const { errorId, orgId, rootCauseId } = job.data;
 
-async function processRCAJob(job: Job<RCAJobData>): Promise<RCAResult> {
-  const { errorId, errorMessage, stackTrace, filePath, environment } = job.data;
+  console.log(`[RCAWorker] Starting analysis for error ${errorId}`);
+  await job.updateProgress(5);
 
-  console.log(`[RCAWorker] Analysing error ${errorId}: "${errorMessage.slice(0, 80)}"`);
-  await job.updateProgress(10);
+  const db = await getDb();
 
-  // Step 1: Parse stack trace and extract context
-  console.log(`[RCAWorker] Step 1: Parsing stack trace`);
-  const affectedFiles = filePath ? [filePath] : [];
-  if (stackTrace) {
-    // Extract file paths from stack trace lines
-    const fileMatches = stackTrace.match(/at\s+.*?\((.+?):\d+:\d+\)/g) || [];
-    for (const match of fileMatches) {
-      const fileMatch = match.match(/\((.+?):\d+:\d+\)/);
-      if (fileMatch?.[1] && !affectedFiles.includes(fileMatch[1])) {
-        affectedFiles.push(fileMatch[1]);
-      }
+  // Step 1: Fetch error from DB for full context
+  console.log(`[RCAWorker] Step 1: Fetching error details`);
+  const [error] = await db
+    .select()
+    .from(errors)
+    .where(eq(errors.id, errorId))
+    .limit(1);
+
+  if (!error) {
+    console.error(`[RCAWorker] Error ${errorId} not found`);
+    if (rootCauseId) {
+      await db.update(rootCauses).set({
+        status: 'failed',
+        summary: 'Error not found in database',
+      } as any).where(eq(rootCauses.id, rootCauseId));
     }
+    return;
   }
-  await job.updateProgress(30);
+  await job.updateProgress(15);
 
-  // Step 2: Query AI for root cause analysis
-  console.log(`[RCAWorker] Step 2: AI analysis`);
-  const aiApiKey = process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY;
-  let rootCause = 'Unable to determine — AI API key not configured';
-  let suggestedFix = 'Configure OPENAI_API_KEY or ANTHROPIC_API_KEY to enable AI analysis';
-  let confidence = 0;
-  let category = 'unknown';
-  let aiModel = 'none';
+  const projectId = job.data.projectId || error.projectId;
 
-  if (aiApiKey && process.env.OPENAI_API_KEY) {
-    try {
-      // In production: call OpenAI API
-      // const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      //   method: 'POST',
-      //   headers: { 'Authorization': `Bearer ${aiApiKey}`, 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     model: 'gpt-4o',
-      //     messages: [{ role: 'system', content: 'You are a senior DevOps engineer...' }, { role: 'user', content: `Analyze this error:\n${errorMessage}\n\nStack trace:\n${stackTrace}` }],
-      //   }),
-      // });
-      aiModel = 'gpt-4o';
-      console.log(`[RCAWorker] AI analysis complete (model: ${aiModel})`);
-    } catch (err) {
-      console.error(`[RCAWorker] AI API call failed:`, err);
-    }
+  // Step 2: Create RCA record if not pre-created
+  let rcaId = rootCauseId;
+  if (!rcaId) {
+    console.log(`[RCAWorker] Step 2: Creating RCA record`);
+    const [rca] = await db
+      .insert(rootCauses)
+      .values({
+        errorId,
+        projectId,
+        orgId,
+        status: 'analyzing',
+      })
+      .returning();
+    rcaId = rca.id;
   } else {
-    // Fallback: pattern-based heuristic analysis
-    console.log(`[RCAWorker] Using heuristic analysis (no AI key)`);
-    aiModel = 'heuristic-v1';
-
-    if (errorMessage.includes('undefined') || errorMessage.includes('null')) {
-      rootCause = 'Null/undefined reference — variable not initialized or missing null check';
-      suggestedFix = 'Add null checking with optional chaining (?.) or explicit guard clause';
-      category = 'null-reference';
-      confidence = 75;
-    } else if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('ETIMEDOUT')) {
-      rootCause = 'Network connectivity failure — downstream service unreachable';
-      suggestedFix = 'Add circuit breaker pattern, verify service health, check firewall rules';
-      category = 'network';
-      confidence = 80;
-    } else if (errorMessage.includes('ENOMEM') || errorMessage.includes('heap')) {
-      rootCause = 'Memory exhaustion — process exceeded available memory';
-      suggestedFix = 'Profile memory usage, check for leaks in event listeners, increase server RAM';
-      category = 'resource-exhaustion';
-      confidence = 85;
-    } else if (errorMessage.includes('SQL') || errorMessage.includes('query')) {
-      rootCause = 'Database query error — malformed SQL or connection issue';
-      suggestedFix = 'Use parameterised queries, validate input, check connection pool limits';
-      category = 'database';
-      confidence = 70;
-    } else if (errorMessage.includes('permission') || errorMessage.includes('EACCES')) {
-      rootCause = 'Permission denied — insufficient filesystem or process privileges';
-      suggestedFix = 'Check file ownership, verify process user, review SELinux/AppArmor policies';
-      category = 'permissions';
-      confidence = 82;
-    } else {
-      rootCause = `Unclassified error: ${errorMessage.slice(0, 200)}`;
-      suggestedFix = 'Review stack trace, add debug logging, check recent deployments';
-      category = 'unclassified';
-      confidence = 30;
-    }
+    await db.update(rootCauses).set({ status: 'analyzing' } as any).where(eq(rootCauses.id, rcaId));
   }
-  await job.updateProgress(70);
+  await job.updateProgress(20);
 
-  // Step 3: Check for related errors
-  console.log(`[RCAWorker] Step 3: Checking related errors`);
-  const relatedErrors: string[] = []; // Would query errors table for similar patterns
-  await job.updateProgress(90);
+  // Step 3: Deploy correlation
+  console.log(`[RCAWorker] Step 3: Correlating with recent deployments`);
+  let deployCorrelation = null;
+  try {
+    deployCorrelation = await correlateWithDeploy(
+      projectId,
+      error.firstSeenAt || new Date(),
+    );
+    if (deployCorrelation) {
+      await db.update(rootCauses).set({
+        deploymentId: deployCorrelation.deploymentId,
+      } as any).where(eq(rootCauses.id, rcaId));
+      console.log(`[RCAWorker] Deploy correlation found: ${deployCorrelation.deploymentId} (confidence: ${deployCorrelation.confidence}%)`);
+    }
+  } catch (err) {
+    console.warn(`[RCAWorker] Deploy correlation failed:`, err);
+  }
+  await job.updateProgress(35);
 
-  // Step 4: Build prevention steps
-  const preventionSteps = [
-    'Add comprehensive error handling with try/catch blocks',
-    'Implement automated testing for the affected code path',
-    'Add monitoring alerts for this error pattern',
-    'Review recent deployments that may have introduced the regression',
-  ];
+  // Step 4: Find similar past bugs
+  console.log(`[RCAWorker] Step 4: Finding similar bugs`);
+  let similarBugIds: string[] = [];
+  try {
+    const similar = await findSimilarBugs(
+      errorId,
+      projectId,
+      error.type,
+      error.message || '',
+      error.file,
+      5,
+    );
+    similarBugIds = similar.map((s) => s.errorId);
+    if (similar.length > 0) {
+      console.log(`[RCAWorker] Found ${similar.length} similar bugs`);
+      await db.update(rootCauses).set({
+        similarBugs: similarBugIds,
+      } as any).where(eq(rootCauses.id, rcaId));
+    }
+  } catch (err) {
+    console.warn(`[RCAWorker] Similar bugs search failed:`, err);
+  }
+  await job.updateProgress(50);
 
+  // Step 5: Run AI analysis via the existing engine
+  console.log(`[RCAWorker] Step 5: Running AI root cause analysis`);
+  try {
+    await analyzeRootCause(errorId, rcaId, projectId, orgId);
+    console.log(`[RCAWorker] AI analysis completed for error ${errorId}`);
+  } catch (err) {
+    console.error(`[RCAWorker] AI analysis failed for error ${errorId}:`, err);
+    await db.update(rootCauses).set({
+      status: 'failed',
+      summary: `Analysis failed: ${(err as Error).message}`,
+    } as any).where(eq(rootCauses.id, rcaId));
+  }
   await job.updateProgress(100);
-  const result: RCAResult = {
-    errorId,
-    rootCause,
-    confidence,
-    category,
-    suggestedFix,
-    affectedFiles: affectedFiles.slice(0, 10),
-    relatedErrors,
-    preventionSteps,
-    aiModel,
-    analysisTime: `${Date.now() - job.timestamp}ms`,
-  };
 
-  // In production: INSERT into root_causes table
-  console.log(`[RCAWorker] Analysis complete for ${errorId} — confidence: ${confidence}%, category: ${category}`);
-  return result;
+  console.log(`[RCAWorker] Analysis complete for error ${errorId} (RCA: ${rcaId})`);
 }
 
 export function startRCAWorker() {

@@ -263,7 +263,16 @@ class ApiClient {
     });
 
     const json = await res.json();
-    if (!res.ok) throw new ApiError(json.error || 'Request failed', res.status, json);
+    if (!res.ok) {
+      if (res.status === 401) {
+        this.token = null;
+        if (typeof window !== 'undefined') localStorage.removeItem('cortexo_token');
+        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+      }
+      throw new ApiError(json.error || 'Request failed', res.status, json);
+    }
     return json;
   }
 
@@ -677,6 +686,30 @@ class ApiClient {
   getJudgeScoreStats()                                 { return this.request<Record<string, unknown>>('GET', '/judge-scores/stats/aggregate'); }
   triggerJudgeScore(data: { targetType: string; targetId: string }) { return this.request<{ jobId: string }>('POST', '/judge-scores/trigger', data); }
 
+  // ─── Code Review Engine (F6) ──────────────────────────────────────────────
+  getCodeReviews(projectId: string, params?: Record<string, string>) {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    return this.request<Record<string, unknown>[]>('GET', `/projects/${projectId}/code-reviews${qs}`);
+  }
+  triggerCodeReview(projectId: string, data: { files: { path: string; content: string }[]; commitSha?: string; branch?: string; aiEnabled?: boolean }) {
+    return this.request<Record<string, unknown>>('POST', `/projects/${projectId}/code-reviews`, data);
+  }
+  getCodeReview(reviewId: string)                    { return this.request<Record<string, unknown>>('GET', `/code-reviews/${reviewId}`); }
+  getCodeReviewFindings(reviewId: string, params?: Record<string, string>) {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    return this.request<Record<string, unknown>[]>('GET', `/code-reviews/${reviewId}/findings${qs}`);
+  }
+  updateCodeReviewFinding(findingId: string, data: { status: string }) {
+    return this.request<Record<string, unknown>>('PUT', `/code-review-findings/${findingId}`, data);
+  }
+  getCodeReviewStats(projectId: string)              { return this.request<Record<string, unknown>>('GET', `/projects/${projectId}/code-review-stats`); }
+  getCodeReviewRules()                               { return this.request<Record<string, unknown>[]>('GET', '/code-review-rules'); }
+
+  // ─── SSL Scan helpers (used by scans page) ────────────────────────────────
+  getSSLScanResults()                                { return this.sslScan(); }
+  runSSLScan()                                       { return this.sslScan(); }
+  runDeprecationScan()                               { return this.triggerDeprecationScan({ projectId: 1 }); }
+
   // ─── Real-Time Metrics Stream ─────────────────────────────────────────
   getMetricsSnapshot()                                 { return this.request<Record<string, unknown>>('GET', '/metrics/snapshot'); }
 
@@ -712,6 +745,49 @@ class ApiClient {
     };
 
     return es;
+  }
+
+  // ─── Root Cause Analysis (Sprint 2 — F8) ──────────────────────────────
+  /** Trigger new AI root cause analysis for an error */
+  triggerRootCauseAnalysis(errorId: string) {
+    return this.request<any>('POST', `/errors/${errorId}/root-cause/trigger`);
+  }
+
+  /** Get latest root cause analysis for an error */
+  getErrorRootCause(errorId: string) {
+    return this.request<any>('GET', `/errors/${errorId}/root-cause`);
+  }
+
+  /** Get root cause by ID with full error + deploy details */
+  getRootCause(id: string) {
+    return this.request<any>('GET', `/root-causes/${id}`);
+  }
+
+  /** List all root cause analyses */
+  listRootCauses() {
+    return this.request<any>('GET', '/root-causes');
+  }
+
+  /** Submit correct/wrong feedback for an RCA */
+  submitRootCauseFeedback(id: string, verdict: 'correct' | 'wrong', rating?: number, comment?: string) {
+    return this.request<any>('PATCH', `/root-causes/${id}/feedback`, {
+      verdict, rating, comment,
+    });
+  }
+
+  /** Find similar past bugs for an error */
+  findSimilarBugs(errorId: string) {
+    return this.request<any>('GET', `/root-causes/similar/${errorId}`);
+  }
+
+  /** Mark a root cause fix as applied */
+  applyRootCauseFix(id: string) {
+    return this.request<any>('POST', `/root-causes/${id}/apply-fix`);
+  }
+
+  /** Get aggregate RCA stats */
+  getRootCauseStats() {
+    return this.request<any>('GET', '/root-causes/stats');
   }
 }
 

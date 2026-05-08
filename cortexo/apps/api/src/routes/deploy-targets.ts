@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import { getDb } from '../lib/db.js';
 import { encrypt, decrypt } from '../lib/crypto.js';
 import { testSSHConnection } from '../lib/ssh-executor.js';
+import { getOrgId } from '../lib/request-context.js';
 
 const createTargetSchema = z.object({
   name: z.string().min(1).max(100),
@@ -63,7 +64,7 @@ export async function deployTargetRoutes(app: FastifyInstance) {
 
       await db.insert(deployTargets).values({
         id,
-        orgId: 'default-org',
+        orgId: getOrgId(request),
         ...data,
         encryptedKey: privateKey ? encrypt(privateKey) : null,
         encryptedPassword: password ? encrypt(password) : null,

@@ -92,9 +92,9 @@ export async function syncRoutes(app: FastifyInstance) {
           targetBranch: client?.branch || 'STAGING',
           status: 'pending',
           triggeredBy: getUser(request).sub,
-        } as any);
+        } as any).returning();
 
-        const syncId = (insertResult as any).insertId;
+        const syncId = (insertResult as any).id;
 
         // In production: trigger GitHub Actions workflow here
         // For now, mark as syncing (simulated)
@@ -241,8 +241,8 @@ export async function syncRoutes(app: FastifyInstance) {
       const [result] = await db.insert(syncExcludeRules).values({
         ...parsed.data,
         createdBy: 'admin',
-      } as any);
-      return reply.code(201).send({ success: true, data: { id: (result as any).insertId } });
+      } as any).returning();
+      return reply.code(201).send({ success: true, data: { id: (result as any).id } });
     } catch (err) {
       app.log.error(err);
       return reply.code(500).send({ error: 'Database error' });
@@ -352,9 +352,9 @@ export async function syncRoutes(app: FastifyInstance) {
         branch,
         status: 'pending_approval',
         triggeredBy: 'admin',
-      } as any);
+      } as any).returning();
       const dep = await db.query.monoDeployments.findFirst({
-        where: (d, { eq }) => eq(d.id, (result as any).insertId),
+        where: (d, { eq }) => eq(d.id, (result as any).id),
       });
       return { success: true, data: { deployment: dep }, message: 'Deployment submitted for approval' };
     } catch (err) {

@@ -9,7 +9,7 @@ import {
   Store, Compass, BookOpen, Activity, Wifi, ClipboardCheck,
   FlaskConical, ShieldCheck, Boxes, TrendingUp, ArrowLeftRight,
   GitCompareArrows, FileCode, History, AlertTriangle,
-  Play, FileCheck, Wand2, Settings2, Command, Heart,
+  Play, FileCheck, Wand2, Settings2, Command, Heart, Package,
 } from 'lucide-react';
 
 interface PaletteItem {
@@ -37,6 +37,8 @@ const PALETTE_ITEMS: PaletteItem[] = [
   { id: 'errors', label: 'Errors', href: '/errors', section: 'Bugs', icon: Bug, keywords: ['bugs', 'exceptions'] },
   { id: 'root-causes', label: 'Root Causes', href: '/root-causes', section: 'Bugs', icon: Search },
   { id: 'scans', label: 'Scan Results', href: '/scans', section: 'Bugs', icon: FileCheck },
+  { id: 'code-reviews', label: 'Code Reviews', href: '/code-reviews', section: 'Bugs', icon: FileCode, keywords: ['review', 'scan', 'security', 'quality'] },
+  { id: 'fix-library', label: 'Fix Library', href: '/fix-library', section: 'Bugs', icon: Package, keywords: ['fix', 'recipe', 'propagate', 'patch', 'rollout'] },
   // Ops
   { id: 'postmortem', label: 'Postmortem', href: '/postmortem', section: 'Operations', icon: FileText },
   { id: 'deprecation', label: 'Deprecations', href: '/deprecation', section: 'Operations', icon: AlertTriangle },

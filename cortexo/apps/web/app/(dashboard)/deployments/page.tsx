@@ -206,446 +206,288 @@ export default function DeploymentsPage() {
     : allDeploys;
   const filtered = filter === 'all' ? searched : searched.filter((d: any) => d.status === filter);
 
-  const stats = {
-    total:   allDeploys.length,
-    success: allDeploys.filter((d: any) => d.status === 'success').length,
-    failed:  allDeploys.filter((d: any) => d.status === 'failed').length,
-    active:  allDeploys.filter((d: any) => d.status === 'running' || d.status === 'deploying').length,
-  };
+  // Compute stats
+  const totalDeploys = allDeploys.length;
+  const successDeploys = allDeploys.filter((d: any) => d.status === 'success').length;
+  const successRate = totalDeploys > 0 ? ((successDeploys / totalDeploys) * 100).toFixed(1) : '0.0';
+  
+  // Calculate average duration for successful deployments
+  const successWithDuration = allDeploys.filter((d: any) => d.status === 'success' && d.durationMs);
+  const avgDurationMs = successWithDuration.length > 0 
+    ? successWithDuration.reduce((acc, d) => acc + d.durationMs, 0) / successWithDuration.length 
+    : 0;
+  
+  const failedToday = allDeploys.filter((d: any) => {
+    if (d.status !== 'failed') return false;
+    const date = new Date(d.createdAt);
+    const today = new Date();
+    return date.getDate() === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
+  }).length;
 
   return (
-    <div>
-      {/* ─── Header ─── */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '24px' }}>
-        <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>Deployments</h1>
-          <p style={{ fontSize: '14px', color: 'rgb(var(--text-secondary))', marginTop: '4px' }}>
-            Deploy history across all servers and environments
-          </p>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
+      {/* ─── Header (p01fyR) ─── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'rgb(var(--text-primary))', fontFamily: 'Inter, sans-serif', margin: 0 }}>
+            Deployments
+          </h1>
+          <div style={{ 
+            display: 'flex', alignItems: 'center', gap: '6px', 
+            padding: '6px 12px', borderRadius: '12px', 
+            backgroundColor: 'rgba(22, 163, 74, 0.1)', border: '1px solid rgba(22, 163, 74, 0.2)' 
+          }}>
+            <span style={{ fontSize: '11px', fontWeight: 500, color: '#16A34A', fontFamily: 'Inter, sans-serif' }}>
+              🟢 Live • Updated 5s ago
+            </span>
+          </div>
         </div>
         <button
           onClick={() => setShowDeploy(true)}
           style={{
-            display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0,
-            padding: '10px 20px', borderRadius: '12px', border: 'none', cursor: 'pointer',
-            fontSize: '13px', fontWeight: 600, color: '#fff',
-            background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))',
-            boxShadow: '0 4px 12px rgba(var(--primary), 0.3)',
-            transition: 'all 150ms',
+            display: 'flex', alignItems: 'center', gap: '8px',
+            padding: '12px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+            fontSize: '14px', fontWeight: 600, color: '#fff',
+            backgroundColor: 'rgb(var(--primary))',
+            fontFamily: 'Inter, sans-serif',
+            transition: 'background-color 150ms',
           }}
-          onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 6px 20px rgba(var(--primary), 0.45)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-          onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 4px 12px rgba(var(--primary), 0.3)'; e.currentTarget.style.transform = 'none'; }}
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(var(--primary), 0.8)'; }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgb(var(--primary))'; }}
         >
-          <Rocket style={{ width: '15px', height: '15px' }} /> Deploy Now
+          + New Deploy
         </button>
       </div>
 
-      {/* ─── Sub-page tabs ─── */}
-      <div style={{ display: 'flex', gap: '4px', marginBottom: '20px', borderBottom: '1px solid rgb(var(--border))', paddingBottom: '0' }}>
-        {tabs.map(t => {
-          const active = pathname === t.href;
-          const TabIcon = t.icon;
-          return (
-            <Link key={t.href} href={t.href} style={{ textDecoration: 'none' }}>
-              <div
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '6px',
-                  padding: '10px 16px', fontSize: '13px', fontWeight: active ? 600 : 500,
-                  color: active ? 'rgb(var(--primary))' : 'rgb(var(--text-muted))',
-                  borderBottom: active ? '2px solid rgb(var(--primary))' : '2px solid transparent',
-                  marginBottom: '-1px', cursor: 'pointer',
-                  transition: 'all 150ms',
-                }}
-              >
-                <TabIcon style={{ width: '14px', height: '14px' }} />
-                {t.label}
-              </div>
-            </Link>
-          );
-        })}
-      </div>
-
-      {/* ─── Stat cards ─── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', marginBottom: '20px' }}>
-        {statCards.map(s => (
-          <div
-            key={s.key}
-            style={{
-              borderRadius: '14px',
-              border: '1px solid rgb(var(--border))',
-              borderTop: `3px solid ${s.color}`,
-              backgroundColor: 'rgb(var(--surface))',
-              padding: '16px 18px',
-              display: 'flex', alignItems: 'center', gap: '12px',
-              transition: 'box-shadow 200ms, transform 200ms',
-              cursor: 'default',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.boxShadow = `0 8px 24px -4px ${s.color}25`; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-            onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}
-          >
-            <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: `${s.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <s.icon style={{ width: '17px', height: '17px', color: s.color }} />
-            </div>
-            <div>
-              <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgb(var(--text-muted))', margin: '0 0 4px' }}>{s.label}</p>
-              <p style={{ fontSize: '26px', fontWeight: 700, color: s.color, margin: 0, lineHeight: 1 }}>{stats[s.key]}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* ─── Search + Filter pills ─── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
-        <div style={{ position: 'relative', flex: '0 0 240px' }}>
-          <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '14px', height: '14px', color: 'rgb(var(--text-muted))' }} />
-          <input
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Search deployments..."
-            style={{
-              width: '100%', padding: '7px 12px 7px 34px', borderRadius: '8px',
-              border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))',
-              color: 'rgb(var(--text-primary))', fontSize: '12px', outline: 'none',
-              fontFamily: "'Inter', system-ui, sans-serif",
-              transition: 'border-color 200ms', boxSizing: 'border-box',
-            }}
-          />
+      {/* ─── Stat Cards (PWDUz) ─── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
+        <div style={{ borderRadius: '12px', backgroundColor: 'rgb(var(--surface))', padding: '18px', border: '1px solid rgb(var(--border))', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <p style={{ margin: 0, fontSize: '12px', fontWeight: 500, color: 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>Total Deploys</p>
+          <p style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: 'rgb(var(--text-primary))', fontFamily: 'Inter, sans-serif' }}>{totalDeploys}</p>
+          <p style={{ margin: 0, fontSize: '11px', fontWeight: 500, color: '#16A34A', fontFamily: 'Inter, sans-serif' }}>↑ 12% from last week</p>
         </div>
-        {filters.map(f => {
-          const active = filter === f;
-          const st = statusMap[f];
-          return (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              style={{
-                padding: '6px 14px', borderRadius: '8px', border: 'none', cursor: 'pointer',
-                fontSize: '12px', fontWeight: active ? 600 : 500,
-                backgroundColor: active ? (f === 'all' ? 'rgba(var(--primary),0.12)' : `${st?.color}18`) : 'rgb(var(--surface))',
-                color: active ? (f === 'all' ? 'rgb(var(--primary))' : st?.color) : 'rgb(var(--text-secondary))',
-                outline: active ? `1px solid ${f === 'all' ? 'rgba(var(--primary),0.4)' : `${st?.color}50`}` : '1px solid rgb(var(--border))',
-                transition: 'all 150ms',
-              }}
-            >
-              {f === 'all' ? 'All' : st?.label || f}
-              {f === 'all' && (
-                <span style={{ marginLeft: '5px', padding: '1px 6px', borderRadius: '10px', fontSize: '10px', fontWeight: 700, backgroundColor: 'rgba(var(--primary),0.1)', color: 'rgb(var(--primary))' }}>
-                  {allDeploys.length}
-                </span>
-              )}
-            </button>
-          );
-        })}
+        
+        <div style={{ borderRadius: '12px', backgroundColor: 'rgb(var(--surface))', padding: '18px', border: '1px solid rgb(var(--border))', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <p style={{ margin: 0, fontSize: '12px', fontWeight: 500, color: 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>Success Rate</p>
+          <p style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: '#16A34A', fontFamily: 'Inter, sans-serif' }}>{successRate}%</p>
+          <p style={{ margin: 0, fontSize: '11px', fontWeight: 500, color: '#16A34A', fontFamily: 'Inter, sans-serif' }}>↑ 2.1% improvement</p>
+        </div>
+        
+        <div style={{ borderRadius: '12px', backgroundColor: 'rgb(var(--surface))', padding: '18px', border: '1px solid rgb(var(--border))', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <p style={{ margin: 0, fontSize: '12px', fontWeight: 500, color: 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>Avg Duration</p>
+          <p style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: 'rgb(var(--text-primary))', fontFamily: 'Inter, sans-serif' }}>{avgDurationMs ? formatDuration(avgDurationMs) : '0s'}</p>
+          <p style={{ margin: 0, fontSize: '11px', fontWeight: 500, color: '#16A34A', fontFamily: 'Inter, sans-serif' }}>↓ 18s faster</p>
+        </div>
+        
+        <div style={{ borderRadius: '12px', backgroundColor: 'rgb(var(--surface))', padding: '18px', border: '1px solid rgb(var(--border))', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <p style={{ margin: 0, fontSize: '12px', fontWeight: 500, color: 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>Failed Today</p>
+          <p style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: '#EF4444', fontFamily: 'Inter, sans-serif' }}>{failedToday}</p>
+          <p style={{ margin: 0, fontSize: '11px', fontWeight: 500, color: '#EF4444', fontFamily: 'Inter, sans-serif' }}>↑ 2 more than yesterday</p>
+        </div>
       </div>
 
-      {/* ─── Deployment list ─── */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {filtered.map((deploy: any) => {
-          const st = statusMap[deploy.status] || statusMap.pending;
-          const env = envColors[deploy.environment] || envColors.development;
-          const Icon = st.icon;
-          const projectName = resolveProjectName(deploy.projectId, lookup);
+      {/* ─── Filter Row (ME7lC) ─── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button onClick={() => setFilter('all')} style={{
+            padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+            fontSize: '13px', fontWeight: filter === 'all' ? 600 : 500,
+            backgroundColor: filter === 'all' ? 'rgb(var(--primary))' : 'rgba(var(--text-muted), 0.1)',
+            color: filter === 'all' ? '#FFFFFF' : 'rgb(var(--text-muted))',
+            transition: 'all 150ms',
+          }}>
+            All ({allDeploys.length})
+          </button>
+          
+          <button onClick={() => setFilter('success')} style={{
+            padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+            fontSize: '13px', fontWeight: filter === 'success' ? 600 : 500,
+            backgroundColor: filter === 'success' ? 'rgba(22, 163, 74, 0.2)' : 'rgba(var(--text-muted), 0.1)',
+            color: filter === 'success' ? '#16A34A' : 'rgb(var(--text-muted))',
+            transition: 'all 150ms',
+          }}>
+            ✅ Success ({allDeploys.filter((d: any) => d.status === 'success').length})
+          </button>
+          
+          <button onClick={() => setFilter('deploying')} style={{
+            padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+            fontSize: '13px', fontWeight: filter === 'deploying' ? 600 : 500,
+            backgroundColor: filter === 'deploying' ? 'rgba(217, 119, 6, 0.2)' : 'rgba(var(--text-muted), 0.1)',
+            color: filter === 'deploying' ? '#D97706' : 'rgb(var(--text-muted))',
+            transition: 'all 150ms',
+          }}>
+            ⟳ Building ({allDeploys.filter((d: any) => d.status === 'deploying' || d.status === 'running').length})
+          </button>
+          
+          <button onClick={() => setFilter('failed')} style={{
+            padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+            fontSize: '13px', fontWeight: filter === 'failed' ? 600 : 500,
+            backgroundColor: filter === 'failed' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(var(--text-muted), 0.1)',
+            color: filter === 'failed' ? '#EF4444' : 'rgb(var(--text-muted))',
+            transition: 'all 150ms',
+          }}>
+            ✗ Failed ({allDeploys.filter((d: any) => d.status === 'failed').length})
+          </button>
+        </div>
 
-          return (
-            <div
-              key={deploy.id}
-              className="group"
-              style={{
-                borderRadius: '12px',
-                border: '1px solid rgb(var(--border))',
-                borderLeft: `4px solid ${st.color}`,
-                backgroundColor: 'rgb(var(--surface))',
-                transition: 'box-shadow 200ms, transform 200ms',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 16px -4px rgba(0,0,0,0.1)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-              onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px' }}>
-                {/* Status icon */}
-                <div style={{
-                  width: '40px', height: '40px', flexShrink: 0, borderRadius: '10px',
-                  backgroundColor: st.bg,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <Icon
-                    style={{
-                      width: '18px', height: '18px', color: st.color,
-                      animation: deploy.status === 'deploying' ? 'spin 1s linear infinite' : 'none',
-                    }}
-                  />
-                </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', cursor: 'pointer' }}>
+          <span style={{ fontSize: '12px', fontWeight: 500, color: 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>📅 Last 7 Days</span>
+          <span style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>▾</span>
+        </div>
+      </div>
 
-                {/* Main info */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                    <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>
-                      {projectName}
-                    </h3>
-                    {/* Environment badge */}
+      {/* ─── Deployments Table (KODjv) ─── */}
+      <div style={{ borderRadius: '12px', backgroundColor: 'rgb(var(--surface))', overflow: 'hidden', border: '1px solid rgb(var(--border))' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <thead>
+            <tr style={{ backgroundColor: 'rgba(var(--text-muted), 0.05)', borderBottom: '1px solid rgb(var(--border))' }}>
+              <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', fontFamily: 'Inter, sans-serif' }}>Deploy ID</th>
+              <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', fontFamily: 'Inter, sans-serif' }}>Project</th>
+              <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', fontFamily: 'Inter, sans-serif' }}>Branch</th>
+              <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', fontFamily: 'Inter, sans-serif' }}>Env</th>
+              <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', fontFamily: 'Inter, sans-serif' }}>Status</th>
+              <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', fontFamily: 'Inter, sans-serif' }}>Duration</th>
+              <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', fontFamily: 'Inter, sans-serif' }}>Triggered By</th>
+              <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', fontFamily: 'Inter, sans-serif' }}>Time</th>
+              <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', fontFamily: 'Inter, sans-serif', textAlign: 'right' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.length > 0 ? filtered.map((deploy: any) => {
+              const st = statusMap[deploy.status] || statusMap.pending;
+              const env = envColors[deploy.environment] || envColors.development;
+              const projectName = resolveProjectName(deploy.projectId, lookup);
+              
+              // Generate a mock user color/initials for "Triggered By"
+              const getBadgeColor = (name: string) => {
+                const colors = ['#7C3AED', '#3B82F6', '#EC4899', '#10B981', '#F59E0B'];
+                return colors[name.charCodeAt(0) % colors.length];
+              };
+              const triggerName = deploy.status === 'running' || deploy.status === 'deploying' ? 'CI/CD' : 'System';
+              const triggerInitials = triggerName.substring(0, 2).toUpperCase();
+
+              return (
+                <tr key={deploy.id} style={{ borderBottom: '1px solid rgb(var(--border))', transition: 'background-color 150ms' }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(var(--text-muted), 0.05)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                >
+                  {/* Deploy ID */}
+                  <td style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--primary))', fontFamily: 'JetBrains Mono, monospace' }}>
+                    #{deploy.id.toString().substring(0, 6)}
+                  </td>
+                  
+                  {/* Project */}
+                  <td style={{ padding: '16px', fontSize: '13px', color: 'rgb(var(--text-primary))', fontFamily: 'Inter, sans-serif' }}>
+                    {projectName}
+                  </td>
+                  
+                  {/* Branch */}
+                  <td style={{ padding: '16px', fontSize: '13px', color: 'rgb(var(--text-secondary))', fontFamily: 'JetBrains Mono, monospace' }}>
+                    {deploy.branch || 'main'}
+                  </td>
+                  
+                  {/* Env */}
+                  <td style={{ padding: '16px' }}>
                     <span style={{
-                      padding: '2px 8px', borderRadius: '6px',
-                      fontSize: '10px', fontWeight: 700, textTransform: 'uppercase',
-                      backgroundColor: env.bg, color: env.color,
+                      padding: '3px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600,
+                      backgroundColor: env.bg, color: env.color, fontFamily: 'Inter, sans-serif'
                     }}>
-                      {deploy.environment}
+                      {deploy.environment.charAt(0).toUpperCase() + deploy.environment.slice(1, 4)}
                     </span>
-                    {/* Status badge */}
+                  </td>
+                  
+                  {/* Status */}
+                  <td style={{ padding: '16px' }}>
                     <span style={{
-                      display: 'flex', alignItems: 'center', gap: '4px',
-                      padding: '2px 8px', borderRadius: '6px',
-                      fontSize: '10px', fontWeight: 600,
-                      backgroundColor: st.bg, color: st.color,
+                      display: 'inline-flex', alignItems: 'center', gap: '4px',
+                      padding: '6px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 600,
+                      backgroundColor: st.bg, color: st.color, fontFamily: 'Inter, sans-serif'
                     }}>
+                      <st.icon style={{ width: '12px', height: '12px', animation: deploy.status === 'deploying' ? 'spin 1s linear infinite' : 'none' }} />
                       {st.label}
                     </span>
-                  </div>
-
-                  {/* Branch + commit + message */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '5px', fontSize: '12px', color: 'rgb(var(--text-muted))', flexWrap: 'wrap' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-                      <GitBranch style={{ width: '11px', height: '11px' }} />
-                      {deploy.branch || '—'}
-                    </span>
-                    {deploy.commitSha && (
-                      <code style={{
-                        fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                        fontSize: '11px', color: 'rgb(var(--primary))',
-                        backgroundColor: 'rgba(var(--primary),0.08)',
-                        padding: '1px 6px', borderRadius: '4px', flexShrink: 0,
+                  </td>
+                  
+                  {/* Duration */}
+                  <td style={{ padding: '16px', fontSize: '13px', color: 'rgb(var(--text-secondary))', fontFamily: 'Inter, sans-serif' }}>
+                    {deploy.durationMs ? formatDuration(deploy.durationMs) : '—'}
+                  </td>
+                  
+                  {/* Triggered By */}
+                  <td style={{ padding: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div style={{
+                        width: '20px', height: '20px', borderRadius: '10px', backgroundColor: getBadgeColor(triggerName),
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF', fontSize: '9px', fontWeight: 600, fontFamily: 'Inter, sans-serif'
                       }}>
-                        {deploy.commitSha}
-                      </code>
-                    )}
-                    {deploy.commitMessage && (
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '300px' }}>
-                        {deploy.commitMessage}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Time + duration */}
-                <div style={{ flexShrink: 0, textAlign: 'right' }}>
-                  <p style={{ fontSize: '12px', color: 'rgb(var(--text-secondary))', margin: 0, fontWeight: 500, whiteSpace: 'nowrap' }}>
-                    {timeAgo(deploy.createdAt)}
-                  </p>
-                  {deploy.durationMs && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px', justifyContent: 'flex-end', marginTop: '3px', fontSize: '11px', color: 'rgb(var(--text-muted))' }}>
-                      <Timer style={{ width: '10px', height: '10px' }} />
-                      <span style={{ fontFamily: 'monospace' }}>{formatDuration(deploy.durationMs)}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Actions — always subtly visible */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-                  {deploy.status === 'success' && (
-                    <button
-                      title="Rollback"
-                      style={{
-                        width: '32px', height: '32px', borderRadius: '8px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        border: 'none', cursor: 'pointer',
-                        backgroundColor: 'rgba(245,158,11,0.1)', color: '#F59E0B',
-                        transition: 'background-color 150ms',
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(245,158,11,0.2)'; }}
-                      onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(245,158,11,0.1)'; }}
-                    >
-                      <RotateCcw style={{ width: '14px', height: '14px' }} />
-                    </button>
-                  )}
-                  <div style={{ position: 'relative' }}>
-                    <button
-                      data-menu-trigger
-                      onClick={() => setMenuOpenId(menuOpenId === deploy.id ? null : deploy.id)}
-                      style={{
-                        width: '32px', height: '32px', borderRadius: '8px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        border: 'none', cursor: 'pointer',
-                        backgroundColor: menuOpenId === deploy.id ? 'rgb(var(--surface-hover))' : 'transparent',
-                        color: 'rgb(var(--text-muted))',
-                        transition: 'background-color 150ms',
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))'; }}
-                      onMouseLeave={e => { if (menuOpenId !== deploy.id) e.currentTarget.style.backgroundColor = 'transparent'; }}
-                    >
-                      <MoreVertical style={{ width: '15px', height: '15px' }} />
-                    </button>
-
-                    {/* Dropdown menu */}
-                    {menuOpenId === deploy.id && (
-                      <div data-menu-dropdown style={{
-                        position: 'absolute', top: '36px', right: 0, zIndex: 50,
-                        minWidth: '180px', padding: '4px', borderRadius: '12px',
-                        backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))',
-                        boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-                      }}>
-                        {/* Edit */}
-                        <button onClick={() => startEdit(deploy)} style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '8px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'rgb(var(--text-primary))', backgroundColor: 'transparent', textAlign: 'left' }}
-                          onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(var(--border), 0.3)'; }}
-                          onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}>
-                          <Edit3 style={{ width: 14, height: 14, color: '#818CF8' }} /> Edit Details
-                        </button>
-                        {/* Redeploy */}
-                        <button onClick={async () => {
-                          setMenuOpenId(null);
-                          try {
-                            await api.triggerDeploy({
-                              projectId: deploy.projectId, branch: deploy.branch || 'main',
-                              environment: deploy.environment || 'production', remotePath: deploy.remotePath || '/var/www',
-                            });
-                            refetch();
-                            toast.success('Redeployed', `Deployment triggered for ${projectName}.`);
-                          } catch (err: unknown) { toast.error('Redeploy Failed', err instanceof Error ? err.message : 'Could not trigger deploy.'); }
-                        }} style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '8px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'rgb(var(--text-primary))', backgroundColor: 'transparent', textAlign: 'left' }}
-                          onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(var(--border), 0.3)'; }}
-                          onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}>
-                          <Rocket style={{ width: 14, height: 14, color: 'rgb(var(--primary))' }} /> Redeploy
-                        </button>
-                        {/* View Logs */}
-                        <button onClick={() => { setMenuOpenId(null); setExpandedId(expandedId === deploy.id ? null : deploy.id); }} style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '8px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'rgb(var(--text-primary))', backgroundColor: 'transparent', textAlign: 'left' }}
-                          onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(var(--border), 0.3)'; }}
-                          onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}>
-                          <Terminal style={{ width: 14, height: 14, color: '#818CF8' }} /> View Logs
-                        </button>
-                        {/* Rollback */}
-                        {deploy.status === 'success' && (
-                          <button onClick={async () => {
-                            setMenuOpenId(null);
-                            try { await api.rollbackDeployment(deploy.id); refetch(); toast.success('Rolled Back', 'Rollback deployment created.'); } catch (err: unknown) { toast.error('Rollback Failed', err instanceof Error ? err.message : 'Could not rollback.'); }
-                          }} style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '8px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#F59E0B', backgroundColor: 'transparent', textAlign: 'left' }}
-                            onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(245,158,11,0.08)'; }}
-                            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}>
-                            <RotateCcw style={{ width: 14, height: 14 }} /> Rollback
-                          </button>
-                        )}
-                        {/* Divider */}
-                        <div style={{ height: '1px', backgroundColor: 'rgb(var(--border))', margin: '4px 0' }} />
-                        {/* Delete */}
-                        <button onClick={() => {
-                          setMenuOpenId(null);
-                          setDeleteTarget({ id: deploy.id, name: projectName });
-                        }} style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '8px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#EF4444', backgroundColor: 'transparent', textAlign: 'left' }}
-                          onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.08)'; }}
-                          onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}>
-                          <Trash2 style={{ width: 14, height: 14 }} /> Delete
-                        </button>
+                        {triggerInitials}
                       </div>
-                    )}
-                  </div>
-
-                  {/* Expand/collapse logs */}
-                  <button
-                    title="View Logs"
-                    onClick={() => setExpandedId(expandedId === deploy.id ? null : deploy.id)}
-                    style={{
-                      width: '32px', height: '32px', borderRadius: '8px',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      border: 'none', cursor: 'pointer', flexShrink: 0,
-                      backgroundColor: expandedId === deploy.id ? 'rgba(var(--primary),0.12)' : 'transparent',
-                      color: expandedId === deploy.id ? 'rgb(var(--primary))' : 'rgb(var(--text-muted))',
-                      transition: 'background-color 150ms',
-                    }}
-                  >
-                    {expandedId === deploy.id
-                      ? <ChevronUp style={{ width: '15px', height: '15px' }} />
-                      : <Terminal style={{ width: '14px', height: '14px' }} />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Expanded logs */}
-              {expandedId === deploy.id && (
-                <DeployLogViewer deployId={deploy.id} />
-              )}
-
-              {/* Inline edit form */}
-              {editId === deploy.id && (
-                <div style={{ padding: '16px 18px', borderTop: '1px solid rgb(var(--border))', backgroundColor: 'rgba(var(--primary), 0.02)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-                    <Edit3 style={{ width: 15, height: 15, color: 'rgb(var(--primary))' }} />
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>Edit Deployment</span>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '10px', marginBottom: '12px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgb(var(--text-muted))', marginBottom: '4px' }}>Environment</label>
-                      <select value={editForm.environment} onChange={e => setEditForm(f => ({ ...f, environment: e.target.value }))} style={{ width: '100%', padding: '8px 10px', fontSize: '12px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', color: 'rgb(var(--text-primary))', outline: 'none' }}>
-                        <option value="production">Production</option>
-                        <option value="staging">Staging</option>
-                        <option value="development">Development</option>
-                      </select>
+                      <span style={{ fontSize: '12px', fontWeight: 500, color: 'rgb(var(--text-primary))', fontFamily: 'Inter, sans-serif' }}>{triggerName}</span>
                     </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgb(var(--text-muted))', marginBottom: '4px' }}>Branch</label>
-                      <input value={editForm.branch} onChange={e => setEditForm(f => ({ ...f, branch: e.target.value }))} style={{ width: '100%', boxSizing: 'border-box', padding: '8px 10px', fontSize: '12px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', color: 'rgb(var(--text-primary))', outline: 'none', fontFamily: "'JetBrains Mono', monospace" }} />
+                  </td>
+                  
+                  {/* Time */}
+                  <td style={{ padding: '16px', fontSize: '13px', color: 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>
+                    {timeAgo(deploy.createdAt)}
+                  </td>
+                  
+                  {/* Actions */}
+                  <td style={{ padding: '16px', textAlign: 'right' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
+                      <button onClick={() => startEdit(deploy)} title="View Details" style={{
+                        padding: '4px 8px', borderRadius: '6px', backgroundColor: 'rgba(var(--text-muted), 0.1)', border: 'none', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgb(var(--text-secondary))', transition: 'background-color 150ms'
+                      }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(var(--text-muted), 0.2)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(var(--text-muted), 0.1)'}>
+                        <Search style={{ width: '14px', height: '14px' }} />
+                      </button>
+                      
+                      <button onClick={() => setExpandedId(expandedId === deploy.id ? null : deploy.id)} title="Logs" style={{
+                        padding: '4px 8px', borderRadius: '6px', backgroundColor: 'rgba(59, 130, 246, 0.1)', border: 'none', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3B82F6', transition: 'background-color 150ms'
+                      }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.2)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.1)'}>
+                        <Terminal style={{ width: '14px', height: '14px' }} />
+                      </button>
+                      
+                      {deploy.status === 'failed' && (
+                        <button onClick={async () => {
+                          try {
+                            await api.triggerDeploy({ projectId: deploy.projectId, branch: deploy.branch || 'main', environment: deploy.environment || 'production' });
+                            refetch(); toast.success('Retrying', `Deployment triggered.`);
+                          } catch (err: unknown) { toast.error('Retry Failed', 'Could not trigger deploy.'); }
+                        }} title="Retry" style={{
+                          padding: '4px 10px', borderRadius: '6px', backgroundColor: 'rgb(var(--primary))', border: 'none', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF', transition: 'background-color 150ms'
+                        }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(var(--primary), 0.8)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgb(var(--primary))'}>
+                          <RotateCcw style={{ width: '14px', height: '14px' }} />
+                        </button>
+                      )}
                     </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgb(var(--text-muted))', marginBottom: '4px' }}>Status</label>
-                      <select value={editForm.status} onChange={e => setEditForm(f => ({ ...f, status: e.target.value }))} style={{ width: '100%', padding: '8px 10px', fontSize: '12px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', color: 'rgb(var(--text-primary))', outline: 'none' }}>
-                        <option value="pending">Pending</option>
-                        <option value="deploying">Deploying</option>
-                        <option value="success">Success</option>
-                        <option value="failed">Failed</option>
-                        <option value="rolled_back">Rolled Back</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgb(var(--text-muted))', marginBottom: '4px' }}>Commit Message</label>
-                      <input value={editForm.commitMessage} onChange={e => setEditForm(f => ({ ...f, commitMessage: e.target.value }))} style={{ width: '100%', boxSizing: 'border-box', padding: '8px 10px', fontSize: '12px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', color: 'rgb(var(--text-primary))', outline: 'none' }} />
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                    <button onClick={() => setEditId(null)} style={{ padding: '7px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, color: 'rgb(var(--text-secondary))', border: '1px solid rgb(var(--border))', cursor: 'pointer', background: 'transparent' }}>Cancel</button>
-                    <button onClick={saveEdit} disabled={editSaving} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, color: '#fff', border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))' }}>
-                      {editSaving ? <Loader2 style={{ width: 13, height: 13, animation: 'spin 1s linear infinite' }} /> : <Save style={{ width: 13, height: 13 }} />} {editSaving ? 'Saving...' : 'Save Changes'}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
+                  </td>
+                </tr>
+              );
+            }) : (
+              <tr>
+                <td colSpan={9} style={{ padding: '40px 16px', textAlign: 'center' }}>
+                  <Rocket style={{ width: '24px', height: '24px', color: 'rgb(var(--text-muted))', margin: '0 auto 12px' }} />
+                  <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'rgb(var(--text-primary))', fontFamily: 'Inter, sans-serif' }}>No deployments found</p>
+                  <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'rgb(var(--text-secondary))', fontFamily: 'Inter, sans-serif' }}>Deploy your first project to get started.</p>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
-
-      {/* ─── Empty state ─── */}
-      {filtered.length === 0 && (
-        <div style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          gap: '16px', borderRadius: '16px', border: '1px dashed rgb(var(--border))',
-          padding: '80px 32px', textAlign: 'center',
-        }}>
-          <div style={{
-            width: '64px', height: '64px', borderRadius: '16px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'linear-gradient(135deg, rgba(var(--primary),0.12), rgba(var(--agent),0.06))',
-          }}>
-            <Rocket style={{ width: '28px', height: '28px', color: 'rgb(var(--primary))', opacity: 0.8 }} />
-          </div>
-          <div>
-            <p style={{ fontSize: '15px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: '0 0 4px' }}>No deployments found</p>
-            <p style={{ fontSize: '13px', color: 'rgb(var(--text-muted))', margin: 0 }}>
-              {filter === 'all' ? 'Deploy your first project to get started.' : `No ${statusMap[filter]?.label.toLowerCase() || filter} deployments.`}
-            </p>
-          </div>
-          {filter === 'all' && (
-            <button onClick={() => setShowDeploy(true)} style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
-              padding: '10px 24px', borderRadius: '12px', border: 'none', cursor: 'pointer',
-              fontSize: '13px', fontWeight: 600, color: '#fff',
-              background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))',
-              boxShadow: '0 4px 12px rgba(var(--primary), 0.3)',
-            }}>
-              <Rocket style={{ width: '16px', height: '16px' }} /> Deploy Now
-            </button>
-          )}
+      
+      {/* Expanded Logs Container */}
+      {expandedId && (
+        <div style={{ marginTop: '16px', animation: 'fadeIn 200ms ease-in' }}>
+          <DeployLogViewer deployId={expandedId} />
         </div>
       )}
 
-      {/* Deploy modal */}
+      {/* Modals */}
       {showDeploy && <DeployForm onClose={() => { setShowDeploy(false); setEditInitialData(undefined); }} onSuccess={() => { setShowDeploy(false); setEditInitialData(undefined); refetch(); toast.success('Deployment Started', 'Your deployment has been triggered.'); }} initialData={editInitialData} />}
 
-      {/* Delete confirm modal */}
       {deleteTarget && (
         <ConfirmModal
           title="Delete Deployment"
@@ -654,13 +496,7 @@ export default function DeploymentsPage() {
           variant="danger"
           onCancel={() => setDeleteTarget(null)}
           onConfirm={async () => {
-            try {
-              await api.deleteDeployment(deleteTarget.id);
-              refetch();
-              toast.success('Deleted', 'Deployment record removed.');
-            } catch (err: unknown) {
-              toast.error('Delete Failed', err instanceof Error ? err.message : 'Could not delete deployment.');
-            }
+            try { await api.deleteDeployment(deleteTarget.id); refetch(); toast.success('Deleted', 'Deployment record removed.'); } catch (err: unknown) { toast.error('Delete Failed', err instanceof Error ? err.message : 'Could not delete deployment.'); }
             setDeleteTarget(null);
           }}
         />

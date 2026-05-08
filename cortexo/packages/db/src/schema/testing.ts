@@ -138,3 +138,46 @@ export type ModuleTestSuite = typeof moduleTestSuites.$inferSelect;
 export type NewModuleTestSuite = typeof moduleTestSuites.$inferInsert;
 export type ModuleTestResult = typeof moduleTestResults.$inferSelect;
 export type NewModuleTestResult = typeof moduleTestResults.$inferInsert;
+
+/**
+ * Playwright / k6 Test Suites
+ */
+export const testSuites = pgTable(
+  'test_suites',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    projectId: uuid('project_id').references(() => projects.id).notNull(),
+    name: varchar('name', { length: 200 }),
+    type: varchar('type', { length: 30 }), // 'page-load'|'form'|'e2e'|'visual'|'performance'
+    config: jsonb('config'),   // playwright config or k6 script
+    schedule: varchar('schedule', { length: 50 }), // cron expression or null
+    enabled: boolean('enabled').default(true),
+    createdAt: timestamp('created_at').defaultNow(),
+  },
+  (table) => [index('idx_test_suites_project').on(table.projectId)]
+);
+
+export const testRuns = pgTable(
+  'test_runs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    suiteId: uuid('suite_id').references(() => testSuites.id).notNull(),
+    triggeredBy: varchar('triggered_by', { length: 30 }), // 'deploy'|'schedule'|'manual'
+    status: varchar('status', { length: 20 }).default('pending'),
+    passed: integer('passed').default(0),
+    failed: integer('failed').default(0),
+    duration: integer('duration'), // ms
+    screenshotUrl: text('screenshot_url'), // for visual regression
+    reportJson: jsonb('report_json'),
+    createdAt: timestamp('created_at').defaultNow(),
+  },
+  (table) => [
+    index('idx_test_runs_suite').on(table.suiteId),
+    index('idx_test_runs_status').on(table.status)
+  ]
+);
+
+export type TestSuite = typeof testSuites.$inferSelect;
+export type NewTestSuite = typeof testSuites.$inferInsert;
+export type TestRun = typeof testRuns.$inferSelect;
+export type NewTestRun = typeof testRuns.$inferInsert;

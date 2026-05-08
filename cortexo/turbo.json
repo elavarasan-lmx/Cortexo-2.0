@@ -4,6 +4,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
+      "env": ["NODE_ENV"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
     "dev": {
@@ -11,7 +12,8 @@
       "persistent": true
     },
     "lint": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "outputs": []
     },
     "clean": {
       "cache": false
@@ -31,11 +33,13 @@
     },
     "test": {
       "dependsOn": ["^build"],
+      "outputs": [],
       "cache": false
     },
     "test:coverage": {
       "dependsOn": ["^build"],
-      "cache": false
+      "outputs": ["coverage/**"],
+      "cache": true
     },
     "seed": {
       "cache": false

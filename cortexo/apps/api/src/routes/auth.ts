@@ -138,9 +138,11 @@ export async function authRoutes(app: FastifyInstance) {
       const refreshToken = signRefreshToken(app, userId);
 
       return {
-        token,
-        refreshToken,
-        user: { id: userId, name, email, role: 'admin', orgId },
+        data: {
+          token,
+          refreshToken,
+          user: { id: userId, name, email, role: 'admin', orgId },
+        }
       };
     } catch (err: unknown) {
       app.log.error(err);
@@ -188,16 +190,18 @@ export async function authRoutes(app: FastifyInstance) {
       const refreshToken = signRefreshToken(app, user.id);
 
       return {
-        token,
-        refreshToken,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          orgId: user.orgId,
-          avatarUrl: user.avatarUrl,
-        },
+        data: {
+          token,
+          refreshToken,
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            orgId: user.orgId,
+            avatarUrl: user.avatarUrl,
+          },
+        }
       };
     } catch (err: unknown) {
       app.log.error(err);
@@ -211,37 +215,43 @@ export async function authRoutes(app: FastifyInstance) {
    */
   app.get('/auth/me', async (request, reply) => {
     const authHeader = request.headers.authorization;
+    console.log('--- GET /auth/me ---');
+    console.log('authHeader:', authHeader);
 
     // Support dev bypass: if UNSAFE_DEV_AUTH is on and middleware set request.user
     if (!authHeader?.startsWith('Bearer ')) {
       const devUser = (request as any).user;
-      if (process.env.UNSAFE_DEV_AUTH === 'true' && devUser) {
+      if (process.env.UNSAFE_DEV_AUTH === 'true') {
         // In dev mode, return the dev user from the database if possible, else synthetic
         try {
           const db = await getDb();
           const user = await db.query.users.findFirst();
           if (user) {
             return {
-              user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                orgId: user.orgId,
-                avatarUrl: user.avatarUrl,
-              },
+              data: {
+                user: {
+                  id: user.id,
+                  name: user.name,
+                  email: user.email,
+                  role: user.role,
+                  orgId: user.orgId,
+                  avatarUrl: user.avatarUrl,
+                },
+              }
             };
           }
         } catch { /* fall through to synthetic user */ }
         return {
-          user: {
-            id: devUser.sub,
-            name: devUser.name,
-            email: devUser.email,
-            role: devUser.role,
-            orgId: devUser.orgId,
-            avatarUrl: null,
-          },
+          data: {
+            user: {
+              id: devUser?.sub || 'dev-user',
+              name: devUser?.name || 'Dev User',
+              email: devUser?.email || 'dev@example.com',
+              role: devUser?.role || 'admin',
+              orgId: devUser?.orgId || '',
+              avatarUrl: null,
+            },
+          }
         };
       }
       return reply.code(401).send({ error: 'Not authenticated' });
@@ -260,14 +270,16 @@ export async function authRoutes(app: FastifyInstance) {
       }
 
       return {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          orgId: user.orgId,
-          avatarUrl: user.avatarUrl,
-        },
+        data: {
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            orgId: user.orgId,
+            avatarUrl: user.avatarUrl,
+          },
+        }
       };
     } catch (err: unknown) {
       return reply.code(401).send({ error: 'Invalid or expired token' });
@@ -310,8 +322,10 @@ export async function authRoutes(app: FastifyInstance) {
       });
 
       return {
-        token: newToken,
-        user: { id: user.id, name: user.name, email: user.email, role: user.role, orgId: user.orgId },
+        data: {
+          token: newToken,
+          user: { id: user.id, name: user.name, email: user.email, role: user.role, orgId: user.orgId },
+        }
       };
     } catch (err: unknown) {
       if (err instanceof Error && 'code' in err && (err as { code: string }).code === '23505') return reply.code(409).send({ error: 'Email already in use' });
@@ -350,7 +364,7 @@ export async function authRoutes(app: FastifyInstance) {
       const newHash = await hashPassword(newPassword);
       await db.update(users).set({ passwordHash: newHash }).where(eq(users.id, decoded.sub));
 
-      return { message: 'Password changed successfully' };
+      return { data: { message: 'Password changed successfully' } };
     } catch (err: unknown) {
       app.log.error(err);
       return reply.code(500).send({ error: 'Failed to change password' });
@@ -406,7 +420,7 @@ export async function authRoutes(app: FastifyInstance) {
           email: ghUser.email || `${ghUser.login}@github`, role: 'admin',
           avatarUrl: ghUser.avatar_url, githubId: String(ghUser.id),
         });
-        user = { id: userId, email: ghUser.email || `${ghUser.login}@github`, orgId, name: ghUser.name || ghUser.login, role: 'admin' } as typeof user;
+        user = { id: userId, email: ghUser.email || `${ghUser.login}@github`, orgId, name: ghUser.name || ghUser.login, role: 'admin' } as any;
       }
 
       const token = signAccessToken(app, {
@@ -457,7 +471,7 @@ export async function authRoutes(app: FastifyInstance) {
       });
       const newRefreshToken = signRefreshToken(app, user.id);
 
-      return { token: newToken, refreshToken: newRefreshToken };
+      return { data: { token: newToken, refreshToken: newRefreshToken } };
     } catch {
       return reply.code(401).send({ error: 'Token expired, please log in again' });
     }
@@ -475,7 +489,7 @@ export async function authRoutes(app: FastifyInstance) {
     const user = await db.query.users.findFirst({ where: eq(users.email, email) });
 
     // Always return success (don't reveal if email exists)
-    if (!user) return { message: 'If the email exists, a reset link has been sent' };
+    if (!user) return { data: { message: 'If the email exists, a reset link has been sent' } };
 
     const resetToken = crypto.randomBytes(32).toString('hex');
     const resetExpiry = new Date(Date.now() + 3600000); // 1 hour
@@ -495,7 +509,7 @@ export async function authRoutes(app: FastifyInstance) {
 
     app.log.info(`[Auth] Password reset token generated for ${email}`);
 
-    return { message: 'If the email exists, a reset link has been sent' };
+    return { data: { message: 'If the email exists, a reset link has been sent' } };
   });
 
   /**
@@ -521,6 +535,6 @@ export async function authRoutes(app: FastifyInstance) {
       resetTokenExpiresAt: null,
     }).where(eq(users.id, user.id));
 
-    return { message: 'Password reset successful' };
+    return { data: { message: 'Password reset successful' } };
   });
 }

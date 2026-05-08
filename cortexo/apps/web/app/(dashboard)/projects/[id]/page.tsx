@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 import {
   ArrowLeft, GitBranch, Loader2,
   CheckCircle, Edit3, Trash2, Save,
-  ExternalLink, Copy, Github, Globe, Database, Radio, Server,
+  ExternalLink, Copy, Github, Globe, Database, Radio, Server, Brain
 } from 'lucide-react';
 
 const card: React.CSSProperties = { borderRadius: '14px', backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', overflow: 'hidden' };
@@ -115,9 +115,14 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div>
-      <button onClick={() => router.push('/projects')} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '20px', padding: 0, background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'rgb(var(--text-muted))' }}>
-        <ArrowLeft style={{ width: '14px', height: '14px' }} /> Back to Projects
-      </button>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+        <button onClick={() => router.push('/projects')} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: 0, background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'rgb(var(--text-muted))' }}>
+          <ArrowLeft style={{ width: '14px', height: '14px' }} /> Back to Projects
+        </button>
+        <button onClick={() => router.push(`/projects/${id}/brain`)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '8px', border: '1px solid rgb(var(--primary))', backgroundColor: 'rgba(var(--primary), 0.1)', cursor: 'pointer', fontSize: '12px', fontWeight: 600, color: 'rgb(var(--primary))' }}>
+          <Brain style={{ width: '14px', height: '14px' }} /> Source Code Brain
+        </button>
+      </div>
 
       <div style={{ ...card, padding: '24px', marginBottom: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>

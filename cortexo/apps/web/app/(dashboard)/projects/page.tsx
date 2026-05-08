@@ -65,14 +65,35 @@ export default function ProjectsPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '20px' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>Projects</h1>
-          <p style={{ fontSize: '14px', color: 'rgb(var(--text-secondary))', marginTop: '4px' }}>
-            {allProjects.length} {allProjects.length === 1 ? 'project' : 'projects'} registered
+          <h1 style={{ fontSize: '24px', fontWeight: 800, color: 'rgb(var(--text-primary))', margin: 0 }}>Projects</h1>
+          <p style={{ fontSize: '14px', color: 'rgb(var(--text-muted))', marginTop: '4px' }}>
+            {allProjects.length} {allProjects.length === 1 ? 'project' : 'projects'} · {allProjects.filter(p => { const st = parseSettings(p); return st.productType; }).length} active deployments
           </p>
         </div>
-        <Link href="/projects/new" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, padding: '10px 20px', borderRadius: '12px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#fff', background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))', boxShadow: '0 4px 12px rgba(var(--primary), 0.3)', textDecoration: 'none' }}>
-          <Plus style={{ width: '16px', height: '16px' }} /> New Project
-        </Link>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', color: 'rgb(var(--text-muted))', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>⚡ Filter</button>
+          <Link href="/projects/new" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, padding: '10px 20px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#fff', background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))', boxShadow: '0 4px 12px rgba(var(--primary), 0.3)', textDecoration: 'none' }}>
+            <Plus style={{ width: '16px', height: '16px' }} /> Add Project
+          </Link>
+        </div>
+      </div>
+
+      {/* Stat Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '20px' }}>
+        {[
+          { icon: '📂', value: allProjects.length, label: 'Total Projects', color: '#7C3AED' },
+          { icon: '✅', value: allProjects.filter(p => parseSettings(p).productType).length, label: 'Active', color: '#10B981' },
+          { icon: '🚀', value: allProjects.filter(p => parseSettings(p).productType === 'trade').length, label: 'Deploying', color: '#F59E0B' },
+          { icon: '📱', value: allProjects.filter(p => { const st = parseSettings(p); return st.androidVersion || st.iosVersion; }).length, label: 'With Mobile', color: '#3B82F6' },
+        ].map((stat, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px', borderRadius: '10px', backgroundColor: 'rgb(var(--card))', border: '1px solid rgb(var(--border))' }}>
+            <span style={{ fontSize: '22px' }}>{stat.icon}</span>
+            <div>
+              <div style={{ fontSize: '22px', fontWeight: 800, color: stat.color }}>{stat.value}</div>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: 'rgb(var(--text-muted))' }}>{stat.label}</div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Search bar */}
@@ -149,11 +170,25 @@ export default function ProjectsPage() {
               </div>
 
               {/* Client config rows */}
-              <div style={{ padding: '0 18px 14px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px', fontSize: '11px' }}>
+              <div style={{ padding: '0 18px 8px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px', fontSize: '11px' }}>
                 {s.domain && <div><span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>Admin URL</span><p style={{ margin: '2px 0 0', color: 'rgb(var(--text-primary))', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(s.adminBaseUrl || '—')}</p></div>}
                 {db.name && <div><span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>Database</span><p style={{ margin: '2px 0 0', color: '#00758F', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>{db.name}</p></div>}
                 {s.androidVersion && <div><span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>Android</span><p style={{ margin: '2px 0 0', color: 'rgb(var(--text-primary))', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>v{String(s.androidVersion)}</p></div>}
                 {s.iosVersion && <div><span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>iOS</span><p style={{ margin: '2px 0 0', color: 'rgb(var(--text-primary))', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>v{String(s.iosVersion)}</p></div>}
+              </div>
+
+              {/* Tech Tags */}
+              <div style={{ padding: '0 18px 12px', display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                {[
+                  { label: 'React', color: '#61DAFB', bg: 'rgba(97,218,251,0.1)' },
+                  { label: 'Node.js', color: '#339933', bg: 'rgba(51,153,51,0.1)' },
+                  ...(s.productType === 'trade' ? [{ label: 'Trade', color: '#F59E0B', bg: 'rgba(245,158,11,0.1)' }] : [{ label: 'Lite', color: '#10B981', bg: 'rgba(16,185,129,0.1)' }]),
+                  ...(db.name ? [{ label: 'MySQL', color: '#00758F', bg: 'rgba(0,117,143,0.1)' }] : []),
+                  ...(s.androidVersion ? [{ label: 'Android', color: '#3DDC84', bg: 'rgba(61,220,132,0.1)' }] : []),
+                  ...(s.iosVersion ? [{ label: 'iOS', color: '#007AFF', bg: 'rgba(0,122,255,0.1)' }] : []),
+                ].slice(0, 5).map((tag, ti) => (
+                  <span key={ti} style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 600, color: tag.color, backgroundColor: tag.bg }}>{tag.label}</span>
+                ))}
               </div>
 
               {/* Footer */}
@@ -168,7 +203,10 @@ export default function ProjectsPage() {
                     {project.defaultBranch || 'main'}
                   </div>
                 </div>
-                {s.adminUser && <span style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>👤 {String(s.adminUser)}</span>}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>⏱ 3 days ago · v1.1</span>
+                  {s.adminUser && <span style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>👤 {String(s.adminUser)}</span>}
+                </div>
               </div>
             </div>
           );

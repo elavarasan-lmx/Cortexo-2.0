@@ -8,6 +8,62 @@
       "when": 1777836077088,
       "tag": "0000_init-postgresql",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778214428446,
+      "tag": "0001_lucky_imperial_guard",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778214903048,
+      "tag": "0002_optimal_baron_strucker",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1778215107475,
+      "tag": "0003_steep_maggott",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1778215352257,
+      "tag": "0004_fuzzy_the_watchers",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1778215986170,
+      "tag": "0005_fancy_luckman",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1778216318756,
+      "tag": "0006_illegal_the_liberteens",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1778217926472,
+      "tag": "0007_messy_marvel_boy",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1778218665838,
+      "tag": "0008_wide_sister_grimm",
+      "breakpoints": true
     }
   ]
 }

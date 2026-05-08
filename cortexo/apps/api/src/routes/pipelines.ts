@@ -5,6 +5,7 @@ import { getDb } from '../lib/db.js';
 import { getRedis } from '../lib/redis.js';
 import { Queue } from 'bullmq';
 import { pipelines as pipelinesTable, pipelineRuns } from '@cortexo/db/schema';
+import { getOrgId } from '../lib/request-context.js';
 
 // BullMQ Queue for pipeline jobs (matches worker queue name)
 let pipelineQueue: Queue | null = null;
@@ -101,7 +102,7 @@ export async function pipelineRoutes(app: FastifyInstance) {
       const id = crypto.randomUUID();
       await db.insert(pipelinesTable).values({
         id,
-        orgId: 'default-org',
+        orgId: getOrgId(request),
         ...parsed.data,
       } as any);
 

@@ -152,8 +152,8 @@ export async function logViewerRoutes(app: FastifyInstance) {
         path: filePath,
         server,
         description,
-      } as any);
-      return reply.code(201).send({ data: { id: (result as any).insertId }, success: true });
+      } as any).returning();
+      return reply.code(201).send({ data: { id: (result as any).id }, success: true });
     } catch (err) {
       app.log.error(err);
       return reply.code(500).send({ error: 'Database error' });

@@ -1,168 +1,208 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  ShieldCheck, AlertTriangle, CheckCircle, XCircle,
-  Search, Bug, Shield, Lock, Eye, ChevronRight, Loader2, RefreshCw, Play,
-} from 'lucide-react';
+import { Shield, ShieldAlert, ShieldCheck, AlertTriangle, Fingerprint, Database, History, Play, CheckCircle, XCircle } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useApiData, useAutoLoadToken } from '@/lib/hooks';
+import { useApiData, useAutoLoadToken, timeAgo } from '@/lib/hooks';
 
-const typeIcons: Record<string, typeof ShieldCheck> = { security: Shield, dependency: Bug, code: Eye, secrets: Lock, ssl: ShieldCheck };
-
-export default function ScansPage() {
+export default function SecurityScansPage() {
   useAutoLoadToken();
-  const [filter, setFilter] = useState('all');
-  const [runningSSL, setRunningSSL] = useState(false);
-  const [runningDep, setRunningDep] = useState(false);
 
-  const { data: sslResults, loading: loadingSSL, refetch: refetchSSL } = useApiData(
-    () => api.getSSLScanResults(),
-    { default: [] as any[] }
-  );
+  const [activeTab, setActiveTab] = useState<'scans' | 'findings' | 'history'>('scans');
 
-  const { data: depResults, loading: loadingDep, refetch: refetchDep } = useApiData(
-    () => api.getDeprecationResults(),
-    { default: [] as any[] }
-  );
+  const projectId = 'e8b8c2d2-1111-4444-8888-abcdef123456'; 
+  
+  const { data: scansData, loading: scansLoading, refetch: refetchScans } = useApiData(() => api.request<any>('GET', `/security-scans?projectId=${projectId}`));
+  const scans = scansData?.data || [];
 
-  // Combine all scan results into a unified list
-  const allScans = [
-    ...(sslResults || []).map((s: any) => ({
-      id: s.id || `ssl-${s.domain}`,
-      type: 'security',
-      title: `SSL: ${s.domain || 'Unknown'}`,
-      target: s.domain || '—',
-      status: s.valid ? 'completed' : 'warning',
-      findings: s.valid ? 0 : 1,
-      critical: s.daysUntilExpiry < 7 ? 1 : 0,
-      high: s.daysUntilExpiry < 30 && s.daysUntilExpiry >= 7 ? 1 : 0,
-      medium: 0,
-      time: s.lastChecked ? new Date(s.lastChecked).toLocaleString() : '—',
-      details: s.valid ? `Valid until ${s.expiresAt ? new Date(s.expiresAt).toLocaleDateString() : '—'} (${s.daysUntilExpiry || 0}d)` : `⚠ ${s.error || 'Invalid'}`,
-    })),
-    ...(depResults || []).map((d: any) => ({
-      id: d.id || `dep-${d.name}`,
-      type: 'dependency',
-      title: `Dep: ${d.name || d.packageName || 'Unknown'}`,
-      target: d.filePath || d.type || '—',
-      status: 'completed',
-      findings: 1,
-      critical: (d.severity === 'critical' || d.impact === 'critical') ? 1 : 0,
-      high: (d.severity === 'high' || d.impact === 'high') ? 1 : 0,
-      medium: (d.severity === 'medium' || d.impact === 'medium') ? 1 : 0,
-      time: d.scannedAt ? new Date(d.scannedAt).toLocaleString() : '—',
-      details: d.replacement ? `Replace with: ${d.replacement}` : '',
-    })),
-  ];
-
-  const filtered = filter === 'all' ? allScans : allScans.filter(s => s.type === filter);
-  const totalFindings = allScans.reduce((s, sc) => s + sc.findings, 0);
-  const loading = loadingSSL || loadingDep;
-
-  const handleRunSSL = async () => {
-    setRunningSSL(true);
-    try { await api.runSSLScan(); await refetchSSL(); } catch {}
-    setRunningSSL(false);
-  };
-
-  const handleRunDep = async () => {
-    setRunningDep(true);
-    try { await api.runDeprecationScan(); await refetchDep(); } catch {}
-    setRunningDep(false);
+  const handleRunScan = async (type: string) => {
+    try {
+      await api.request('POST', `/security-scans/trigger`, {
+        projectId,
+        type
+      });
+      alert(`${type} scan triggered successfully!`);
+      refetchScans();
+    } catch (error) {
+      alert('Failed to trigger scan');
+    }
   };
 
   return (
-    <div style={{ maxWidth: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <ShieldCheck style={{ width: '22px', height: '22px', color: '#10B981' }} /> Scan Results
-          </h1>
-          <p style={{ fontSize: '13px', color: 'rgb(var(--text-secondary))', marginTop: '4px' }}>Security scans, dependency audits, and code quality results</p>
-        </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button onClick={handleRunSSL} disabled={runningSSL} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', fontSize: '12px', fontWeight: 600, cursor: 'pointer', color: 'rgb(var(--text-muted))' }}>
-            {runningSSL ? <Loader2 style={{ width: '13px', height: '13px', animation: 'spin 1s linear infinite' }} /> : <Play style={{ width: '13px', height: '13px' }} />}
-            Run SSL Scan
-          </button>
-          <button onClick={handleRunDep} disabled={runningDep} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', fontSize: '12px', fontWeight: 600, cursor: 'pointer', color: 'rgb(var(--text-muted))' }}>
-            {runningDep ? <Loader2 style={{ width: '13px', height: '13px', animation: 'spin 1s linear infinite' }} /> : <Play style={{ width: '13px', height: '13px' }} />}
-            Run Dep Scan
-          </button>
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', marginBottom: '24px' }}>
-        {[
-          { label: 'Total Scans', value: loading ? '—' : String(allScans.length), color: '#818CF8' },
-          { label: 'Findings', value: loading ? '—' : String(totalFindings), color: '#F59E0B' },
-          { label: 'Critical', value: loading ? '—' : String(allScans.reduce((s, sc) => s + sc.critical, 0)), color: '#EF4444' },
-          { label: 'Clean', value: loading ? '—' : String(allScans.filter(s => s.findings === 0).length), color: '#10B981' },
-        ].map((c) => (
-          <div key={c.label} style={{ backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', borderRadius: '14px', padding: '18px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', backgroundColor: c.color }} />
-            <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgb(var(--text-muted))', margin: 0 }}>{c.label}</p>
-            <p style={{ fontSize: '26px', fontWeight: 700, color: c.color, margin: '10px 0 0', lineHeight: 1 }}>{c.value}</p>
+    <div className="flex h-screen bg-[#050505] text-white font-sans overflow-hidden">
+      {/* Sidebar */}
+      <div className="w-64 border-r border-white/10 flex flex-col">
+        <div className="p-6">
+          <div className="flex items-center space-x-3 mb-8">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center">
+              <Shield className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold tracking-tight">Security</h1>
+              <p className="text-xs text-white/50">Audit & Scanners</p>
+            </div>
           </div>
-        ))}
-      </div>
 
-      <div style={{ display: 'flex', gap: '6px', marginBottom: '16px' }}>
-        {['all', 'security', 'dependency'].map((f) => (
-          <button key={f} onClick={() => setFilter(f)} style={{ padding: '5px 12px', borderRadius: '9999px', fontSize: '11px', fontWeight: 500, border: '1px solid', borderColor: filter === f ? 'rgb(var(--primary))' : 'rgb(var(--border))', backgroundColor: filter === f ? 'rgba(var(--primary), 0.08)' : 'transparent', color: filter === f ? 'rgb(var(--primary))' : 'rgb(var(--text-secondary))', cursor: 'pointer', textTransform: 'capitalize' }}>{f}</button>
-        ))}
-      </div>
-
-      {/* Loading */}
-      {loading && (
-        <div style={{ textAlign: 'center', padding: '40px' }}>
-          <Loader2 style={{ width: '24px', height: '24px', color: 'rgb(var(--primary))', animation: 'spin 1s linear infinite' }} />
-          <p style={{ fontSize: '13px', color: 'rgb(var(--text-muted))', marginTop: '8px' }}>Loading scan results...</p>
+          <nav className="space-y-1">
+            <button
+              onClick={() => setActiveTab('scans')}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm transition-all ${
+                activeTab === 'scans'
+                  ? 'bg-white/10 text-white font-medium'
+                  : 'text-white/60 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <Database className="w-4 h-4" />
+              <span>Scanners</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('findings')}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm transition-all ${
+                activeTab === 'findings'
+                  ? 'bg-white/10 text-white font-medium'
+                  : 'text-white/60 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <ShieldAlert className="w-4 h-4" />
+              <span>Findings</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm transition-all ${
+                activeTab === 'history'
+                  ? 'bg-white/10 text-white font-medium'
+                  : 'text-white/60 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <History className="w-4 h-4" />
+              <span>Scan History</span>
+            </button>
+          </nav>
         </div>
-      )}
+      </div>
 
-      {/* Scan list */}
-      {!loading && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {filtered.map((scan) => {
-            const Icon = typeIcons[scan.type] || ShieldCheck;
-            const color = scan.critical > 0 ? '#EF4444' : scan.findings > 0 ? '#F59E0B' : '#10B981';
-            return (
-              <div key={scan.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', padding: '16px 20px', backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', borderLeft: `3px solid ${color}`, borderRadius: '12px', transition: 'box-shadow 200ms, transform 200ms', cursor: 'pointer' }}
-                onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 4px 16px -2px rgba(0,0,0,0.12)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}>
-                <div style={{ width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '10px', backgroundColor: `${color}12`, flexShrink: 0 }}>
-                  <Icon style={{ width: '16px', height: '16px', color }} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                    <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: 0 }}>{scan.title}</h3>
-                    <span style={{ fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '9999px', backgroundColor: `${color}15`, color }}>{scan.findings === 0 ? 'Clean' : `${scan.findings} finding${scan.findings > 1 ? 's' : ''}`}</span>
-                  </div>
-                  <p style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', margin: '4px 0 0' }}>Target: {scan.target} · {scan.time}</p>
-                  {scan.details && <p style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', margin: '4px 0 0' }}>{scan.details}</p>}
-                  {scan.findings > 0 && (
-                    <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
-                      {scan.critical > 0 && <span style={{ fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '9999px', backgroundColor: 'rgba(239,68,68,0.12)', color: '#EF4444' }}>{scan.critical} Critical</span>}
-                      {scan.high > 0 && <span style={{ fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '9999px', backgroundColor: 'rgba(249,115,22,0.12)', color: '#F97316' }}>{scan.high} High</span>}
-                      {scan.medium > 0 && <span style={{ fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '9999px', backgroundColor: 'rgba(245,158,11,0.12)', color: '#F59E0B' }}>{scan.medium} Med</span>}
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto">
+        <header className="px-8 py-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02] backdrop-blur-md sticky top-0 z-10">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">
+              {activeTab === 'scans' ? 'Security Scanners' : activeTab === 'findings' ? 'Active Findings' : 'Scan History'}
+            </h2>
+            <p className="text-sm text-white/50 mt-1">
+              Automated dependency and secret scanning for infrastructure safety.
+            </p>
+          </div>
+        </header>
+
+        <main className="p-8">
+          {activeTab === 'scans' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              <div className="bg-white/5 border border-white/10 rounded-xl p-6 hover:border-white/20 transition-all">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-500/10 rounded-lg">
+                      <Database className="w-5 h-5 text-blue-400" />
                     </div>
-                  )}
+                    <div>
+                      <h3 className="font-semibold text-white">Dependency Scanner</h3>
+                      <span className="text-xs text-white/50 tracking-wider">
+                        npm / composer
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <ChevronRight style={{ width: '16px', height: '16px', color: 'rgb(var(--text-muted))', flexShrink: 0 }} />
+                <div className="space-y-4 mb-6 text-sm text-white/70">
+                  <p>Scans package.json, package-lock.json, and composer.lock files for known vulnerabilities.</p>
+                </div>
+                <button 
+                  onClick={() => handleRunScan('dependency')}
+                  className="w-full py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-2"
+                >
+                  <Play className="w-4 h-4" />
+                  <span>Run Audit</span>
+                </button>
               </div>
-            );
-          })}
-          {filtered.length === 0 && (
-            <div style={{ padding: '40px', textAlign: 'center', backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', borderRadius: '12px' }}>
-              <ShieldCheck style={{ width: '32px', height: '32px', color: '#10B981', marginBottom: '8px' }} />
-              <p style={{ fontSize: '13px', color: 'rgb(var(--text-muted))', margin: 0 }}>No scan results yet — run a scan to check your infrastructure</p>
+
+              <div className="bg-white/5 border border-white/10 rounded-xl p-6 hover:border-white/20 transition-all">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-orange-500/10 rounded-lg">
+                      <Fingerprint className="w-5 h-5 text-orange-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-white">Secret Scanner</h3>
+                      <span className="text-xs text-white/50 tracking-wider">
+                        trufflehog / gitleaks
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-4 mb-6 text-sm text-white/70">
+                  <p>Scans the codebase for hardcoded API keys, passwords, AWS tokens, and SSH keys.</p>
+                </div>
+                <button 
+                  onClick={() => handleRunScan('secret')}
+                  className="w-full py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-2"
+                >
+                  <Play className="w-4 h-4" />
+                  <span>Scan Secrets</span>
+                </button>
+              </div>
+
             </div>
           )}
-        </div>
-      )}
-      <style>{`@keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }`}</style>
+
+          {activeTab === 'findings' && (
+            <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+              <div className="p-6 text-center text-white/50">
+                <ShieldCheck className="w-12 h-12 text-white/20 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-white mb-2">No Active Findings</h3>
+                <p className="text-sm">Your codebase is currently free of known critical vulnerabilities and hardcoded secrets.</p>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'history' && (
+            <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-white/5 text-white/50">
+                  <tr>
+                    <th className="px-6 py-4 font-medium">Scan ID</th>
+                    <th className="px-6 py-4 font-medium">Type</th>
+                    <th className="px-6 py-4 font-medium">Findings</th>
+                    <th className="px-6 py-4 font-medium">Status</th>
+                    <th className="px-6 py-4 font-medium">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/10">
+                  {scans.length > 0 ? scans.map((scan: any) => (
+                    <tr key={scan.id} className="hover:bg-white/5 transition-colors">
+                      <td className="px-6 py-4 font-mono text-white/70">{scan.id.split('-')[0]}</td>
+                      <td className="px-6 py-4 text-white capitalize">{scan.type}</td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${scan.criticalCount > 0 ? 'bg-red-500/10 text-red-400' : 'bg-green-500/10 text-green-400'}`}>
+                          {scan.criticalCount} Critical, {scan.highCount} High
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center text-white/70 capitalize">
+                          {scan.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-white/50">{timeAgo(scan.createdAt)}</td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-8 text-center text-white/50">No scan history available</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 }

@@ -181,70 +181,99 @@ export function Topbar({ isMobile = false }: { isMobile?: boolean }) {
             )}
           </button>
 
-          {/* Notification dropdown */}
+          {/* Notification dropdown — matches screen 26 */}
           {showNotifications && (
             <div style={{
               position: 'absolute', right: 0, top: 'calc(100% + 8px)',
-              width: '340px', maxHeight: '420px', overflowY: 'auto',
-              borderRadius: '12px', border: '1px solid rgb(var(--border))',
+              width: '380px', maxHeight: '500px',
+              borderRadius: '16px', border: '1px solid rgb(var(--border))',
               backgroundColor: 'rgb(var(--surface))',
-              boxShadow: '0 16px 40px -8px rgba(0,0,0,0.15)',
-              zIndex: 100,
+              boxShadow: '0 16px 48px rgba(0,0,0,0.25)',
+              zIndex: 100, overflow: 'hidden',
+              animation: 'notifPanelIn 200ms ease-out forwards',
             }}>
               <div style={{
-                padding: '12px 16px',
-                borderBottom: '1px solid rgb(var(--border))',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
+                padding: '16px 20px',
+                borderBottom: '1px solid rgba(var(--border), 0.5)',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}>
-                <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'rgb(var(--text-primary))' }}>Notifications</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Bell style={{ width: '16px', height: '16px', color: 'rgb(var(--text-primary))' }} />
+                  <span style={{ fontSize: '15px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>
+                    Notifications ({unread})
+                  </span>
+                </div>
                 {unread > 0 && (
                   <button onClick={markAllRead} style={{
                     display: 'flex', alignItems: 'center', gap: '4px',
                     fontSize: '12px', color: '#7C3AED', background: 'none',
                     border: 'none', cursor: 'pointer', padding: '4px 8px',
-                    borderRadius: '6px',
+                    borderRadius: '6px', fontWeight: 600,
                   }}>
                     <CheckCheck style={{ width: '12px', height: '12px' }} /> Mark all read
                   </button>
                 )}
               </div>
-              {notifications.length === 0 ? (
-                <div style={{ padding: '32px 16px', textAlign: 'center', color: 'rgb(var(--text-muted))', fontSize: '13px' }}>
-                  No notifications yet
-                </div>
-              ) : (
-                <div>
-                  {notifications.map((n: any) => {
-                    const TypeIcon = n.type === 'deploy_failed' ? Rocket : n.type === 'error_spike' ? Bug : AlertCircle;
-                    const isUnread = !n.readAt;
-                    return (
-                      <div key={n.id} style={{
-                        display: 'flex', alignItems: 'flex-start', gap: '10px',
-                        padding: '12px 16px',
-                        backgroundColor: isUnread ? 'rgba(var(--primary), 0.08)' : 'transparent',
-                        borderBottom: '1px solid rgb(var(--border))',
-                        cursor: 'pointer',
-                      }}>
-                        <div style={{
-                          width: '32px', height: '32px', borderRadius: '8px',
-                          backgroundColor: '#EDE9FE',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                        }}>
-                          <TypeIcon style={{ width: '15px', height: '15px', color: '#7C3AED' }} />
+              <div style={{ maxHeight: '380px', overflowY: 'auto' }}>
+                {notifications.length === 0 ? (
+                  <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+                    <Bell style={{ width: '24px', height: '24px', color: 'rgb(var(--text-muted))', margin: '0 auto 8px', display: 'block' }} />
+                    <p style={{ fontSize: '13px', color: 'rgb(var(--text-muted))', margin: 0 }}>No notifications yet</p>
+                  </div>
+                ) : (
+                  <div>
+                    {notifications.map((n: any) => {
+                      const isUnread = !n.readAt;
+                      const t = n.type || '';
+                      const isDeploy = t.includes('deploy');
+                      const isError = t.includes('error') || t.includes('fail');
+                      const isBug = t.includes('bug');
+                      const borderColor = isDeploy ? '#10B981' : (isError || isBug) ? '#EF4444' : '#F59E0B';
+                      const iconBg = isDeploy ? 'rgba(16,185,129,0.12)' : (isError || isBug) ? 'rgba(239,68,68,0.12)' : 'rgba(245,158,11,0.12)';
+                      const TypeIcon = isDeploy ? Rocket : isBug ? Bug : isError ? AlertCircle : AlertCircle;
+                      return (
+                        <div key={n.id} style={{
+                          display: 'flex', alignItems: 'flex-start', gap: '12px',
+                          padding: '14px 20px',
+                          backgroundColor: isUnread ? `${borderColor}08` : 'transparent',
+                          borderLeft: `3px solid ${isUnread ? borderColor : 'transparent'}`,
+                          borderBottom: '1px solid rgba(var(--border), 0.3)',
+                          cursor: 'pointer', transition: 'background-color 150ms',
+                        }}
+                        onMouseEnter={e => { if (!isUnread) e.currentTarget.style.backgroundColor = 'rgba(var(--border),0.06)'; }}
+                        onMouseLeave={e => { if (!isUnread) e.currentTarget.style.backgroundColor = 'transparent'; }}>
+                          <div style={{
+                            width: '32px', height: '32px', borderRadius: '8px',
+                            backgroundColor: iconBg,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                          }}>
+                            <TypeIcon style={{ width: '16px', height: '16px', color: borderColor }} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ margin: 0, fontSize: '13px', fontWeight: isUnread ? 600 : 500, color: 'rgb(var(--text-primary))', lineHeight: 1.4 }}>{n.title}</p>
+                            {n.message && <p style={{ margin: '2px 0 0', fontSize: '11px', color: 'rgb(var(--text-muted))' }}>{n.message}</p>}
+                            <p style={{ margin: '3px 0 0', fontSize: '10px', color: 'rgb(var(--text-muted))' }}>{timeAgo(n.createdAt)}</p>
+                          </div>
+                          {isUnread && <div style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: borderColor, flexShrink: 0, marginTop: '4px' }} />}
                         </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ margin: 0, fontSize: '12px', fontWeight: isUnread ? 600 : 400, color: 'rgb(var(--text-primary))' }}>{n.title}</p>
-                          <p style={{ margin: '2px 0 0', fontSize: '11px', color: 'rgb(var(--text-muted))' }}>{n.message}</p>
-                          <p style={{ margin: '4px 0 0', fontSize: '10px', color: 'rgb(var(--text-muted))' }}>{timeAgo(n.createdAt)}</p>
-                        </div>
-                        {isUnread && <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#7C3AED', flexShrink: 0, marginTop: '4px' }} />}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              {/* Footer */}
+              <div style={{
+                padding: '12px 20px', borderTop: '1px solid rgba(var(--border), 0.5)',
+                textAlign: 'center',
+              }}>
+                <a href="/settings/notifications" onClick={() => setShowNotifications(false)} style={{
+                  fontSize: '12px', fontWeight: 600, color: 'rgb(var(--primary))',
+                  textDecoration: 'none',
+                }}>
+                  View all notifications →
+                </a>
+              </div>
+              <style>{`@keyframes notifPanelIn { from { opacity: 0; transform: translateY(-8px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }`}</style>
             </div>
           )}
         </div>

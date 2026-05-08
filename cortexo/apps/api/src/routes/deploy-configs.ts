@@ -102,10 +102,7 @@ export async function deployConfigRoutes(app: FastifyInstance) {
     }
     try {
       const db = await getDb();
-      const [result] = await db.insert(deployConfigs).values(parsed.data as any);
-      const row = await db.query.deployConfigs.findFirst({
-        where: (c: any, { eq }: any) => eq(c.id, (result as any).insertId),
-      });
+      const [row] = await db.insert(deployConfigs).values(parsed.data as any).returning();
       return reply.code(201).send({ data: row });
     } catch (err) {
       app.log.error(err);

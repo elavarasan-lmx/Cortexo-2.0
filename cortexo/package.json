@@ -11,6 +11,7 @@
     "dev": "turbo dev",
     "dev:web": "turbo dev --filter=@cortexo/web",
     "dev:api": "turbo dev --filter=@cortexo/api",
+    "dev:fresh": "turbo clean && turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
@@ -25,14 +26,10 @@
   },
   "devDependencies": {
     "prettier": "^3.4.0",
-    "turbo": "^2.4.0"
+    "turbo": "^2.9.10"
   },
   "engines": {
     "node": ">=20.0.0"
   },
-  "packageManager": "npm@10.0.0",
-  "dependencies": {
-    "@fastify/helmet": "^13.0.2",
-    "@fastify/rate-limit": "^10.3.0"
-  }
+  "packageManager": "npm@11.12.1"
 }

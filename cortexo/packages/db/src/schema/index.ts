@@ -16,8 +16,8 @@ export { sessions } from './auth';
 export { projects } from './projects';
 export type { Project, NewProject } from './projects';
 
-export { notifications } from './notifications';
-export type { Notification, NewNotification } from './notifications';
+export { notifications, notificationPreferences, pushTokens } from './notifications';
+export type { Notification, NewNotification, NotificationPreference, PushToken } from './notifications';
 
 // Phase 2: CI/CD Engine
 export { pipelines, pipelineRuns, deployTargets, deployments } from './pipelines';
@@ -109,11 +109,13 @@ export type {
 } from './automation';
 
 // Phase 16: Load Testing & Module Testing
-export { loadTestRuns, moduleTestSuites, moduleTestResults } from './testing';
+export { loadTestRuns, moduleTestSuites, moduleTestResults, testSuites, testRuns } from './testing';
 export type {
   LoadTestRun, NewLoadTestRun,
   ModuleTestSuite, NewModuleTestSuite,
   ModuleTestResult, NewModuleTestResult,
+  TestSuite, NewTestSuite,
+  TestRun, NewTestRun,
 } from './testing';
 
 // Phase 17: AI Agents
@@ -122,3 +124,45 @@ export type {
   Agent, NewAgent,
   AgentRun, NewAgentRun,
 } from './agents';
+
+// Phase 18: Code Review Engine (F6)
+export { codeReviews, codeReviewFindings } from './code-review';
+export type {
+  CodeReview, NewCodeReview,
+  CodeReviewFinding, NewCodeReviewFinding,
+} from './code-review';
+
+// Phase 19: Fix Library & Bug Propagation (F29–F34)
+export { fixRecipes, fixRollouts } from './fix-library';
+export type {
+  FixRecipe, NewFixRecipe,
+  FixRollout, NewFixRollout,
+} from './fix-library';
+
+// Phase 20: Client Health Scores (F31, F39)
+export { clientHealthScores } from './client-health';
+export type {
+  ClientHealthScore, NewClientHealthScore,
+} from './client-health';
+
+// Phase 21: Source Code Brain (F9, F10, F11)
+export { projectBrains, brainPatterns, brainViolations } from './brain';
+export type {
+  ProjectBrain, NewProjectBrain,
+  BrainPattern, NewBrainPattern,
+  BrainViolation, NewBrainViolation,
+} from './brain';
+
+// Phase 22: Knowledge Base / Q&A Engine (F36)
+export { knowledgeDocs, qaHistory } from './knowledge';
+export type {
+  KnowledgeDoc, NewKnowledgeDoc,
+  QaHistory, NewQaHistory,
+} from './knowledge';
+
+// Phase 23: Security Scanners
+export { securityScans, securityFindings } from './security';
+export type {
+  SecurityScan, NewSecurityScan,
+  SecurityFinding, NewSecurityFinding,
+} from './security';

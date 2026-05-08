@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { getDb } from '../lib/db.js';
 import { eq, and } from 'drizzle-orm';
 import { integrations } from '@cortexo/db/schema';
+import { getOrgId } from '../lib/request-context.js';
 
 const createSchema = z.object({
   provider: z.string().min(1),
@@ -63,7 +64,7 @@ export async function integrationRoutes(app: FastifyInstance) {
       const id = crypto.randomUUID();
       await db.insert(integrations).values({
         id,
-        orgId: 'default-org',
+        orgId: getOrgId(request),
         ...parsed.data,
       });
       return { data: { id, ...parsed.data, message: 'Integration created' } };

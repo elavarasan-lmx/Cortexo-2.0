@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { getDb } from '../lib/db.js';
 import { eq } from 'drizzle-orm';
 import { sourceProfiles, dbProfiles } from '@cortexo/db/schema';
+import { getOrgId } from '../lib/request-context.js';
 
 const sourceSchema = z.object({
   name: z.string().min(1),
@@ -64,7 +65,7 @@ export async function profileRoutes(app: FastifyInstance) {
     try {
       const db = await getDb();
       const id = crypto.randomUUID();
-      await db.insert(sourceProfiles).values({ id, orgId: 'default-org', ...parsed.data });
+      await db.insert(sourceProfiles).values({ id, orgId: getOrgId(req), ...parsed.data });
       return { data: { id, ...parsed.data, message: 'Source profile created' } };
     } catch (err) {
       app.log.error(err);
@@ -134,7 +135,7 @@ export async function profileRoutes(app: FastifyInstance) {
     try {
       const db = await getDb();
       const id = crypto.randomUUID();
-      await db.insert(dbProfiles).values({ id, orgId: 'default-org', ...parsed.data });
+      await db.insert(dbProfiles).values({ id, orgId: getOrgId(req), ...parsed.data });
       return { data: { id, ...parsed.data, message: 'DB profile created' } };
     } catch (err) {
       app.log.error(err);

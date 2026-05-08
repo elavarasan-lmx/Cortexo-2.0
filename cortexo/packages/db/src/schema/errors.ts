@@ -123,25 +123,38 @@ export const rootCauses = pgTable(
     orgId: uuid('org_id')
       .references(() => organizations.id),
     deploymentId: uuid('deployment_id'),
-    analysis: text('analysis'),
-    similarBugs: jsonb('similar_bugs').$type<string[]>().default([]),
+    // ─── Sprint 2 (F8) — expanded fields ─────────────────────────
+    summary: text('summary'),                // one-line summary
+    analysis: text('analysis'),              // full AI analysis text
+    rootCause: text('root_cause'),           // detailed root cause explanation
+    category: varchar('category', { length: 30 }),  // null_reference|type_error|connection|timeout|auth|validation|memory|concurrency|config|unknown
     suggestedFix: text('suggested_fix'),
-    diffContext: text('diff_context'),
-    confidence: integer('confidence'),
+    diffContext: text('diff_context'),        // git diff from correlated deploy
+    affectedFiles: jsonb('affected_files').$type<string[]>().default([]),
+    similarBugs: jsonb('similar_bugs').$type<string[]>().default([]),
+    confidence: integer('confidence'),        // 0–100
+    provider: varchar('provider', { length: 30 }),   // 'openai'|'anthropic'|'rules'
     model: varchar('model', { length: 50 }),
     tokenUsage: jsonb('token_usage').$type<{
       prompt: number;
       completion: number;
       total: number;
     }>(),
+    fixApplied: boolean('fix_applied').default(false),
+    userFeedback: varchar('user_feedback', { length: 10 }),   // 'correct'|'wrong'|null
     feedbackRating: integer('feedback_rating'),
     feedbackComment: text('feedback_comment'),
     status: varchar('status', { length: 20 }).default('pending'),
+    completedAt: timestamp('completed_at'),
     createdAt: timestamp('created_at')
       .defaultNow()
       .notNull(),
   },
-  (table) => [index('idx_root_causes_error').on(table.errorId)],
+  (table) => [
+    index('idx_root_causes_error').on(table.errorId),
+    index('idx_root_causes_project').on(table.projectId),
+    index('idx_root_causes_deploy').on(table.deploymentId),
+  ],
 );
 
 export type Error = typeof errors.$inferSelect;

@@ -1,11 +1,11 @@
-import { drizzle } from 'drizzle-orm/node-postgres';
+import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
 import pg from 'pg';
 import * as schema from '@cortexo/db/schema';
 
 const { Pool } = pg;
 
-type PgDatabase = ReturnType<typeof drizzle>;
+type PgDatabase = NodePgDatabase<typeof schema>;
 let db: PgDatabase | null = null;
 let pool: pg.Pool | null = null;
 

@@ -85,7 +85,7 @@ export async function projectRoutes(app: FastifyInstance) {
       await db.insert(projects).values({
         id,
         ...parsed.data,
-        orgId: user?.orgId || 'default-org',
+        orgId: user?.orgId || getOrgId(request),
         sdkApiKey: sdkKey,
       } as any);
 

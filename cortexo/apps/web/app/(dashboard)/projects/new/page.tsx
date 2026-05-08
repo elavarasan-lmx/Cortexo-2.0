@@ -2,18 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, FolderGit2, Loader2, ArrowLeft, ArrowRight, Github, Search, Database, Globe, Radio, Bell, Trash2 } from 'lucide-react';
+import { Check, FolderGit2, Loader2, ArrowLeft, ArrowRight, Github, Search, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useApiData } from '@/lib/hooks';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/v1';
 
 const steps = [
-  { id: 1, label: 'Client Info', icon: FolderGit2 },
-  { id: 2, label: 'Domain & URLs', icon: Globe },
-  { id: 3, label: 'MySQL Database', icon: Database },
-  { id: 4, label: 'Rate & Socket', icon: Radio },
-  { id: 5, label: 'Deploy & Notify', icon: Bell },
+  { id: 1, label: 'Basic Info' },
+  { id: 2, label: 'Domain & DB' },
+  { id: 3, label: 'Mobile App' },
+  { id: 4, label: 'Review' },
 ];
 
 
@@ -215,8 +214,37 @@ export default function NewProjectPage() {
     } finally { setSaving(false); }
   }
 
+  const previewPanel = (
+    <div style={{ ...cardStyle, width: '320px', flexShrink: 0, position: 'sticky', top: '20px', alignSelf: 'flex-start' }}>
+      <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 20px' }}>Project Preview</h3>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+        <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'rgba(124,58,237,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <FolderGit2 style={{ width: '24px', height: '24px', color: '#7C3AED' }} />
+        </div>
+        <div>
+          <div style={{ fontSize: '16px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>{form.name || 'project-name'}</div>
+          <div style={{ fontSize: '12px', color: 'rgb(var(--text-muted))' }}>{form.clientSlug || 'client-slug'} · {form.productType}</div>
+        </div>
+      </div>
+      {form.domain && <div style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', marginBottom: '4px' }}>🌐 {form.domain}</div>}
+      {form.repoUrl && <div style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📦 {form.repoUrl.split('/').pop()}</div>}
+      {form.dbName && <div style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', marginBottom: '4px' }}>🗄 {form.dbName}</div>}
+      <div style={{ marginTop: '20px', padding: '16px', borderRadius: '10px', backgroundColor: 'rgba(124,58,237,0.04)', border: '1px solid rgba(124,58,237,0.1)' }}>
+        <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#7C3AED', margin: '0 0 10px' }}>What happens next?</h4>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {['Project is registered in Cortexo', 'CI/CD pipeline is created', 'Ready for first deployment'].map((t, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'rgb(var(--text-muted))' }}>
+              <span style={{ width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'rgba(124,58,237,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: '#7C3AED', flexShrink: 0 }}>{i + 1}</span>
+              {t}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div style={{ maxWidth: '720px', margin: '0 auto' }}>
+    <div style={{ maxWidth: '1080px', margin: '0 auto' }}>
       {/* ─── Header ─── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -262,7 +290,6 @@ export default function NewProjectPage() {
         {steps.map((s, i) => {
           const isDone = step > s.id || done;
           const isCurrent = step === s.id;
-          const Icon = s.icon;
           return (
             <div key={s.id} style={{ display: 'flex', flex: 1, alignItems: 'center' }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
@@ -275,8 +302,9 @@ export default function NewProjectPage() {
                   color: isDone || isCurrent ? '#fff' : 'rgb(var(--text-muted))',
                   transition: 'all 300ms',
                   boxShadow: isCurrent ? '0 4px 12px rgba(var(--primary), 0.35)' : 'none',
+                  fontSize: '14px', fontWeight: 700,
                 }}>
-                  {isDone ? <Check style={{ width: '16px', height: '16px' }} /> : <Icon style={{ width: '16px', height: '16px' }} />}
+                  {isDone ? <Check style={{ width: '16px', height: '16px' }} /> : s.id}
                 </div>
                 <span style={{
                   fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap',
@@ -299,14 +327,15 @@ export default function NewProjectPage() {
         })}
       </div>
 
-      {/* ─── Step Content Card ─── */}
-      <div style={cardStyle}>
+      {/* ─── Main Content with Sidebar ─── */}
+      <div style={{ display: 'flex', gap: '32px' }}>
+      <div style={{ ...cardStyle, flex: 1 }}>
 
         {/* Step 1: Client Info */}
         {step === 1 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <h2 style={{ fontSize: '17px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: 0 }}>
-              Client Info
+              Project Basic Information
             </h2>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
@@ -433,7 +462,8 @@ export default function NewProjectPage() {
                                   <div style={{ flex: 1, minWidth: 0 }}>
                                     <div style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{repo.name}</div>
                                   </div>
-                                  {repo.private && <span style={{ padding: '1px 6px', borderRadius: '4px', fontSize: '9px', fontWeight: 700, backgroundColor: 'rgba(245,158,11,0.1)', color: '#F59E0B' }}>PRIVATE</span>}
+                                  <span style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '9px', fontWeight: 700, backgroundColor: 'rgba(16,185,129,0.1)', color: '#10B981' }}>connected</span>
+                                  {repo.private && <span style={{ padding: '2px 6px', borderRadius: '4px', fontSize: '9px', fontWeight: 700, backgroundColor: 'rgba(245,158,11,0.1)', color: '#F59E0B' }}>PRIVATE</span>}
                                   {form.repoUrl === repo.url && <Check style={{ width: 14, height: 14, color: 'rgb(var(--primary))' }} />}
                                 </button>
                               ))}
@@ -474,14 +504,39 @@ export default function NewProjectPage() {
                 />
               </div>
             )}
+
+            {/* Client & Infrastructure */}
+            <div style={{ borderTop: '1px solid rgb(var(--border))', paddingTop: '20px', marginTop: '4px' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#7C3AED', margin: '0 0 14px', display: 'flex', alignItems: 'center', gap: '6px' }}>🏢 Client & Infrastructure</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div>
+                  <label style={labelStyle}>Client *</label>
+                  <select style={{ ...inputStyle, cursor: 'pointer' }}>
+                    <option value="">Select client...</option>
+                    {([] as any[]).concat(allServers.length > 0 ? [{ name: 'Winbull' }, { name: 'Cortexo' }] : [{ name: 'Winbull' }, { name: 'Cortexo' }, { name: 'MNT Traders' }]).map((c: any, i: number) => (
+                      <option key={i} value={c.name}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Server</label>
+                  <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.serverId} onChange={e => update('serverId', e.target.value)}>
+                    <option value="">Select deployment server...</option>
+                    {allServers.map((s: Record<string, unknown>) => (<option key={String(s.id)} value={String(s.id)}>🖥 {String(s.name)} ({String(s.privateIp)})</option>))}
+                    {allServers.length === 0 && <option disabled>🖥 prod-server-01</option>}
+                    {allServers.length === 0 && <option disabled>🖥 prod-server-02</option>}
+                  </select>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
 
-        {/* Step 2: Domain & URLs */}
+        {/* Step 2: Domain & DB */}
         {step === 2 && !done && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <h2 style={{ fontSize: '17px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: 0 }}>Domain & URLs</h2>
+            <h2 style={{ fontSize: '17px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: 0 }}>Domain & Access</h2>
             <div>
               <label style={labelStyle}>Domain *</label>
               <input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace" }} placeholder="e.g. vijaybullion.com" value={form.domain} onChange={e => updateDomain(e.target.value)} />
@@ -513,71 +568,72 @@ export default function NewProjectPage() {
           </div>
         )}
 
-        {/* Step 3: MySQL Database */}
+        {/* Step 2 continued: Database section */}
+        {step === 2 && !done && (
+          <>
+            <div style={{ borderTop: '1px solid rgb(var(--border))', marginTop: '8px', paddingTop: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: 0 }}>Database</h3>
+                <span style={{ padding: '4px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, backgroundColor: 'rgba(0,117,143,0.1)', color: '#00758F' }}>MySQL</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                <div><label style={labelStyle}>DB Host *</label><input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace" }} placeholder="database-1.rds.amazonaws.com" value={form.dbHost} onChange={e => update('dbHost', e.target.value)} /></div>
+                <div><label style={labelStyle}>DB Port</label><input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace" }} placeholder="3306" value={form.dbPort} onChange={e => update('dbPort', e.target.value)} /></div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                <div><label style={labelStyle}>DB Username *</label><input style={inputStyle} placeholder="admin" value={form.dbUser} onChange={e => update('dbUser', e.target.value)} /></div>
+                <div><label style={labelStyle}>DB Password *</label><input type="password" style={inputStyle} placeholder="••••••••" value={form.dbPassword} onChange={e => update('dbPassword', e.target.value)} /></div>
+                <div><label style={labelStyle}>DB Port</label><input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace" }} placeholder="3306" value={form.dbPort} onChange={e => update('dbPort', e.target.value)} /></div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Step 3: Mobile App */}
         {step === 3 && !done && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <h2 style={{ fontSize: '17px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: 0 }}>MySQL Database</h2>
-              <span style={{ padding: '4px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, backgroundColor: 'rgba(0,117,143,0.1)', color: '#00758F' }}>MySQL</span>
+            <h2 style={{ fontSize: '17px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: 0 }}>Mobile App Configuration</h2>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '4px' }}>
+              {(['Mobile App', 'Not Mobile App'] as const).map(t => (
+                <button key={t} style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', border: t === 'Mobile App' ? '1.5px solid rgb(var(--primary))' : '1px solid rgb(var(--border))', backgroundColor: t === 'Mobile App' ? 'rgba(var(--primary),0.08)' : 'transparent', color: t === 'Mobile App' ? 'rgb(var(--primary))' : 'rgb(var(--text-muted))' }}>{t === 'Mobile App' ? '📱' : '🚫'} {t}</button>
+              ))}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px' }}>
-              <div><label style={labelStyle}>Host / RDS Endpoint</label><input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace" }} placeholder="database-1.cb86ugsw4aax.ap-south-1.rds.amazonaws.com" value={form.dbHost} onChange={e => update('dbHost', e.target.value)} /></div>
-              <div><label style={labelStyle}>Port</label><input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace" }} placeholder="3306" value={form.dbPort} onChange={e => update('dbPort', e.target.value)} /></div>
-            </div>
-            <div><label style={labelStyle}>Database Name</label><input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace" }} placeholder={form.clientSlug || 'e.g. maharaj'} value={form.dbName} onChange={e => update('dbName', e.target.value)} /></div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <div><label style={labelStyle}>Username</label><input style={inputStyle} placeholder="admin" value={form.dbUser} onChange={e => update('dbUser', e.target.value)} /></div>
-              <div><label style={labelStyle}>Password</label><input type="password" style={inputStyle} placeholder="••••••••" value={form.dbPassword} onChange={e => update('dbPassword', e.target.value)} /></div>
+              <div><label style={labelStyle}>Android Version</label><input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace" }} placeholder="e.g. 1.0.0" value={form.androidVersion} onChange={e => update('androidVersion', e.target.value)} /></div>
+              <div><label style={labelStyle}>iOS Version</label><input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace" }} placeholder="e.g. 1.0.0" value={form.iosVersion} onChange={e => update('iosVersion', e.target.value)} /></div>
             </div>
-            {form.dbHost && form.dbName && (
-              <div style={{ padding: '12px 16px', borderRadius: '10px', backgroundColor: 'rgb(var(--surface-hover))', border: '1px solid rgb(var(--border))' }}>
-                <label style={{ ...labelStyle, marginBottom: '8px' }}>Connection String</label>
-                <code style={{ fontSize: '11px', fontFamily: "'JetBrains Mono', monospace", color: '#00758F', wordBreak: 'break-all' }}>{`mysql://${form.dbUser || 'user'}:****@${form.dbHost}:${form.dbPort || '3306'}/${form.dbName}`}</code>
-              </div>
-            )}
+            <div><label style={labelStyle}>Android Store Link</label><input style={inputStyle} placeholder="https://play.google.com/store/apps/details?id=..." value={form.androidUrl} onChange={e => update('androidUrl', e.target.value)} /></div>
+            <div><label style={labelStyle}>iOS Store Link</label><input style={inputStyle} placeholder="https://apps.apple.com/app/..." value={form.iosUrl} onChange={e => update('iosUrl', e.target.value)} /></div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div><label style={labelStyle}>Bundle ID</label><input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace" }} placeholder="com.example.app" /></div>
+              <div><label style={labelStyle}>Guide Number</label><input style={inputStyle} placeholder="e.g. 12345" /></div>
+            </div>
           </div>
         )}
 
-        {/* Step 4: Rate & Socket */}
+        {/* Step 4: Review */}
         {step === 4 && !done && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <h2 style={{ fontSize: '17px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: 0 }}>Rate & Socket Config</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <div><label style={labelStyle}>Rate Feed Type</label>
-                <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.rateFeed} onChange={e => update('rateFeed', e.target.value)}>
-                  <option value="0">PHP Encryption</option><option value="1">Broadcast Rate</option><option value="2">Text File</option><option value="3">WebSocket</option><option value="4">Native Socket</option>
-                </select></div>
-              <div><label style={labelStyle}>WebSocket Type</label>
-                <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.websocketType} onChange={e => update('websocketType', e.target.value)}>
-                  <option value="1">Socket.io</option><option value="2">Native WebSocket</option>
-                </select></div>
+            <h2 style={{ fontSize: '17px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: 0 }}>Review & Create</h2>
+            <div style={{ padding: '14px 16px', borderRadius: '10px', backgroundColor: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Check style={{ width: '18px', height: '18px', color: '#10B981' }} />
+              <div><span style={{ fontSize: '14px', fontWeight: 700, color: '#10B981' }}>Ready to Create Project!</span><br/><span style={{ fontSize: '12px', color: 'rgb(var(--text-muted))' }}>Please review all details before submitting.</span></div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <div><label style={labelStyle}>Socket Base URL</label><input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace" }} placeholder="http://www.domain.com/" value={form.socketBaseUrl} onChange={e => update('socketBaseUrl', e.target.value)} /></div>
-              <div><label style={labelStyle}>Native WS URL</label><input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace" }} placeholder="ws://domain.com/ws" value={form.nativeSocketUrl} onChange={e => update('nativeSocketUrl', e.target.value)} /></div>
-            </div>
-          </div>
-        )}
-
-        {/* Step 5: Deploy & Notifications */}
-        {step === 5 && !done && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <h2 style={{ fontSize: '17px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: 0 }}>Deploy & Notifications</h2>
-            <div><label style={labelStyle}>Environment</label>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                {['production', 'staging', 'development'].map(env => (
-                  <button key={env} onClick={() => update('environment', env)} style={{ padding: '8px 18px', borderRadius: '8px', fontSize: '12px', textTransform: 'capitalize' as const, cursor: 'pointer', transition: 'all 200ms', fontWeight: form.environment === env ? 600 : 500, border: form.environment === env ? '1.5px solid rgba(var(--primary), 0.5)' : '1px solid rgb(var(--border))', backgroundColor: form.environment === env ? 'rgba(var(--primary), 0.1)' : 'transparent', color: form.environment === env ? 'rgb(var(--primary))' : 'rgb(var(--text-muted))' }}>{env}</button>
+            {[{ title: '🔹 Basic Info', items: [['Project', form.name], ['Slug', form.clientSlug], ['Product', form.productType], ['Repo', form.repoUrl || '—']] },
+              { title: '🔹 Domain & Access', items: [['Domain', form.domain || '—'], ['Admin URL', form.adminBaseUrl || '—'], ['Admin User', form.adminUser || '—']] },
+              { title: '🔹 PMG Creds', items: [['DB Host', form.dbHost || '—'], ['DB Name', form.dbName || '—'], ['DB User', form.dbUser || '—']] },
+              { title: '🔹 Mobile App', items: [['Android', form.androidVersion], ['iOS', form.iosVersion]] },
+            ].map((section, si) => (
+              <div key={si} style={{ padding: '16px', borderRadius: '10px', border: '1px solid rgb(var(--border))' }}>
+                <h4 style={{ fontSize: '13px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 12px' }}>{section.title}</h4>
+                {section.items.map(([label, value], ii) => (
+                  <div key={ii} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: ii < section.items.length - 1 ? '1px solid rgba(var(--border),0.3)' : 'none' }}>
+                    <span style={{ fontSize: '12px', color: 'rgb(var(--text-muted))' }}>{label}</span>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: 'rgb(var(--text-primary))' }}>{value}</span>
+                  </div>
                 ))}
               </div>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <div><label style={labelStyle}>Select Server <span style={{ fontWeight: 400, textTransform: 'none' }}>(optional)</span></label>
-                <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.serverId} onChange={e => update('serverId', e.target.value)}>
-                  <option value="">No server (add later)</option>
-                  {allServers.map((s: Record<string, unknown>) => (<option key={String(s.id)} value={String(s.id)}>{String(s.name)} ({String(s.privateIp)})</option>))}
-                </select></div>
-              <div><label style={labelStyle}>Deploy Path</label><input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace" }} value={form.serverPath} onChange={e => update('serverPath', e.target.value)} /></div>
-            </div>
+            ))}
           </div>
         )}
 
@@ -601,6 +657,9 @@ export default function NewProjectPage() {
           </div>
         )}
       </div>
+      {/* Right sidebar preview */}
+      {!done && previewPanel}
+      </div>
 
       {/* ─── Navigation Buttons ─── */}
       {!done && (
@@ -621,7 +680,7 @@ export default function NewProjectPage() {
             <ArrowLeft style={{ width: '14px', height: '14px' }} /> Back
           </button>
 
-          {step < 5 ? (
+          {step < 4 ? (
             <button
               onClick={() => setStep(s => s + 1)}
               disabled={!form.name.trim()}

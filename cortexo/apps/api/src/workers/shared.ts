@@ -23,6 +23,7 @@ export const QUEUE_NAMES = {
   CRON: 'cortexo:cron',
   DEPRECATION_SCAN: 'cortexo:deprecation-scan',
   JUDGE_SCORE: 'cortexo:judge-score',
+  CODE_REVIEW: 'cortexo:code-review',
 } as const;
 
 // ── Queue factory ───────────────────────────────────────────────────

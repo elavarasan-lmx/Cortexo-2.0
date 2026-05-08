@@ -6,6 +6,7 @@ import { startSyncWorker } from './sync-worker.js';
 import { startProvisionWorker } from './provision-worker.js';
 import { startAlertDispatchWorker } from './alert-dispatch-worker.js';
 import { startRCAWorker } from './rca-worker.js';
+import { startCodeReviewWorker } from './code-review-worker.js';
 
 async function main() {
   console.log(`
@@ -20,6 +21,7 @@ async function main() {
     startProvisionWorker(),
     startAlertDispatchWorker(),
     startRCAWorker(),
+    startCodeReviewWorker(),
   ];
 
   console.log(`[WorkerPool] ${workers.length} workers started ✅`);
@@ -28,6 +30,7 @@ async function main() {
   console.log('  - cortexo:provision      (concurrency: 1)');
   console.log('  - cortexo:alert-dispatch (concurrency: 5)');
   console.log('  - cortexo:rca            (concurrency: 2)');
+  console.log('  - cortexo:code-review    (concurrency: 2)');
   console.log('[WorkerPool] Waiting for jobs...\n');
 
   // Graceful shutdown

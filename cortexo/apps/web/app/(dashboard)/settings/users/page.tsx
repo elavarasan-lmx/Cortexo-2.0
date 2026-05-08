@@ -1,113 +1,219 @@
 'use client';
-import { Users, UserPlus, Search, Mail, Shield, MoreHorizontal, Loader2, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
+import { Users, UserPlus, Search, Shield, MoreHorizontal, Loader2, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useApiData, useAutoLoadToken } from '@/lib/hooks';
 
-const rc: Record<string, string> = { owner: '#A78BFA', admin: '#3B82F6', developer: '#10B981', member: '#F59E0B', viewer: '#6B7280' };
+const rc: Record<string, string> = { owner: '#A78BFA', admin: '#3B82F6', developer: '#10B981', member: '#F59E0B', viewer: '#6B7280', 'super admin': '#7C3AED' };
+const avatarColors = ['#7C3AED', '#F59E0B', '#10B981', '#3B82F6', '#EF4444', '#EC4899', '#F97316'];
+
+const card: React.CSSProperties = {
+  borderRadius: '12px', border: '1px solid rgb(var(--border))',
+  backgroundColor: 'rgb(var(--card))', padding: '20px',
+};
+
+const MOCK_USERS = [
+  { id: 1, name: 'Jerry Kumar', email: 'jerry@cortexo.dev', role: 'Super Admin', status: 'active', lastActive: '2 mins ago', createdAt: '2024-01-15' },
+  { id: 2, name: 'Priya Nair', email: 'priya@cortexo.dev', role: 'Admin', status: 'active', lastActive: '15 mins ago', createdAt: '2024-02-20' },
+  { id: 3, name: 'Arjun Sharma', email: 'arjun@cortexo.dev', role: 'Developer', status: 'active', lastActive: '1 hr ago', createdAt: '2024-03-10' },
+  { id: 4, name: 'Ravi Subramanian', email: 'ravi@cortexo.dev', role: 'Developer', status: 'suspended', lastActive: '1 day ago', createdAt: '2024-04-05' },
+  { id: 5, name: 'Meera Krishnan', email: 'meera@cortexo.dev', role: 'Viewer', status: 'active', lastActive: '3 hrs ago', createdAt: '2024-05-12' },
+  { id: 6, name: 'karthik@email.com', email: 'karthik@email.com', role: 'Member', status: 'pending', lastActive: 'Never', createdAt: '2024-06-01' },
+];
 
 export default function UsersPage() {
   useAutoLoadToken();
+  const [searchQ, setSearchQ] = useState('');
+  const [roleFilter, setRoleFilter] = useState('All Roles');
+  const [statusFilter, setStatusFilter] = useState('All Status');
+
   const { data: rawUsers, loading, error, refetch } = useApiData(
     () => api.getUsers(),
     { default: [] as any[] }
   );
 
-  const users = (rawUsers || []).map((u: any) => ({
+  const apiUsers = (rawUsers || []).map((u: any) => ({
     id: u.id,
     name: u.name || 'User',
     email: u.email || '—',
-    role: (u.role || 'member').toLowerCase(),
+    role: (u.role || 'member'),
     status: u.status || 'active',
-    avatar: (u.name || 'U').charAt(0).toUpperCase(),
+    lastActive: '—',
     createdAt: u.createdAt,
   }));
 
+  const users = apiUsers.length > 0 ? apiUsers : MOCK_USERS;
+
+  const filtered = users.filter((u: any) => {
+    if (searchQ && !u.name.toLowerCase().includes(searchQ.toLowerCase()) && !u.email.toLowerCase().includes(searchQ.toLowerCase())) return false;
+    if (roleFilter !== 'All Roles' && u.role.toLowerCase() !== roleFilter.toLowerCase()) return false;
+    if (statusFilter !== 'All Status' && u.status.toLowerCase() !== statusFilter.toLowerCase()) return false;
+    return true;
+  });
+
+  const stats = [
+    { label: 'Total Users', value: users.length, sub: '+3 this week', color: '#7C3AED', icon: '👥' },
+    { label: 'Active Now', value: users.filter((u: any) => u.status === 'active').length, sub: 'Online', color: '#10B981', icon: '🟢' },
+    { label: 'Pending Invites', value: users.filter((u: any) => u.status === 'pending').length, sub: 'Awaiting', color: '#F59E0B', icon: '📩' },
+    { label: 'Suspended', value: users.filter((u: any) => u.status === 'suspended').length, sub: 'Blocked', color: '#EF4444', icon: '🚫' },
+    { label: 'Super Admins', value: users.filter((u: any) => u.role.toLowerCase() === 'super admin').length, sub: 'Full access', color: '#8B5CF6', icon: '🛡️' },
+  ];
+
+  const selectStyle: React.CSSProperties = {
+    padding: '8px 14px', borderRadius: '8px', border: '1px solid rgb(var(--border))',
+    backgroundColor: 'rgb(var(--card))', color: 'rgb(var(--text-primary))',
+    fontSize: '13px', cursor: 'pointer', outline: 'none',
+  };
+
+  const statusDot = (s: string) => {
+    const c = s === 'active' ? '#10B981' : s === 'suspended' ? '#EF4444' : '#F59E0B';
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, color: c, textTransform: 'capitalize' as const }}>
+        <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: c, display: 'inline-block' }} />
+        {s}
+      </span>
+    );
+  };
+
   return (
-    <div style={{ maxWidth: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Users style={{ width: '22px', height: '22px', color: '#3B82F6' }} /> User Management
+          <h1 style={{ fontSize: '24px', fontWeight: 800, color: 'rgb(var(--text-primary))', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Users style={{ width: '24px', height: '24px', color: '#7C3AED' }} /> User Management
           </h1>
-          <p style={{ fontSize: '13px', color: 'rgb(var(--text-secondary))', marginTop: '4px' }}>
-            Manage platform users and permissions{users.length > 0 ? ` · ${users.length} users` : ''}
+          <p style={{ fontSize: '14px', color: 'rgb(var(--text-muted))', margin: 0 }}>
+            Manage platform users, roles, and access permissions.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button onClick={() => refetch()} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', fontSize: '12px', fontWeight: 600, cursor: 'pointer', color: 'rgb(var(--text-muted))' }}>
-            <RefreshCw style={{ width: '13px', height: '13px' }} /> Refresh
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', fontSize: '13px', fontWeight: 600, cursor: 'pointer', color: 'rgb(var(--text-primary))' }}>
+            <Download style={{ width: '14px', height: '14px' }} /> Export CSV
           </button>
-          <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '10px', border: 'none', background: 'linear-gradient(135deg,rgb(var(--primary)),#818CF8)', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
-            <UserPlus style={{ width: '14px', height: '14px' }} /> Add User
+          <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', border: 'none', backgroundColor: '#7C3AED', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+            <UserPlus style={{ width: '14px', height: '14px' }} /> Invite User
           </button>
         </div>
       </div>
 
-      {loading && (
+      {/* Stat Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px' }}>
+        {stats.map((s, i) => (
+          <div key={i} style={{ ...card, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', fontWeight: 500 }}>{s.label}</div>
+            <div style={{ fontSize: '28px', fontWeight: 800, color: 'rgb(var(--text-primary))' }}>{s.value}</div>
+            <div style={{ fontSize: '11px', color: s.color, fontWeight: 600 }}>{s.icon} {s.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Filters */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: '200px', maxWidth: '320px' }}>
+          <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '14px', height: '14px', color: 'rgb(var(--text-muted))' }} />
+          <input
+            placeholder="Search users..."
+            value={searchQ}
+            onChange={e => setSearchQ(e.target.value)}
+            style={{ width: '100%', padding: '8px 14px 8px 34px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--card))', color: 'rgb(var(--text-primary))', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }}
+          />
+        </div>
+        <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)} style={selectStyle}>
+          <option>All Roles</option>
+          {['Super Admin', 'Admin', 'Developer', 'Member', 'Viewer'].map(r => <option key={r}>{r}</option>)}
+        </select>
+        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={selectStyle}>
+          <option>All Status</option>
+          {['Active', 'Pending', 'Suspended'].map(s => <option key={s}>{s}</option>)}
+        </select>
+        <div style={{ flex: 1 }} />
+        <button style={{ padding: '8px 14px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', fontSize: '13px', fontWeight: 600, cursor: 'pointer', color: 'rgb(var(--text-primary))' }}>
+          Bulk Actions ▾
+        </button>
+      </div>
+
+      {/* Table */}
+      {loading ? (
         <div style={{ textAlign: 'center', padding: '40px' }}>
-          <Loader2 style={{ width: '24px', height: '24px', color: 'rgb(var(--primary))', animation: 'spin 1s linear infinite' }} />
+          <Loader2 style={{ width: '24px', height: '24px', color: 'rgb(var(--primary))', animation: 'spin 1s linear infinite', margin: '0 auto' }} />
           <p style={{ fontSize: '13px', color: 'rgb(var(--text-muted))', marginTop: '8px' }}>Loading users...</p>
         </div>
-      )}
-
-      {error && (
-        <div style={{ padding: '24px', backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', borderRadius: '12px', textAlign: 'center' }}>
-          <p style={{ fontSize: '13px', color: '#EF4444', margin: 0 }}>Failed to load: {error}</p>
-          <button onClick={() => refetch()} style={{ marginTop: '10px', padding: '6px 14px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', fontSize: '12px', cursor: 'pointer', color: 'rgb(var(--text-muted))' }}>Retry</button>
-        </div>
-      )}
-
-      {!loading && !error && (
-        <div style={{ backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', borderRadius: '14px', overflow: 'hidden' }}>
+      ) : (
+        <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid rgb(var(--border))' }}>
-                {['User', 'Role', 'Status', 'Joined', ''].map(h => (
-                  <th key={h} style={{ padding: '12px 16px', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgb(var(--text-muted))', textAlign: 'left' }}>{h}</th>
+                <th style={{ padding: '14px 20px', width: '40px' }}>
+                  <input type="checkbox" style={{ accentColor: '#7C3AED' }} />
+                </th>
+                {['User', 'Role', 'Status', 'Last Active', 'Joined', ''].map(h => (
+                  <th key={h} style={{ padding: '14px 16px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgb(var(--text-muted))', textAlign: 'left' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {users.map((u: any) => {
-                const col = rc[u.role] || '#6B7280';
+              {filtered.map((u: any, idx: number) => {
+                const roleColor = rc[u.role.toLowerCase()] || '#6B7280';
+                const avColor = avatarColors[idx % avatarColors.length];
                 return (
-                  <tr key={u.id} style={{ borderBottom: '1px solid rgb(var(--border))', transition: 'background 150ms', cursor: 'pointer' }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(var(--border),0.08)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}>
+                  <tr key={u.id} style={{ borderBottom: '1px solid rgba(var(--border), 0.5)', transition: 'background 150ms', cursor: 'pointer' }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(var(--border),0.08)'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                    <td style={{ padding: '14px 20px' }}>
+                      <input type="checkbox" style={{ accentColor: '#7C3AED' }} />
+                    </td>
                     <td style={{ padding: '14px 16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: `linear-gradient(135deg,${col},${col}AA)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '13px', fontWeight: 700 }}>{u.avatar}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: `linear-gradient(135deg, ${avColor}, ${avColor}CC)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '14px', fontWeight: 700, flexShrink: 0 }}>
+                          {(u.name || 'U').charAt(0).toUpperCase()}
+                        </div>
                         <div>
-                          <p style={{ fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: 0 }}>{u.name}</p>
-                          <p style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', margin: '1px 0 0' }}>{u.email}</p>
+                          <div style={{ fontSize: '14px', fontWeight: 600, color: 'rgb(var(--text-primary))' }}>{u.name}</div>
+                          <div style={{ fontSize: '12px', color: 'rgb(var(--text-muted))' }}>{u.email}</div>
                         </div>
                       </div>
                     </td>
                     <td style={{ padding: '14px 16px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 600, color: col, padding: '3px 8px', borderRadius: '6px', backgroundColor: `${col}12`, textTransform: 'capitalize' }}>{u.role}</span>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: roleColor, padding: '4px 10px', borderRadius: '6px', backgroundColor: `${roleColor}15`, textTransform: 'capitalize' }}>{u.role}</span>
                     </td>
-                    <td style={{ padding: '14px 16px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 600, color: u.status === 'active' ? '#10B981' : '#F59E0B', textTransform: 'capitalize' }}>{u.status}</span>
-                    </td>
+                    <td style={{ padding: '14px 16px' }}>{statusDot(u.status)}</td>
+                    <td style={{ padding: '14px 16px', fontSize: '12px', color: 'rgb(var(--text-muted))' }}>{u.lastActive || '—'}</td>
                     <td style={{ padding: '14px 16px', fontSize: '12px', color: 'rgb(var(--text-muted))' }}>
-                      {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
+                      {u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
                     </td>
                     <td style={{ padding: '14px 16px' }}>
-                      <button style={{ padding: '4px', borderRadius: '6px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', cursor: 'pointer', color: 'rgb(var(--text-muted))' }}>
+                      <button style={{ padding: '6px', borderRadius: '6px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', cursor: 'pointer', color: 'rgb(var(--text-muted))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <MoreHorizontal style={{ width: '14px', height: '14px' }} />
                       </button>
                     </td>
                   </tr>
                 );
               })}
-              {users.length === 0 && (
-                <tr><td colSpan={5} style={{ padding: '40px', textAlign: 'center', fontSize: '13px', color: 'rgb(var(--text-muted))' }}>No users found</td></tr>
+              {filtered.length === 0 && (
+                <tr><td colSpan={7} style={{ padding: '40px', textAlign: 'center', fontSize: '13px', color: 'rgb(var(--text-muted))' }}>No users match your filters</td></tr>
               )}
             </tbody>
           </table>
+
+          {/* Pagination */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderTop: '1px solid rgb(var(--border))' }}>
+            <span style={{ fontSize: '13px', color: 'rgb(var(--text-muted))' }}>
+              Showing {filtered.length} of {users.length} users
+            </span>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <button style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', fontSize: '12px', cursor: 'pointer', color: 'rgb(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <ChevronLeft style={{ width: '14px', height: '14px' }} /> Back
+              </button>
+              <button style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', backgroundColor: '#7C3AED', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>1</button>
+              <button style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', fontSize: '12px', cursor: 'pointer', color: 'rgb(var(--text-muted))' }}>2</button>
+              <button style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', fontSize: '12px', cursor: 'pointer', color: 'rgb(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                Next <ChevronRight style={{ width: '14px', height: '14px' }} />
+              </button>
+            </div>
+          </div>
         </div>
       )}
-      <style>{`@keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

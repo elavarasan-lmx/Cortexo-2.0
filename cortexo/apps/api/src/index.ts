@@ -60,8 +60,15 @@ import { metricsStreamRoutes } from './routes/metrics-stream.js';
 import { winbullRoutes } from './routes/winbull.js';
 import { agentRoutes } from './routes/agents.js';
 import { rootCauseRoutes } from './routes/root-causes.js';
+import { codeReviewRoutes } from './routes/code-review.js';
+import { fixLibraryRoutes } from './routes/fix-library.js';
+import { fleetRoutes } from './routes/fleet.js';
+import { brainRoutes } from './routes/brain.js';
+import { knowledgeRoutes } from './routes/knowledge.js';
+import { testingRoutes } from './routes/testing.js';
+import { securityRoutes } from './routes/security.js';
 import { usageLimitsPlugin } from './middleware/usage-limits.js';
-import { authPlugin } from './middleware/auth.js';
+import { authPlugin, authMiddleware } from './middleware/auth.js';
 import { getDb } from './lib/db.js';
 import { deployments } from '@cortexo/db/schema';
 import { eq, and, lt, sql as drizzleSql } from 'drizzle-orm';
@@ -155,7 +162,10 @@ async function start() {
   });
 
   // --- Auth Middleware (hooks only — JWT already registered above) ---
-  await app.register(authPlugin);
+  if (!app.hasRequestDecorator('user')) {
+    app.decorateRequest('user', null as any);
+  }
+  app.addHook('preHandler', authMiddleware);
 
   // --- Swagger API Documentation ---
   await app.register(swagger, {
@@ -256,6 +266,13 @@ async function start() {
   await app.register(winbullRoutes, { prefix: '/v1' });
   await app.register(agentRoutes, { prefix: '/v1' });
   await app.register(rootCauseRoutes, { prefix: '/v1' });
+  await app.register(codeReviewRoutes, { prefix: '/v1' });
+  await app.register(fixLibraryRoutes, { prefix: '/v1' });
+  await app.register(fleetRoutes, { prefix: '/v1' });
+  await app.register(brainRoutes, { prefix: '/v1' });
+  await app.register(knowledgeRoutes, { prefix: '/v1' });
+  await app.register(testingRoutes, { prefix: '/v1' });
+  await app.register(securityRoutes, { prefix: '/v1' });
 
   // Note: usageLimitsPlugin uses addHook — must be registered at root scope, not prefixed
   await app.register(usageLimitsPlugin);
@@ -331,6 +348,14 @@ async function start() {
       'POST /v1/judge-scores',
       'GET  /v1/judge-scores/stats/aggregate',
       'POST /v1/judge-scores/trigger',
+      // Code Review Engine (F6)
+      'GET  /v1/projects/:id/code-reviews',
+      'POST /v1/projects/:id/code-reviews',
+      'GET  /v1/code-reviews/:id',
+      'GET  /v1/code-reviews/:id/findings',
+      'PUT  /v1/code-review-findings/:id',
+      'GET  /v1/projects/:id/code-review-stats',
+      'GET  /v1/code-review-rules',
     ],
   }));
 

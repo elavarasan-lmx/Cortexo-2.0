@@ -4,6 +4,7 @@ import { getDb } from '../lib/db.js';
 import { users } from '@cortexo/db/schema';
 import { eq } from 'drizzle-orm';
 import crypto from 'crypto';
+import { getOrgId } from '../lib/request-context.js';
 
 /**
  * Organization / Team Management API — /v1/org
@@ -14,7 +15,7 @@ export async function orgRoutes(app: FastifyInstance) {
   app.get('/org/members', async (request, reply) => {
     try {
       const db = await getDb();
-      const orgId = (request as any).user?.orgId || '';
+      const orgId = getOrgId(request);
 
       // If orgId is set, filter by org; otherwise return all users (single-tenant / dev mode)
       const members = orgId
@@ -57,7 +58,7 @@ export async function orgRoutes(app: FastifyInstance) {
 
     try {
       const db = await getDb();
-      const orgId = (request as any).user?.orgId || 'default-org';
+      const orgId = getOrgId(request);
 
       // Check if user already exists
       const existing = await db.query.users.findFirst({ where: eq(users.email, email) });

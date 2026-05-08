@@ -4,12 +4,15 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
 import {
-  User, Bell, LayoutGrid, Shield, Database,
+  User, Bell, LayoutGrid, Shield, Database, GripVertical, Users, Lock,
 } from 'lucide-react';
 
 const tabs = [
   { label: 'Profile', href: '/settings', icon: User },
   { label: 'Credentials', href: '/settings/credentials', icon: Shield },
+  { label: 'Users', href: '/settings/users', icon: Users },
+  { label: 'Access Control', href: '/settings/access', icon: Lock },
+  { label: 'Menu Order', href: '/settings/menu-order', icon: GripVertical },
   { label: 'Notifications', href: '/settings/notifications', icon: Bell },
   { label: 'Deploy Profiles', href: '/settings/profiles', icon: Database },
   { label: 'Modules', href: '/settings/modules', icon: LayoutGrid },
