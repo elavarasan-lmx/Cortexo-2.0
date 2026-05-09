@@ -51,6 +51,7 @@ import { brainRoutes } from './routes/brain.js';
 import { knowledgeRoutes } from './routes/knowledge.js';
 import { testingRoutes } from './routes/testing.js';
 import { menuPermissionRoutes } from './routes/menu-permissions.js';
+import { menuItemRoutes } from './routes/menu-items.js';
 import { usageLimitsPlugin } from './middleware/usage-limits.js';
 import { authPlugin, authMiddleware } from './middleware/auth.js';
 import { getDb } from './lib/db.js';
@@ -242,6 +243,7 @@ async function start() {
   await app.register(knowledgeRoutes, { prefix: '/v1' });
   await app.register(testingRoutes, { prefix: '/v1' });
   await app.register(menuPermissionRoutes, { prefix: '/v1' });
+  await app.register(menuItemRoutes, { prefix: '/v1' });
 
   // Note: usageLimitsPlugin uses addHook — must be registered at root scope, not prefixed
   await app.register(usageLimitsPlugin);

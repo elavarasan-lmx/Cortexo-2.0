@@ -2,44 +2,50 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { api } from './api';
 import { useToastStore } from './toast-store';
-import { NAVIGATION } from './nav-config';
+import { NAVIGATION, type NavSection } from './nav-config';
 
 /**
  * Sidebar Feature Visibility Store — DB-backed
  *
- * Loads per-user menu permissions from the API (backed by DB).
- * Falls back to "all visible" if API is offline.
+ * Loads menu items from DB via /menu-items API.
+ * Falls back to hardcoded NAVIGATION if API is offline or DB empty.
  * Each menuKey = the href path (e.g. "/pipelines", "/servers").
- *
- * SECTIONS is derived dynamically from NAVIGATION (nav-config.ts).
- * Add/remove sidebar items there — this file auto-syncs.
  */
 
 /** Section metadata for the Settings UI */
 export interface SectionMeta {
   title: string;
   color: string;
-  items: { menuKey: string; label: string }[];
+  items: { menuKey: string; label: string; emoji?: string }[];
 }
 
-/** Dynamically derived from the shared NAVIGATION config */
-export const SECTIONS: SectionMeta[] = NAVIGATION.map(section => ({
-  title: section.title,
-  color: section.color,
-  items: section.items.map(item => ({
-    menuKey: item.href,
-    label: item.label,
-  })),
-}));
+/** Convert NAVIGATION config to SECTIONS format (fallback) */
+const navToSections = (nav: NavSection[]): SectionMeta[] =>
+  nav.map(section => ({
+    title: section.title,
+    color: section.color,
+    items: section.items.map(item => ({
+      menuKey: item.href,
+      label: item.label,
+      emoji: item.emoji,
+    })),
+  }));
+
+/** Default sections from hardcoded config */
+const DEFAULT_SECTIONS = navToSections(NAVIGATION);
 
 interface SidebarFeaturesState {
+  /** Menu sections from DB (or fallback) */
+  sections: SectionMeta[];
   /** menuKey → visible. If key is missing, default is true. */
   permissions: Record<string, boolean>;
   /** Whether data has been loaded from API */
   loaded: boolean;
   /** Loading state */
   loading: boolean;
-  /** Load from API */
+  /** Whether menu was loaded from DB */
+  fromDb: boolean;
+  /** Load menu structure from DB + permissions from API */
   loadFromApi: () => Promise<void>;
   /** Toggle a single menu item and save to API */
   toggleItem: (menuKey: string) => void;
@@ -70,11 +76,13 @@ interface SidebarFeaturesState {
 export const useSidebarFeatures = create<SidebarFeaturesState>()(
   persist(
     (set, get) => ({
+      sections: DEFAULT_SECTIONS,
       permissions: {},
       loaded: false,
       loading: false,
-      sectionOrder: SECTIONS.map(s => s.title),
-      itemOrders: SECTIONS.reduce((acc, s) => {
+      fromDb: false,
+      sectionOrder: DEFAULT_SECTIONS.map(s => s.title),
+      itemOrders: DEFAULT_SECTIONS.reduce((acc, s) => {
         acc[s.title] = s.items.map(i => i.menuKey);
         return acc;
       }, {} as Record<string, string[]>),
@@ -85,12 +93,54 @@ export const useSidebarFeatures = create<SidebarFeaturesState>()(
         set({ loading: true });
         try {
           api.loadToken();
-          const res = await api.getMenuPermissions();
-          const apiPerms = (res as unknown as { permissions?: Record<string, boolean>; data?: { permissions?: Record<string, boolean> } });
-          const perms = apiPerms?.permissions || apiPerms?.data?.permissions || {};
-          // Merge API permissions over local cache (API is source of truth)
+
+          // 1. Try to load menu structure from DB
+          let dbSections: SectionMeta[] | null = null;
+          try {
+            const menuRes = await api.getMenuItems();
+            const data = menuRes as any;
+            const sections = data?.sections || data?.data?.sections;
+            if (sections && sections.length > 0) {
+              dbSections = sections.map((s: any) => ({
+                title: s.title,
+                color: s.color,
+                items: s.items.map((i: any) => ({
+                  menuKey: i.href,
+                  label: i.label,
+                  emoji: i.emoji,
+                })),
+              }));
+            }
+          } catch {
+            // DB not seeded or API offline — use fallback
+          }
+
+          const finalSections = dbSections || DEFAULT_SECTIONS;
+
+          // 2. Load permissions
+          let perms: Record<string, boolean> = {};
+          try {
+            const res = await api.getMenuPermissions();
+            const apiPerms = (res as unknown as { permissions?: Record<string, boolean>; data?: { permissions?: Record<string, boolean> } });
+            perms = apiPerms?.permissions || apiPerms?.data?.permissions || {};
+          } catch {
+            // Keep local cache
+          }
+
           const merged = { ...get().permissions, ...perms };
-          set({ permissions: merged, loaded: true, loading: false });
+
+          set({
+            sections: finalSections,
+            permissions: merged,
+            loaded: true,
+            loading: false,
+            fromDb: !!dbSections,
+            sectionOrder: finalSections.map(s => s.title),
+            itemOrders: finalSections.reduce((acc, s) => {
+              acc[s.title] = s.items.map(i => i.menuKey);
+              return acc;
+            }, {} as Record<string, string[]>),
+          });
         } catch {
           // API offline — keep localStorage permissions (already hydrated by persist)
           set({ loaded: true, loading: false });
@@ -112,7 +162,7 @@ export const useSidebarFeatures = create<SidebarFeaturesState>()(
 
       showAll: () => {
         const perms: Record<string, boolean> = {};
-        SECTIONS.forEach((s) => s.items.forEach((i) => { perms[i.menuKey] = true; }));
+        get().sections.forEach((s) => s.items.forEach((i) => { perms[i.menuKey] = true; }));
         set({ permissions: perms });
         api.updateMenuPermissions(perms)
           .then(() => useToastStore.getState().success('All modules shown', 'All sidebar items are now visible'))
@@ -121,7 +171,7 @@ export const useSidebarFeatures = create<SidebarFeaturesState>()(
 
       hideAll: () => {
         const perms: Record<string, boolean> = {};
-        SECTIONS.forEach((s) => s.items.forEach((i) => { perms[i.menuKey] = false; }));
+        get().sections.forEach((s) => s.items.forEach((i) => { perms[i.menuKey] = false; }));
         set({ permissions: perms });
         api.updateMenuPermissions(perms)
           .then(() => useToastStore.getState().info('All modules hidden', 'Toggle items back from Settings'))
@@ -159,9 +209,10 @@ export const useSidebarFeatures = create<SidebarFeaturesState>()(
       },
 
       resetLayout: () => {
+        const sections = get().sections;
         set({
-          sectionOrder: SECTIONS.map(s => s.title),
-          itemOrders: SECTIONS.reduce((acc, s) => {
+          sectionOrder: sections.map(s => s.title),
+          itemOrders: sections.reduce((acc, s) => {
             acc[s.title] = s.items.map(i => i.menuKey);
             return acc;
           }, {} as Record<string, string[]>),
@@ -181,3 +232,6 @@ export const useSidebarFeatures = create<SidebarFeaturesState>()(
     }
   )
 );
+
+// Re-export SECTIONS for backward compatibility
+export const SECTIONS = DEFAULT_SECTIONS;

@@ -69,6 +69,10 @@ export type {
 export { userMenuPermissions } from './menu-permissions';
 export type { UserMenuPermission, NewUserMenuPermission } from './menu-permissions';
 
+// Menu Items (DB-driven sidebar navigation)
+export { menuItems } from './menu-items';
+export type { MenuItem, NewMenuItem } from './menu-items';
+
 // Phase 12: Audit Trail
 export { auditLogs, type AuditLog, type NewAuditLog } from './audit';
 

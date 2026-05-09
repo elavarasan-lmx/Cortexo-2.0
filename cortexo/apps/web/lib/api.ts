@@ -543,6 +543,14 @@ class ApiClient {
   getUserMenuPermissions(userId: string)              { return this.request<Record<string, boolean>>('GET', `/menu-permissions/user/${userId}`); }
   setUserMenuPermissions(userId: string, permissions: Record<string, boolean>) { return this.request<{ success: boolean }>('PUT', `/menu-permissions/user/${userId}`, { permissions }); }
 
+  // ─── Menu Items (DB-driven sidebar) ──────────────────────────────────────
+  getMenuItems()                                     { return this.request<{ sections: { title: string; color: string; items: { label: string; href: string; emoji: string }[] }[] }>('GET', '/menu-items'); }
+  getMenuItemsAll()                                  { return this.request<{ items: any[] }>('GET', '/menu-items/all'); }
+  createMenuItem(data: { label: string; href: string; emoji: string; sectionTitle: string; sectionColor: string; sortOrder?: number; visible?: boolean }) { return this.request<{ success: boolean; item: any }>('POST', '/menu-items', data); }
+  updateMenuItem(id: number, data: Record<string, unknown>) { return this.request<{ success: boolean }>('PUT', `/menu-items/${id}`, data); }
+  deleteMenuItem(id: number)                         { return this.request<{ success: boolean }>('DELETE', `/menu-items/${id}`); }
+  seedMenuItems()                                    { return this.request<{ success: boolean; count?: number }>('POST', '/menu-items/seed'); }
+
   // ─── Deploy Configs ────────────────────────────────────────────────────────
   getDeployConfigs()                                 { return this.request<DeployConfig[]>('GET', '/deploy-configs'); }
   getDeployConfig(id: number)                        { return this.request<DeployConfig>('GET', `/deploy-configs/${id}`); }
