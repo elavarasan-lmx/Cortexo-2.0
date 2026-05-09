@@ -88,6 +88,64 @@ npm run db:generate  # Generate migrations
 
 ---
 
+## 🔄 Workflows
+
+### Adding a New Feature (Full Stack)
+```
+Step 1: Create DB schema     → packages/db/src/schema/feature.ts
+Step 2: Export schema         → packages/db/src/schema/index.ts
+Step 3: Push to DB            → npm run db:push
+Step 4: Create API route      → apps/api/src/routes/feature.ts
+Step 5: Register route        → apps/api/src/index.ts (import + register)
+Step 6: Add API client method → apps/web/lib/api.ts
+Step 7: Create page           → apps/web/app/(dashboard)/feature/page.tsx
+Step 8: Add to sidebar        → POST /v1/menu-items (DB insert)
+Step 9: Add to command palette→ apps/web/components/command-palette.tsx
+Step 10: Add to global search → apps/web/components/global-search.tsx
+Step 11: Commit & push        → git add -A && git commit && git push
+```
+
+### Removing a Feature (Full Cleanup)
+```
+Step 1: Delete page           → rm apps/web/app/(dashboard)/feature/
+Step 2: Delete API route      → rm apps/api/src/routes/feature.ts
+Step 3: Delete lib files      → rm apps/api/src/lib/feature-*.ts
+Step 4: Unregister route      → Remove import + register from index.ts
+Step 5: Remove API methods    → Clean apps/web/lib/api.ts
+Step 6: Remove from sidebar   → DELETE /v1/menu-items/:id
+Step 7: Remove from palette   → Clean command-palette.tsx
+Step 8: Remove from search    → Clean global-search.tsx
+Step 9: Remove unused imports → Check for orphaned icon/component imports
+Step 10: Verify zero refs     → grep -rl "feature" apps/ to confirm clean
+Step 11: Commit & push
+```
+
+### Deploying to Production
+```
+Step 1: npm run build         → Verify no build errors
+Step 2: git push origin main  → Push latest code
+Step 3: SSH to server         → ssh prod-gateway → ssh server1
+Step 4: git pull              → Pull latest on server
+Step 5: npm run db:push       → Sync any schema changes
+Step 6: pm2 restart api       → Restart API server
+Step 7: Verify health         → curl localhost:PORT/v1/health
+```
+
+### Adding a New Sidebar Menu Item (DB Way)
+```
+POST /v1/menu-items
+{
+  "label": "Feature Name",
+  "href": "/feature",
+  "emoji": "🔥",
+  "sectionTitle": "MAIN",
+  "sectionColor": "#818CF8",
+  "sortOrder": 5
+}
+```
+
+---
+
 ## 🌐 Infra Context
 
 - **Production**: AWS EC2 via SSHFS mount through `13.201.238.28`
