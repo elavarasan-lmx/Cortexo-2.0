@@ -1022,13 +1022,13 @@ sed -i 's|\\$client = "lmxtrade"|\\$client = "${form.clientSlug}"|g' global_conf
 # Laravel logs
 > ${form.serverPath}/lmxtrade/winbullliteapi/storage/logs/lumen.log
 
-# CodeIgniter logs
-rm -f ${form.serverPath}/application/logs/log-*.php
+# CodeIgniter logs (truncate data, keep files)
+find ${form.serverPath}/application/logs -name 'log-*.php' -exec truncate -s 0 {} +
 
-# Admin logs
-rm -f ${form.serverPath}/admin/application/logs/log-*.php
+# Admin logs (truncate data, keep files)
+find ${form.serverPath}/admin/application/logs -name 'log-*.php' -exec truncate -s 0 {} +
 
-# Laravel cache & sessions
+# Laravel cache & sessions (safe to remove, framework regenerates)
 rm -rf ${form.serverPath}/lmxtrade/winbullliteapi/storage/framework/cache/data/*
 rm -rf ${form.serverPath}/lmxtrade/winbullliteapi/storage/framework/sessions/*
 rm -rf ${form.serverPath}/lmxtrade/winbullliteapi/storage/framework/views/*
@@ -1106,14 +1106,6 @@ pm2 flush ${form.clientSlug}-socketio`}
         try_files \\$uri \\$uri/ /lmxtrade/winbullliteapi/index.php?\\$query_string;
     }
 
-    # PHP-FPM
-    location ~ \\.php$ {
-        include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
-        fastcgi_param SCRIPT_FILENAME \\$document_root\\$fastcgi_script_name;
-        include fastcgi_params;
-    }
-
     location ~ /\\.ht {
         deny all;
     }
@@ -1125,12 +1117,25 @@ pm2 flush ${form.clientSlug}-socketio`}
                 <div>
                   <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgb(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Database Setup</span>
                   <pre style={{ margin: '6px 0 0', padding: '10px 12px', borderRadius: '8px', backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', fontSize: '11px', fontFamily: "'JetBrains Mono', monospace", color: 'rgb(var(--text-primary))', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
-{`-- ⚠️ SAFETY: Target ONLY this client's database
+{`-- ========================
+-- Phase 1: Create Database
+-- ========================
+CREATE DATABASE IF NOT EXISTS \`${form.dbName || 'winbullSource'}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- ========================
+-- Phase 2: Import Base Schema
+-- ========================
+-- mysqldump winbullSource | mysql ${form.dbName || 'winbullSource'}
+
+-- ========================
+-- Phase 3: Truncate & Configure
+-- ========================
 USE ${form.dbName || 'winbullSource'};
 
 -- ========================
 -- TRUNCATE (fresh client)
 -- ========================
+SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE ci_usersessions;
 TRUNCATE ci_sessions;
 TRUNCATE dt_admin_log;
@@ -1167,6 +1172,7 @@ TRUNCATE dt_appvideos;
 TRUNCATE dt_advertisements;
 TRUNCATE dt_gallery;
 TRUNCATE dt_events;
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- ========================
 -- UPDATE (client config)

@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { eq, desc, and, sql } from 'drizzle-orm';
 import { getDb } from '../lib/db.js';
-import { notifications, notificationPreferences, pushTokens } from '@cortexo/db/schema';
+import { notifications, notificationPreferences } from '@cortexo/db/schema';
 import { parsePagination, paginatedResponse } from '../lib/pagination.js';
 import { getOrgId } from '../lib/request-context.js';
 import { getPreferences, upsertPreference } from '../lib/push-notifications.js';
@@ -28,7 +28,7 @@ const NOTIFICATION_EVENTS = [
 
 /**
  * Notifications API — /v1/notifications
- * Sprint 3 expanded: preference management + push token registration
+ * Channels: In-App + Email only
  */
 export async function notificationRoutes(app: FastifyInstance) {
   // ─── LIST notifications (paginated) ────────────────────────────
@@ -100,8 +100,6 @@ export async function notificationRoutes(app: FastifyInstance) {
           category: evt.category,
           inApp: pref?.inApp ?? true,
           email: pref?.email ?? false,
-          push: pref?.push ?? false,
-          slack: pref?.slack ?? false,
         };
       });
 
@@ -109,7 +107,7 @@ export async function notificationRoutes(app: FastifyInstance) {
     } catch {
       return { data: NOTIFICATION_EVENTS.map((e) => ({
         event: e.key, label: e.label, category: e.category,
-        inApp: true, email: false, push: false, slack: false,
+        inApp: true, email: false,
       })) };
     }
   });
@@ -120,8 +118,6 @@ export async function notificationRoutes(app: FastifyInstance) {
       event: z.string(),
       inApp: z.boolean().optional(),
       email: z.boolean().optional(),
-      push: z.boolean().optional(),
-      slack: z.boolean().optional(),
     })),
   });
 
@@ -133,96 +129,10 @@ export async function notificationRoutes(app: FastifyInstance) {
       await upsertPreference(userId, pref.event, {
         inApp: pref.inApp,
         email: pref.email,
-        push: pref.push,
-        slack: pref.slack,
       });
     }
 
     return { success: true, message: `Updated ${body.preferences.length} preferences` };
-  });
-
-  // ─── REGISTER push token ──────────────────────────────────────
-  const pushTokenSchema = z.object({
-    token: z.string().min(10),
-    platform: z.enum(['web', 'android', 'ios']).optional(),
-    deviceName: z.string().optional(),
-  });
-
-  app.post('/notifications/push-token', async (request) => {
-    const userId = (request as any).userId || 'system';
-    const body = pushTokenSchema.parse(request.body);
-
-    try {
-      const db = await getDb();
-
-      // Check if token already registered
-      const [existing] = await db
-        .select()
-        .from(pushTokens)
-        .where(
-          and(
-            eq(pushTokens.userId, userId),
-            eq(pushTokens.token, body.token),
-          ),
-        )
-        .limit(1);
-
-      if (existing) {
-        // Update last used timestamp
-        await db.update(pushTokens)
-          .set({ lastUsedAt: new Date(), deviceName: body.deviceName })
-          .where(eq(pushTokens.id, existing.id));
-        return { data: existing, message: 'Token already registered' };
-      }
-
-      // Register new token
-      const [created] = await db
-        .insert(pushTokens)
-        .values({
-          userId,
-          token: body.token,
-          platform: body.platform,
-          deviceName: body.deviceName,
-        })
-        .returning();
-
-      return { data: created };
-    } catch (err) {
-      return { error: 'Failed to register push token' };
-    }
-  });
-
-  // ─── DELETE push token ─────────────────────────────────────────
-  app.delete('/notifications/push-token/:id', async (request) => {
-    const { id } = request.params as { id: string };
-    try {
-      const db = await getDb();
-      await db.delete(pushTokens).where(eq(pushTokens.id, id));
-      return { success: true };
-    } catch {
-      return { error: 'Failed to remove push token' };
-    }
-  });
-
-  // ─── LIST push tokens for user ─────────────────────────────────
-  app.get('/notifications/push-tokens', async (request) => {
-    const userId = (request as any).userId || 'system';
-    try {
-      const db = await getDb();
-      const tokens = await db
-        .select({
-          id: pushTokens.id,
-          platform: pushTokens.platform,
-          deviceName: pushTokens.deviceName,
-          lastUsedAt: pushTokens.lastUsedAt,
-          createdAt: pushTokens.createdAt,
-        })
-        .from(pushTokens)
-        .where(eq(pushTokens.userId, userId));
-      return { data: tokens };
-    } catch {
-      return { data: [] };
-    }
   });
 
   // ─── GET supported events list ─────────────────────────────────

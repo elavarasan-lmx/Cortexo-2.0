@@ -1,4 +1,4 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import type { FastifyRequest, FastifyReply } from 'fastify';
 import { getDb } from '../lib/db.js';
 
 const DEV_ORG_ID = '00000000-0000-0000-0000-000000000000';
@@ -82,19 +82,4 @@ export async function authMiddleware(
   }
 }
 
-/**
- * Auth plugin — registers preHandler hook.
- * JWT is registered separately at root scope (in index.ts) so all
- * route plugins can access app.jwt for signing tokens.
- */
-export async function authPlugin(app: FastifyInstance) {
-  // Decorate request with user type (guard against duplicates —
-  // @fastify/jwt may already decorate 'user')
-  if (!app.hasRequestDecorator('user')) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    app.decorateRequest('user', null as any);
-  }
 
-  // Add auth check hook
-  app.addHook('preHandler', authMiddleware);
-}

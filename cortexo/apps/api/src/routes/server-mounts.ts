@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getDb } from '../lib/db.js';
 import { eq } from 'drizzle-orm';
 import { serverMounts } from '@cortexo/db/schema';
+import { logAudit } from './audit.js';
 import { spawnSync } from 'child_process';
 import { readdirSync, statSync, readFileSync, existsSync, mkdirSync } from 'fs';
 import { join, resolve, basename, extname, relative } from 'path';
@@ -256,10 +257,13 @@ export async function serverMountRoutes(app: FastifyInstance) {
           ? `,IdentityFile=${expandHome(server.sshKey)}`
           : '';
 
+        // Read-only flag — mount with -o ro to enforce at OS level
+        const roFlag = row.readOnly ? ',ro' : '';
+
         const sshfsArgs = [
           `${sshUser}@${sshHost}:${row.remotePath}`,
           localPath,
-          '-o', `reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,ConnectTimeout=20,cache=yes,kernel_cache,auto_cache,compression=no,StrictHostKeyChecking=no${sshKeyOpts}`,
+          '-o', `reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,ConnectTimeout=20,cache=yes,kernel_cache,auto_cache,compression=no,StrictHostKeyChecking=no${sshKeyOpts}${roFlag}`,
         ];
 
         app.log.info(`SSHFS mount: sshfs ${sshfsArgs.join(' ')}`);
@@ -437,6 +441,19 @@ export async function serverMountRoutes(app: FastifyInstance) {
       const basePath = expandHome(row.localMountPath);
       const currentRelPath = relative(basePath, targetPath);
 
+      // Audit log — directory browse
+      const user = (request as any).user;
+      logAudit({
+        userId: user?.id || '00000000-0000-0000-0000-000000000001',
+        userName: user?.name || 'LMX',
+        action: 'file_browse',
+        resource: 'server_mount',
+        resourceId: id,
+        description: `Browsed directory: ${row.name}/${currentRelPath || '.'}`,
+        metadata: { mountName: row.name, path: currentRelPath || '.', totalEntries: entries.length },
+        ipAddress: (request.ip || request.headers['x-forwarded-for'] || '') as string,
+      });
+
       return {
         data: {
           currentPath: currentRelPath || '.',
@@ -489,6 +506,19 @@ export async function serverMountRoutes(app: FastifyInstance) {
       const content = readFileSync(targetPath, 'utf-8');
       const lines = content.split('\n').length;
 
+      // Audit log — file read
+      const user = (request as any).user;
+      logAudit({
+        userId: user?.id || '00000000-0000-0000-0000-000000000001',
+        userName: user?.name || 'LMX',
+        action: 'file_read',
+        resource: 'server_mount',
+        resourceId: id,
+        description: `Read file: ${row.name}/${filePath}`,
+        metadata: { mountName: row.name, filePath, fileName: basename(targetPath), size: stat.size, lines, type: getFileType(basename(targetPath)) },
+        ipAddress: (request.ip || request.headers['x-forwarded-for'] || '') as string,
+      });
+
       return {
         data: {
           filePath,
@@ -506,6 +536,183 @@ export async function serverMountRoutes(app: FastifyInstance) {
       }
       app.log.error(err);
       return reply.code(500).send({ error: 'Failed to read file' });
+    }
+  });
+
+  // ── Scan for file changes (IDE edits detection) ───────────
+  app.post('/server-mounts/:id/scan-changes', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { minutes = 30 } = (request.body as any) || {};
+
+    try {
+      const db = await getDb();
+      const row = await db.query.serverMounts.findFirst({
+        where: (m, { eq }) => eq(m.id, parseInt(id)),
+      });
+      if (!row) return reply.code(404).send({ error: 'Mount config not found' });
+
+      if (!isMounted(row.localMountPath)) {
+        return reply.code(400).send({ error: 'Mount is not active' });
+      }
+
+      const localPath = expandHome(row.localMountPath);
+      const minsNum = Math.min(Math.max(1, parseInt(minutes)), 1440); // 1 min to 24 hrs
+
+      // Use `find` to detect recently modified files
+      const result = spawnSync('find', [
+        localPath,
+        '-maxdepth', '6',
+        '-type', 'f',
+        '-mmin', `-${minsNum}`,
+        '-not', '-path', '*/node_modules/*',
+        '-not', '-path', '*/.git/*',
+        '-not', '-path', '*/vendor/*',
+        '-not', '-path', '*/storage/logs/*',
+        '-not', '-path', '*/cache/*',
+      ], { encoding: 'utf-8', timeout: 15000 });
+
+      const files = (result.stdout || '').trim().split('\n').filter(Boolean);
+      const changes: any[] = [];
+
+      for (const fileFull of files) {
+        try {
+          const relPath = relative(localPath, fileFull);
+          const st = statSync(fileFull);
+          const modifiedAgo = Math.round((Date.now() - st.mtime.getTime()) / 60000);
+
+          changes.push({
+            path: relPath,
+            name: basename(fileFull),
+            size: st.size,
+            modified: st.mtime.toISOString(),
+            minutesAgo: modifiedAgo,
+            type: getFileType(basename(fileFull)),
+          });
+        } catch { /* skip unreadable */ }
+      }
+
+      // Sort by most recent first
+      changes.sort((a, b) => a.minutesAgo - b.minutesAgo);
+
+      // Log each changed file to audit trail
+      const user = (request as any).user;
+      for (const ch of changes.slice(0, 50)) { // cap at 50
+        logAudit({
+          userId: user?.id || '00000000-0000-0000-0000-000000000001',
+          userName: user?.name || 'LMX',
+          action: 'file_modified',
+          resource: 'server_mount',
+          resourceId: id,
+          description: `File modified: ${row.name}/${ch.path} (${ch.minutesAgo}m ago)`,
+          metadata: { mountName: row.name, filePath: ch.path, fileName: ch.name, size: ch.size, minutesAgo: ch.minutesAgo },
+          ipAddress: (request.ip || request.headers['x-forwarded-for'] || '') as string,
+        });
+      }
+
+      return {
+        data: {
+          mountName: row.name,
+          scannedMinutes: minsNum,
+          totalChanges: changes.length,
+          changes: changes.slice(0, 100),
+        },
+      };
+    } catch (err: any) {
+      app.log.error(err);
+      return reply.code(500).send({ error: 'Scan failed', details: err.message });
+    }
+  });
+
+  // ── Toggle read-only (remounts with -o ro) ────────────────
+  app.put('/server-mounts/:id/toggle-readonly', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { readOnly } = (request.body as any) || {};
+    if (typeof readOnly !== 'boolean') return reply.code(400).send({ error: 'readOnly boolean required' });
+
+    try {
+      const db = await getDb();
+      const row = await db.query.serverMounts.findFirst({
+        where: (m, { eq }) => eq(m.id, parseInt(id)),
+      });
+      if (!row) return reply.code(404).send({ error: 'Mount config not found' });
+
+      // Update DB
+      await db.update(serverMounts)
+        .set({ readOnly } as any)
+        .where(eq(serverMounts.id, parseInt(id)));
+
+      // If currently mounted, remount with new permission
+      if (isMounted(row.localMountPath)) {
+        const localPath = expandHome(row.localMountPath);
+
+        // Unmount first
+        try {
+          spawnSync('fusermount', ['-u', localPath], { timeout: 10000, encoding: 'utf-8' });
+        } catch {
+          try { spawnSync('fusermount', ['-uz', localPath], { timeout: 10000, encoding: 'utf-8' }); } catch {}
+        }
+
+        // Get server info for remount
+        const server = await db.query.servers.findFirst({
+          where: (s, { eq }) => eq(s.id, row.serverId),
+        });
+        if (server) {
+          const privateIp = server.privateIp || '';
+          const publicAddr = server.publicAddress || '';
+          let sshUser = row.sshUser;
+          let sshHost = privateIp || publicAddr;
+          if (!privateIp && publicAddr && publicAddr.includes('@')) {
+            const parts = publicAddr.split('@');
+            sshUser = parts[0] || sshUser;
+            sshHost = parts[1];
+          }
+
+          const sshKeyOpts = server.sshKey && server.sshKey.length > 0 && !server.sshKey.startsWith('ssh-')
+            ? `,IdentityFile=${expandHome(server.sshKey)}`
+            : '';
+          const roFlag = readOnly ? ',ro' : '';
+
+          const sshfsArgs = [
+            `${sshUser}@${sshHost}:${row.remotePath}`,
+            localPath,
+            '-o', `reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,ConnectTimeout=20,cache=yes,kernel_cache,auto_cache,compression=no,StrictHostKeyChecking=no${sshKeyOpts}${roFlag}`,
+          ];
+
+          app.log.info(`SSHFS remount (readOnly=${readOnly}): sshfs ${sshfsArgs.join(' ')}`);
+
+          const result = spawnSync('sshfs', sshfsArgs, {
+            timeout: 60000, encoding: 'utf-8',
+            env: { ...process.env, HOME: homedir() },
+          });
+
+          if (result.status !== 0) {
+            const errMsg = (result.stderr || '').trim() || `sshfs exited with code ${result.status}`;
+            app.log.error(`SSHFS remount failed: ${errMsg}`);
+            return reply.code(500).send({ error: 'Remount failed', details: errMsg });
+          }
+
+          await db.update(serverMounts)
+            .set({ status: 'mounted', lastMountedAt: new Date() } as any)
+            .where(eq(serverMounts.id, parseInt(id)));
+        }
+      }
+
+      // Audit log
+      const user = (request as any).user;
+      logAudit({
+        userId: user?.id || '00000000-0000-0000-0000-000000000001',
+        userName: user?.name || 'LMX',
+        action: readOnly ? 'set_readonly' : 'set_readwrite',
+        resource: 'server_mount',
+        resourceId: id,
+        description: `${row.name} set to ${readOnly ? 'Read Only' : 'Read Write'}`,
+        ipAddress: (request.ip || request.headers['x-forwarded-for'] || '') as string,
+      });
+
+      return { data: { readOnly, remounted: isMounted(row.localMountPath) } };
+    } catch (err: any) {
+      app.log.error(err);
+      return reply.code(500).send({ error: 'Toggle failed', details: err.message });
     }
   });
 }

@@ -92,6 +92,7 @@ export const serverMounts = pgTable(
     localMountPath: varchar('local_mount_path', { length: 500 }).notNull(),
     sshUser: varchar('ssh_user', { length: 50 }).notNull().default('ubuntu'),
     status: varchar('status', { length: 20 }).default('unmounted'),
+    readOnly: boolean('read_only').default(true),
     autoMount: boolean('auto_mount').default(false),
     createdAt: timestamp('created_at')
       .defaultNow()

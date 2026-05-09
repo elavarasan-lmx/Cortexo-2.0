@@ -67,7 +67,7 @@ function verifyPassword(password: string, hash: string): Promise<boolean> {
 }
 
 /**
- * Generate a signed JWT access token (15min expiry, set in authPlugin).
+ * Generate a signed JWT access token (15min expiry, set in index.ts JWT config).
  */
 function signAccessToken(app: FastifyInstance, user: { id: string; email: string; name: string; orgId: string; role: string }): string {
   const payload: JwtUser = {

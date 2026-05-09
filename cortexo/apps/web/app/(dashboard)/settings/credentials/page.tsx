@@ -32,7 +32,9 @@ interface SavedCred {
 
 const categoryMeta: Record<string, { icon: any; label: string; color: string; description: string }> = {
   github:  { icon: GitBranch, label: 'GitHub',     color: '#C9D1D9', description: 'Personal Access Token for repo listing, webhooks, and CI/CD' },
-  openai:  { icon: Bot,       label: 'OpenAI',     color: '#10B981', description: 'API key for AI root cause analysis and postmortem generation' },
+  openai:  { icon: Bot,       label: 'OpenAI',     color: '#10B981', description: 'API key for Knowledge Base AI Assistant and postmortem generation' },
+  gemini:  { icon: Zap,       label: 'Google Gemini', color: '#4285F4', description: 'Free AI for Knowledge Base Assistant (gemini-2.5-flash)' },
+  groq:    { icon: Zap,       label: 'Groq',       color: '#F55036', description: 'Free ultra-fast AI for Knowledge Base (Llama 3.3 70B, 30 RPM)' },
   aws:     { icon: Cloud,     label: 'AWS',        color: '#FF9900', description: 'EC2, S3, and other AWS service credentials' },
   ssh:     { icon: Terminal,   label: 'SSH Keys',   color: '#818CF8', description: 'Private keys for secure server deployment' },
   docker:  { icon: Key,       label: 'Docker',     color: '#2496ED', description: 'Container registry authentication' },

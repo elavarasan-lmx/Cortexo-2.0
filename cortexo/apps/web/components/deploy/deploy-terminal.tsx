@@ -1,6 +1,6 @@
 'use client';
-import React, { useRef, useEffect } from 'react';
-import { Loader2, CheckCircle, XCircle, Rocket, Terminal, Clock, X } from 'lucide-react';
+import React, { useRef, useEffect, useState } from 'react';
+import { Loader2, CheckCircle, XCircle, Rocket, Terminal, Clock, X, Copy, Check } from 'lucide-react';
 
 interface DeployLogEntry {
   step: string;
@@ -29,24 +29,84 @@ interface DeployTerminalProps {
 }
 
 const STEP_LABELS: Record<string, string> = {
-  connect: 'Connect',
-  verify_path: 'Verify Path',
-  pre_deploy: 'Pre-Deploy',
-  git_pull: 'Git Pull',
-  post_deploy: 'Post-Deploy',
-  health_check: 'Health Check',
-  commit_sha: 'Commit SHA',
+  connect: '🔌 Connect',
+  verify_path: '📁 Verify Path',
+  pre_deploy: '⚙️ Pre-Deploy',
+  git_check: '🔍 Git Check',
+  git_clone: '📦 Git Clone',
+  git_pull: '🔄 Git Pull',
+  database: '🗄️ Database',
+  db_import: '📥 SQL Import',
+  nginx: '🌐 Nginx Config',
+  permissions: '🔒 Permissions',
+  post_deploy: '🛠️ Post-Deploy',
+  pm2: '🚀 PM2 Process',
+  health_check: '💓 Health Check',
+  commit_sha: '🏷️ Commit SHA',
 };
+
+function buildPlainText(logs: DeployLogEntry[], result: DeployResult | null): string {
+  const lines: string[] = ['═══ Cortexo Deploy Log ═══', ''];
+  for (const log of logs) {
+    const label = STEP_LABELS[log.step] || log.step;
+    const status = log.exitCode === null ? '⏳' : log.exitCode === 0 ? '✅' : '❌';
+    lines.push(`${status} ${label}  (${(log.durationMs / 1000).toFixed(1)}s)`);
+    if (log.command) lines.push(`  $ ${log.command}`);
+    if (log.stdout) lines.push(`  ${log.stdout}`);
+    if (log.stderr) lines.push(`  ⚠ ${log.stderr}`);
+    lines.push('');
+  }
+  if (result) {
+    lines.push('───────────────────────────');
+    lines.push(`Status: ${result.success ? 'SUCCESS' : 'FAILED'}`);
+    lines.push(`Duration: ${((result.totalDurationMs || 0) / 1000).toFixed(1)}s`);
+    if (result.commitSha) lines.push(`Commit: ${result.commitSha}`);
+    if (result.error) lines.push(`Error: ${result.error}`);
+  }
+  return lines.join('\n');
+}
 
 export default function DeployTerminal({ deployLogs, deployResult, isRunning, onClose, onSuccess }: DeployTerminalProps) {
   const termRef = useRef<HTMLDivElement>(null);
+  const [copied, setCopied] = useState(false);
 
+  const isNearBottom = useRef(true);
+
+  // Track whether user is near the bottom
+  const handleScroll = () => {
+    if (!termRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = termRef.current;
+    isNearBottom.current = scrollHeight - scrollTop - clientHeight < 150;
+  };
+
+  // Only auto-scroll if user is near bottom
   useEffect(() => {
-    if (termRef.current) termRef.current.scrollTop = termRef.current.scrollHeight;
+    if (termRef.current && isNearBottom.current) {
+      termRef.current.scrollTop = termRef.current.scrollHeight;
+    }
   }, [deployLogs]);
 
+  const handleCopy = async () => {
+    const text = buildPlainText(deployLogs, deployResult);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   return (
-    <>
+    <div style={{display:'flex',flexDirection:'column',height:'100%',minHeight:0}}>
       {/* Header */}
       <div style={{padding:'20px 28px',borderBottom:'1px solid rgb(var(--border))',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
         <div>
@@ -54,7 +114,16 @@ export default function DeployTerminal({ deployLogs, deployResult, isRunning, on
             <Terminal style={{width:'18px',height:'18px',display:'inline',verticalAlign:'middle',marginRight:'8px',color:'#10B981'}}/>Live Deploy Terminal
           </h2>
         </div>
-        <button onClick={()=>{onSuccess();}} style={{background:'none',border:'none',cursor:'pointer',color:'rgb(var(--text-muted))'}}><X style={{width:'18px',height:'18px'}}/></button>
+        <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+          <button
+            onClick={handleCopy}
+            title={copied ? 'Copied!' : 'Copy logs'}
+            style={{background:'none',border:'1px solid rgb(var(--border))',borderRadius:'8px',cursor:'pointer',color: copied ? '#10B981' : 'rgb(var(--text-muted))',padding:'6px 10px',display:'flex',alignItems:'center',gap:'6px',fontSize:'12px',fontWeight:600,transition:'all 0.2s'}}
+          >
+            {copied ? <><Check style={{width:'14px',height:'14px'}}/> Copied</> : <><Copy style={{width:'14px',height:'14px'}}/> Copy</>}
+          </button>
+          <button onClick={()=>{onSuccess();}} style={{background:'none',border:'none',cursor:'pointer',color:'rgb(var(--text-muted))',padding:'4px'}}><X style={{width:'18px',height:'18px'}}/></button>
+        </div>
       </div>
 
       {/* Status bar */}
@@ -69,7 +138,12 @@ export default function DeployTerminal({ deployLogs, deployResult, isRunning, on
             {isRunning ? 'Deploying...' : deployResult?.success ? 'Deploy Successful' : 'Deploy Failed'}
           </h3>
           <p style={{fontSize:'12px',color:'rgb(var(--text-muted))',margin:'2px 0 0'}}>
-            {isRunning ? `${deployLogs.length} step${deployLogs.length!==1?'s':''} completed` :
+            {isRunning ? (() => {
+              const completed = deployLogs.filter(l => l.exitCode !== null).length;
+              const running = deployLogs.find(l => l.exitCode === null);
+              const label = running ? (STEP_LABELS[running.step] || running.step) : '';
+              return `${completed} step${completed!==1?'s':''} completed${label ? ` • ${label}` : ''}`;
+            })() :
              deployResult ? `Finished in ${((deployResult.totalDurationMs||0)/1000).toFixed(1)}s${deployResult.commitSha?` • ${deployResult.commitSha}`:''}` : 'Waiting...'}
           </p>
         </div>
@@ -80,8 +154,8 @@ export default function DeployTerminal({ deployLogs, deployResult, isRunning, on
         )}
       </div>
 
-      {/* Terminal body */}
-      <div ref={termRef} style={{flex:1,overflowY:'auto',padding:'16px 28px',backgroundColor:'#0d1117',fontFamily:"'JetBrains Mono',monospace",fontSize:'12px',lineHeight:1.7}}>
+      {/* Terminal body — scrollable */}
+      <div ref={termRef} onScroll={handleScroll} style={{flex:1,minHeight:0,overflowY:'auto',padding:'16px 28px',backgroundColor:'#0d1117',fontFamily:"'JetBrains Mono',monospace",fontSize:'12px',lineHeight:1.7}}>
         {deployLogs.length === 0 && isRunning && (
           <div style={{color:'#8b949e',textAlign:'center',padding:'40px 0'}}>
             <Loader2 style={{width:'24px',height:'24px',animation:'spin 1s linear infinite',marginBottom:'8px'}}/><br/>
@@ -89,15 +163,26 @@ export default function DeployTerminal({ deployLogs, deployResult, isRunning, on
           </div>
         )}
         {deployLogs.map((log,i) => {
+          const isRunning = log.exitCode === null;
           const ok = log.exitCode === 0;
+          const borderColor = isRunning ? '#d29922' : ok ? '#238636' : '#f85149';
           return (
-            <div key={i} style={{marginBottom:'16px',borderLeft:`2px solid ${ok?'#238636':'#f85149'}`,paddingLeft:'14px'}}>
+            <div key={i} style={{marginBottom:'16px',borderLeft:`2px solid ${borderColor}`,paddingLeft:'14px',opacity: isRunning ? 0.85 : 1}}>
               <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'4px'}}>
-                {ok ? <CheckCircle style={{width:'13px',height:'13px',color:'#238636',flexShrink:0}}/> : <XCircle style={{width:'13px',height:'13px',color:'#f85149',flexShrink:0}}/>}
-                <span style={{color:'#58a6ff',fontWeight:700,fontSize:'12px'}}>{STEP_LABELS[log.step]||log.step}</span>
-                <span style={{color:'#484f58',fontSize:'11px',marginLeft:'auto',display:'flex',alignItems:'center',gap:'4px'}}>
-                  <Clock style={{width:'10px',height:'10px'}}/> {(log.durationMs/1000).toFixed(1)}s
-                </span>
+                {isRunning
+                  ? <Loader2 style={{width:'13px',height:'13px',color:'#d29922',flexShrink:0,animation:'spin 1s linear infinite'}}/>
+                  : ok
+                    ? <CheckCircle style={{width:'13px',height:'13px',color:'#238636',flexShrink:0}}/>
+                    : <XCircle style={{width:'13px',height:'13px',color:'#f85149',flexShrink:0}}/>}
+                <span style={{color: isRunning ? '#d29922' : '#58a6ff',fontWeight:700,fontSize:'12px'}}>{STEP_LABELS[log.step]||log.step}</span>
+                {!isRunning && (
+                  <span style={{color:'#484f58',fontSize:'11px',marginLeft:'auto',display:'flex',alignItems:'center',gap:'4px'}}>
+                    <Clock style={{width:'10px',height:'10px'}}/> {(log.durationMs/1000).toFixed(1)}s
+                  </span>
+                )}
+                {isRunning && (
+                  <span style={{color:'#d29922',fontSize:'11px',marginLeft:'auto',fontStyle:'italic'}}>running...</span>
+                )}
               </div>
               {log.command && <div style={{color:'#484f58',fontSize:'11px',marginBottom:'4px'}}>$ {log.command}</div>}
               {log.stdout && <pre style={{color:'#c9d1d9',margin:'0 0 2px',whiteSpace:'pre-wrap',wordBreak:'break-all',fontSize:'11px'}}>{log.stdout}</pre>}
@@ -131,6 +216,6 @@ export default function DeployTerminal({ deployLogs, deployResult, isRunning, on
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 }

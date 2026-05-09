@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getDb } from '../lib/db.js';
 import { logAudit } from './audit.js';
+import { createNotification } from './notifications.js';
 import { parsePagination, paginatedResponse } from '../lib/pagination.js';
 import { getOrgId, getUser } from '../lib/request-context.js';
 import { deployments, deployTargets, servers, winbullConfigs, projects, deployConfigs } from '@cortexo/db/schema';
@@ -51,7 +52,7 @@ const createDeploySchema = z.object({
   preDeployCmd: z.string().optional(),
   postDeployCmd: z.string().optional(),
   healthCheckUrl: z.string().optional(),
-});
+}).passthrough();  // Allow provisioning fields (database, nginx, pm2, permissions)
 
 /**
  * Deployments API — /v1/deployments
@@ -204,21 +205,57 @@ export async function deploymentRoutes(app: FastifyInstance) {
   // ── Get deployment logs (from Redis) ────────────────────────
   app.get('/deployments/:id/logs', async (request, reply) => {
     const { id } = request.params as { id: string };
+
+    // 1. Try Redis first (live streaming logs)
     const entry = await getDeployLogs(id);
-    if (!entry) {
-      return { logs: [], status: 'no_logs', message: 'No logs available for this deployment' };
+    if (entry) {
+      return {
+        logs: entry.logs,
+        result: entry.result ? {
+          success: entry.result.success,
+          status: entry.result.status,
+          totalDurationMs: entry.result.totalDurationMs,
+          error: entry.result.error,
+          commitSha: entry.result.commitSha,
+        } : null,
+        isRunning: !entry.result,
+      };
     }
-    return {
-      logs: entry.logs,
-      result: entry.result ? {
-        success: entry.result.success,
-        status: entry.result.status,
-        totalDurationMs: entry.result.totalDurationMs,
-        error: entry.result.error,
-        commitSha: entry.result.commitSha,
-      } : null,
-      isRunning: !entry.result,
-    };
+
+    // 2. Fallback: Redis unavailable — check DB deployment status
+    try {
+      const db = await getDb();
+      const deploy = await db.query.deployments.findFirst({
+        where: (d: any, { eq: e }: any) => e(d.id, id),
+      });
+
+      if (!deploy) {
+        return { logs: [], result: null, isRunning: false };
+      }
+
+      // Deploy finished (failed or success) — return final result from DB
+      if (deploy.status === 'failed' || deploy.status === 'success') {
+        return {
+          logs: deploy.commitMessage
+            ? [{ step: deploy.status, command: '', stdout: deploy.commitMessage, stderr: '', exitCode: deploy.status === 'success' ? 0 : 1, durationMs: deploy.durationMs || 0, timestamp: (deploy.finishedAt || new Date()).toISOString() }]
+            : [],
+          result: {
+            success: deploy.status === 'success',
+            status: deploy.status,
+            totalDurationMs: deploy.durationMs || 0,
+            error: deploy.status === 'failed' ? (deploy.commitMessage || 'Deploy failed') : undefined,
+            commitSha: deploy.commitSha || undefined,
+          },
+          isRunning: false,
+        };
+      }
+
+      // Deploy still running in DB — tell frontend to keep polling
+      return { logs: [], result: null, isRunning: true };
+    } catch {
+      // DB also failed — stop the spinner, don't leave it hanging
+      return { logs: [], result: { success: false, status: 'failed', totalDurationMs: 0, error: 'Unable to fetch deploy status' }, isRunning: false };
+    }
   });
 
   // Delete a deployment record
@@ -312,16 +349,34 @@ export async function deploymentRoutes(app: FastifyInstance) {
         });
         if (!server) return reply.code(404).send({ error: 'Server not found' });
 
-        const host = server.publicAddress?.split('@')[1] || server.privateIp || '';
-        const username = server.publicAddress?.split('@')[0] || 'ubuntu';
+        const publicUser = server.publicAddress?.split('@')[0] || 'ubuntu';
+        const publicHost = server.publicAddress?.split('@')[1] || '';
         targetName = server.name;
 
-        sshCreds = {
-          host,
-          port: 22,
-          username,
-          privateKey: server.sshKey || undefined,
-        };
+        // If server has BOTH publicAddress (jump host) and privateIp (target),
+        // tunnel through the jump host to reach the private server.
+        if (publicHost && server.privateIp) {
+          sshCreds = {
+            host: server.privateIp,
+            port: 22,
+            username: publicUser,
+            privateKey: server.sshKey || undefined,
+            jumpHost: {
+              host: publicHost,
+              port: 22,
+              username: publicUser,
+              privateKey: server.sshKey || undefined,
+            },
+          };
+        } else {
+          // Direct connection (no jump host)
+          sshCreds = {
+            host: publicHost || server.privateIp || '',
+            port: 22,
+            username: publicUser,
+            privateKey: server.sshKey || undefined,
+          };
+        }
       } else if (parsed.data.deployTargetId) {
         // Use deploy target table (encrypted credentials)
         const target = await db.query.deployTargets.findFirst({
@@ -361,12 +416,22 @@ export async function deploymentRoutes(app: FastifyInstance) {
       await setDeployLogs(id, { logs: [] });
 
       // ── Execute async (don't block HTTP response) ──
+      // Look up project's repo URL for first-time clone
+      const project = await db.query.projects.findFirst({
+        where: (p, { eq }) => eq(p.id, parsed.data.projectId),
+      });
+
       const deployOpts: DeployOptions = {
         remotePath: parsed.data.remotePath,
+        repoUrl: project?.repoUrl || undefined,
         branch: parsed.data.branch,
         preDeployCmd: parsed.data.preDeployCmd,
         postDeployCmd: parsed.data.postDeployCmd,
         healthCheckUrl: parsed.data.healthCheckUrl,
+        database: (parsed.data as any).database || undefined,
+        nginx: (parsed.data as any).nginx || undefined,
+        permissions: (parsed.data as any).permissions || undefined,
+        pm2: (parsed.data as any).pm2 || undefined,
       };
 
       // Fire and forget — the deploy runs in the background
@@ -459,7 +524,12 @@ async function executeDeployAsync(
   targetName: string,
 ) {
   try {
-    const result = await runDeploySequence(creds, opts);
+    // Progress callback: update Redis after each step so frontend sees live logs
+    const onProgress = async (stepLogs: DeployLog[]) => {
+      await setDeployLogs(deploymentId, { logs: [...stepLogs] });
+    };
+
+    const result = await runDeploySequence(creds, opts, onProgress);
 
     // Store logs in Redis (survives restarts)
     await setDeployLogs(deploymentId, {
@@ -480,8 +550,73 @@ async function executeDeployAsync(
 
     if (result.success) {
       app.log.info({ deploymentId, durationMs: result.totalDurationMs, commitSha: result.commitSha }, '✅ Deployment succeeded');
+
+      // In-app notification
+      try {
+        await createNotification({
+          orgId: user.orgId,
+          userId: user.sub,
+          type: 'deploy.success',
+          title: '✅ Deployment Successful',
+          message: `Deploy to ${targetName} completed in ${(result.totalDurationMs / 1000).toFixed(1)}s${result.commitSha ? ` • ${result.commitSha}` : ''}`,
+          link: `/deployments?id=${deploymentId}`,
+        });
+        app.log.info({ deploymentId }, '🔔 Deploy success notification created');
+      } catch (notifErr) {
+        app.log.warn({ notifErr }, '🔔 Failed to create notification');
+      }
+
+      // Email notification
+      try {
+        const { sendDeployEmail } = await import('../lib/mailer.js');
+        const emailTo = (user as any).email || undefined;
+        app.log.info({ emailTo, userName: user.name }, '📧 Attempting deploy email...');
+        await sendDeployEmail({
+          to: emailTo,
+          status: 'success',
+          target: targetName,
+          branch: opts.branch || 'main',
+          commitSha: result.commitSha,
+          durationMs: result.totalDurationMs,
+          deploymentId,
+        });
+      } catch (emailErr) {
+        app.log.warn({ emailErr }, '📧 Deploy email notification failed (non-fatal)');
+      }
     } else {
       app.log.error({ deploymentId, error: result.error }, '❌ Deployment failed');
+
+      // In-app notification
+      try {
+        await createNotification({
+          orgId: user.orgId,
+          userId: user.sub,
+          type: 'deploy.failed',
+          title: '❌ Deployment Failed',
+          message: `Deploy to ${targetName} failed: ${result.error || 'Unknown error'}`,
+          link: `/deployments?id=${deploymentId}`,
+        });
+        app.log.info({ deploymentId }, '🔔 Deploy failed notification created');
+      } catch (notifErr) {
+        app.log.warn({ notifErr }, '🔔 Failed to create notification');
+      }
+
+      // Email notification
+      try {
+        const { sendDeployEmail } = await import('../lib/mailer.js');
+        const emailTo = (user as any).email || undefined;
+        await sendDeployEmail({
+          to: emailTo,
+          status: 'failed',
+          target: targetName,
+          branch: opts.branch || 'main',
+          error: result.error,
+          durationMs: result.totalDurationMs,
+          deploymentId,
+        });
+      } catch (emailErr) {
+        app.log.warn({ emailErr }, '📧 Deploy email notification failed (non-fatal)');
+      }
     }
 
     // Audit the result

@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   FolderGit2, GitBranch,
   Plus, ExternalLink, Search,
-  Loader2, Github, Globe, X, MoreVertical, Edit3, Trash2, Save,
+  Loader2, Github, Globe, X, Edit3, Trash2, Save,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { Project } from '@/lib/api';
@@ -27,19 +27,9 @@ export default function ProjectsPage() {
   const { data: projects, loading, refetch } = useApiData(() => api.getProjects());
 
   const [search, setSearch] = useState('');
-  const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [editProject, setEditProject] = useState<Project | null>(null);
   const [deleteProject, setDeleteProject] = useState<Project | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(null);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
 
   const handleDelete = async (p: Project) => {
     setDeleting(true);
@@ -80,12 +70,11 @@ export default function ProjectsPage() {
       </div>
 
       {/* Stat Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '20px' }}>
         {[
           { icon: '📂', value: allProjects.length, label: 'Total Projects', color: '#7C3AED' },
           { icon: '📈', value: allProjects.filter(p => parseSettings(p).productType === 'trade').length, label: 'Trade', color: '#F59E0B' },
           { icon: '📊', value: allProjects.filter(p => parseSettings(p).productType === 'lite').length, label: 'Lite', color: '#10B981' },
-          { icon: '📱', value: allProjects.filter(p => { const st = parseSettings(p); return st.androidVersion || st.iosVersion; }).length, label: 'With Mobile', color: '#3B82F6' },
         ].map((stat, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px', borderRadius: '10px', backgroundColor: 'rgb(var(--card))', border: '1px solid rgb(var(--border))' }}>
             <span style={{ fontSize: '22px' }}>{stat.icon}</span>
@@ -116,7 +105,6 @@ export default function ProjectsPage() {
           const db = (s.database || {}) as Record<string, string>;
           const productColor = s.productType === 'trade' ? '#F59E0B' : '#10B981';
           const productLabel = s.productType === 'trade' ? 'Trade' : 'Lite';
-          const isMenuOpen = menuOpen === project.id;
 
           return (
             <div key={project.id}
@@ -144,29 +132,31 @@ export default function ProjectsPage() {
                     </div>
                   </div>
                 </div>
-                {/* 3-dot menu */}
-                <div ref={isMenuOpen ? menuRef : undefined} style={{ position: 'relative', flexShrink: 0 }}>
-                  <button onClick={e => { e.stopPropagation(); setMenuOpen(isMenuOpen ? null : project.id); }}
-                    style={{ padding: '4px', borderRadius: '6px', border: 'none', backgroundColor: isMenuOpen ? 'rgba(var(--primary),0.1)' : 'transparent', color: isMenuOpen ? 'rgb(var(--primary))' : 'rgb(var(--text-muted))', cursor: 'pointer' }}>
-                    <MoreVertical style={{ width: '16px', height: '16px' }} />
-                  </button>
-                  {isMenuOpen && (
-                    <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '4px', width: '160px', borderRadius: '10px', backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', boxShadow: '0 8px 24px rgba(0,0,0,0.25)', zIndex: 50, overflow: 'hidden' }}>
-                      {[
-                        { icon: Edit3, label: 'Edit', color: '#818CF8', action: () => { setEditProject(project); setMenuOpen(null); } },
-                        { icon: ExternalLink, label: 'Open Repo', color: '#6B7280', action: () => { if (project.repoUrl) window.open(project.repoUrl, '_blank'); setMenuOpen(null); } },
-                        { icon: Trash2, label: 'Delete', color: '#EF4444', action: () => { setDeleteProject(project); setMenuOpen(null); } },
-                      ].map(item => (
-                        <button key={item.label} onClick={e => { e.stopPropagation(); item.action(); }}
-                          style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '9px 14px', border: 'none', backgroundColor: 'transparent', color: 'rgb(var(--text-secondary))', fontSize: '12px', fontWeight: 500, cursor: 'pointer' }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = `${item.color}10`; (e.currentTarget as HTMLElement).style.color = item.color; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'rgb(var(--text-secondary))'; }}
-                        >
-                          <item.icon style={{ width: '13px', height: '13px' }} /> {item.label}
-                        </button>
-                      ))}
-                    </div>
+                {/* Action icons */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                  {project.repoUrl && (
+                    <button onClick={e => { e.stopPropagation(); window.open(project.repoUrl!, '_blank'); }}
+                      title="Open Repo"
+                      style={{ padding: '6px', borderRadius: '8px', border: 'none', backgroundColor: 'transparent', color: 'rgb(var(--text-muted))', cursor: 'pointer', transition: 'all 150ms' }}
+                      onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(107,114,128,0.12)'; e.currentTarget.style.color = '#818CF8'; }}
+                      onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'rgb(var(--text-muted))'; }}>
+                      <ExternalLink style={{ width: '14px', height: '14px' }} />
+                    </button>
                   )}
+                  <button onClick={e => { e.stopPropagation(); setEditProject(project); }}
+                    title="Edit"
+                    style={{ padding: '6px', borderRadius: '8px', border: 'none', backgroundColor: 'transparent', color: 'rgb(var(--text-muted))', cursor: 'pointer', transition: 'all 150ms' }}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(129,140,248,0.12)'; e.currentTarget.style.color = '#818CF8'; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'rgb(var(--text-muted))'; }}>
+                    <Edit3 style={{ width: '14px', height: '14px' }} />
+                  </button>
+                  <button onClick={e => { e.stopPropagation(); setDeleteProject(project); }}
+                    title="Delete"
+                    style={{ padding: '6px', borderRadius: '8px', border: 'none', backgroundColor: 'transparent', color: 'rgb(var(--text-muted))', cursor: 'pointer', transition: 'all 150ms' }}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.12)'; e.currentTarget.style.color = '#EF4444'; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'rgb(var(--text-muted))'; }}>
+                    <Trash2 style={{ width: '14px', height: '14px' }} />
+                  </button>
                 </div>
               </div>
 
@@ -277,7 +267,7 @@ function EditProjectModal({ project, onClose, onSaved }: { project: Project; onC
   const [form, setForm] = useState({ name: project.name, description: project.description || '', repoUrl: project.repoUrl || '', defaultBranch: project.defaultBranch || 'main' });
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
-  const inp: React.CSSProperties = { width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--bg))', color: 'rgb(var(--text-primary))', fontSize: '13px', outline: 'none', boxSizing: 'border-box' };
+  const inp: React.CSSProperties = { width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-primary))', fontSize: '13px', outline: 'none', boxSizing: 'border-box' };
   const lbl: React.CSSProperties = { fontSize: '11px', fontWeight: 600, color: 'rgb(var(--text-secondary))', marginBottom: '6px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.06em' };
 
   const submit = async () => {

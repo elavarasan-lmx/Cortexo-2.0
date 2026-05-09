@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { BookOpen, Search, MessageSquare, Send, Book, FileText, Settings, Bot, User, Loader2 } from 'lucide-react';
+import { BookOpen, Search, MessageSquare, Send, Book, FileText, Settings, Bot, User, Loader2, Plus, Edit2, Trash2, X, ChevronDown } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useApiData, useAutoLoadToken, timeAgo } from '@/lib/hooks';
 
@@ -11,7 +11,13 @@ export default function KnowledgeBasePage() {
   const [searchQuery, setSearchQuery] = useState('');
   
   // Docs Tab Data
-  const { data: docs, loading: docsLoading } = useApiData(() => api.request<any>('GET', `/knowledge/docs?q=${encodeURIComponent(searchQuery)}`), [searchQuery]);
+  const { data: docs, loading: docsLoading, refetch: refetchDocs } = useApiData(() => api.request<any>('GET', `/knowledge/docs?q=${encodeURIComponent(searchQuery)}`), [searchQuery]);
+
+  // Doc CRUD state
+  const [showDocModal, setShowDocModal] = useState(false);
+  const [docForm, setDocForm] = useState({ title: '', content: '', category: 'general', tags: '' });
+  const [editingDocId, setEditingDocId] = useState<string | null>(null);
+  const [savingDoc, setSavingDoc] = useState(false);
 
   // Q&A Tab Data
   const { data: history, loading: historyLoading, refetch: refetchHistory } = useApiData(() => api.request<any>('GET', '/knowledge/history'));
@@ -19,6 +25,10 @@ export default function KnowledgeBasePage() {
   const [input, setInput] = useState('');
   const [isAsking, setIsAsking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // AI Provider selector
+  const { data: providersData } = useApiData(() => api.request<any>('GET', '/knowledge/providers'));
+  const [selectedProvider, setSelectedProvider] = useState<string>('');
 
   // Sync history with messages initially
   useEffect(() => {
@@ -45,7 +55,10 @@ export default function KnowledgeBasePage() {
     setIsAsking(true);
 
     try {
-      const res = await api.request<any>('POST', '/knowledge/ask', { question: userMessage.content });
+      const res = await api.request<any>('POST', '/knowledge/ask', {
+        question: userMessage.content,
+        provider: selectedProvider || undefined,
+      });
       if (res && res.data) {
         setMessages(prev => [...prev, {
           role: 'assistant',
@@ -60,6 +73,43 @@ export default function KnowledgeBasePage() {
     } finally {
       setIsAsking(false);
     }
+  };
+
+  const handleSaveDoc = async () => {
+    if (!docForm.title.trim() || !docForm.content.trim()) return;
+    setSavingDoc(true);
+    try {
+      const payload = {
+        title: docForm.title,
+        content: docForm.content,
+        category: docForm.category,
+        tags: docForm.tags.split(',').map(t => t.trim()).filter(Boolean),
+      };
+      if (editingDocId) {
+        await api.request('PUT', `/knowledge/docs/${editingDocId}`, payload);
+      } else {
+        await api.request('POST', '/knowledge/docs', payload);
+      }
+      setShowDocModal(false);
+      setDocForm({ title: '', content: '', category: 'general', tags: '' });
+      setEditingDocId(null);
+      refetchDocs();
+    } catch (err) { console.error(err); }
+    setSavingDoc(false);
+  };
+
+  const handleDeleteDoc = async (id: string) => {
+    if (!confirm('Delete this document?')) return;
+    try {
+      await api.request('DELETE', `/knowledge/docs/${id}`);
+      refetchDocs();
+    } catch (err) { console.error(err); }
+  };
+
+  const handleEditDoc = (doc: any) => {
+    setDocForm({ title: doc.title, content: doc.content, category: doc.category || 'general', tags: (doc.tags || []).join(', ') });
+    setEditingDocId(doc.id);
+    setShowDocModal(true);
   };
 
   return (
@@ -185,7 +235,26 @@ export default function KnowledgeBasePage() {
 
             {/* Input Area */}
             <div style={{ padding: '20px', borderTop: '1px solid rgb(var(--border))', backgroundColor: 'rgba(var(--surface-hover), 0.5)' }}>
-              <form onSubmit={handleAsk} style={{ display: 'flex', gap: '12px' }}>
+              <form onSubmit={handleAsk} style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                {/* Provider selector */}
+                {providersData?.available?.length > 1 && (
+                  <select
+                    value={selectedProvider}
+                    onChange={e => setSelectedProvider(e.target.value)}
+                    style={{
+                      padding: '14px 12px', borderRadius: '12px', border: '1px solid rgb(var(--border))',
+                      backgroundColor: 'rgb(var(--surface))', color: 'rgb(var(--text-primary))', fontSize: '13px',
+                      outline: 'none', cursor: 'pointer', minWidth: '160px', fontWeight: 500
+                    }}
+                  >
+                    <option value="">Auto ({providersData?.default || 'none'})</option>
+                    {providersData?.available?.map((p: any) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}{p.free ? ' ✦ Free' : ' 💰'}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 <input
                   type="text"
                   value={input}
@@ -219,9 +288,9 @@ export default function KnowledgeBasePage() {
         ) : (
           // ─── Documentation View ───────────────────────────────
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            {/* Search Bar */}
-            <div style={{ padding: '20px', borderBottom: '1px solid rgb(var(--border))' }}>
-              <div style={{ position: 'relative' }}>
+            {/* Search Bar + Create Button */}
+            <div style={{ padding: '20px', borderBottom: '1px solid rgb(var(--border))', display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <div style={{ position: 'relative', flex: 1 }}>
                 <Search style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', width: '18px', height: '18px', color: 'rgb(var(--text-muted))' }} />
                 <input
                   type="text"
@@ -235,29 +304,49 @@ export default function KnowledgeBasePage() {
                   }}
                 />
               </div>
+              <button
+                onClick={() => { setDocForm({ title: '', content: '', category: 'general', tags: '' }); setEditingDocId(null); setShowDocModal(true); }}
+                style={{
+                  padding: '12px 20px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                  background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))',
+                  color: '#fff', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px',
+                  whiteSpace: 'nowrap', transition: 'all 200ms'
+                }}
+              >
+                <Plus style={{ width: '16px', height: '16px' }} /> Create Doc
+              </button>
             </div>
 
-            {/* Docs List */}
+            {/* Docs Grid */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
               {docsLoading ? (
                 <div style={{ textAlign: 'center', color: 'rgb(var(--text-muted))', padding: '40px' }}>Loading documentation...</div>
               ) : docs?.length === 0 ? (
-                <div style={{ textAlign: 'center', color: 'rgb(var(--text-muted))', padding: '40px' }}>No documents found matching "{searchQuery}"</div>
+                <div style={{ textAlign: 'center', color: 'rgb(var(--text-muted))', padding: '40px' }}>No documents found matching &quot;{searchQuery}&quot;</div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' }}>
                   {docs?.map((doc: any) => (
                     <div key={doc.id} style={{
                       backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))',
                       borderRadius: '12px', padding: '20px', display: 'flex', flexDirection: 'column',
-                      transition: 'all 200ms', cursor: 'pointer'
+                      transition: 'all 200ms', position: 'relative'
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgb(var(--primary))'; e.currentTarget.style.transform = 'translateY(-2px)' }}
                     onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgb(var(--border))'; e.currentTarget.style.transform = 'none' }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                      {/* Category + Actions */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                         <span style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', color: 'rgb(var(--primary))', backgroundColor: 'rgba(var(--primary), 0.1)', padding: '4px 8px', borderRadius: '6px' }}>
                           {doc.category}
                         </span>
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <button onClick={() => handleEditDoc(doc)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', borderRadius: '6px', color: 'rgb(var(--text-muted))' }} title="Edit">
+                            <Edit2 style={{ width: '14px', height: '14px' }} />
+                          </button>
+                          <button onClick={() => handleDeleteDoc(doc.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', borderRadius: '6px', color: 'rgb(var(--danger))' }} title="Delete">
+                            <Trash2 style={{ width: '14px', height: '14px' }} />
+                          </button>
+                        </div>
                       </div>
                       
                       <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 8px 0' }}>{doc.title}</h3>
@@ -281,6 +370,67 @@ export default function KnowledgeBasePage() {
         )}
 
       </div>
+
+      {/* ─── Create/Edit Doc Modal ─── */}
+      {showDocModal && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowDocModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{
+            backgroundColor: 'rgb(var(--surface))', borderRadius: '16px', border: '1px solid rgb(var(--border))',
+            width: '560px', maxHeight: '80vh', overflow: 'auto', padding: '32px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>
+                {editingDocId ? 'Edit Document' : 'Create Document'}
+              </h2>
+              <button onClick={() => setShowDocModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgb(var(--text-muted))' }}>
+                <X style={{ width: '20px', height: '20px' }} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgb(var(--text-secondary))', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Title</label>
+                <input value={docForm.title} onChange={e => setDocForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. Nginx Configuration Guide"
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-primary))', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgb(var(--text-secondary))', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Content</label>
+                <textarea value={docForm.content} onChange={e => setDocForm(f => ({ ...f, content: e.target.value }))} placeholder="Document content..."
+                  rows={6} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-primary))', fontSize: '14px', outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgb(var(--text-secondary))', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Category</label>
+                  <select value={docForm.category} onChange={e => setDocForm(f => ({ ...f, category: e.target.value }))}
+                    style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-primary))', fontSize: '14px', outline: 'none' }}>
+                    <option value="general">General</option>
+                    <option value="architecture">Architecture</option>
+                    <option value="deployment">Deployment</option>
+                    <option value="infrastructure">Infrastructure</option>
+                    <option value="security">Security</option>
+                    <option value="troubleshooting">Troubleshooting</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgb(var(--text-secondary))', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Tags</label>
+                  <input value={docForm.tags} onChange={e => setDocForm(f => ({ ...f, tags: e.target.value }))} placeholder="nginx, config, deploy"
+                    style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-primary))', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
+                </div>
+              </div>
+              <button onClick={handleSaveDoc} disabled={savingDoc || !docForm.title.trim() || !docForm.content.trim()}
+                style={{
+                  padding: '14px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+                  background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))',
+                  color: '#fff', fontSize: '14px', fontWeight: 600, marginTop: '8px',
+                  opacity: savingDoc || !docForm.title.trim() ? 0.6 : 1, transition: 'all 200ms'
+                }}
+              >
+                {savingDoc ? 'Saving...' : editingDocId ? 'Update Document' : 'Create Document'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

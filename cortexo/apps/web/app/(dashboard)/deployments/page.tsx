@@ -3,7 +3,7 @@
 import {
   Rocket, CheckCircle, XCircle, Clock, Loader2, RotateCcw,
   GitBranch, MoreVertical, Timer, Activity, Trash2, Edit3, Save,
-  ChevronUp, Terminal, Search, Layers, Zap, GitCompareArrows,
+  ChevronUp, Terminal as TerminalIcon, Search, Layers, Zap, GitCompareArrows,
 } from 'lucide-react';
 import DeployForm, { type DeployFormInitialData } from '@/components/deploy-form';
 import ConfirmModal from '@/components/confirm-modal';
@@ -445,7 +445,7 @@ export default function DeploymentsPage() {
                         padding: '4px 8px', borderRadius: '6px', backgroundColor: 'rgba(59, 130, 246, 0.1)', border: 'none', cursor: 'pointer',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3B82F6', transition: 'background-color 150ms'
                       }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.2)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.1)'}>
-                        <Terminal style={{ width: '14px', height: '14px' }} />
+                        <TerminalIcon style={{ width: '14px', height: '14px' }} />
                       </button>
                       
                       {deploy.status === 'failed' && (

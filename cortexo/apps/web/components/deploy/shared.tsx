@@ -11,15 +11,14 @@ export const g3: React.CSSProperties = { display:'grid',gridTemplateColumns:'1fr
 
 // ─── Step Definitions ───────────────────────────────────────────────────────
 
-import { Rocket, Globe, FolderKey, Database, Cpu, Shield } from 'lucide-react';
+import { Rocket, Globe, Database, Cpu, Shield } from 'lucide-react';
 
 export const STEPS = [
   { id:'project', num:1, title:'Project & Server',   desc:'Select project and target server',      icon:Rocket, color:'#818CF8' },
   { id:'nginx',   num:2, title:'Nginx Configuration', desc:'Domain, SSL, and proxy settings',       icon:Globe,  color:'#3B82F6' },
-  { id:'perms',   num:3, title:'Folder Permissions',  desc:'Ownership and file access control',     icon:FolderKey,color:'#10B981' },
-  { id:'db',      num:4, title:'Database',            desc:'DB config, migrations, SQL import',    icon:Database,color:'#EC4899' },
-  { id:'pm2',     num:5, title:'PM2 / Services',      desc:'Process manager and service config',    icon:Cpu,    color:'#8B5CF6' },
-  { id:'hooks',   num:6, title:'Review & Deploy',   desc:'Review all settings and launch',        icon:Shield, color:'#EF4444' },
+  { id:'db',      num:3, title:'Database',            desc:'DB config, migrations, SQL import',    icon:Database,color:'#EC4899' },
+  { id:'pm2',     num:4, title:'PM2 / Services',      desc:'Process manager and service config',    icon:Cpu,    color:'#8B5CF6' },
+  { id:'hooks',   num:5, title:'Review & Deploy',   desc:'Review all settings and launch',        icon:Shield, color:'#EF4444' },
 ] as const;
 
 // ─── Shared Types ───────────────────────────────────────────────────────────

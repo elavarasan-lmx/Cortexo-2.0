@@ -502,6 +502,8 @@ class ApiClient {
   getServerMountStatus(id: number)                   { return this.request<{ mounted: boolean; path?: string }>('GET', `/server-mounts/${id}/status`); }
   browseServerMount(id: number, path: string = '.')  { return this.request<{ entries: { name: string; type: string; size: number }[] }>('POST', `/server-mounts/${id}/browse`, { path }); }
   readServerFile(id: number, filePath: string)       { return this.request<{ content: string; encoding: string }>('POST', `/server-mounts/${id}/read-file`, { filePath }); }
+  toggleMountReadOnly(id: number, readOnly: boolean) { return this.request<{ readOnly: boolean; remounted: boolean }>('PUT', `/server-mounts/${id}/toggle-readonly`, { readOnly }); }
+  scanMountChanges(id: number, minutes = 30)          { return this.request<{ mountName: string; totalChanges: number; changes: any[] }>('POST', `/server-mounts/${id}/scan-changes`, { minutes }); }
 
   // ─── Log Viewer ───────────────────────────────────────────────────────────
   getLogSources()                                    { return this.request<LogSource[]>('GET', '/logs/sources'); }
@@ -638,6 +640,18 @@ class ApiClient {
   createDbProfile(data: Record<string, unknown>)     { return this.request<Record<string, unknown>>('POST', '/db-profiles', data); }
   updateDbProfile(id: string, data: Record<string, unknown>) { return this.request<Record<string, unknown>>('PATCH', `/db-profiles/${id}`, data); }
   deleteDbProfile(id: string)                        { return this.request<{ success: boolean }>('DELETE', `/db-profiles/${id}`); }
+
+  // ─── Client Git Profiles (new client provisioning) ────────────────────────
+  getClientGitProfiles()                                    { return this.request<Record<string, unknown>[]>('GET', '/client-git-profiles'); }
+  createClientGitProfile(data: Record<string, unknown>)     { return this.request<Record<string, unknown>>('POST', '/client-git-profiles', data); }
+  updateClientGitProfile(id: string, data: Record<string, unknown>) { return this.request<Record<string, unknown>>('PATCH', `/client-git-profiles/${id}`, data); }
+  deleteClientGitProfile(id: string)                        { return this.request<{ success: boolean }>('DELETE', `/client-git-profiles/${id}`); }
+
+  // ─── Client DB Profiles (new client DB provisioning) ──────────────────────
+  getClientDbProfiles()                                     { return this.request<Record<string, unknown>[]>('GET', '/client-db-profiles'); }
+  createClientDbProfile(data: Record<string, unknown>)      { return this.request<Record<string, unknown>>('POST', '/client-db-profiles', data); }
+  updateClientDbProfile(id: string, data: Record<string, unknown>) { return this.request<Record<string, unknown>>('PATCH', `/client-db-profiles/${id}`, data); }
+  deleteClientDbProfile(id: string)                         { return this.request<{ success: boolean }>('DELETE', `/client-db-profiles/${id}`); }
 
   // ─── WinBull Deploy Engine ────────────────────────────────────────────────
   deployWinbull(data: { projectId: number; serverId: number; settings: Record<string, unknown> }) {

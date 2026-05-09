@@ -74,8 +74,77 @@ export const dbProfiles = pgTable(
   ],
 );
 
+/**
+ * Client Git Profiles — Git repo templates for new client provisioning.
+ * Used when setting up a new tenant/client deployment.
+ */
+export const clientGitProfiles = pgTable(
+  'client_git_profiles',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .defaultRandom(),
+    orgId: uuid('org_id')
+      .references(() => organizations.id)
+      .notNull(),
+    name: varchar('name', { length: 100 }).notNull(),
+    repoUrl: varchar('repo_url', { length: 500 }).notNull(),
+    branch: varchar('branch', { length: 100 }).default('main'),
+    templatePath: varchar('template_path', { length: 500 }),
+    authType: varchar('auth_type', { length: 20 }).default('token'),
+    authValue: text('auth_value'),
+    notes: text('notes'),
+    createdAt: timestamp('created_at')
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('idx_client_git_profiles_org').on(table.orgId),
+  ],
+);
+
+/**
+ * Client DB Profiles — Template database credentials for new client provisioning.
+ * Used to clone/create databases for new tenants.
+ */
+export const clientDbProfiles = pgTable(
+  'client_db_profiles',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .defaultRandom(),
+    orgId: uuid('org_id')
+      .references(() => organizations.id)
+      .notNull(),
+    name: varchar('name', { length: 100 }).notNull(),
+    host: varchar('host', { length: 255 }).notNull(),
+    port: integer('port').default(3306),
+    username: varchar('username', { length: 100 }).notNull(),
+    password: text('password'),
+    templateDb: varchar('template_db', { length: 100 }),
+    databasePrefix: varchar('database_prefix', { length: 50 }),
+    notes: text('notes'),
+    createdAt: timestamp('created_at')
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('idx_client_db_profiles_org').on(table.orgId),
+  ],
+);
+
 // Type exports
 export type SourceProfile = typeof sourceProfiles.$inferSelect;
 export type NewSourceProfile = typeof sourceProfiles.$inferInsert;
 export type DbProfile = typeof dbProfiles.$inferSelect;
 export type NewDbProfile = typeof dbProfiles.$inferInsert;
+export type ClientGitProfile = typeof clientGitProfiles.$inferSelect;
+export type NewClientGitProfile = typeof clientGitProfiles.$inferInsert;
+export type ClientDbProfile = typeof clientDbProfiles.$inferSelect;
+export type NewClientDbProfile = typeof clientDbProfiles.$inferInsert;

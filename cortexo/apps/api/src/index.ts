@@ -49,11 +49,11 @@ import { winbullRoutes } from './routes/winbull.js';
 import { winbullDeployRoutes } from './routes/winbull-deploy.js';
 import { brainRoutes } from './routes/brain.js';
 import { knowledgeRoutes } from './routes/knowledge.js';
-import { testingRoutes } from './routes/testing.js';
+
 import { menuPermissionRoutes } from './routes/menu-permissions.js';
 import { menuItemRoutes } from './routes/menu-items.js';
 import { usageLimitsPlugin } from './middleware/usage-limits.js';
-import { authPlugin, authMiddleware } from './middleware/auth.js';
+import { authMiddleware } from './middleware/auth.js';
 import { getDb } from './lib/db.js';
 import { deployments } from '@cortexo/db/schema';
 import { eq, and, lt, sql as drizzleSql } from 'drizzle-orm';
@@ -241,93 +241,18 @@ async function start() {
   await app.register(winbullRoutes, { prefix: '/v1' });
   await app.register(brainRoutes, { prefix: '/v1' });
   await app.register(knowledgeRoutes, { prefix: '/v1' });
-  await app.register(testingRoutes, { prefix: '/v1' });
+
   await app.register(menuPermissionRoutes, { prefix: '/v1' });
   await app.register(menuItemRoutes, { prefix: '/v1' });
 
   // Note: usageLimitsPlugin uses addHook — must be registered at root scope, not prefixed
   await app.register(usageLimitsPlugin);
 
-  // --- API index ---
+  // --- API index (auto-generated from registered routes) ---
   app.get('/', async () => ({
     service: 'cortexo-api',
     version: '0.5.0',
-    endpoints: [
-      'GET  /v1/health',
-      'POST /v1/auth/register',
-      'POST /v1/auth/login',
-      'GET  /v1/auth/me',
-      'GET  /v1/auth/github',
-      'GET  /v1/auth/github/callback',
-      'POST /v1/auth/refresh',
-      'POST /v1/auth/forgot-password',
-      'POST /v1/auth/reset-password',
-      'GET  /v1/projects',
-      'POST /v1/projects',
-      'GET  /v1/projects/:id',
-      'POST /v1/projects/:id/regenerate-key',
-      'GET  /v1/pipelines',
-      'POST /v1/pipelines',
-      'POST /v1/pipelines/:id/run',
-      'GET  /v1/pipeline-runs',
-      'GET  /v1/pipeline-runs/:runId',
-      'POST /v1/pipeline-runs/:runId/retry',
-      'POST /v1/pipeline-runs/:runId/cancel',
-      'GET  /v1/deployments',
-      'POST /v1/deployments',
-      'GET  /v1/deployments/:id',
-      'GET  /v1/deployments/:id/logs',
-      'GET  /v1/deployments/resolve/:projectId',
-      'POST /v1/deployments/:id/rollback',
-      'GET  /v1/deploy-targets',
-      'POST /v1/deploy-targets',
-      'POST /v1/deploy-targets/:id/test',
-      'POST /v1/servers/:id/test-ssh',
-      'GET  /v1/errors',
-      'GET  /v1/errors/:id',
-      'PATCH /v1/errors/:id',
-      'POST /v1/errors/:id/assign',
-      'GET  /v1/errors/:id/events',
-      'POST /v1/ingest/error',
-      'POST /v1/ingest/performance',
-      'POST /v1/ingest/breadcrumb',
-      'GET  /v1/notifications',
-      'PATCH /v1/notifications/:id/read',
-      'POST /v1/notifications/read-all',
-      'POST /v1/webhooks/github',
-      'POST /v1/webhooks/gitlab',
-      'GET  /v1/org/members',
-      'POST /v1/org/members/invite',
-      // Phase 4+
-      'GET  /v1/cron-jobs',
-      'POST /v1/cron-jobs',
-      'POST /v1/cron-jobs/:id/run',
-      'GET  /v1/provision/defaults',
-      'POST /v1/provision/start',
-      'GET  /v1/provision/status/:jobId',
-      'GET  /v1/analytics/summary',
-      'GET  /v1/analytics/daily',
-      'GET  /v1/analytics/health-score',
-      'GET  /v1/alert-channels',
-      'POST /v1/alert-channels',
-      'GET  /v1/alert-rules',
-      'GET  /v1/alert-history',
-      'GET  /v1/deprecation/results',
-      'GET  /v1/deprecation/summary',
-      'POST /v1/deprecation/scan',
-      'GET  /v1/judge-scores',
-      'POST /v1/judge-scores',
-      'GET  /v1/judge-scores/stats/aggregate',
-      'POST /v1/judge-scores/trigger',
-      // Code Review Engine (F6)
-      'GET  /v1/projects/:id/code-reviews',
-      'POST /v1/projects/:id/code-reviews',
-      'GET  /v1/code-reviews/:id',
-      'GET  /v1/code-reviews/:id/findings',
-      'PUT  /v1/code-review-findings/:id',
-      'GET  /v1/projects/:id/code-review-stats',
-      'GET  /v1/code-review-rules',
-    ],
+    docs: '/docs',
   }));
 
   // --- Start ---

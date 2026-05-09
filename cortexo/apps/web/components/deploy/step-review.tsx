@@ -29,10 +29,7 @@ interface ReviewStepProps {
   dbUser: string;
   dbMigrate: boolean;
   dbMigrateCmd: string;
-  // PM2
-  pm2Name: string;
-  pm2Interpreter: string;
-  pm2Instances: string;
+  // PM2 — auto-generated from slug
   pm2Restart: boolean;
   // Permissions
   permUser: string;
@@ -48,9 +45,12 @@ export default function StepReview(props: ReviewStepProps) {
     selectedProject, projects, branch, environment, serverId, serverList,
     remotePath, healthCheckUrl, nginxDomain, nginxPort, nginxRoot, phpVer,
     socketPort, wsPort, sslCert, crons, dbHost, dbPort, dbName, dbUser,
-    dbMigrate, dbMigrateCmd, pm2Name, pm2Interpreter, pm2Instances, pm2Restart,
+    dbMigrate, dbMigrateCmd, pm2Restart,
     permUser, permGroup, permFile, permDir, folders, permWritable,
   } = props;
+
+  // Derive slug from remotePath (e.g. /var/www/html/winbullstaging → winbullstaging)
+  const slug = (remotePath || '').split('/').pop() || '<slug>';
 
   return (
     <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
@@ -106,16 +106,19 @@ export default function StepReview(props: ReviewStepProps) {
         </div>
       )}
 
-      {/* PM2 */}
-      {pm2Name&&(
+      {/* PM2 — Auto-generated */}
+      {remotePath&&(
         <div style={{padding:'14px 16px',borderRadius:'12px',backgroundColor:'rgba(139,92,246,0.06)',border:'1px solid rgba(139,92,246,0.15)'}}>
-          <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'#8B5CF6',margin:'0 0 8px'}}>PM2 Service</p>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'6px',fontSize:'12px',color:'rgb(var(--text-secondary))'}}>
-            <div><span style={{color:'rgb(var(--text-muted))'}}>Name:</span> {pm2Name}</div>
-            <div><span style={{color:'rgb(var(--text-muted))'}}>Interpreter:</span> {pm2Interpreter}</div>
-            <div><span style={{color:'rgb(var(--text-muted))'}}>Instances:</span> {pm2Instances}</div>
-            {pm2Restart&&<div><span style={{color:'rgb(var(--text-muted))'}}>Auto-restart:</span> ✓</div>}
-          </div>
+          <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'#8B5CF6',margin:'0 0 8px',display:'flex',alignItems:'center',gap:'6px'}}>
+            PM2 Processes
+            <span style={{fontSize:'9px',fontWeight:500,color:'rgb(var(--text-muted))',textTransform:'none',letterSpacing:0}}>— auto-generated</span>
+          </p>
+          <pre style={{margin:0,padding:'10px 12px',borderRadius:'8px',backgroundColor:'rgba(0,0,0,0.15)',fontSize:'11px',fontFamily:"'JetBrains Mono',monospace",color:'rgb(var(--text-secondary))',whiteSpace:'pre-wrap',lineHeight:1.7}}>
+{`pm2 start ${remotePath}/client/${slug}-ws.js --name "${slug}-ws"
+pm2 start ${remotePath}/lmxtrade/${slug}winlitesocket.js --name "${slug}-socketio"
+pm2 save`}
+          </pre>
+          {pm2Restart && <div style={{marginTop:'6px',fontSize:'11px',color:'rgb(var(--text-muted))'}}>✓ Auto-restart on deploy</div>}
         </div>
       )}
 
@@ -131,7 +134,7 @@ export default function StepReview(props: ReviewStepProps) {
       )}
 
       {/* Nothing configured warning */}
-      {!nginxDomain&&crons.length===0&&!dbHost&&!pm2Name&&folders.length===0&&(
+      {!nginxDomain&&crons.length===0&&!dbHost&&!remotePath&&folders.length===0&&(
         <div style={{padding:'20px',textAlign:'center',borderRadius:'12px',border:'1px dashed rgb(var(--border))',color:'rgb(var(--text-muted))',fontSize:'13px'}}>
           Only project, server, and git pull configured. Other steps are optional.
         </div>

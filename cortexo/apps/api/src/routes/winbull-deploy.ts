@@ -176,14 +176,6 @@ function buildNginxConfig(s: DeploySettings): string {
         try_files \\$uri \\$uri/ /lmxtrade/winbullliteapi/index.php?\\$query_string;
     }
 
-    # PHP-FPM
-    location ~ \\.php$ {
-        include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
-        fastcgi_param SCRIPT_FILENAME \\$document_root\\$fastcgi_script_name;
-        include fastcgi_params;
-    }
-
     location ~ /\\.ht {
         deny all;
     }
@@ -247,8 +239,8 @@ function buildLogCleanupCmds(s: DeploySettings): string[] {
   return [
     `cd ${s.serverPath}`,
     `> lmxtrade/winbullliteapi/storage/logs/lumen.log 2>/dev/null || true`,
-    `rm -f application/logs/log-*.php 2>/dev/null || true`,
-    `rm -f admin/application/logs/log-*.php 2>/dev/null || true`,
+    `find application/logs -name 'log-*.php' -exec truncate -s 0 {} + 2>/dev/null || true`,
+    `find admin/application/logs -name 'log-*.php' -exec truncate -s 0 {} + 2>/dev/null || true`,
     `rm -rf lmxtrade/winbullliteapi/storage/framework/cache/data/* 2>/dev/null || true`,
     `rm -rf lmxtrade/winbullliteapi/storage/framework/sessions/* 2>/dev/null || true`,
     `rm -rf lmxtrade/winbullliteapi/storage/framework/views/* 2>/dev/null || true`,
@@ -438,10 +430,27 @@ export async function winbullDeployRoutes(app: FastifyInstance) {
       sendEvent({ type: 'step_start', step: 'Database Setup', index: 5 });
       const step6Start = Date.now();
       try {
+        const mysqlAuth = `mysql -h ${s.dbHost} -u ${s.dbUser} -p'${s.dbPassword}'`;
+        const dumpAuth = `mysqldump -h ${s.dbHost} -u ${s.dbUser} -p'${s.dbPassword}'`;
+
+        // Phase 1: Create database
+        sendEvent({ type: 'status', message: '📦 Creating database...' });
+        const createResult = await sshExec(conn, `${mysqlAuth} -e "CREATE DATABASE IF NOT EXISTS \\\`${s.dbName}\\\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"`);
+        if (createResult.code !== 0) throw new Error(`CREATE DATABASE failed: ${createResult.stderr}`);
+
+        // Phase 2: Clone schema + data from winbullSource
+        sendEvent({ type: 'status', message: '📥 Importing base schema from winbullSource...' });
+        const importResult = await sshExec(conn, `${dumpAuth} winbullSource | ${mysqlAuth} ${s.dbName}`);
+        if (importResult.code !== 0) throw new Error(`Schema import failed: ${importResult.stderr}`);
+
+        // Phase 3: Truncate client data + update configs
+        sendEvent({ type: 'status', message: '🧹 Cleaning data & updating configs...' });
         const sqlScript = buildTruncateSQL(s);
-        const escapedSQL = sqlScript.replace(/'/g, "'\\''");
-        const result = await sshExec(conn, `mysql -h ${s.dbHost} -u ${s.dbUser} -p'${s.dbPassword}' -e '${escapedSQL}'`);
-        const r: StepResult = { step: 'Database Setup', status: result.code === 0 ? 'success' : 'failed', output: 'Truncated 37 tables + updated configs', error: result.stderr || undefined, duration: Date.now() - step6Start };
+        const tmpFile = `/tmp/cortexo_deploy_${s.clientSlug}_${Date.now()}.sql`;
+        await sshExec(conn, `cat > ${tmpFile} << 'CORTEXO_SQL_EOF'\n${sqlScript}\nCORTEXO_SQL_EOF`);
+        const result = await sshExec(conn, `${mysqlAuth} < ${tmpFile} && rm -f ${tmpFile}`);
+
+        const r: StepResult = { step: 'Database Setup', status: result.code === 0 ? 'success' : 'failed', output: `Created DB ${s.dbName} → imported schema → truncated 37 tables + updated configs`, error: result.stderr || undefined, duration: Date.now() - step6Start };
         results.push(r);
         sendEvent({ type: 'step_done', ...r, index: 5 });
       } catch (e: any) {

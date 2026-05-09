@@ -302,7 +302,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
       }catch{}
     };
     poll();
-    const iv = setInterval(poll, 2000);
+    const iv = setInterval(poll, 1000);
     return ()=>{ cancelled=true; clearInterval(iv); };
   },[deployId]);
 
@@ -325,10 +325,9 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
     switch(idx){
       case 0:return!!(selectedProject&&serverId&&remotePath);
       case 1:return!!(nginxDomain&&nginxRoot);
-      case 2:return folders.length>0||(!!permUser&&!!permGroup);
-      case 3:return!!(dbHost&&dbName);
-      case 4:return!!(pm2Name&&pm2Script);
-      case 5:return!!(selectedProject&&serverId&&remotePath);
+      case 2:return!!(dbHost&&dbName);
+      case 3:return true; // PM2 auto-generated from slug
+      case 4:return!!(selectedProject&&serverId&&remotePath);
       default:return false;
     }
   };
@@ -336,36 +335,6 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
   return (
     <div style={{position:'fixed',inset:0,zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',backgroundColor:'rgba(0,0,0,0.6)'}} onClick={onClose}>
       <div onClick={e=>e.stopPropagation()} style={{ width:'780px',maxHeight:'88vh',display:'flex',flexDirection:'column',borderRadius:'20px',backgroundColor:'rgb(var(--surface))',border:'1px solid rgb(var(--border))',boxShadow:'0 24px 64px rgba(0,0,0,0.4)',overflow:'hidden' }}>
-
-        {/* Header */}
-        <div style={{padding:'20px 28px',borderBottom:'1px solid rgb(var(--border))',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
-          <div>
-            <h2 style={{fontSize:'18px',fontWeight:700,color:'rgb(var(--text-primary))',margin:0}}>
-              {deployId ? <><Terminal style={{width:'18px',height:'18px',display:'inline',verticalAlign:'middle',marginRight:'8px',color:'#10B981'}}/>Live Deploy Terminal</> : 'Deploy Configuration'}
-            </h2>
-            {!deployId && <p style={{fontSize:'12px',color:'rgb(var(--text-muted))',margin:'4px 0 0'}}>Step {step+1} of {STEPS.length} — {cur.title}</p>}
-          </div>
-          <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
-            {!deployId && (
-              <button
-                onClick={clearDraft}
-                style={{
-                  display:'flex',alignItems:'center',gap:'6px',
-                  padding:'6px 10px',borderRadius:'8px',
-                  fontSize:'11px',fontWeight:600,
-                  backgroundColor:'rgba(239, 68, 68, 0.1)',
-                  color:'#EF4444',border:'none',cursor:'pointer',
-                  transition:'background-color 200ms',
-                }}
-                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.15)'}
-                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'}
-              >
-                <Trash2 style={{width:'12px',height:'12px'}}/> Clear
-              </button>
-            )}
-            <button onClick={deployId ? ()=>{onSuccess();} : onClose} style={{background:'none',border:'none',cursor:'pointer',color:'rgb(var(--text-muted))'}}><X style={{width:'18px',height:'18px'}}/></button>
-          </div>
-        </div>
 
         {/* ════════════ LIVE TERMINAL MODE ════════════ */}
         {deployId ? (
@@ -377,6 +346,34 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
             onSuccess={onSuccess}
           />
         ) : (<>
+
+        {/* Header — form mode only */}
+        <div style={{padding:'20px 28px',borderBottom:'1px solid rgb(var(--border))',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
+          <div>
+            <h2 style={{fontSize:'18px',fontWeight:700,color:'rgb(var(--text-primary))',margin:0}}>
+              Deploy Configuration
+            </h2>
+            <p style={{fontSize:'12px',color:'rgb(var(--text-muted))',margin:'4px 0 0'}}>Step {step+1} of {STEPS.length} — {cur.title}</p>
+          </div>
+          <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
+            <button
+              onClick={clearDraft}
+              style={{
+                display:'flex',alignItems:'center',gap:'6px',
+                padding:'6px 10px',borderRadius:'8px',
+                fontSize:'11px',fontWeight:600,
+                backgroundColor:'rgba(239, 68, 68, 0.1)',
+                color:'#EF4444',border:'none',cursor:'pointer',
+                transition:'background-color 200ms',
+              }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.15)'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'}
+            >
+              <Trash2 style={{width:'12px',height:'12px'}}/> Clear
+            </button>
+            <button onClick={onClose} style={{background:'none',border:'none',cursor:'pointer',color:'rgb(var(--text-muted))'}}><X style={{width:'18px',height:'18px'}}/></button>
+          </div>
+        </div>
 
         {/* ════════════ FORM MODE ════════════ */}
 
@@ -457,11 +454,34 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
             <Toggle checked={notifyOnComplete} onChange={setNotifyOnComplete} label="Send email notification on complete"/>
             <Toggle checked={truncateLogs} onChange={setTruncateLogs} label="Truncate logs on deploy"/>
             {truncateLogs && (
-              <div style={{padding:'10px 14px',borderRadius:'8px',backgroundColor:'rgba(245,158,11,0.06)',border:'1px solid rgba(245,158,11,0.15)',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',color:'rgb(var(--text-secondary))',lineHeight:1.8}}>
-                <div style={{color:'#F59E0B',fontWeight:600,marginBottom:'4px'}}>🗑️ Will clear on deploy:</div>
-                <div>• {remotePath || '/var/www/html/client'}/application/logs/*.php</div>
-                <div>• {remotePath || '/var/www/html/client'}/lmxtrade/winbullliteapi/storage/logs/*.log</div>
-                <div>• {remotePath || '/var/www/html/client'}/logs/*</div>
+              <div style={{marginTop:'8px'}}>
+                <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'#F59E0B',margin:'0 0 6px',display:'flex',alignItems:'center',gap:'6px'}}>
+                  ⚡ Log Cleanup Preview
+                  <span style={{fontSize:'9px',fontWeight:500,color:'rgb(var(--text-muted))',textTransform:'none',letterSpacing:0}}>— executed after deployment</span>
+                </p>
+                <pre style={{margin:0,padding:'12px 14px',borderRadius:'8px',backgroundColor:'rgba(0,0,0,0.2)',border:'1px solid rgba(245,158,11,0.2)',fontSize:'11px',fontFamily:"'JetBrains Mono',monospace",color:'rgb(var(--text-primary))',overflowX:'auto',whiteSpace:'pre-wrap',lineHeight:1.7}}>
+{`# ===========================
+# Truncate all log files
+# ===========================
+
+# Laravel logs
+> ${remotePath || '/var/www/html/<slug>'}/lmxtrade/winbullliteapi/storage/logs/lumen.log
+
+# CodeIgniter logs (truncate data, keep files)
+find ${remotePath || '/var/www/html/<slug>'}/application/logs -name 'log-*.php' -exec truncate -s 0 {} +
+
+# Admin logs (truncate data, keep files)
+find ${remotePath || '/var/www/html/<slug>'}/admin/application/logs -name 'log-*.php' -exec truncate -s 0 {} +
+
+# Laravel cache & sessions (safe to remove, framework regenerates)
+rm -rf ${remotePath || '/var/www/html/<slug>'}/lmxtrade/winbullliteapi/storage/framework/cache/data/*
+rm -rf ${remotePath || '/var/www/html/<slug>'}/lmxtrade/winbullliteapi/storage/framework/sessions/*
+rm -rf ${remotePath || '/var/www/html/<slug>'}/lmxtrade/winbullliteapi/storage/framework/views/*
+
+# PM2 logs
+pm2 flush ${(remotePath || '').split('/').pop() || '<slug>'}-ws
+pm2 flush ${(remotePath || '').split('/').pop() || '<slug>'}-socketio`}
+                </pre>
               </div>
             )}
           </>)}
@@ -473,8 +493,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
               <div><label style={lbl}>Listen Port</label><input value={nginxPort} onChange={e=>setNginxPort(e.target.value)} placeholder="80" style={inp}/></div>
             </div>
             <div style={g2}>
-              <div><label style={lbl}>Document Root</label><input value={nginxRoot} onChange={e=>setNginxRoot(e.target.value)} placeholder="/var/www/html/maharaj" style={inp}/></div>
-              <div><label style={lbl}>PHP-FPM Version</label><select value={phpVer} onChange={e=>setPhpVer(e.target.value)} style={{...inp,fontFamily:'inherit'}}><option value="8.3">PHP 8.3</option><option value="8.2">PHP 8.2</option><option value="8.1">PHP 8.1</option><option value="7.4">PHP 7.4</option></select></div>
+              <div style={{gridColumn:'1 / -1'}}><label style={lbl}>Document Root</label><input value={nginxRoot} onChange={e=>setNginxRoot(e.target.value)} placeholder="/var/www/html/maharaj" style={inp}/></div>
             </div>
 
             {/* Socket proxies */}
@@ -499,78 +518,88 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
             </div>
 
             <Toggle checked={nginxAutoGen} onChange={setNginxAutoGen} label="Auto-generate nginx config file on deploy"/>
+
+            {/* Live Nginx Config Preview */}
+            {(nginxDomain || nginxRoot) && (
+              <div style={{marginTop:'8px'}}>
+                <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'#A855F7',margin:'0 0 6px',display:'flex',alignItems:'center',gap:'6px'}}>
+                  ⚡ Nginx Config Preview
+                  <span style={{fontSize:'9px',fontWeight:500,color:'rgb(var(--text-muted))',textTransform:'none',letterSpacing:0}}>— auto-generated from above fields</span>
+                </p>
+                <pre style={{margin:0,padding:'12px 14px',borderRadius:'8px',backgroundColor:'rgba(0,0,0,0.2)',border:'1px solid rgba(168,85,247,0.2)',fontSize:'11px',fontFamily:"'JetBrains Mono',monospace",color:'rgb(var(--text-primary))',overflowX:'auto',whiteSpace:'pre-wrap',lineHeight:1.7}}>
+{`server {
+    listen ${nginxPort || '80'};
+    server_name ${nginxDomain || '<domain>'};
+
+    root ${nginxRoot || '<document-root>'};
+    index index.php index.html;
+${socketPort ? `
+    # Main Socket (port ${socketPort})
+    location /socket.io/ {
+        proxy_pass http://localhost:${socketPort};
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 86400;
+    }
+` : ''}${rateSocketPort ? `
+    # Rate Socket (port ${rateSocketPort})
+    location /ratesocket/ {
+        proxy_pass http://localhost:${rateSocketPort};
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 86400;
+    }
+` : ''}${wsPort ? `
+    # Native WebSocket (port ${wsPort})
+    location /ws {
+        proxy_pass http://127.0.0.1:${wsPort};
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_read_timeout 86400;
+        proxy_send_timeout 86400;
+        proxy_buffering off;
+    }
+` : ''}
+    # Admin Panel
+    location /admin/ {
+        try_files $uri $uri/ /admin/index.php?$query_string;
+    }
+
+    # CodeIgniter routing
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # Mobile API
+    location /mobileapi/ {
+        try_files $uri $uri/ /mobileapi/index.php?$query_string;
+    }
+
+    # Laravel
+    location /lmxtrade/winbullliteapi/ {
+        try_files $uri $uri/ /lmxtrade/winbullliteapi/index.php?$query_string;
+    }
+
+    location ~ /\\.ht {
+        deny all;
+    }
+}`}
+                </pre>
+              </div>
+            )}
           </>)}
 
           {step===2&&(<>
-            {/* Default ownership & permissions */}
-            <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'rgb(var(--primary))',margin:'0 0 2px'}}>Default Ownership</p>
-            <div style={g2}>
-              <div><label style={lbl}>Owner User</label><input value={permUser} onChange={e=>setPermUser(e.target.value)} style={inp}/></div>
-              <div><label style={lbl}>Owner Group</label><input value={permGroup} onChange={e=>setPermGroup(e.target.value)} style={inp}/></div>
-            </div>
-            <div style={g2}>
-              <div><label style={lbl}>File Permission (octal)</label><input value={permFile} onChange={e=>setPermFile(e.target.value)} placeholder="644" style={inp}/></div>
-              <div><label style={lbl}>Directory Permission (octal)</label><input value={permDir} onChange={e=>setPermDir(e.target.value)} placeholder="755" style={inp}/></div>
-            </div>
-
-            {/* Live preview */}
-            <div style={{padding:'10px 14px',borderRadius:'8px',backgroundColor:'rgba(16,185,129,0.06)',border:'1px solid rgba(16,185,129,0.15)',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',color:'rgb(var(--text-secondary))',lineHeight:1.8}}>
-              <div>d{octalToRwx(permDir)} {permUser} {permGroup} 4096 {new Date().toLocaleDateString('en-US',{month:'short',day:'2-digit'})} {new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false})} <span style={{color:'#3B82F6',fontWeight:600}}>project-root/</span></div>
-              <div>-{octalToRwx(permFile)} {permUser} {permGroup}  128 {new Date().toLocaleDateString('en-US',{month:'short',day:'2-digit'})} {new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false})} <span style={{color:'rgb(var(--text-muted))'}}>index.php</span></div>
-            </div>
-
-            {/* Folder creation */}
-            <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'rgb(var(--primary))',margin:'6px 0 0',borderTop:'1px solid rgb(var(--border))',paddingTop:'14px'}}>Folders to Create</p>
-            {folders.map((f,i)=>(
-              <div key={i} style={{display:'flex',gap:'8px',alignItems:'flex-end'}}>
-                <div style={{flex:1}}><label style={lbl}>Path</label><input value={f.path} onChange={e=>updateFolder(i,'path',e.target.value)} placeholder="/var/www/html/client" style={inp}/></div>
-                <div style={{width:'70px'}}><label style={lbl}>Perm</label><input value={f.perm} onChange={e=>updateFolder(i,'perm',e.target.value)} style={inp}/></div>
-                <div style={{width:'90px'}}><label style={lbl}>Owner</label><input value={f.owner} onChange={e=>updateFolder(i,'owner',e.target.value)} style={inp}/></div>
-                <button onClick={()=>removeFolder(i)} style={{width:'38px',height:'38px',borderRadius:'10px',border:'1px solid rgba(239,68,68,0.3)',backgroundColor:'rgba(239,68,68,0.06)',color:'#EF4444',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><Minus style={{width:'14px',height:'14px'}}/></button>
-              </div>
-            ))}
-
-            {/* Folder preview */}
-            {folders.length>0 && (
-              <div style={{padding:'10px 14px',borderRadius:'8px',backgroundColor:'rgba(0,0,0,0.15)',border:'1px solid rgb(var(--border))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',color:'rgb(var(--text-secondary))',lineHeight:1.8,overflowX:'auto'}}>
-                <div style={{color:'rgb(var(--text-muted))',marginBottom:'4px'}}>$ ls -la</div>
-                {folders.map((f,i)=>(
-                  <div key={i}>d{octalToRwx(f.perm)} {f.owner} {f.group} 4096 {new Date().toLocaleDateString('en-US',{month:'short',day:'2-digit'})} {new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false})} <span style={{color:'#3B82F6',fontWeight:600}}>{f.path.split('/').pop()||f.path}</span></div>
-                ))}
-              </div>
-            )}
-
-            {/* Add + presets */}
-            <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
-              <button onClick={()=>addFolder()} style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 16px',borderRadius:'10px',border:'1px dashed rgb(var(--border))',backgroundColor:'transparent',color:'rgb(var(--text-secondary))',cursor:'pointer',fontSize:'12px',fontWeight:600}}><Plus style={{width:'13px',height:'13px'}}/>Add Folder</button>
-              <button onClick={()=>{
-                const slug=remotePath.split('/').pop()||'client';
-                const base=`/var/www/html/${slug}`;
-                const std=['admin','api','application','assets','client','lmxtrade','logs','mobileapi'];
-                std.forEach(s=>addFolder(`${base}/${s}`,'775'));
-              }} style={{padding:'6px 14px',borderRadius:'8px',border:'1px solid rgba(16,185,129,0.3)',backgroundColor:'rgba(16,185,129,0.08)',color:'#10B981',cursor:'pointer',fontSize:'11px',fontWeight:600}}>⚡ All Standard (8 folders)</button>
-              {[
-                {label:'📂 Root',sub:''},
-                {label:'📁 admin',sub:'/admin'},
-                {label:'📁 api',sub:'/api'},
-                {label:'📁 application',sub:'/application'},
-                {label:'📁 assets',sub:'/assets'},
-                {label:'📁 client',sub:'/client'},
-                {label:'📁 lmxtrade',sub:'/lmxtrade'},
-                {label:'📁 logs',sub:'/logs'},
-                {label:'📁 mobileapi',sub:'/mobileapi'},
-              ].map(p=>(
-                <button key={p.label} onClick={()=>addFolder(`/var/www/html/${remotePath.split('/').pop()||'client'}${p.sub}`)} style={{padding:'5px 10px',borderRadius:'8px',border:'1px solid rgba(var(--border),0.5)',backgroundColor:'rgba(var(--primary),0.04)',color:'rgb(var(--text-muted))',cursor:'pointer',fontSize:'11px'}}>{p.label}</button>
-              ))}
-            </div>
-
-            {/* Writable paths */}
-            <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'rgb(var(--primary))',margin:'6px 0 0',borderTop:'1px solid rgb(var(--border))',paddingTop:'14px'}}>Writable Paths (chmod 777)</p>
-            <div><textarea value={permWritable} onChange={e=>setPermWritable(e.target.value)} placeholder={'/client\n/application/logs\n/application/cache\n/assets/uploads\n/logs'} style={ta}/></div>
-            <Toggle checked={permRecursive} onChange={setPermRecursive} label="Apply permissions recursively (-R)"/>
-          </>)}
-
-          {step===3&&(<>
             {dbProfiles.length>0&&(
               <div style={{padding:'12px 14px',borderRadius:'10px',backgroundColor:'rgba(236,72,153,0.06)',border:'1px solid rgba(236,72,153,0.15)'}}>
                 <label style={{...lbl,color:'#EC4899'}}>DB Profile (auto-fill host, port, user, password)</label>
@@ -589,26 +618,129 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
               <div><label style={lbl}>DB User</label><input value={dbUser} onChange={e=>setDbUser(e.target.value)} style={inp}/></div>
               <div><label style={lbl}>DB Password</label><input type="password" value={dbPass} onChange={e=>setDbPass(e.target.value)} style={inp}/></div>
             </div>
-            <Toggle checked={dbMigrate} onChange={setDbMigrate} label="Run migrations on deploy"/>
-            {dbMigrate&&<div><label style={lbl}>Migration Command</label><input value={dbMigrateCmd} onChange={e=>setDbMigrateCmd(e.target.value)} style={inp}/></div>}
-            <Toggle checked={dbImportSql} onChange={setDbImportSql} label="Import SQL dump on deploy"/>
-            {dbImportSql&&<div><label style={lbl}>SQL Dump Path</label><input value={dbSqlPath} onChange={e=>setDbSqlPath(e.target.value)} placeholder="/backup/initial.sql" style={inp}/></div>}
+
+            {/* Live Database Setup Preview */}
+            {dbName && (
+              <div style={{marginTop:'8px'}}>
+                <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'#EC4899',margin:'0 0 6px',display:'flex',alignItems:'center',gap:'6px'}}>
+                  ⚡ Database Setup Preview
+                  <span style={{fontSize:'9px',fontWeight:500,color:'rgb(var(--text-muted))',textTransform:'none',letterSpacing:0}}>— 3-phase pipeline executed on deploy</span>
+                </p>
+                <pre style={{margin:0,padding:'12px 14px',borderRadius:'8px',backgroundColor:'rgba(0,0,0,0.2)',border:'1px solid rgba(236,72,153,0.2)',fontSize:'11px',fontFamily:"'JetBrains Mono',monospace",color:'rgb(var(--text-primary))',overflowX:'auto',whiteSpace:'pre-wrap',lineHeight:1.7,maxHeight:'400px',overflow:'auto'}}>
+{`-- ========================
+-- Phase 1: Create Database
+-- ========================
+CREATE DATABASE IF NOT EXISTS \`${dbName}\`
+  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- ========================
+-- Phase 2: Import Base Schema
+-- ========================
+-- mysqldump -h ${dbHost || '<host>'} -u ${dbUser || '<user>'} winbullSource | mysql ${dbName}
+
+-- ========================
+-- Phase 3: Truncate & Configure
+-- ========================
+USE ${dbName};
+SET FOREIGN_KEY_CHECKS = 0;
+
+TRUNCATE ci_usersessions;
+TRUNCATE ci_sessions;
+TRUNCATE dt_admin_log;
+TRUNCATE dt_adminsessions;
+TRUNCATE dt_cus_commodity;
+TRUNCATE dt_booking;
+TRUNCATE dt_booking_tracking;
+TRUNCATE dt_transaction;
+TRUNCATE dt_marginmanagement;
+TRUNCATE dt_customerdelivery;
+TRUNCATE dt_customer_deliveryinvoice;
+TRUNCATE dt_customergroupitems;
+TRUNCATE dt_customer;
+TRUNCATE dt_customergroup;
+TRUNCATE dt_historicaldata;
+TRUNCATE dt_historical_avg;
+TRUNCATE dt_ratealert;
+TRUNCATE dt_hedge_log;
+TRUNCATE dt_usersessions;
+TRUNCATE dt_user_device;
+TRUNCATE dt_quotation;
+TRUNCATE dt_fundtransfer;
+TRUNCATE dt_knockoff;
+TRUNCATE dt_unfix;
+TRUNCATE dt_coverupmcx;
+TRUNCATE order_logs;
+TRUNCATE dt_popup;
+TRUNCATE dt_marqueetext;
+TRUNCATE dt_news;
+TRUNCATE dt_admininfo;
+TRUNCATE dt_com_master;
+TRUNCATE dt_appevents;
+TRUNCATE dt_appvideos;
+TRUNCATE dt_advertisements;
+TRUNCATE dt_gallery;
+TRUNCATE dt_events;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- ========================
+-- UPDATE (client config)
+-- ========================
+UPDATE dt_generalsettings SET
+  admin_company_name = '${dbName}',
+  admin_mail = '', admin_mail_server = '', admin_mail_password = '',
+  admin_mob1 = '', admin_mob2 = '', admin_mob3 = '',
+  admin_mob4 = '', admin_mob5 = '',
+  is_admin_mob1 = 0, is_admin_mob2 = 0, is_admin_mob3 = 0,
+  is_admin_mob4 = 0, is_admin_mob5 = 0,
+  invoice_comp_name = '', address = '', city = '',
+  state = '', pincode = 0, mobile = '', email = '',
+  gst_no = '', pan_no = '',
+  website_logo = 'logo.png', admin_logo = NULL,
+  website_favicon = 'favicon.ico'
+WHERE genid = 1;
+
+UPDATE dt_admin_user SET
+  admin_user_name = 'bullion',
+  admin_user_password = MD5('<password>')
+WHERE admin_user_id = 3;
+
+UPDATE dt_email_settings SET
+  email_content = REPLACE(email_content, 'LOGIMAX Bullion', '${dbName}'),
+  email_signature = REPLACE(email_signature, 'LOGIMAX Bullion', '${dbName}');
+
+UPDATE dt_sms_settings SET
+  sms_footer = REPLACE(sms_footer, 'LOGIMAX BULLION', '${dbName.toUpperCase()}');
+
+UPDATE dt_whatsapp_settings SET
+  whatsapp_footer = REPLACE(whatsapp_footer, 'Logimax', '${dbName}');`}
+                </pre>
+              </div>
+            )}
           </>)}
 
-          {step===4&&(<>
-            <div style={g2}>
-              <div><label style={lbl}>Process Name</label><input value={pm2Name} onChange={e=>setPm2Name(e.target.value)} placeholder="jmj-socket" style={inp}/></div>
-              <div><label style={lbl}>Script</label><input value={pm2Script} onChange={e=>setPm2Script(e.target.value)} placeholder="server.js" style={inp}/></div>
-            </div>
-            <div style={g3}>
-              <div><label style={lbl}>Interpreter</label><select value={pm2Interpreter} onChange={e=>setPm2Interpreter(e.target.value)} style={{...inp,fontFamily:'inherit'}}><option value="node">Node.js</option><option value="php">PHP</option><option value="python">Python</option><option value="bash">Bash</option></select></div>
-              <div><label style={lbl}>Instances</label><input value={pm2Instances} onChange={e=>setPm2Instances(e.target.value)} placeholder="1 or max" style={inp}/></div>
-              <div><label style={lbl}>Extra Args</label><input value={pm2Args} onChange={e=>setPm2Args(e.target.value)} placeholder="--watch" style={inp}/></div>
-            </div>
+          {step===3&&(<>
             <Toggle checked={pm2Restart} onChange={setPm2Restart} label="Auto-restart process on deploy"/>
+
+            {/* Live PM2 Preview */}
+            <div style={{marginTop:'8px'}}>
+              <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'#8B5CF6',margin:'0 0 6px',display:'flex',alignItems:'center',gap:'6px'}}>
+                ⚡ PM2 Commands Preview
+                <span style={{fontSize:'9px',fontWeight:500,color:'rgb(var(--text-muted))',textTransform:'none',letterSpacing:0}}>— auto-generated from project slug</span>
+              </p>
+              <pre style={{margin:0,padding:'12px 14px',borderRadius:'8px',backgroundColor:'rgba(0,0,0,0.2)',border:'1px solid rgba(139,92,246,0.2)',fontSize:'11px',fontFamily:"'JetBrains Mono',monospace",color:'rgb(var(--text-primary))',overflowX:'auto',whiteSpace:'pre-wrap',lineHeight:1.7}}>
+{`# Native WebSocket — Rate file watcher (port ${wsPort || '?'})
+pm2 start ${remotePath || '/var/www/html/<slug>'}/client/${(remotePath || '').split('/').pop() || '<slug>'}-ws.js --name "${(remotePath || '').split('/').pop() || '<slug>'}-ws"
+
+# Socket.IO — Redis pub/sub events (port ${socketPort || '?'})
+pm2 start ${remotePath || '/var/www/html/<slug>'}/lmxtrade/${(remotePath || '').split('/').pop() || '<slug>'}winlitesocket.js --name "${(remotePath || '').split('/').pop() || '<slug>'}-socketio"
+
+pm2 save`}
+              </pre>
+            </div>
           </>)}
 
-          {step===5&&(
+          {step===4&&(
             <StepReview
               selectedProject={selectedProject} projects={projects} branch={branch}
               environment={environment} serverId={serverId} serverList={serverList}
@@ -617,8 +749,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
               phpVer={phpVer} socketPort={socketPort} wsPort={wsPort} sslCert={sslCert}
               crons={[]} dbHost={dbHost} dbPort={dbPort} dbName={dbName}
               dbUser={dbUser} dbMigrate={dbMigrate} dbMigrateCmd={dbMigrateCmd}
-              pm2Name={pm2Name} pm2Interpreter={pm2Interpreter}
-              pm2Instances={pm2Instances} pm2Restart={pm2Restart}
+              pm2Restart={pm2Restart}
               permUser={permUser} permGroup={permGroup} permFile={permFile}
               permDir={permDir} folders={folders} permWritable={permWritable}
             />

@@ -1,15 +1,14 @@
 /**
- * Push Notifications Service — Sprint 3 (F58–F61)
+ * Notification Dispatcher — In-App + Email only
  *
  * Multi-channel notification dispatcher with per-user preference checking.
- * Channels: in-app (DB), email (existing lib/email.ts), push (FCM), Slack (webhook).
+ * Channels: in-app (DB), email (existing lib/email.ts).
  */
 
 import { getDb } from './db.js';
 import {
   notifications,
   notificationPreferences,
-  pushTokens,
 } from '@cortexo/db/schema';
 import { eq, and } from 'drizzle-orm';
 
@@ -45,8 +44,6 @@ interface NotificationPayload {
 interface UserChannels {
   inApp: boolean;
   email: boolean;
-  push: boolean;
-  slack: boolean;
 }
 
 // ─── Default preferences (when no custom prefs exist) ───────────────
@@ -54,8 +51,6 @@ interface UserChannels {
 const DEFAULT_CHANNELS: UserChannels = {
   inApp: true,
   email: false,
-  push: false,
-  slack: false,
 };
 
 // Events that default to email+inApp even without explicit preference
@@ -113,16 +108,6 @@ export async function dispatchNotification(payload: NotificationPayload): Promis
     // Email notification
     if (channels.email) {
       await sendEmail(uid, title, message, data);
-    }
-
-    // Push notification (FCM)
-    if (channels.push) {
-      await sendPush(uid, title, message, data);
-    }
-
-    // Slack notification
-    if (channels.slack) {
-      await sendSlack(orgId, title, message, link);
     }
   }
 }
@@ -182,92 +167,6 @@ async function sendEmail(
   }
 }
 
-/** Send push notification via FCM */
-async function sendPush(
-  userId: string, title: string, body: string,
-  data?: Record<string, unknown>,
-): Promise<void> {
-  try {
-    const db = await getDb();
-
-    // Get all push tokens for this user
-    const tokens = await db
-      .select()
-      .from(pushTokens)
-      .where(eq(pushTokens.userId, userId));
-
-    if (tokens.length === 0) return;
-
-    const FCM_SERVER_KEY = process.env.FCM_SERVER_KEY;
-    if (!FCM_SERVER_KEY) {
-      console.log('[Notifications/Push] FCM_SERVER_KEY not configured — skipping');
-      return;
-    }
-
-    // Send to each registered device
-    for (const tokenRow of tokens) {
-      try {
-        const res = await fetch('https://fcm.googleapis.com/fcm/send', {
-          method: 'POST',
-          headers: {
-            'Authorization': `key=${FCM_SERVER_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            to: tokenRow.token,
-            notification: { title, body },
-            data: data || {},
-          }),
-        });
-
-        if (!res.ok) {
-          const errText = await res.text();
-          console.error(`[Notifications/Push] FCM error for token ${tokenRow.id}:`, errText);
-
-          // Remove invalid token
-          if (res.status === 400 || errText.includes('InvalidRegistration')) {
-            await db.delete(pushTokens).where(eq(pushTokens.id, tokenRow.id));
-            console.log(`[Notifications/Push] Removed invalid token ${tokenRow.id}`);
-          }
-        }
-
-        // Update last used timestamp
-        await db.update(pushTokens)
-          .set({ lastUsedAt: new Date() })
-          .where(eq(pushTokens.id, tokenRow.id));
-      } catch (err) {
-        console.error(`[Notifications/Push] Error sending to token ${tokenRow.id}:`, err);
-      }
-    }
-  } catch (err) {
-    console.error('[Notifications/Push] Failed:', err);
-  }
-}
-
-/** Send Slack webhook notification */
-async function sendSlack(
-  orgId: string, title: string, text: string, link?: string,
-): Promise<void> {
-  try {
-    // TODO: Look up Slack webhook URL from integrations table for this org
-    const SLACK_WEBHOOK = process.env.SLACK_WEBHOOK_URL;
-    if (!SLACK_WEBHOOK) {
-      console.log('[Notifications/Slack] No webhook configured — skipping');
-      return;
-    }
-
-    await fetch(SLACK_WEBHOOK, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text: `*${title}*\n${text}${link ? `\n<${link}|View in Cortexo>` : ''}`,
-      }),
-    });
-  } catch (err) {
-    console.error('[Notifications/Slack] Failed:', err);
-  }
-}
-
 // ─── Preference Lookup ──────────────────────────────────────────────
 
 /** Get effective notification channels for a user + event */
@@ -289,14 +188,12 @@ async function getUserChannels(userId: string, event: NotificationEvent): Promis
       return {
         inApp: pref.inApp ?? true,
         email: pref.email ?? false,
-        push: pref.push ?? false,
-        slack: pref.slack ?? false,
       };
     }
 
     // No explicit preference — use defaults
     if (HIGH_PRIORITY_EVENTS.includes(event)) {
-      return { inApp: true, email: true, push: false, slack: false };
+      return { inApp: true, email: true };
     }
 
     return DEFAULT_CHANNELS;
@@ -346,8 +243,6 @@ export async function upsertPreference(
       event,
       inApp: channels.inApp ?? true,
       email: channels.email ?? false,
-      push: channels.push ?? false,
-      slack: channels.slack ?? false,
     });
   }
 }

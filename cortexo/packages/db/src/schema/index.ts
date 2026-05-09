@@ -16,8 +16,8 @@ export { sessions } from './auth';
 export { projects } from './projects';
 export type { Project, NewProject } from './projects';
 
-export { notifications, notificationPreferences, pushTokens } from './notifications';
-export type { Notification, NewNotification, NotificationPreference, PushToken } from './notifications';
+export { notifications, notificationPreferences } from './notifications';
+export type { Notification, NewNotification, NotificationPreference } from './notifications';
 
 // Phase 2: CI/CD Engine
 export { pipelines, pipelineRuns, deployTargets, deployments } from './pipelines';
@@ -77,10 +77,12 @@ export type { MenuItem, NewMenuItem } from './menu-items';
 export { auditLogs, type AuditLog, type NewAuditLog } from './audit';
 
 // Phase 13: Deployment Profiles (reusable credentials)
-export { sourceProfiles, dbProfiles } from './profiles';
+export { sourceProfiles, dbProfiles, clientGitProfiles, clientDbProfiles } from './profiles';
 export type {
   SourceProfile, NewSourceProfile,
   DbProfile, NewDbProfile,
+  ClientGitProfile, NewClientGitProfile,
+  ClientDbProfile, NewClientDbProfile,
 } from './profiles';
 
 // Phase 14: Source Registry & Client Configs

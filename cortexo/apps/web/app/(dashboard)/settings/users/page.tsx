@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Users, UserPlus, Search, Shield, MoreHorizontal, Loader2, Download, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Users, Search, Shield, MoreHorizontal, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useApiData, useAutoLoadToken } from '@/lib/hooks';
 
@@ -45,9 +45,8 @@ export default function UsersPage() {
   });
 
   const stats = [
-    { label: 'Total Users', value: users.length, sub: '+3 this week', color: '#7C3AED', icon: '👥' },
+    { label: 'Total Users', value: users.length, sub: `${users.length} registered`, color: '#7C3AED', icon: '👥' },
     { label: 'Active Now', value: users.filter((u: any) => u.status === 'active').length, sub: 'Online', color: '#10B981', icon: '🟢' },
-    { label: 'Pending Invites', value: users.filter((u: any) => u.status === 'pending').length, sub: 'Awaiting', color: '#F59E0B', icon: '📩' },
     { label: 'Suspended', value: users.filter((u: any) => u.status === 'suspended').length, sub: 'Blocked', color: '#EF4444', icon: '🚫' },
     { label: 'Super Admins', value: users.filter((u: any) => u.role.toLowerCase() === 'super admin').length, sub: 'Full access', color: '#8B5CF6', icon: '🛡️' },
   ];
@@ -71,27 +70,17 @@ export default function UsersPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 800, color: 'rgb(var(--text-primary))', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Users style={{ width: '24px', height: '24px', color: '#7C3AED' }} /> User Management
-          </h1>
-          <p style={{ fontSize: '14px', color: 'rgb(var(--text-muted))', margin: 0 }}>
-            Manage platform users, roles, and access permissions.
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', fontSize: '13px', fontWeight: 600, cursor: 'pointer', color: 'rgb(var(--text-primary))' }}>
-            <Download style={{ width: '14px', height: '14px' }} /> Export CSV
-          </button>
-          <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', border: 'none', backgroundColor: '#7C3AED', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
-            <UserPlus style={{ width: '14px', height: '14px' }} /> Invite User
-          </button>
-        </div>
+      <div>
+        <h1 style={{ fontSize: '24px', fontWeight: 800, color: 'rgb(var(--text-primary))', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <Users style={{ width: '24px', height: '24px', color: '#7C3AED' }} /> User Management
+        </h1>
+        <p style={{ fontSize: '14px', color: 'rgb(var(--text-muted))', margin: 0 }}>
+          Manage platform users, roles, and access permissions.
+        </p>
       </div>
 
       {/* Stat Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
         {stats.map((s, i) => (
           <div key={i} style={{ ...card, display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <div style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', fontWeight: 500 }}>{s.label}</div>
@@ -120,10 +109,6 @@ export default function UsersPage() {
           <option>All Status</option>
           {['Active', 'Pending', 'Suspended'].map(s => <option key={s}>{s}</option>)}
         </select>
-        <div style={{ flex: 1 }} />
-        <button style={{ padding: '8px 14px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', fontSize: '13px', fontWeight: 600, cursor: 'pointer', color: 'rgb(var(--text-primary))' }}>
-          Bulk Actions ▾
-        </button>
       </div>
 
       {/* Table */}
@@ -137,10 +122,7 @@ export default function UsersPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid rgb(var(--border))' }}>
-                <th style={{ padding: '14px 20px', width: '40px' }}>
-                  <input type="checkbox" style={{ accentColor: '#7C3AED' }} />
-                </th>
-                {['User', 'Role', 'Status', 'Last Active', 'Joined', ''].map(h => (
+                {['User', 'Role', 'Status', 'Last Active', 'Joined'].map(h => (
                   <th key={h} style={{ padding: '14px 16px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgb(var(--text-muted))', textAlign: 'left' }}>{h}</th>
                 ))}
               </tr>
@@ -153,9 +135,6 @@ export default function UsersPage() {
                   <tr key={u.id} style={{ borderBottom: '1px solid rgba(var(--border), 0.5)', transition: 'background 150ms', cursor: 'pointer' }}
                     onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(var(--border),0.08)'}
                     onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
-                    <td style={{ padding: '14px 20px' }}>
-                      <input type="checkbox" style={{ accentColor: '#7C3AED' }} />
-                    </td>
                     <td style={{ padding: '14px 16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: `linear-gradient(135deg, ${avColor}, ${avColor}CC)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '14px', fontWeight: 700, flexShrink: 0 }}>
@@ -175,16 +154,11 @@ export default function UsersPage() {
                     <td style={{ padding: '14px 16px', fontSize: '12px', color: 'rgb(var(--text-muted))' }}>
                       {u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
                     </td>
-                    <td style={{ padding: '14px 16px' }}>
-                      <button style={{ padding: '6px', borderRadius: '6px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', cursor: 'pointer', color: 'rgb(var(--text-muted))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <MoreHorizontal style={{ width: '14px', height: '14px' }} />
-                      </button>
-                    </td>
                   </tr>
                 );
               })}
               {filtered.length === 0 && (
-                <tr><td colSpan={7} style={{ padding: '40px', textAlign: 'center', fontSize: '13px', color: 'rgb(var(--text-muted))' }}>No users match your filters</td></tr>
+                <tr><td colSpan={5} style={{ padding: '40px', textAlign: 'center', fontSize: '13px', color: 'rgb(var(--text-muted))' }}>No users match your filters</td></tr>
               )}
             </tbody>
           </table>
@@ -199,7 +173,6 @@ export default function UsersPage() {
                 <ChevronLeft style={{ width: '14px', height: '14px' }} /> Back
               </button>
               <button style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', backgroundColor: '#7C3AED', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>1</button>
-              <button style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', fontSize: '12px', cursor: 'pointer', color: 'rgb(var(--text-muted))' }}>2</button>
               <button style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', fontSize: '12px', cursor: 'pointer', color: 'rgb(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 Next <ChevronRight style={{ width: '14px', height: '14px' }} />
               </button>

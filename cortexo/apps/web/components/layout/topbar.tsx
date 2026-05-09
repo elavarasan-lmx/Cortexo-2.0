@@ -2,8 +2,8 @@
 
 import { useTheme } from 'next-themes';
 import {
-  Search, Bell, Moon, ChevronDown, User, LogOut, Settings,
-  HelpCircle, CheckCheck, AlertCircle, Rocket, Bug,
+  Search, Bell, Moon, ChevronDown, LogOut, Settings,
+  CheckCheck, AlertCircle, Rocket, Bug,
   Menu,
 } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -418,8 +418,6 @@ export function Topbar({ isMobile = false }: { isMobile?: boolean }) {
               <div style={{ padding: '6px' }}>
                 {[
                   { href: '/settings', icon: Settings, label: 'Settings' },
-                  { href: '/profile', icon: User, label: 'Profile' },
-                  { href: '#', icon: HelpCircle, label: 'Help & Docs' },
                 ].map(item => (
                   <Link
                     key={item.label}

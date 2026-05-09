@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Bell, BellOff, Mail, AlertTriangle, CheckCircle, Save, Zap, Bug, Rocket,
-  FileText, Smartphone, MessageSquare, Shield, Activity, Brain, RefreshCw,
+  Bell, Mail, AlertTriangle, CheckCircle, Save, Zap, Bug, Rocket,
+  FileText, Shield, Activity, Brain, RefreshCw,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAutoLoadToken } from '@/lib/hooks';
@@ -52,8 +52,6 @@ const eventIcons: Record<string, React.ReactNode> = {
 const channels = [
   { key: 'inApp' as const,  label: 'In-App', icon: <Bell style={{ width: 13, height: 13 }} /> },
   { key: 'email' as const,  label: 'Email',  icon: <Mail style={{ width: 13, height: 13 }} /> },
-  { key: 'push' as const,   label: 'Push',   icon: <Smartphone style={{ width: 13, height: 13 }} /> },
-  { key: 'slack' as const,  label: 'Slack',  icon: <MessageSquare style={{ width: 13, height: 13 }} /> },
 ];
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -64,8 +62,6 @@ interface EventPref {
   category: string;
   inApp: boolean;
   email: boolean;
-  push: boolean;
-  slack: boolean;
 }
 
 // ─── Main Page ──────────────────────────────────────────────────────
@@ -104,8 +100,6 @@ export default function NotificationsPage() {
           event: p.event,
           inApp: p.inApp,
           email: p.email,
-          push: p.push,
-          slack: p.slack,
         })),
       });
       setSaved(true);
@@ -118,7 +112,7 @@ export default function NotificationsPage() {
   const categories = Array.from(new Set(prefs.map((p) => p.category)));
 
   const enabledCount = prefs.reduce(
-    (sum, p) => sum + (p.inApp ? 1 : 0) + (p.email ? 1 : 0) + (p.push ? 1 : 0) + (p.slack ? 1 : 0),
+    (sum, p) => sum + (p.inApp ? 1 : 0) + (p.email ? 1 : 0),
     0,
   );
 
@@ -152,7 +146,7 @@ export default function NotificationsPage() {
                 <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', fontWeight: 600 }}>Event</span>
               </div>
               {channels.map((ch) => (
-                <div key={ch.key} style={{ width: '70px', textAlign: 'center' }}>
+                <div key={ch.key} style={{ width: '80px', textAlign: 'center' }}>
                   <span style={{ fontSize: '10px', color: 'rgb(var(--text-muted))', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                     {ch.icon} {ch.label}
                   </span>
@@ -179,7 +173,7 @@ export default function NotificationsPage() {
                   <span style={{ fontSize: '13px', fontWeight: 500, color: 'rgb(var(--text-primary))' }}>{pref.label}</span>
                 </div>
                 {channels.map((ch) => (
-                  <div key={ch.key} style={{ width: '70px', display: 'flex', justifyContent: 'center' }}>
+                  <div key={ch.key} style={{ width: '80px', display: 'flex', justifyContent: 'center' }}>
                     <Toggle
                       on={pref[ch.key] as boolean}
                       onChange={() => togglePref(pref.event, ch.key)}
@@ -191,22 +185,6 @@ export default function NotificationsPage() {
           </div>
         );
       })}
-
-      {/* Webhook URLs */}
-      <div style={card}>
-        <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 16px' }}>Webhook URLs</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.04em', color: 'rgb(var(--text-muted))', marginBottom: '6px' }}>Slack Webhook URL</label>
-            <input placeholder="https://hooks.slack.com/services/..." style={{ width: '100%', boxSizing: 'border-box' as const, padding: '10px 14px', fontSize: '13px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-primary))', outline: 'none', fontFamily: "'JetBrains Mono', monospace" }} />
-          </div>
-          <div>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.04em', color: 'rgb(var(--text-muted))', marginBottom: '6px' }}>Discord Webhook URL</label>
-            <input placeholder="https://discord.com/api/webhooks/..." style={{ width: '100%', boxSizing: 'border-box' as const, padding: '10px 14px', fontSize: '13px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-primary))', outline: 'none', fontFamily: "'JetBrains Mono', monospace" }} />
-          </div>
-          <p style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', margin: 0 }}>Webhooks receive a JSON POST with: {'{'} event, project, status, message, timestamp {'}'}</p>
-        </div>
-      </div>
 
       {/* Save button */}
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>

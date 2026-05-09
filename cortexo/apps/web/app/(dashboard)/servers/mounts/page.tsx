@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   HardDrive, Plus, Trash2, Edit3, Loader2, RefreshCw,
   FolderOpen, File, ChevronRight, ArrowLeft, Power, PowerOff,
   Server, Copy, X, Folder, FileCode, FileText as FileTextIcon,
+  Shield, Eye, Clock, Lock, Unlock,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useApiData, useAutoLoadToken } from '@/lib/hooks';
@@ -90,6 +91,40 @@ export default function ServerMountsPage() {
 
   // Form state
   const [form, setForm] = useState({ serverId: 0, name: '', remotePath: '', localMountPath: '', sshUser: 'ubuntu', autoMount: false });
+
+  // Read-only mode — backed by DB, enforced at OS level via SSHFS -o ro
+  const isReadOnly = (mountId: number) => {
+    const allM = (mounts as any[]) || [];
+    const mount = allM.find((m: any) => m.id === mountId);
+    return mount?.readOnly !== false; // default: true
+  };
+  const [togglingRO, setTogglingRO] = useState<number | null>(null);
+  const toggleReadOnly = async (mountId: number) => {
+    const newVal = !isReadOnly(mountId);
+    setTogglingRO(mountId);
+    try {
+      await api.toggleMountReadOnly(mountId, newVal);
+      toast.success('Access Changed', `Mount set to ${newVal ? 'Read Only' : 'Read Write'}${newVal ? '' : ' — remounted'}`);
+      await refetch();
+    } catch (e: any) { toast.error('Toggle Failed', e.message); }
+    setTogglingRO(null);
+  };
+
+  // Audit trail state
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [showAudit, setShowAudit] = useState(false);
+  const [auditLoading, setAuditLoading] = useState(false);
+
+  const fetchAuditLogs = async () => {
+    setAuditLoading(true);
+    try {
+      const res = await api.getAuditLogs({ resource: 'server_mount', limit: '30' });
+      setAuditLogs((res as any)?.data || (res as any) || []);
+    } catch { setAuditLogs([]); }
+    setAuditLoading(false);
+  };
+
+  useEffect(() => { if (showAudit) fetchAuditLogs(); }, [showAudit]);
 
   const setAction = (id: number, action: string) => setActionLoading(p => ({ ...p, [id]: action }));
   const clearAction = (id: number) => setActionLoading(p => { const n = { ...p }; delete n[id]; return n; });
@@ -222,8 +257,27 @@ export default function ServerMountsPage() {
                     <p style={{ fontSize:12, fontFamily:"'JetBrains Mono', monospace", color:'rgb(var(--text-primary))', margin:'2px 0 0', wordBreak:'break-all' }}>{m.remotePath}</p>
                   </div>
                   <div>
-                    <span style={{ fontSize:10, fontWeight:600, color:'rgb(var(--text-muted))', textTransform:'uppercase', letterSpacing:'0.05em' }}>SSH User</span>
-                    <p style={{ fontSize:12, fontFamily:"'JetBrains Mono', monospace", color:'rgb(var(--text-primary))', margin:'2px 0 0' }}>{m.sshUser}</p>
+                    <span style={{ fontSize:10, fontWeight:600, color:'rgb(var(--text-muted))', textTransform:'uppercase', letterSpacing:'0.05em' }}>Access</span>
+                    <button
+                      onClick={() => toggleReadOnly(m.id)}
+                      disabled={togglingRO === m.id}
+                      style={{ display:'flex', alignItems:'center', gap:6, marginTop:4, padding:0, border:'none', background:'none', cursor: togglingRO === m.id ? 'wait' : 'pointer', opacity: togglingRO === m.id ? 0.6 : 1 }}
+                      title={isReadOnly(m.id) ? 'Click to enable Read-Write (will remount)' : 'Click to enable Read-Only (will remount)'}
+                    >
+                      {/* Toggle track */}
+                      <div style={{
+                        width:32, height:18, borderRadius:9, position:'relative', transition:'background 200ms',
+                        backgroundColor: isReadOnly(m.id) ? '#10B981' : '#F59E0B',
+                      }}>
+                        <div style={{
+                          width:14, height:14, borderRadius:'50%', backgroundColor:'#fff', position:'absolute', top:2,
+                          left: isReadOnly(m.id) ? 16 : 2, transition:'left 200ms', boxShadow:'0 1px 3px rgba(0,0,0,0.2)',
+                        }} />
+                      </div>
+                      <span style={{ fontSize:11, fontWeight:600, color: isReadOnly(m.id) ? '#10B981' : '#F59E0B', display:'flex', alignItems:'center', gap:3 }}>
+                        {isReadOnly(m.id) ? <><Lock style={{ width:10, height:10 }} /> Read Only</> : <><Unlock style={{ width:10, height:10 }} /> Read Write</>}
+                      </span>
+                    </button>
                   </div>
                 </div>
                 <div style={{ marginBottom:12 }}>
@@ -283,7 +337,6 @@ export default function ServerMountsPage() {
                 const chipRow: React.CSSProperties = { display:'flex', flexWrap:'wrap', gap:4, marginTop:6 };
                 // Compute suggestions from existing data
                 const existingNames = allMounts.map((m: any) => m.name).filter(Boolean);
-                const sshUsers = [...new Set(['ubuntu', ...allMounts.map((m: any) => m.sshUser).filter(Boolean)])].slice(0, 3);
                 // Smart name-based auto-fill
                 const fillFromName = (name: string) => {
                   const slug = name.toLowerCase().replace(/\s+/g, '');
@@ -330,13 +383,7 @@ export default function ServerMountsPage() {
                       <input placeholder="~/ec2-rubysilver" value={form.localMountPath} onChange={e => setForm(p => ({ ...p, localMountPath: e.target.value }))} style={{ ...inputStyle, fontFamily:"'JetBrains Mono', monospace", fontSize:12 }} />
                       {form.localMountPath && <p style={{ fontSize:10, color:'rgb(var(--text-muted))', margin:'4px 0 0' }}>💡 Auto-filled from mount name</p>}
                     </div>
-                    <div>
-                      <label style={{ fontSize:12, fontWeight:600, color:'rgb(var(--text-secondary))', display:'block', marginBottom:4 }}>SSH User</label>
-                      <input placeholder="ubuntu" value={form.sshUser} onChange={e => setForm(p => ({ ...p, sshUser: e.target.value }))} style={inputStyle} />
-                      <div style={chipRow}>
-                        {sshUsers.map(u => <button key={u} type="button" onClick={() => setForm(p => ({ ...p, sshUser: u }))} style={chipStyle} onMouseEnter={e => { (e.target as HTMLElement).style.backgroundColor = 'rgba(var(--primary), 0.15)'; }} onMouseLeave={e => { (e.target as HTMLElement).style.backgroundColor = 'rgba(var(--primary), 0.06)'; }}>{u}</button>)}
-                      </div>
-                    </div>
+
                     <label style={{ display:'flex', alignItems:'center', gap:8, fontSize:13, color:'rgb(var(--text-secondary))', cursor:'pointer' }}>
                       <input type="checkbox" checked={form.autoMount} onChange={e => setForm(p => ({ ...p, autoMount: e.target.checked }))} style={{ accentColor:'rgb(var(--primary))' }} />
                       Auto-mount on startup
@@ -369,12 +416,33 @@ export default function ServerMountsPage() {
                     /{browseData.currentPath === '.' ? '' : browseData.currentPath}
                   </span>
                 )}
+                {(() => {
+                  const ro = isReadOnly(browsing.mountId);
+                  return (
+                    <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'3px 10px', borderRadius:6, fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em', backgroundColor: ro ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)', color: ro ? '#10B981' : '#F59E0B', border: `1px solid ${ro ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.2)'}` }}>
+                      {ro ? <><Lock style={{ width:10, height:10 }} /> Read Only</> : <><Unlock style={{ width:10, height:10 }} /> Read Write</>}
+                    </span>
+                  );
+                })()}
               </div>
               <button onClick={() => { setBrowsing(null); setBrowseData(null); setViewFile(null); }}
                 style={{ background:'none', border:'none', cursor:'pointer', color:'rgb(var(--text-muted))' }}>
                 <X style={{ width:18, height:18 }} />
               </button>
             </div>
+
+            {/* Security Banner */}
+            {isReadOnly(browsing.mountId) ? (
+              <div style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 20px', backgroundColor:'rgba(16,185,129,0.04)', borderBottom:'1px solid rgba(16,185,129,0.1)', flexShrink:0 }}>
+                <Eye style={{ width:13, height:13, color:'#10B981', flexShrink:0 }} />
+                <span style={{ fontSize:11, color:'rgb(var(--text-muted))' }}>Reference-only access · No files can be modified, deleted, or created on the remote server</span>
+              </div>
+            ) : (
+              <div style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 20px', backgroundColor:'rgba(245,158,11,0.04)', borderBottom:'1px solid rgba(245,158,11,0.1)', flexShrink:0 }}>
+                <Unlock style={{ width:13, height:13, color:'#F59E0B', flexShrink:0 }} />
+                <span style={{ fontSize:11, color:'rgb(var(--text-muted))' }}>Read-Write mode · File operations are logged in the audit trail</span>
+              </div>
+            )}
 
             <div style={{ flex:1, display:'flex', overflow:'hidden' }}>
               {/* Directory listing */}
@@ -456,6 +524,99 @@ export default function ServerMountsPage() {
           </div>
         </div>
       )}
+      {/* ── File Access Audit Trail ── */}
+      <div style={{ ...cardStyle, marginTop: 24 }}>
+        <button
+          onClick={() => setShowAudit(!showAudit)}
+          style={{ display:'flex', alignItems:'center', justifyContent:'space-between', width:'100%', padding:'16px 20px', border:'none', backgroundColor:'transparent', cursor:'pointer', color:'rgb(var(--text-primary))' }}
+        >
+          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <div style={{ width:34, height:34, borderRadius:8, background:'linear-gradient(135deg, rgba(var(--primary),0.12), rgba(var(--agent),0.08))', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <Clock style={{ width:16, height:16, color:'rgb(var(--primary))' }} />
+            </div>
+            <div style={{ textAlign:'left' }}>
+              <span style={{ fontSize:14, fontWeight:700 }}>File Access Audit Trail</span>
+              <p style={{ fontSize:11, color:'rgb(var(--text-muted))', margin:'2px 0 0' }}>Track who browsed and read files on your servers</p>
+            </div>
+          </div>
+          <ChevronRight style={{ width:16, height:16, color:'rgb(var(--text-muted))', transform: showAudit ? 'rotate(90deg)' : 'none', transition:'transform 200ms' }} />
+        </button>
+
+        {showAudit && (
+          <div style={{ borderTop:'1px solid rgb(var(--border))' }}>
+            {/* Refresh bar */}
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 20px', backgroundColor:'rgba(var(--surface-hover), 0.3)' }}>
+              <span style={{ fontSize:11, color:'rgb(var(--text-muted))' }}>{auditLogs.length} events loaded</span>
+              <button onClick={fetchAuditLogs} style={{ ...btnOutline, padding:'4px 12px', fontSize:11 }}>
+                <RefreshCw style={{ width:12, height:12 }} /> Refresh
+              </button>
+            </div>
+
+            {auditLoading ? (
+              <div style={{ display:'flex', justifyContent:'center', padding:30 }}>
+                <Loader2 style={{ width:20, height:20, color:'rgb(var(--primary))', animation:'spin 1s linear infinite' }} />
+              </div>
+            ) : auditLogs.length === 0 ? (
+              <div style={{ padding:30, textAlign:'center', color:'rgb(var(--text-muted))', fontSize:13 }}>
+                <Shield style={{ width:28, height:28, margin:'0 auto 8px', opacity:0.3 }} />
+                <p>No file access events yet</p>
+                <p style={{ fontSize:11, marginTop:4 }}>Browse or read files to see the audit trail</p>
+              </div>
+            ) : (
+              <div style={{ maxHeight:360, overflowY:'auto' }}>
+                {auditLogs.map((log: any, i: number) => {
+                  const isRead = log.action === 'file_read';
+                  const isMod = log.action === 'file_modified';
+                  const isToggle = log.action === 'set_readonly' || log.action === 'set_readwrite';
+                  const badgeColor = isMod ? '#F59E0B' : isRead ? '#6366F1' : isToggle ? '#8B5CF6' : '#10B981';
+                  const badgeLabel = isMod ? 'MODIFIED' : isRead ? 'READ' : isToggle ? 'ACCESS' : 'BROWSE';
+                  const timeAgo = (() => {
+                    const diff = Date.now() - new Date(log.createdAt).getTime();
+                    const mins = Math.floor(diff / 60000);
+                    if (mins < 1) return 'just now';
+                    if (mins < 60) return `${mins}m ago`;
+                    const hrs = Math.floor(mins / 60);
+                    if (hrs < 24) return `${hrs}h ago`;
+                    return `${Math.floor(hrs / 24)}d ago`;
+                  })();
+                  const meta = typeof log.metadata === 'string' ? JSON.parse(log.metadata || '{}') : (log.metadata || {});
+
+                  return (
+                    <div key={log.id || i} style={{ display:'flex', alignItems:'flex-start', gap:12, padding:'10px 20px', borderBottom:'1px solid rgba(var(--border), 0.5)', transition:'background 150ms' }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <div style={{ width:28, height:28, borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, backgroundColor: `${badgeColor}18` }}>
+                        {isMod
+                          ? <Edit3 style={{ width:13, height:13, color: badgeColor }} />
+                          : isRead
+                            ? <FileTextIcon style={{ width:13, height:13, color: badgeColor }} />
+                            : isToggle
+                              ? <Lock style={{ width:13, height:13, color: badgeColor }} />
+                              : <FolderOpen style={{ width:13, height:13, color: badgeColor }} />
+                        }
+                      </div>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                          <span style={{ fontSize:12, fontWeight:600, color:'rgb(var(--text-primary))' }}>{log.userName || 'Unknown'}</span>
+                          <span style={{ fontSize:10, padding:'1px 6px', borderRadius:4, fontWeight:600, backgroundColor: `${badgeColor}14`, color: badgeColor }}>
+                            {badgeLabel}
+                          </span>
+                          <span style={{ fontSize:10, color:'rgb(var(--text-muted))', marginLeft:'auto', flexShrink:0 }}>{timeAgo}</span>
+                        </div>
+                        <p style={{ fontSize:11, color:'rgb(var(--text-muted))', margin:'2px 0 0', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{log.description}</p>
+                        {meta.fileName && (
+                          <span style={{ fontSize:10, color:'rgb(var(--text-muted))', fontFamily:"'JetBrains Mono', monospace" }}>{meta.fileName} · {meta.size ? `${(meta.size / 1024).toFixed(1)} KB` : ''} {meta.lines ? `· ${meta.lines} lines` : ''}</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useAutoLoadToken } from '@/lib/hooks';
 import {
   GitBranch, Database, Plus, Edit3, Trash2, Loader2,
-  CheckCircle, XCircle, X, Server, MoreVertical, Copy, Search
+  CheckCircle, XCircle, X, Server, MoreVertical, Copy, Search,
 } from 'lucide-react';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/v1';
@@ -49,7 +50,9 @@ function SourceModal({ item, onClose, onSave }: { item: SourceProfile | null; on
     if (mode === 'github' && repos.length === 0) {
       setTimeout(() => { if (mounted) setLoadingRepos(true); }, 0);
       const token = localStorage.getItem('cortexo_token');
-      fetch(`${API}/credentials/github/repos`, { headers: { Authorization: `Bearer ${token}` } })
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      fetch(`${API}/credentials/github/repos`, { headers })
         .then(res => res.json())
         .then(data => {
           if (!mounted) return;
@@ -70,7 +73,9 @@ function SourceModal({ item, onClose, onSave }: { item: SourceProfile | null; on
     if (ghName) {
       setTimeout(() => { if (mounted) setLoadingBranches(true); }, 0);
       const token = localStorage.getItem('cortexo_token');
-      fetch(`${API}/credentials/github/repos/${ghName}/branches`, { headers: { Authorization: `Bearer ${token}` } })
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      fetch(`${API}/credentials/github/repos/${ghName}/branches`, { headers })
         .then(res => res.json())
         .then(data => {
           if (!mounted) return;
@@ -263,6 +268,7 @@ function DeleteConfirmModal({ item, onClose, onConfirm }: { item: { id: string, 
 }
 
 export default function ProfilesPage() {
+  useAutoLoadToken();
   const [sources, setSources] = useState<SourceProfile[]>([]);
   const [dbs, setDbs] = useState<DbProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -271,7 +277,12 @@ export default function ProfilesPage() {
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
-  const hdr = () => ({ Authorization: `Bearer ${localStorage.getItem('cortexo_token')}`, 'Content-Type': 'application/json' });
+  const hdr = () => {
+    const h: Record<string, string> = { 'Content-Type': 'application/json' };
+    const token = localStorage.getItem('cortexo_token');
+    if (token) h['Authorization'] = `Bearer ${token}`;
+    return h;
+  };
   const showToast = (msg: string, ok = true) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 3500); };
 
   const load = useCallback(() => {
@@ -313,9 +324,11 @@ export default function ProfilesPage() {
     try {
       const endpoint = deleteConfirm.type === 'source' ? 'source-profiles' : 'db-profiles';
       const token = localStorage.getItem('cortexo_token');
+      const deleteHeaders: Record<string, string> = {};
+      if (token) deleteHeaders['Authorization'] = `Bearer ${token}`;
       const res = await fetch(`${API}/${endpoint}/${deleteConfirm.id}`, { 
         method: 'DELETE', 
-        headers: { Authorization: `Bearer ${token}` }
+        headers: deleteHeaders
       });
       if (!res.ok) throw new Error('Failed to delete');
       showToast(`${deleteConfirm.name} deleted`);

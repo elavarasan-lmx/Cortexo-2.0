@@ -14,7 +14,7 @@ const ENCRYPTION_KEY = process.env.VAULT_KEY || 'cortexo-vault-default-key-32ch'
 
 interface Credential {
   id: string;
-  category: 'github' | 'aws' | 'ssh' | 'openai' | 'docker' | 'slack' | 'custom';
+  category: 'github' | 'aws' | 'ssh' | 'openai' | 'gemini' | 'groq' | 'docker' | 'slack' | 'custom';
   label: string;
   key: string;       // e.g. "GITHUB_TOKEN", "AWS_ACCESS_KEY_ID"
   value: string;     // encrypted at rest
@@ -69,6 +69,14 @@ const CATEGORY_CONFIG: Record<string, { keys: string[]; labels: Record<string, s
   openai: {
     keys: ['OPENAI_API_KEY'],
     labels: { OPENAI_API_KEY: 'OpenAI API Key' },
+  },
+  gemini: {
+    keys: ['GEMINI_API_KEY'],
+    labels: { GEMINI_API_KEY: 'Gemini API Key' },
+  },
+  groq: {
+    keys: ['GROQ_API_KEY'],
+    labels: { GROQ_API_KEY: 'Groq API Key' },
   },
   aws: {
     keys: ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_REGION'],
@@ -299,4 +307,38 @@ export async function credentialsRoutes(app: FastifyInstance) {
       return reply.code(500).send({ error: err.message });
     }
   });
+}
+
+/**
+ * Exported helper: get a decrypted credential value from the vault.
+ * Used by mailer, deploy hooks, etc.
+ */
+export async function getVaultCredential(key: string): Promise<string | null> {
+  try {
+    const creds = await readVault();
+    const cred = creds.find(c => c.key === key);
+    if (!cred) return null;
+    return decrypt(cred.value);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Exported helper: get multiple credentials at once.
+ */
+export async function getVaultCredentials(...keys: string[]): Promise<Record<string, string | null>> {
+  try {
+    const creds = await readVault();
+    const result: Record<string, string | null> = {};
+    for (const key of keys) {
+      const cred = creds.find(c => c.key === key);
+      result[key] = cred ? decrypt(cred.value) : null;
+    }
+    return result;
+  } catch {
+    const result: Record<string, string | null> = {};
+    for (const key of keys) result[key] = null;
+    return result;
+  }
 }

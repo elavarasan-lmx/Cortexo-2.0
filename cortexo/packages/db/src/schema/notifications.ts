@@ -44,11 +44,11 @@ export const notifications = pgTable(
 export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;
 
-// ─── Sprint 3 (F58–F61): Notification Preferences ──────────────────
+// ─── Notification Preferences (In-App + Email) ─────────────────────
 
 /**
  * Per-user notification preferences — controls which events
- * trigger which channels (in-app, email, push, Slack).
+ * trigger which channels (in-app, email).
  */
 export const notificationPreferences = pgTable(
   'notification_preferences',
@@ -62,8 +62,6 @@ export const notificationPreferences = pgTable(
     event: varchar('event', { length: 50 }).notNull(), // 'deploy.success'|'error.spike'|'scan.complete'|etc
     inApp: boolean('in_app').default(true),
     email: boolean('email').default(false),
-    push: boolean('push').default(false),
-    slack: boolean('slack').default(false),
     createdAt: timestamp('created_at')
       .defaultNow()
       .notNull(),
@@ -74,31 +72,4 @@ export const notificationPreferences = pgTable(
   ],
 );
 
-/**
- * Push tokens table — stores FCM/Web Push registration tokens.
- * Multiple tokens per user (one per device/browser).
- */
-export const pushTokens = pgTable(
-  'push_tokens',
-  {
-    id: uuid('id')
-      .primaryKey()
-      .defaultRandom(),
-    userId: uuid('user_id')
-      .references(() => users.id)
-      .notNull(),
-    token: text('token').notNull(),
-    platform: varchar('platform', { length: 20 }), // 'web'|'android'|'ios'
-    deviceName: varchar('device_name', { length: 100 }),
-    lastUsedAt: timestamp('last_used_at'),
-    createdAt: timestamp('created_at')
-      .defaultNow()
-      .notNull(),
-  },
-  (table) => [
-    index('idx_push_tokens_user').on(table.userId),
-  ],
-);
-
 export type NotificationPreference = typeof notificationPreferences.$inferSelect;
-export type PushToken = typeof pushTokens.$inferSelect;
