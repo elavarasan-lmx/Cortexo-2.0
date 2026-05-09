@@ -216,32 +216,37 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
       const project=projectRes?.data||projectRes;
       setResolved(info);
 
-      // Step 1: Project & Server
-      setBranch(info.branch||project.defaultBranch||'main');
-      setServerId(info.matchedServerId||0);
-      setRemotePath(info.remotePath||'');
-      setPostDeployCmd(info.postDeployCmd||'');
-      setHealthCheckUrl(info.healthCheckUrl||'');
-
       // Parse project settings JSON
       let s: Record<string,any> = {};
       if(project.settings){
         try{ s = typeof project.settings==='string'?JSON.parse(project.settings):project.settings; }catch{}
       }
+      const deploy = s.deploy||{};
       const db = s.database||{};
       const sock = s.socket||{};
+      const slug = s.broadcast?.client || deploy.clientSlug || (project.description||'').split('|')[1]?.trim() || '';
 
-      // Step 2: Nginx — domain, root, socket ports
-      if(s.domain) setNginxDomain(s.domain);
-      else if(info.domain) setNginxDomain(info.domain);
-      if(info.remotePath) setNginxRoot(info.remotePath);
-      // Extract ports from socket URLs
-      const mainSockMatch = (sock.socketBaseUrl||'').match(/:(\d{4,5})/);
-      if(mainSockMatch) setSocketPort(mainSockMatch[1]);
-      const wsSockMatch = (sock.nativeSocketUrl||'').match(/:(\d{4,5})/);
-      if(wsSockMatch) setWsPort(wsSockMatch[1]);
+      // Step 1: Project & Server — fallback to project.settings.deploy
+      setBranch(info.branch||project.defaultBranch||'main');
+      setServerId(info.matchedServerId||Number(deploy.serverId)||0);
+      setRemotePath(info.remotePath||deploy.serverPath||'');
+      setPostDeployCmd(info.postDeployCmd||'');
+      setHealthCheckUrl(info.healthCheckUrl||(s.domain?`https://${s.domain}`:''));
 
-      // Step 5: Database
+      // Step 2: Nginx — domain, root, socket ports from project settings
+      const domain = s.domain||info.domain||'';
+      if(domain) setNginxDomain(domain);
+      const root = info.remotePath||deploy.serverPath||'';
+      if(root) setNginxRoot(root);
+      // Socket ports — from settings.socket or URL parsing
+      if(sock.socketIoPort) setSocketPort(sock.socketIoPort);
+      else { const m = (sock.socketBaseUrl||'').match(/:(\d{4,5})/); if(m) setSocketPort(m[1]); }
+      if(sock.wsPort) setWsPort(sock.wsPort);
+      else { const m = (sock.nativeSocketUrl||'').match(/:(\d{4,5})/); if(m) setWsPort(m[1]); }
+      // Rate socket = wsPort - 1 (convention)
+      if(sock.wsPort && !rateSocketPort) setRateSocketPort(String(Number(sock.wsPort) - 1));
+
+      // Step 4: Database — from project settings
       if(db.host) setDbHost(db.host);
       else if(info.dbHost) setDbHost(info.dbHost);
       if(db.port) setDbPort(db.port);
@@ -250,8 +255,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
       if(db.user) setDbUser(db.user);
       if(db.password) setDbPass(db.password);
 
-      // Step 6: PM2 — auto-fill from slug
-      const slug = s.clientSlug || (project.description||'').split('|')[1]?.trim() || '';
+      // Step 5: PM2 — auto-fill from slug
       if(slug && !pm2Name) setPm2Name(`${slug}-socket`);
     }catch{}
     setResolving(false);
