@@ -33,8 +33,6 @@ const PALETTE_ITEMS: PaletteItem[] = [
   // Monitoring
   { id: 'heartbeat', label: 'Heartbeat Monitor', href: '/heartbeat', section: 'Monitoring', icon: Heart, keywords: ['health', 'uptime', 'status', 'monitor', 'pulse'] },
   { id: 'bug-tracker', label: 'Bug Tracker', href: '/bug-tracker', section: 'Monitoring', icon: Bug, keywords: ['issues', 'tickets'] },
-  { id: 'root-causes', label: 'Root Causes', href: '/root-causes', section: 'Monitoring', icon: Search },
-  { id: 'code-reviews', label: 'Code Reviews', href: '/code-reviews', section: 'Monitoring', icon: FileCode, keywords: ['review', 'scan', 'security', 'quality'] },
   // Infrastructure
   { id: 'servers', label: 'Servers', href: '/servers', section: 'Infrastructure', icon: Server },
   // Testing

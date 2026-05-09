@@ -47,8 +47,6 @@ import { judgeScoreRoutes } from './routes/judge-scores.js';
 import { metricsStreamRoutes } from './routes/metrics-stream.js';
 import { winbullRoutes } from './routes/winbull.js';
 import { winbullDeployRoutes } from './routes/winbull-deploy.js';
-import { rootCauseRoutes } from './routes/root-causes.js';
-import { codeReviewRoutes } from './routes/code-review.js';
 import { brainRoutes } from './routes/brain.js';
 import { knowledgeRoutes } from './routes/knowledge.js';
 import { testingRoutes } from './routes/testing.js';
@@ -239,8 +237,6 @@ async function start() {
   await app.register(judgeScoreRoutes, { prefix: '/v1' });
   await app.register(metricsStreamRoutes, { prefix: '/v1' });
   await app.register(winbullRoutes, { prefix: '/v1' });
-  await app.register(rootCauseRoutes, { prefix: '/v1' });
-  await app.register(codeReviewRoutes, { prefix: '/v1' });
   await app.register(brainRoutes, { prefix: '/v1' });
   await app.register(knowledgeRoutes, { prefix: '/v1' });
   await app.register(testingRoutes, { prefix: '/v1' });

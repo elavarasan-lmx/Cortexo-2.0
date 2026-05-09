@@ -14,7 +14,6 @@ const SEARCHABLE = [
   { label: 'Deployments',       href: '/deployments',         icon: Rocket,          category: 'CI/CD' },
   { label: 'Pipelines',         href: '/pipelines',           icon: GitBranch,       category: 'CI/CD' },
   { label: 'Bug Tracker',       href: '/bug-tracker',         icon: Bug,             category: 'Bugs' },
-  { label: 'Root Causes',       href: '/root-causes',         icon: Search,          category: 'Bugs' },
   { label: 'Servers',           href: '/servers',             icon: Server,          category: 'Infrastructure' },
   { label: 'Settings',          href: '/settings',            icon: Settings,        category: 'Settings' },
   { label: 'Deploy Profiles',   href: '/settings/profiles',   icon: Settings,        category: 'Settings' },
