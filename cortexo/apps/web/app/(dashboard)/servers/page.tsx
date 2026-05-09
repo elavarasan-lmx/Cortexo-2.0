@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import {
   Server, Plus, Trash2, Edit3, HardDrive, Cpu, MemoryStick,
-  Loader2, RefreshCw, Wifi, WifiOff, Globe, Shield,
+  Loader2, RefreshCw, Wifi, WifiOff, Globe, Shield, FolderSync,
 } from 'lucide-react';
+import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useApiData, useAutoLoadToken } from '@/lib/hooks';
 
@@ -30,10 +31,20 @@ function MetricBar({ label, value, max, unit, color }: { label: string; value: n
 export default function ServersPage() {
   useAutoLoadToken();
   const { data: servers, loading, error, refetch } = useApiData(() => api.getServers());
-  const { data: resources } = useApiData(() => api.getServerResourcesLatest());
+  const { data: resources, refetch: refetchResources } = useApiData(() => api.getServerResourcesLatest());
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [collecting, setCollecting] = useState(false);
   const [form, setForm] = useState({ name: '', privateIp: '', publicAddress: '', sshKey: '' });
+
+  const collectLiveMetrics = async () => {
+    setCollecting(true);
+    try {
+      await api.collectServerMetrics();
+      await refetchResources();
+    } catch (err) { console.error(err); }
+    setCollecting(false);
+  };
 
   const addServer = async () => {
     if (!form.name) return;
@@ -83,8 +94,14 @@ export default function ServersPage() {
           <p style={{ fontSize: '14px', color: 'rgb(var(--text-secondary))', marginTop: '4px' }}>{allServers.length} servers · resource monitoring & fleet management</p>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
+          <Link href="/servers/mounts" style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', fontSize: '13px', fontWeight: 500, color: 'rgb(var(--text-secondary))', cursor: 'pointer', textDecoration: 'none' }}>
+            <FolderSync style={{ width: '14px', height: '14px' }} /> SSHFS Mounts
+          </Link>
           <button onClick={refetch} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', fontSize: '13px', fontWeight: 500, color: 'rgb(var(--text-secondary))', cursor: 'pointer' }}>
             <RefreshCw style={{ width: '14px', height: '14px' }} /> Refresh
+          </button>
+          <button onClick={collectLiveMetrics} disabled={collecting} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '10px', border: '1px solid #10B981', backgroundColor: 'rgba(16,185,129,0.08)', fontSize: '13px', fontWeight: 600, color: '#10B981', cursor: collecting ? 'wait' : 'pointer', opacity: collecting ? 0.7 : 1 }}>
+            {collecting ? <Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} /> : <Wifi style={{ width: '14px', height: '14px' }} />} {collecting ? 'Scanning...' : '📡 Live Scan'}
           </button>
           <button onClick={() => setShowForm(!showForm)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '12px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#fff', background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))', boxShadow: '0 4px 12px rgba(var(--primary), 0.3)' }}>
             <Plus style={{ width: '16px', height: '16px' }} /> Add Server

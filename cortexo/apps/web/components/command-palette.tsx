@@ -31,7 +31,6 @@ const PALETTE_ITEMS: PaletteItem[] = [
   { id: 'pipeline-editor', label: 'Pipeline Editor', href: '/pipelines/editor', section: 'CI/CD', icon: FileCode, keywords: ['yaml', 'config'] },
   { id: 'deployments', label: 'Deployments', href: '/deployments', section: 'CI/CD', icon: Rocket, keywords: ['deploy', 'release'] },
   // Monitoring
-  { id: 'heartbeat', label: 'Heartbeat Monitor', href: '/heartbeat', section: 'Monitoring', icon: Heart, keywords: ['health', 'uptime', 'status', 'monitor', 'pulse'] },
   { id: 'bug-tracker', label: 'Bug Tracker', href: '/bug-tracker', section: 'Monitoring', icon: Bug, keywords: ['issues', 'tickets'] },
   // Infrastructure
   { id: 'servers', label: 'Servers', href: '/servers', section: 'Infrastructure', icon: Server },

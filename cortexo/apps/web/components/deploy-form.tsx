@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Loader2, X, Plus, Minus, CheckCircle, Server, Trash2, ChevronRight, ChevronLeft, Rocket } from 'lucide-react';
 import { api } from '@/lib/api';
 import { inp, lbl, ta, g2, g3, STEPS, Toggle, octalToRwx } from './deploy/shared';
-import type { CronEntry, FolderEntry } from './deploy/shared';
+import type { FolderEntry } from './deploy/shared';
 import DeployTerminal from './deploy/deploy-terminal';
 import StepReview from './deploy/step-review';
 
@@ -53,7 +53,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
   const [nginxExtra,setNginxExtra]=useState('');
   const [nginxAutoGen,setNginxAutoGen]=useState(initialData?.nginxAutoGen !== false);
 
-  const [crons,setCrons]=useState<CronEntry[]>(initialData?.crons || []);
+
 
   const [permUser,setPermUser]=useState(initialData?.permUser || 'ubuntu');
   const [permGroup,setPermGroup]=useState(initialData?.permGroup || 'ubuntu');
@@ -115,7 +115,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
         if (d.laravelPath !== undefined) setLaravelPath(d.laravelPath);
         if (d.nginxExtra !== undefined) setNginxExtra(d.nginxExtra);
         if (d.nginxAutoGen !== undefined) setNginxAutoGen(d.nginxAutoGen);
-        if (d.crons !== undefined) setCrons(d.crons);
+
         if (d.permUser !== undefined) setPermUser(d.permUser);
         if (d.permGroup !== undefined) setPermGroup(d.permGroup);
         if (d.permFile !== undefined) setPermFile(d.permFile);
@@ -152,7 +152,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
       localStorage.setItem('cortexo_deploy_form', JSON.stringify({
         step, selectedProject, branch, environment, serverId, remotePath,
         nginxDomain, nginxPort, nginxRoot, phpVer, socketPort, rateSocketPort, wsPort, sslCert, sslKey, enableAdmin, enableMobileApi, enableLaravel, laravelPath, nginxExtra, nginxAutoGen,
-        crons, permUser, permGroup, permFile, permDir, permWritable, permRecursive, folders,
+        crons: [], permUser, permGroup, permFile, permDir, permWritable, permRecursive, folders,
         dbHost, dbPort, dbName, dbUser, dbPass, dbMigrate, dbMigrateCmd, dbImportSql, dbSqlPath,
         pm2Name, pm2Script, pm2Interpreter, pm2Instances, pm2Restart, pm2Args,
         preDeployCmd, postDeployCmd, healthCheckUrl, notifyOnComplete, truncateLogs
@@ -161,7 +161,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
   }, [
     step, selectedProject, branch, environment, serverId, remotePath,
     nginxDomain, nginxPort, nginxRoot, phpVer, socketPort, rateSocketPort, wsPort, sslCert, sslKey, enableAdmin, enableMobileApi, enableLaravel, laravelPath, nginxExtra, nginxAutoGen,
-    crons, permUser, permGroup, permFile, permDir, permWritable, permRecursive, folders,
+    permUser, permGroup, permFile, permDir, permWritable, permRecursive, folders,
     dbHost, dbPort, dbName, dbUser, dbPass, dbMigrate, dbMigrateCmd, dbImportSql, dbSqlPath,
     pm2Name, pm2Script, pm2Interpreter, pm2Instances, pm2Restart, pm2Args,
     preDeployCmd, postDeployCmd, healthCheckUrl, notifyOnComplete, truncateLogs, isClient
@@ -172,7 +172,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
       localStorage.removeItem('cortexo_deploy_form');
       setStep(0); setSelectedProject(''); setBranch('main'); setEnvironment('production'); setServerId(0); setRemotePath('');
       setNginxDomain(''); setNginxPort('80'); setNginxRoot(''); setPhpVer('8.3'); setSocketPort(''); setRateSocketPort(''); setWsPort(''); setSslCert(''); setSslKey(''); setEnableAdmin(true); setEnableMobileApi(true); setEnableLaravel(true); setLaravelPath('lmxtrade/winbullliteapi'); setNginxExtra(''); setNginxAutoGen(true);
-      setCrons([]); setPermUser('ubuntu'); setPermGroup('ubuntu'); setPermFile('644'); setPermDir('755'); setPermWritable(''); setPermRecursive(true); setFolders([]);
+      setPermUser('ubuntu'); setPermGroup('ubuntu'); setPermFile('644'); setPermDir('755'); setPermWritable(''); setPermRecursive(true); setFolders([]);
       setDbHost(''); setDbPort('3306'); setDbName(''); setDbUser(''); setDbPass(''); setDbMigrate(false); setDbMigrateCmd('php index.php migrate'); setDbImportSql(false); setDbSqlPath('');
       setPm2Name(''); setPm2Script(''); setPm2Interpreter('node'); setPm2Instances('1'); setPm2Restart(true); setPm2Args('');
       setPreDeployCmd(''); setPostDeployCmd(''); setHealthCheckUrl(''); setNotifyOnComplete(false); setTruncateLogs(false);
@@ -266,7 +266,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
         preDeployCmd: truncateLogs ? `${preDeployCmd ? preDeployCmd + ' && ' : ''}find ${remotePath}/application/logs -name '*.php' -type f -exec truncate -s 0 {} + 2>/dev/null; find ${remotePath}/lmxtrade/winbullliteapi/storage/logs -name '*.log' -type f -exec truncate -s 0 {} + 2>/dev/null; find ${remotePath}/logs -type f -exec truncate -s 0 {} + 2>/dev/null; echo '[cortexo] logs truncated'` : preDeployCmd,
         postDeployCmd, healthCheckUrl, notifyOnComplete, truncateLogs,
         nginx: { domain:nginxDomain, port:nginxPort, root:nginxRoot, phpVer, socketPort, rateSocketPort, wsPort, sslCert, sslKey, enableAdmin, enableMobileApi, enableLaravel, laravelPath, extraDirectives:nginxExtra, autoGenerate:nginxAutoGen },
-        crons,
+        crons: [],
         permissions: { user:permUser, group:permGroup, fileMode:permFile, dirMode:permDir, writablePaths:permWritable, recursive:permRecursive, folders },
         database: { host:dbHost, port:dbPort, name:dbName, user:dbUser, password:dbPass, migrate:dbMigrate, migrateCmd:dbMigrateCmd, importSql:dbImportSql, sqlPath:dbSqlPath },
         pm2: { name:pm2Name, script:pm2Script, interpreter:pm2Interpreter, instances:pm2Instances, autoRestart:pm2Restart, args:pm2Args },
@@ -303,9 +303,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
     if(termRef.current) termRef.current.scrollTop = termRef.current.scrollHeight;
   },[deployLogs]);
 
-  const addCron=()=>setCrons(c=>[...c,{schedule:'* * * * *',command:''}]);
-  const removeCron=(i:number)=>setCrons(c=>c.filter((_,idx)=>idx!==i));
-  const updateCron=(i:number,key:keyof CronEntry,val:string)=>setCrons(c=>c.map((e,idx)=>idx===i?{...e,[key]:val}:e));
+
 
   const addFolder=(path='',perm=permDir,owner=permUser,group=permGroup)=>setFolders(f=>[...f,{path,perm,owner,group}]);
   const removeFolder=(i:number)=>setFolders(f=>f.filter((_,idx)=>idx!==i));
@@ -319,11 +317,10 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
     switch(idx){
       case 0:return!!(selectedProject&&serverId&&remotePath);
       case 1:return!!(nginxDomain&&nginxRoot);
-      case 2:return crons.length>0;
-      case 3:return folders.length>0||(!!permUser&&!!permGroup);
-      case 4:return!!(dbHost&&dbName);
-      case 5:return!!(pm2Name&&pm2Script);
-      case 6:return!!(selectedProject&&serverId&&remotePath); // review ready if step 0 is valid
+      case 2:return folders.length>0||(!!permUser&&!!permGroup);
+      case 3:return!!(dbHost&&dbName);
+      case 4:return!!(pm2Name&&pm2Script);
+      case 5:return!!(selectedProject&&serverId&&remotePath);
       default:return false;
     }
   };
@@ -497,23 +494,6 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
           </>)}
 
           {step===2&&(<>
-            {crons.map((c,i)=>(
-              <div key={i} style={{display:'flex',gap:'8px',alignItems:'flex-end'}}>
-                <div style={{width:'140px'}}><label style={lbl}>Schedule</label><input value={c.schedule} onChange={e=>updateCron(i,'schedule',e.target.value)} style={inp}/></div>
-                <div style={{flex:1}}><label style={lbl}>Command</label><input value={c.command} onChange={e=>updateCron(i,'command',e.target.value)} placeholder="cd /var/www/html/client && php index.php cron run" style={inp}/></div>
-                <button onClick={()=>removeCron(i)} style={{width:'38px',height:'38px',borderRadius:'10px',border:'1px solid rgba(239,68,68,0.3)',backgroundColor:'rgba(239,68,68,0.06)',color:'#EF4444',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><Minus style={{width:'14px',height:'14px'}}/></button>
-              </div>
-            ))}
-            <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
-              <button onClick={addCron} style={{display:'flex',alignItems:'center',gap:'6px',padding:'8px 16px',borderRadius:'10px',border:'1px dashed rgb(var(--border))',backgroundColor:'transparent',color:'rgb(var(--text-secondary))',cursor:'pointer',fontSize:'12px',fontWeight:600}}><Plus style={{width:'13px',height:'13px'}}/>Add Cron Entry</button>
-              {[{label:'⚡ Rate Sync',schedule:'* * * * *',command:`cd ${remotePath||'/var/www/html/client'} && php index.php C_rates sync_rates`},{label:'💾 DB Backup',schedule:'0 2 * * *',command:`db_dump -u ${dbUser||'admin'} -p ${dbName||'dbname'} > /backup/${dbName||'db'}_$(date +\%F).sql`},{label:'📜 Log Cleanup',schedule:'0 0 * * 0',command:`find ${remotePath||'/var/www/html/client'}/application/logs -name '*.php' -mtime +30 -delete`}].map(p=>(
-                <button key={p.label} onClick={()=>setCrons(c=>[...c,{schedule:p.schedule,command:p.command}])} style={{padding:'6px 12px',borderRadius:'8px',border:'1px solid rgba(var(--border),0.5)',backgroundColor:'rgba(var(--primary),0.04)',color:'rgb(var(--text-muted))',cursor:'pointer',fontSize:'11px',fontWeight:500}}>{p.label}</button>
-              ))}
-            </div>
-            {crons.length===0&&<div style={{padding:'32px',textAlign:'center',borderRadius:'12px',border:'1px dashed rgb(var(--border))'}}><Webhook style={{width:'24px',height:'24px',color:'rgb(var(--text-muted))',opacity:0.4,margin:'0 auto 8px'}}/><p style={{fontSize:'13px',color:'rgb(var(--text-muted))',margin:0}}>No cron jobs — use presets or add custom entries</p></div>}
-          </>)}
-
-          {step===3&&(<>
             {/* Default ownership & permissions */}
             <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'rgb(var(--primary))',margin:'0 0 2px'}}>Default Ownership</p>
             <div style={g2}>
@@ -582,7 +562,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
             <Toggle checked={permRecursive} onChange={setPermRecursive} label="Apply permissions recursively (-R)"/>
           </>)}
 
-          {step===4&&(<>
+          {step===3&&(<>
             {dbProfiles.length>0&&(
               <div style={{padding:'12px 14px',borderRadius:'10px',backgroundColor:'rgba(236,72,153,0.06)',border:'1px solid rgba(236,72,153,0.15)'}}>
                 <label style={{...lbl,color:'#EC4899'}}>DB Profile (auto-fill host, port, user, password)</label>
@@ -607,7 +587,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
             {dbImportSql&&<div><label style={lbl}>SQL Dump Path</label><input value={dbSqlPath} onChange={e=>setDbSqlPath(e.target.value)} placeholder="/backup/initial.sql" style={inp}/></div>}
           </>)}
 
-          {step===5&&(<>
+          {step===4&&(<>
             <div style={g2}>
               <div><label style={lbl}>Process Name</label><input value={pm2Name} onChange={e=>setPm2Name(e.target.value)} placeholder="jmj-socket" style={inp}/></div>
               <div><label style={lbl}>Script</label><input value={pm2Script} onChange={e=>setPm2Script(e.target.value)} placeholder="server.js" style={inp}/></div>
@@ -620,14 +600,14 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
             <Toggle checked={pm2Restart} onChange={setPm2Restart} label="Auto-restart process on deploy"/>
           </>)}
 
-          {step===6&&(
+          {step===5&&(
             <StepReview
               selectedProject={selectedProject} projects={projects} branch={branch}
               environment={environment} serverId={serverId} serverList={serverList}
               remotePath={remotePath} healthCheckUrl={healthCheckUrl}
               nginxDomain={nginxDomain} nginxPort={nginxPort} nginxRoot={nginxRoot}
               phpVer={phpVer} socketPort={socketPort} wsPort={wsPort} sslCert={sslCert}
-              crons={crons} dbHost={dbHost} dbPort={dbPort} dbName={dbName}
+              crons={[]} dbHost={dbHost} dbPort={dbPort} dbName={dbName}
               dbUser={dbUser} dbMigrate={dbMigrate} dbMigrateCmd={dbMigrateCmd}
               pm2Name={pm2Name} pm2Interpreter={pm2Interpreter}
               pm2Instances={pm2Instances} pm2Restart={pm2Restart}

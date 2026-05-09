@@ -1,8 +1,17 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getDb } from '../lib/db.js';
-import { eq } from 'drizzle-orm';
-import { servers } from '@cortexo/db/schema';
+import { eq, sql } from 'drizzle-orm';
+import { servers, serverResources } from '@cortexo/db/schema';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const execFileAsync = promisify(execFile);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 const createServerSchema = z.object({
   name: z.string().min(1).max(100),
@@ -167,6 +176,73 @@ export async function serverRoutes(app: FastifyInstance) {
     } catch (err) {
       app.log.error(err);
       return reply.code(500).send({ error: 'Database error' });
+    }
+  });
+
+  // ── Live Metrics Collector ──────────────────────────────────────
+  // SSHes into each server, runs lightweight commands, stores results
+
+  app.post('/servers/collect-metrics', async (_request, reply) => {
+    try {
+      const db = await getDb();
+
+      // Get all server IPs from DB
+      const allServers = await db.query.servers.findMany();
+      const ips = allServers.map(s => s.privateIp).filter(Boolean) as string[];
+
+      if (ips.length === 0) {
+        return reply.code(400).send({ error: 'No servers with IPs configured' });
+      }
+
+      // Run collector script
+      const scriptPath = path.resolve(__dirname, '../lib/collect-metrics.sh');
+      const { stdout } = await execFileAsync('bash', [scriptPath, ...ips], {
+        timeout: 60_000, // 60s max
+        env: { ...process.env, HOME: process.env.HOME || '/root' },
+      });
+
+      let metrics: any[];
+      try {
+        metrics = JSON.parse(stdout);
+      } catch {
+        app.log.error('Failed to parse collector output: ' + stdout);
+        return reply.code(500).send({ error: 'Failed to parse metrics output' });
+      }
+
+      // Insert fresh metrics
+      let inserted = 0;
+      for (const m of metrics) {
+        if (!m.serverIp) continue;
+        await db.insert(serverResources).values({
+          serverIp: m.serverIp,
+          cpuPercent: m.cpuPercent?.toString() || '0',
+          ramUsedMb: m.ramUsedMb || 0,
+          ramTotalMb: m.ramTotalMb || 0,
+          diskUsedGb: m.diskUsedGb?.toString() || '0',
+          diskTotalGb: m.diskTotalGb?.toString() || '0',
+          loadAvg: m.loadAvg || '0 0 0',
+          uptimeHours: m.uptimeHours || 0,
+        } as any);
+        inserted++;
+      }
+
+      // Prune old data (keep last 24h)
+      await db.execute(
+        sql`DELETE FROM server_resources WHERE checked_at < NOW() - INTERVAL '24 hours'`
+      );
+
+      return {
+        success: true,
+        collected: inserted,
+        servers: ips.length,
+        message: `Collected metrics from ${inserted} servers`,
+      };
+    } catch (err: any) {
+      app.log.error(err);
+      return reply.code(500).send({
+        error: 'Metrics collection failed',
+        detail: err.message,
+      });
     }
   });
 }

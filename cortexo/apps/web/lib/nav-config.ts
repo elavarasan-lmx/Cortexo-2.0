@@ -31,7 +31,6 @@ export const NAVIGATION: NavSection[] = [
   {
     title: 'MONITORING', color: '#EF4444',
     items: [
-      { label: 'Heartbeat',     href: '/heartbeat',    emoji: '💓' },
       { label: 'Bug Tracker',   href: '/bug-tracker',  emoji: '🐛' },
     ],
   },
@@ -39,7 +38,6 @@ export const NAVIGATION: NavSection[] = [
     title: 'INFRASTRUCTURE', color: '#06B6D4',
     items: [
       { label: 'Servers',        href: '/servers',        emoji: '🖥' },
-      { label: 'SSHFS',          href: '/servers/mounts', emoji: '📂' },
       { label: 'Pipelines',      href: '/pipelines',      emoji: '🔀' },
     ],
   },

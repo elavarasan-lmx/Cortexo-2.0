@@ -489,6 +489,7 @@ class ApiClient {
   getServerResourcesLatest()                         { return this.request<Record<string, unknown>[]>('GET', '/servers/resources/latest'); }
   getServerResourceHistory(ip: string)               { return this.request<Record<string, unknown>[]>('GET', `/servers/resources/${ip}/history`); }
   getServerProjectCounts()                           { return this.request<Record<string, number>>('GET', '/servers/project-counts'); }
+  collectServerMetrics()                             { return this.request<{ success: boolean; collected: number }>('POST', '/servers/collect-metrics'); }
 
   // ─── Server Mounts (SSHFS) ────────────────────────────────────────────────
   getServerMounts()                                  { return this.request<ServerMount[]>('GET', '/server-mounts'); }
