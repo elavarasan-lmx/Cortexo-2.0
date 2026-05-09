@@ -1,0 +1,107 @@
+'use client';
+
+import { useState } from 'react';
+import { Server, Save, ArrowLeft, Loader2, Trash2 } from 'lucide-react';
+import Link from 'next/link';
+import { useAutoLoadToken } from '@/lib/hooks';
+
+const card: React.CSSProperties = {
+  borderRadius: '14px', border: '1px solid rgb(var(--border))',
+  backgroundColor: 'rgb(var(--surface))', overflow: 'hidden',
+};
+const inputStyle: React.CSSProperties = {
+  width: '100%', padding: '10px 14px', borderRadius: '10px',
+  border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))',
+  color: 'rgb(var(--text-primary))', fontSize: '13px', outline: 'none', boxSizing: 'border-box',
+};
+const labelStyle: React.CSSProperties = {
+  display: 'block', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase',
+  letterSpacing: '0.04em', marginBottom: '6px', color: 'rgb(var(--text-muted))',
+};
+
+export default function EditServerPage() {
+  useAutoLoadToken();
+  const [form, setForm] = useState({
+    name: 'prod-api-01', ip: '13.201.238.28', port: '22', user: 'ubuntu',
+    provider: 'aws', region: 'ap-south-1', os: 'Ubuntu 22.04 LTS',
+    sshKey: '~/.ssh/prod-key.pem', tags: 'production, api, primary',
+    description: 'Primary production API server running Node.js backend',
+  });
+  const [saving, setSaving] = useState(false);
+
+  const u = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      {/* Breadcrumb */}
+      <Link href="/servers" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'rgb(var(--text-muted))', textDecoration: 'none' }}>
+        <ArrowLeft style={{ width: '14px', height: '14px' }} /> Back to Servers
+      </Link>
+
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'linear-gradient(135deg, #7C3AED, #A855F7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Server style={{ width: '20px', height: '20px', color: '#fff' }} />
+          </div>
+          <div>
+            <h1 style={{ fontSize: '22px', fontWeight: 800, color: 'rgb(var(--text-primary))', margin: 0 }}>✏️ Edit Server: {form.name}</h1>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: '#10B981', padding: '2px 8px', borderRadius: '4px', backgroundColor: 'rgba(16,185,129,0.1)' }}>● Online</span>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', border: '1px solid #EF4444', backgroundColor: 'transparent', color: '#EF4444', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+            <Trash2 style={{ width: '14px', height: '14px' }} /> Delete
+          </button>
+          <button onClick={() => { setSaving(true); setTimeout(() => setSaving(false), 800); }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', border: 'none', backgroundColor: '#7C3AED', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+            {saving ? <Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} /> : <Save style={{ width: '14px', height: '14px' }} />}
+            {saving ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+      </div>
+
+      {/* Two-column */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', alignItems: 'start' }}>
+        {/* Left: Connection */}
+        <div style={card}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(var(--border),0.4)' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0, color: 'rgb(var(--text-primary))' }}>Connection Details</h3>
+          </div>
+          <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div><label style={labelStyle}>Server Name</label><input style={inputStyle} value={form.name} onChange={e => u('name', e.target.value)} /></div>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
+              <div><label style={labelStyle}>IP Address</label><input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace" }} value={form.ip} onChange={e => u('ip', e.target.value)} /></div>
+              <div><label style={labelStyle}>SSH Port</label><input style={inputStyle} value={form.port} onChange={e => u('port', e.target.value)} /></div>
+            </div>
+            <div><label style={labelStyle}>SSH User</label><input style={inputStyle} value={form.user} onChange={e => u('user', e.target.value)} /></div>
+            <div><label style={labelStyle}>SSH Key Path</label><input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace" }} value={form.sshKey} onChange={e => u('sshKey', e.target.value)} /></div>
+          </div>
+        </div>
+
+        {/* Right: Metadata */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={card}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(var(--border),0.4)' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0, color: 'rgb(var(--text-primary))' }}>Server Metadata</h3>
+            </div>
+            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div><label style={labelStyle}>Provider</label>
+                <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.provider} onChange={e => u('provider', e.target.value)}>
+                  <option value="aws">AWS (EC2)</option><option value="gcp">Google Cloud</option><option value="azure">Azure</option><option value="digitalocean">DigitalOcean</option><option value="hetzner">Hetzner</option><option value="custom">Custom</option>
+                </select>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div><label style={labelStyle}>Region</label><input style={inputStyle} value={form.region} onChange={e => u('region', e.target.value)} /></div>
+                <div><label style={labelStyle}>OS</label><input style={inputStyle} value={form.os} onChange={e => u('os', e.target.value)} /></div>
+              </div>
+              <div><label style={labelStyle}>Tags</label><input style={inputStyle} value={form.tags} onChange={e => u('tags', e.target.value)} /></div>
+              <div><label style={labelStyle}>Description</label><textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} value={form.description} onChange={e => u('description', e.target.value)} /></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <style>{`@keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}

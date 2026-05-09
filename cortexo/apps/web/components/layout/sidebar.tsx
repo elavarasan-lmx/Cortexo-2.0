@@ -57,13 +57,16 @@ const navigation: NavSection[] = [
   {
     title: 'INFRASTRUCTURE',
     items: [
-      { label: 'Servers',      href: '/servers',        emoji: '🖥' },
-      { label: 'SSHFS',        href: '/servers/mounts', emoji: '📂' },
-      { label: 'Cron Jobs',    href: '/cron-jobs',      emoji: '⏰' },
-      { label: 'Client Fleet', href: '/fleet',          emoji: '🌐' },
-      { label: 'Pipelines',    href: '/pipelines',      emoji: '🔀' },
-      { label: 'Auto Sync',    href: '/sync',           emoji: '🔄' },
-      { label: 'Webhooks',     href: '/webhooks',       emoji: '🪝' },
+      { label: 'Servers',          href: '/servers',          emoji: '🖥' },
+      { label: 'SSHFS',            href: '/servers/mounts',   emoji: '📂' },
+      { label: 'Cron Jobs',        href: '/cron-jobs',        emoji: '⏰' },
+      { label: 'Client Fleet',     href: '/fleet',            emoji: '🌐' },
+      { label: 'Mobile Deploy',    href: '/mobile-deploy',    emoji: '📱' },
+      { label: 'Keystore Vault',   href: '/keystore-vault',   emoji: '🔑' },
+      { label: 'Scaffolding',      href: '/scaffolding',      emoji: '🏗' },
+      { label: 'Pipelines',        href: '/pipelines',        emoji: '🔀' },
+      { label: 'Auto Sync',        href: '/sync',             emoji: '🔄' },
+      { label: 'Webhooks',         href: '/webhooks',         emoji: '🪝' },
     ],
   },
   {
