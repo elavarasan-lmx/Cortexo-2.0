@@ -278,34 +278,72 @@ export default function ServerMountsPage() {
             </div>
 
             <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
-              <div>
-                <label style={{ fontSize:12, fontWeight:600, color:'rgb(var(--text-secondary))', display:'block', marginBottom:4 }}>Server</label>
-                <select value={form.serverId} onChange={e => setForm(p => ({ ...p, serverId: parseInt(e.target.value) }))}
-                  style={{ ...inputStyle, cursor:'pointer' }}>
-                  <option value={0}>Select a server...</option>
-                  {allServers.map((s: any) => <option key={s.id} value={s.id}>{s.name} ({s.privateIp})</option>)}
-                </select>
-              </div>
-              <div>
-                <label style={{ fontSize:12, fontWeight:600, color:'rgb(var(--text-secondary))', display:'block', marginBottom:4 }}>Mount Name</label>
-                <input placeholder="e.g. RubySilver" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} style={inputStyle} />
-              </div>
-              <div>
-                <label style={{ fontSize:12, fontWeight:600, color:'rgb(var(--text-secondary))', display:'block', marginBottom:4 }}>Remote Path</label>
-                <input placeholder="/var/www/html/rubysilver" value={form.remotePath} onChange={e => setForm(p => ({ ...p, remotePath: e.target.value }))} style={{ ...inputStyle, fontFamily:"'JetBrains Mono', monospace", fontSize:12 }} />
-              </div>
-              <div>
-                <label style={{ fontSize:12, fontWeight:600, color:'rgb(var(--text-secondary))', display:'block', marginBottom:4 }}>Local Mount Path</label>
-                <input placeholder="~/ec2-rubysilver" value={form.localMountPath} onChange={e => setForm(p => ({ ...p, localMountPath: e.target.value }))} style={{ ...inputStyle, fontFamily:"'JetBrains Mono', monospace", fontSize:12 }} />
-              </div>
-              <div>
-                <label style={{ fontSize:12, fontWeight:600, color:'rgb(var(--text-secondary))', display:'block', marginBottom:4 }}>SSH User</label>
-                <input placeholder="ubuntu" value={form.sshUser} onChange={e => setForm(p => ({ ...p, sshUser: e.target.value }))} style={inputStyle} />
-              </div>
-              <label style={{ display:'flex', alignItems:'center', gap:8, fontSize:13, color:'rgb(var(--text-secondary))', cursor:'pointer' }}>
-                <input type="checkbox" checked={form.autoMount} onChange={e => setForm(p => ({ ...p, autoMount: e.target.checked }))} style={{ accentColor:'rgb(var(--primary))' }} />
-                Auto-mount on startup
-              </label>
+              {(() => {
+                const chipStyle: React.CSSProperties = { padding:'3px 10px', borderRadius:6, fontSize:11, fontWeight:500, border:'1px solid rgba(var(--primary), 0.25)', backgroundColor:'rgba(var(--primary), 0.06)', color:'rgb(var(--primary))', cursor:'pointer', whiteSpace:'nowrap', transition:'all 150ms' };
+                const chipRow: React.CSSProperties = { display:'flex', flexWrap:'wrap', gap:4, marginTop:6 };
+                // Compute suggestions from existing data
+                const existingNames = allMounts.map((m: any) => m.name).filter(Boolean);
+                const sshUsers = [...new Set(['ubuntu', ...allMounts.map((m: any) => m.sshUser).filter(Boolean)])].slice(0, 3);
+                // Smart name-based auto-fill
+                const fillFromName = (name: string) => {
+                  const slug = name.toLowerCase().replace(/\s+/g, '');
+                  setForm(p => ({
+                    ...p,
+                    name,
+                    remotePath: p.remotePath || `/var/www/html/${slug}`,
+                    localMountPath: p.localMountPath || `~/ec2-${slug}`,
+                  }));
+                };
+                // Common project names for suggestion
+                const nameHints = ['KJPL', 'JMBullion', 'RubySilver', 'TrustBullion', 'AJBullion'].filter(n => !existingNames.includes(n)).slice(0, 4);
+
+                return (
+                  <>
+                    <div>
+                      <label style={{ fontSize:12, fontWeight:600, color:'rgb(var(--text-secondary))', display:'block', marginBottom:4 }}>Server</label>
+                      <select value={form.serverId} onChange={e => setForm(p => ({ ...p, serverId: parseInt(e.target.value) }))}
+                        style={{ ...inputStyle, cursor:'pointer' }}>
+                        <option value={0}>Select a server...</option>
+                        {allServers.map((s: any) => <option key={s.id} value={s.id}>{s.name} ({s.privateIp})</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ fontSize:12, fontWeight:600, color:'rgb(var(--text-secondary))', display:'block', marginBottom:4 }}>Mount Name</label>
+                      <input placeholder="e.g. RubySilver" value={form.name} onChange={e => {
+                        const val = e.target.value;
+                        const slug = val.toLowerCase().replace(/\s+/g, '');
+                        setForm(p => ({ ...p, name: val, remotePath: `/var/www/html/${slug}`, localMountPath: `~/ec2-${slug}` }));
+                      }} style={inputStyle} />
+                      {nameHints.length > 0 && (
+                        <div style={chipRow}>
+                          {nameHints.map(h => <button key={h} type="button" onClick={() => fillFromName(h)} style={chipStyle} onMouseEnter={e => { (e.target as HTMLElement).style.backgroundColor = 'rgba(var(--primary), 0.15)'; }} onMouseLeave={e => { (e.target as HTMLElement).style.backgroundColor = 'rgba(var(--primary), 0.06)'; }}>{h}</button>)}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <label style={{ fontSize:12, fontWeight:600, color:'rgb(var(--text-secondary))', display:'block', marginBottom:4 }}>Remote Path</label>
+                      <input placeholder="/var/www/html/rubysilver" value={form.remotePath} onChange={e => setForm(p => ({ ...p, remotePath: e.target.value }))} style={{ ...inputStyle, fontFamily:"'JetBrains Mono', monospace", fontSize:12 }} />
+                      {form.remotePath && <p style={{ fontSize:10, color:'rgb(var(--text-muted))', margin:'4px 0 0' }}>💡 Auto-filled from mount name</p>}
+                    </div>
+                    <div>
+                      <label style={{ fontSize:12, fontWeight:600, color:'rgb(var(--text-secondary))', display:'block', marginBottom:4 }}>Local Mount Path</label>
+                      <input placeholder="~/ec2-rubysilver" value={form.localMountPath} onChange={e => setForm(p => ({ ...p, localMountPath: e.target.value }))} style={{ ...inputStyle, fontFamily:"'JetBrains Mono', monospace", fontSize:12 }} />
+                      {form.localMountPath && <p style={{ fontSize:10, color:'rgb(var(--text-muted))', margin:'4px 0 0' }}>💡 Auto-filled from mount name</p>}
+                    </div>
+                    <div>
+                      <label style={{ fontSize:12, fontWeight:600, color:'rgb(var(--text-secondary))', display:'block', marginBottom:4 }}>SSH User</label>
+                      <input placeholder="ubuntu" value={form.sshUser} onChange={e => setForm(p => ({ ...p, sshUser: e.target.value }))} style={inputStyle} />
+                      <div style={chipRow}>
+                        {sshUsers.map(u => <button key={u} type="button" onClick={() => setForm(p => ({ ...p, sshUser: u }))} style={chipStyle} onMouseEnter={e => { (e.target as HTMLElement).style.backgroundColor = 'rgba(var(--primary), 0.15)'; }} onMouseLeave={e => { (e.target as HTMLElement).style.backgroundColor = 'rgba(var(--primary), 0.06)'; }}>{u}</button>)}
+                      </div>
+                    </div>
+                    <label style={{ display:'flex', alignItems:'center', gap:8, fontSize:13, color:'rgb(var(--text-secondary))', cursor:'pointer' }}>
+                      <input type="checkbox" checked={form.autoMount} onChange={e => setForm(p => ({ ...p, autoMount: e.target.checked }))} style={{ accentColor:'rgb(var(--primary))' }} />
+                      Auto-mount on startup
+                    </label>
+                  </>
+                );
+              })()}
             </div>
 
             <div style={{ display:'flex', gap:10, marginTop:20, justifyContent:'flex-end' }}>

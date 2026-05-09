@@ -148,16 +148,51 @@ export default function ServersPage() {
             </div>
             {/* Body */}
             <div style={{ padding: '20px 24px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div><label style={labelStyle}>Server Name *</label><input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Production Web 1" style={inputStyle} autoFocus /></div>
-                  <div><label style={labelStyle}>Private IP *</label><input value={form.privateIp} onChange={e => setForm(f => ({ ...f, privateIp: e.target.value }))} placeholder="e.g. 10.0.1.50" style={inputStyle} /></div>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div><label style={labelStyle}>Public Address</label><input value={form.publicAddress} onChange={e => setForm(f => ({ ...f, publicAddress: e.target.value }))} placeholder="e.g. ec2-xx.compute.amazonaws.com" style={inputStyle} /></div>
-                  <div><label style={labelStyle}>SSH Key Path</label><input value={form.sshKey} onChange={e => setForm(f => ({ ...f, sshKey: e.target.value }))} placeholder="e.g. ~/.ssh/id_rsa" style={inputStyle} /></div>
-                </div>
-              </div>
+              {(() => {
+                const chipStyle: React.CSSProperties = { padding: '3px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 500, border: '1px solid rgba(var(--primary), 0.25)', backgroundColor: 'rgba(var(--primary), 0.06)', color: 'rgb(var(--primary))', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 150ms' };
+                const chipRow: React.CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px' };
+                // Compute suggestions
+                const existingIps = allServers.map((s: any) => s.privateIp).filter(Boolean);
+                const usedNums = existingIps.map((ip: string) => { const m = ip.match(/10\.0\.1\.(\d+)/); return m ? parseInt(m[1]) : 0; }).filter(Boolean);
+                const nextNum = usedNums.length > 0 ? Math.max(...usedNums) + 1 : 41;
+                const suggestedIps = [nextNum, nextNum + 1, nextNum + 10].map(n => `10.0.1.${n}`);
+                const serverCount = allServers.length + 1;
+                const nameHints = [`Server ${serverCount}`, `Production Web ${serverCount}`, `Staging ${serverCount}`, `DB Server ${serverCount}`];
+                const sshHints = ['~/.ssh/winbull.pem', '~/.ssh/id_rsa', '~/.ssh/cortexo.pem'];
+                const existingSshKeys = [...new Set(allServers.map((s: any) => s.sshKey).filter(Boolean))];
+                const allSshHints = [...new Set([...existingSshKeys, ...sshHints])].slice(0, 4);
+
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                      <div>
+                        <label style={labelStyle}>Server Name *</label>
+                        <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Production Web 1" style={inputStyle} autoFocus />
+                        <div style={chipRow}>
+                          {nameHints.map(h => <button key={h} type="button" onClick={() => setForm(f => ({ ...f, name: h }))} style={chipStyle} onMouseEnter={e => { (e.target as HTMLElement).style.backgroundColor = 'rgba(var(--primary), 0.15)'; }} onMouseLeave={e => { (e.target as HTMLElement).style.backgroundColor = 'rgba(var(--primary), 0.06)'; }}>{h}</button>)}
+                        </div>
+                      </div>
+                      <div>
+                        <label style={labelStyle}>Private IP *</label>
+                        <input value={form.privateIp} onChange={e => setForm(f => ({ ...f, privateIp: e.target.value }))} placeholder="e.g. 10.0.1.50" style={inputStyle} />
+                        <div style={chipRow}>
+                          {suggestedIps.map(ip => <button key={ip} type="button" onClick={() => setForm(f => ({ ...f, privateIp: ip }))} style={chipStyle} onMouseEnter={e => { (e.target as HTMLElement).style.backgroundColor = 'rgba(var(--primary), 0.15)'; }} onMouseLeave={e => { (e.target as HTMLElement).style.backgroundColor = 'rgba(var(--primary), 0.06)'; }}>{ip}</button>)}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                      <div><label style={labelStyle}>Public Address</label><input value={form.publicAddress} onChange={e => setForm(f => ({ ...f, publicAddress: e.target.value }))} placeholder="e.g. ec2-xx.compute.amazonaws.com" style={inputStyle} /></div>
+                      <div>
+                        <label style={labelStyle}>SSH Key Path</label>
+                        <input value={form.sshKey} onChange={e => setForm(f => ({ ...f, sshKey: e.target.value }))} placeholder="e.g. ~/.ssh/id_rsa" style={inputStyle} />
+                        <div style={chipRow}>
+                          {allSshHints.map(h => <button key={h} type="button" onClick={() => setForm(f => ({ ...f, sshKey: h }))} style={chipStyle} onMouseEnter={e => { (e.target as HTMLElement).style.backgroundColor = 'rgba(var(--primary), 0.15)'; }} onMouseLeave={e => { (e.target as HTMLElement).style.backgroundColor = 'rgba(var(--primary), 0.06)'; }}>{h}</button>)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
             {/* Footer */}
             <div style={{ padding: '16px 24px', borderTop: '1px solid rgb(var(--border))', display: 'flex', gap: '8px', justifyContent: 'flex-end', backgroundColor: 'rgba(var(--surface-hover), 0.5)' }}>

@@ -106,7 +106,7 @@ function buildSedCmds(s: DeploySettings): string[] {
     `sed -i "s|bullion_v4.logimaxindia.com|www.${s.domain}|g" global_configs.php`,
     `sed -i 's|\\$database = "winbullSource"|\\$database = "${s.dbName}"|g' global_configs.php`,
     `sed -i 's|\\$web_title = ".*"|\\$web_title = "${s.webTitle || s.name}"|g' global_configs.php`,
-    `sed -i 's|\\$web_copyright = ".*"|\\$web_copyright = "${s.webCopyright || '© 2025 ' + s.name}"|g' global_configs.php`,
+    `sed -i 's|\\$web_copyright = ".*"|\\$web_copyright = "${s.webCopyright || '© 2026 ' + s.name}"|g' global_configs.php`,
     `sed -i 's|\\$client = "lmxtrade"|\\$client = "${slug}"|g' global_configs.php`,
   ];
 }
@@ -151,31 +151,32 @@ function buildNginxConfig(s: DeploySettings): string {
         proxy_set_header Upgrade \\$http_upgrade;
         proxy_set_header Connection "upgrade";
         proxy_set_header Host \\$host;
-        proxy_set_header X-Real-IP \\$remote_addr;
-        proxy_cache_bypass \\$http_upgrade;
         proxy_read_timeout 86400;
+        proxy_send_timeout 86400;
+        proxy_buffering off;
     }
 
     # Admin Panel
-    location /admin {
+    location /admin/ {
         try_files \\$uri \\$uri/ /admin/index.php?\\$query_string;
     }
 
-    # Laravel API
-    location /lmxtrade/winbullliteapi {
-        try_files \\$uri \\$uri/ /lmxtrade/winbullliteapi/public/index.php?\\$query_string;
-    }
-
-    # Mobile API
-    location /mobileapi {
-        try_files \\$uri \\$uri/ /mobileapi/index.php?\\$query_string;
-    }
-
-    # CI routes
+    # CodeIgniter routing
     location / {
         try_files \\$uri \\$uri/ /index.php?\\$query_string;
     }
 
+    # Mobile API
+    location /mobileapi/ {
+        try_files \\$uri \\$uri/ /mobileapi/index.php?\\$query_string;
+    }
+
+    # Laravel
+    location /lmxtrade/winbullliteapi/ {
+        try_files \\$uri \\$uri/ /lmxtrade/winbullliteapi/index.php?\\$query_string;
+    }
+
+    # PHP-FPM
     location ~ \\.php$ {
         include snippets/fastcgi-php.conf;
         fastcgi_pass unix:/run/php/php8.3-fpm.sock;
@@ -251,6 +252,8 @@ function buildLogCleanupCmds(s: DeploySettings): string[] {
     `rm -rf lmxtrade/winbullliteapi/storage/framework/cache/data/* 2>/dev/null || true`,
     `rm -rf lmxtrade/winbullliteapi/storage/framework/sessions/* 2>/dev/null || true`,
     `rm -rf lmxtrade/winbullliteapi/storage/framework/views/* 2>/dev/null || true`,
+    `pm2 flush ${s.clientSlug}-ws 2>/dev/null || true`,
+    `pm2 flush ${s.clientSlug}-socketio 2>/dev/null || true`,
   ];
 }
 

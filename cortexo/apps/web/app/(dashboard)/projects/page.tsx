@@ -11,6 +11,7 @@ import {
 import { api } from '@/lib/api';
 import type { Project } from '@/lib/api';
 import { useApiData, useAutoLoadToken } from '@/lib/hooks';
+import { useToastStore } from '@/lib/toast-store';
 
 function parseSettings(p: Project) {
   try {
@@ -42,7 +43,7 @@ export default function ProjectsPage() {
 
   const handleDelete = async (p: Project) => {
     setDeleting(true);
-    try { await api.deleteProject(p.id); setDeleteProject(null); refetch(); } catch { /* */ }
+    try { await api.deleteProject(p.id); setDeleteProject(null); refetch(); useToastStore.getState().success('Project Deleted', `${p.name} has been removed`); } catch { useToastStore.getState().error('Failed', 'Could not delete project'); }
     setDeleting(false);
   };
 
@@ -284,8 +285,9 @@ function EditProjectModal({ project, onClose, onSaved }: { project: Project; onC
     setSaving(true); setErr('');
     try {
       await api.updateProject(project.id, { name: form.name, description: form.description || undefined, repoUrl: form.repoUrl || undefined, defaultBranch: form.defaultBranch } as Record<string, unknown>);
+      useToastStore.getState().success('Project Updated', `${form.name} has been updated`);
       onSaved();
-    } catch (e: unknown) { setErr((e as Error).message || 'Failed to update'); }
+    } catch (e: unknown) { setErr((e as Error).message || 'Failed to update'); useToastStore.getState().error('Update Failed', (e as Error).message || 'Could not update project'); }
     setSaving(false);
   };
 

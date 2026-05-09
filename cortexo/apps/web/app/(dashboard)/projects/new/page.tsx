@@ -1005,7 +1005,7 @@ sed -i "s/lmxtrade/${form.clientSlug}/g" lmxtrade/${form.clientSlug}winlitesocke
 sed -i "s|bullion_v4.logimaxindia.com|www.${form.domain}|g" global_configs.php
 sed -i 's|\\$database = "winbullSource"|\\$database = "${form.dbName}"|g' global_configs.php
 sed -i 's|\\$web_title = ".*"|\\$web_title = "${form.webTitle || form.name}"|g' global_configs.php
-sed -i 's|\\$web_copyright = ".*"|\\$web_copyright = "${form.webCopyright || '© 2025 ' + form.name}"|g' global_configs.php
+sed -i 's|\\$web_copyright = ".*"|\\$web_copyright = "${form.webCopyright || '© 2026 ' + form.name}"|g' global_configs.php
 sed -i 's|\\$client = "lmxtrade"|\\$client = "${form.clientSlug}"|g' global_configs.php`}
                   </pre>
                 </div>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { User, Mail, Camera, Save, Shield, Phone, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAutoLoadToken } from '@/lib/hooks';
+import { useToastStore } from '@/lib/toast-store';
 
 const inputBase: React.CSSProperties = {
   width: '100%',
@@ -40,7 +41,7 @@ const labelStyle: React.CSSProperties = {
   marginBottom: '6px',
 };
 
-type Toast = { type: 'success' | 'error'; message: string } | null;
+
 
 export default function SettingsPage() {
   useAutoLoadToken();
@@ -52,7 +53,7 @@ export default function SettingsPage() {
   const [passwords, setPasswords] = useState({ current: '', newPassword: '', confirm: '' });
   const [saving, setSaving] = useState(false);
   const [changingPw, setChangingPw] = useState(false);
-  const [toast, setToast] = useState<Toast>(null);
+  const toast = useToastStore.getState();
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -73,7 +74,7 @@ export default function SettingsPage() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to load profile';
       setLoadError(msg);
-      setToast({ type: 'error', message: `Could not load profile: ${msg}` });
+      useToastStore.getState().error('Load Failed', `Could not load profile: ${msg}`);
     } finally {
       setIsLoading(false);
     }
@@ -81,22 +82,14 @@ export default function SettingsPage() {
 
   useEffect(() => { loadProfile(); }, []);
 
-  // Auto-hide toast
-  useEffect(() => {
-    if (toast) {
-      const t = setTimeout(() => setToast(null), 3000);
-      return () => clearTimeout(t);
-    }
-  }, [toast]);
-
   async function handleSaveProfile() {
     setSaving(true);
     try {
       await api.updateProfile({ name: profile.name, email: profile.email });
-      setToast({ type: 'success', message: 'Profile saved successfully' });
+      useToastStore.getState().success('Profile Saved', 'Your profile has been updated');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to save profile';
-      setToast({ type: 'error', message });
+      useToastStore.getState().error('Save Failed', message);
     } finally {
       setSaving(false);
     }
@@ -104,25 +97,25 @@ export default function SettingsPage() {
 
   async function handleChangePassword() {
     if (!passwords.current || !passwords.newPassword) {
-      setToast({ type: 'error', message: 'Fill in all password fields' });
+      useToastStore.getState().error('Validation', 'Fill in all password fields');
       return;
     }
     if (passwords.newPassword !== passwords.confirm) {
-      setToast({ type: 'error', message: 'New passwords do not match' });
+      useToastStore.getState().error('Validation', 'New passwords do not match');
       return;
     }
     if (passwords.newPassword.length < 8) {
-      setToast({ type: 'error', message: 'New password must be at least 8 characters' });
+      useToastStore.getState().error('Validation', 'New password must be at least 8 characters');
       return;
     }
     setChangingPw(true);
     try {
       await api.changePassword({ currentPassword: passwords.current, newPassword: passwords.newPassword });
-      setToast({ type: 'success', message: 'Password changed successfully' });
+      useToastStore.getState().success('Password Changed', 'Your password has been updated');
       setPasswords({ current: '', newPassword: '', confirm: '' });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to change password';
-      setToast({ type: 'error', message });
+      useToastStore.getState().error('Password Failed', message);
     } finally {
       setChangingPw(false);
     }
@@ -130,23 +123,6 @@ export default function SettingsPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {/* ─── Toast notification ─── */}
-      {toast && (
-        <div style={{
-          position: 'fixed', top: '20px', right: '20px', zIndex: 9999,
-          display: 'flex', alignItems: 'center', gap: '8px',
-          padding: '12px 18px', borderRadius: '12px',
-          fontSize: '13px', fontWeight: 600, color: '#fff',
-          backgroundColor: toast.type === 'success' ? '#10B981' : '#EF4444',
-          boxShadow: '0 6px 20px rgba(0,0,0,0.25)',
-          animation: 'fadeIn 200ms ease',
-        }}>
-          {toast.type === 'success'
-            ? <CheckCircle style={{ width: '16px', height: '16px' }} />
-            : <AlertCircle style={{ width: '16px', height: '16px' }} />}
-          {toast.message}
-        </div>
-      )}
 
       {/* ─── Loading Skeleton ─── */}
       {isLoading && (
