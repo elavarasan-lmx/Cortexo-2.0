@@ -14,7 +14,6 @@ const REQUIRED_VARS = [
 
 const RECOMMENDED_VARS = [
   'NEXTAUTH_SECRET',
-  'AUTH_SECRET',
   'APP_URL',
   'API_URL',
 ] as const;

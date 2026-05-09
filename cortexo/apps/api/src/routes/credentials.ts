@@ -197,7 +197,10 @@ export async function credentialsRoutes(app: FastifyInstance) {
 
     while (nextUrl) {
       const res: Response = await fetch(nextUrl, { headers });
-      if (!res.ok) break;
+      if (!res.ok) {
+        if (res.status === 401) throw new Error('GitHub token expired or invalid. Update it in Settings → Credentials.');
+        break;
+      }
 
       const page = await res.json() as any[];
       all.push(...page);
@@ -221,6 +224,12 @@ export async function credentialsRoutes(app: FastifyInstance) {
     const ghHeaders: Record<string, string> = { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json', 'User-Agent': 'Cortexo' };
 
     try {
+      // 0. Validate token first
+      const testRes = await fetch('https://api.github.com/user', { headers: ghHeaders });
+      if (!testRes.ok) {
+        return reply.code(401).send({ error: 'GitHub token expired or invalid. Update it in Settings → Credentials.', tokenExpired: true });
+      }
+
       // 1. Fetch ALL user repos (follows pagination automatically)
       const userReposPromise = fetchAllGitHubPages(
         'https://api.github.com/user/repos?per_page=100&sort=updated&type=all',

@@ -5,83 +5,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSidebarStore, SIDEBAR_WIDTH, SIDEBAR_COLLAPSED_WIDTH } from '@/lib/sidebar-store';
 import { useSidebarFeatures } from '@/lib/sidebar-features';
+import { NAVIGATION } from '@/lib/nav-config';
+import type { NavItem } from '@/lib/nav-config';
 import {
   ChevronLeft,
   ChevronRight,
   X,
   LogOut,
 } from 'lucide-react';
-
-interface NavItem {
-  label: string;
-  href: string;
-  emoji: string;
-  badge?: number;
-}
-
-interface NavSection {
-  title: string;
-  items: NavItem[];
-}
-
-/**
- * Sidebar navigation — matches the new pencil.pen design system
- * White background, emoji icons, clean Inter typography
- */
-const navigation: NavSection[] = [
-  {
-    title: 'MAIN',
-    items: [
-      { label: 'Dashboard',    href: '/dashboard',    emoji: '◉' },
-      { label: 'Projects',     href: '/projects',     emoji: '📁' },
-      { label: 'Deployments',  href: '/deployments',  emoji: '⬡' },
-      { label: 'Clients',      href: '/clients',      emoji: '👥' },
-      { label: 'Sources',      href: '/sources',      emoji: '🔌' },
-      { label: 'Knowledge',    href: '/knowledge-base',emoji: '📚' },
-    ],
-  },
-  {
-    title: 'MONITORING',
-    items: [
-      { label: 'Heartbeat',     href: '/heartbeat',      emoji: '💓' },
-      { label: 'Logs',          href: '/logs',           emoji: '📋' },
-      { label: 'Error Tracker', href: '/errors',         emoji: '⚠' },
-      { label: 'Bug Tracker',   href: '/bug-tracker',    emoji: '🐛' },
-      { label: 'Root Causes',   href: '/root-causes',    emoji: '🧬' },
-      { label: 'Deprecation',   href: '/deprecation',    emoji: '🚫' },
-      { label: 'Scans',         href: '/scans',          emoji: '🔍' },
-      { label: 'Code Reviews', href: '/code-reviews',   emoji: '📝' },
-      { label: 'Fix Library',  href: '/fix-library',    emoji: '📦' },
-    ],
-  },
-  {
-    title: 'INFRASTRUCTURE',
-    items: [
-      { label: 'Servers',          href: '/servers',          emoji: '🖥' },
-      { label: 'SSHFS',            href: '/servers/mounts',   emoji: '📂' },
-      { label: 'Cron Jobs',        href: '/cron-jobs',        emoji: '⏰' },
-      { label: 'Client Fleet',     href: '/fleet',            emoji: '🌐' },
-      { label: 'Mobile Deploy',    href: '/mobile-deploy',    emoji: '📱' },
-      { label: 'Keystore Vault',   href: '/keystore-vault',   emoji: '🔑' },
-      { label: 'Scaffolding',      href: '/scaffolding',      emoji: '🏗' },
-      { label: 'Pipelines',        href: '/pipelines',        emoji: '🔀' },
-      { label: 'Auto Sync',        href: '/sync',             emoji: '🔄' },
-      { label: 'Webhooks',         href: '/webhooks',         emoji: '🪝' },
-    ],
-  },
-  {
-    title: 'ADMIN',
-    items: [
-      { label: 'Analytics',    href: '/analytics',           emoji: '📊' },
-      { label: 'Audit Log',    href: '/audit-log',           emoji: '📜' },
-      { label: 'Team',         href: '/team',                emoji: '👤' },
-      { label: 'Testing',      href: '/testing',             emoji: '🧪' },
-      { label: 'API Keys',     href: '/settings/api-keys',   emoji: '🔑' },
-      { label: 'Docs',         href: '/docs',                emoji: '📖' },
-      { label: 'Settings',     href: '/settings',            emoji: '⚙' },
-    ],
-  },
-];
 
 /* ── Nav link — matches pencil.pen navItem styling ── */
 function NavLink({
@@ -113,19 +44,19 @@ function NavLink({
         fontFamily: 'Inter, system-ui, sans-serif',
         textDecoration: 'none',
         transition: 'all 180ms ease',
-        backgroundColor: isActive ? '#F3F0FF' : 'transparent',
-        color: isActive ? '#7C3AED' : '#64748B',
+        backgroundColor: isActive ? 'rgba(124, 58, 237, 0.12)' : 'transparent',
+        color: isActive ? '#7C3AED' : 'rgb(var(--text-muted))',
       }}
       onMouseEnter={(e) => {
         if (!isActive) {
-          e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))';
-          e.currentTarget.style.color = '#475569';
+          e.currentTarget.style.backgroundColor = 'rgba(124, 58, 237, 0.06)';
+          e.currentTarget.style.color = 'rgb(var(--text-primary))';
         }
       }}
       onMouseLeave={(e) => {
         if (!isActive) {
           e.currentTarget.style.backgroundColor = 'transparent';
-          e.currentTarget.style.color = '#64748B';
+          e.currentTarget.style.color = 'rgb(var(--text-muted))';
         }
       }}
     >
@@ -195,7 +126,7 @@ export function Sidebar({ isMobile = false }: { isMobile?: boolean }) {
   }, [isMobile, mobileOpen, setMobileOpen]);
 
   // Filter: per-item visibility + hide entire section if all items hidden
-  const visibleNav = navigation
+  const visibleNav = NAVIGATION
     .map((section) => ({
       ...section,
       items: section.items.filter((item) => {
@@ -277,7 +208,7 @@ export function Sidebar({ isMobile = false }: { isMobile?: boolean }) {
             <span style={{
               fontSize: '20px',
               fontWeight: 700,
-              color: '#1E1B4B',
+              color: 'rgb(var(--text-primary))',
               fontFamily: 'Inter, system-ui, sans-serif',
               lineHeight: 1,
             }}>
@@ -299,8 +230,8 @@ export function Sidebar({ isMobile = false }: { isMobile?: boolean }) {
               height: '32px',
               borderRadius: '8px',
               border: 'none',
-              backgroundColor: '#F1F5F9',
-              color: '#64748B',
+              backgroundColor: 'rgb(var(--surface-hover))',
+              color: 'rgb(var(--text-muted))',
               cursor: 'pointer',
               transition: 'background-color 150ms',
             }}
@@ -330,7 +261,7 @@ export function Sidebar({ isMobile = false }: { isMobile?: boolean }) {
                 fontWeight: 700,
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase' as const,
-                color: '#64748B',
+                color: 'rgb(var(--text-muted))',
                 margin: 0,
                 fontFamily: 'Inter, system-ui, sans-serif',
               }}>
@@ -344,7 +275,7 @@ export function Sidebar({ isMobile = false }: { isMobile?: boolean }) {
                 margin: '8px auto',
                 height: '1px',
                 width: '24px',
-                backgroundColor: '#F1F5F9',
+                backgroundColor: 'rgb(var(--border))',
               }} />
             )}
 
@@ -352,7 +283,7 @@ export function Sidebar({ isMobile = false }: { isMobile?: boolean }) {
             {!effectiveCollapsed && idx > 0 && (
               <div style={{
                 height: '1px',
-                backgroundColor: '#F1F5F9',
+                backgroundColor: 'rgb(var(--border))',
                 margin: '4px 12px 8px',
               }} />
             )}
@@ -388,7 +319,7 @@ export function Sidebar({ isMobile = false }: { isMobile?: boolean }) {
           <div style={{ marginTop: '8px' }}>
             <div style={{
               height: '1px',
-              backgroundColor: '#F1F5F9',
+              backgroundColor: 'rgb(var(--border))',
               margin: '4px 12px 8px',
             }} />
             <button
@@ -440,9 +371,9 @@ export function Sidebar({ isMobile = false }: { isMobile?: boolean }) {
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
-            border: '1px solid #E5E7EB',
-            backgroundColor: '#FFFFFF',
-            color: '#94A3B8',
+            border: '1px solid rgb(var(--border))',
+            backgroundColor: 'rgb(var(--card))',
+            color: 'rgb(var(--text-muted))',
             boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
             transition: 'all 200ms ease',
             zIndex: 50,
@@ -455,7 +386,7 @@ export function Sidebar({ isMobile = false }: { isMobile?: boolean }) {
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = 'rgb(var(--card))';
-            e.currentTarget.style.color = '#94A3B8';
+            e.currentTarget.style.color = 'rgb(var(--text-muted))';
             e.currentTarget.style.borderColor = 'rgb(var(--border))';
             e.currentTarget.style.transform = 'scale(1)';
           }}

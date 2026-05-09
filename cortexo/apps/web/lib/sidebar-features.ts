@@ -2,15 +2,17 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { api } from './api';
 import { useToastStore } from './toast-store';
+import { NAVIGATION } from './nav-config';
 
 /**
  * Sidebar Feature Visibility Store — DB-backed
  *
  * Loads per-user menu permissions from the API (backed by DB).
  * Falls back to "all visible" if API is offline.
- * Each menuKey = the href path (e.g. "/pipelines", "/provision").
+ * Each menuKey = the href path (e.g. "/pipelines", "/servers").
  *
- * Admin can restrict other users via the admin endpoints.
+ * SECTIONS is derived dynamically from NAVIGATION (nav-config.ts).
+ * Add/remove sidebar items there — this file auto-syncs.
  */
 
 /** Section metadata for the Settings UI */
@@ -20,98 +22,15 @@ export interface SectionMeta {
   items: { menuKey: string; label: string }[];
 }
 
-export const SECTIONS: SectionMeta[] = [
-  {
-    title: 'PROJECTS', color: '#818CF8',
-    items: [{ menuKey: '/projects', label: 'All Projects' }],
-  },
-  {
-    title: 'CI/CD', color: '#10B981',
-    items: [
-      { menuKey: '/pipelines', label: 'Pipelines' },
-      { menuKey: '/pipelines/runs', label: 'Pipeline Runs' },
-      { menuKey: '/pipelines/editor', label: 'Pipeline Editor' },
-      { menuKey: '/deployments', label: 'Deployments' },
-      { menuKey: '/deployments/canary', label: 'Canary Releases' },
-      { menuKey: '/rollbacks', label: 'Rollbacks' },
-    ],
-  },
-  {
-    title: 'BUGS & ERRORS', color: '#EF4444',
-    items: [
-      { menuKey: '/errors', label: 'Errors' },
-      { menuKey: '/root-causes', label: 'Root Causes' },
-      { menuKey: '/scans', label: 'Scan Results' },
-    ],
-  },
-  {
-    title: 'OPERATIONS', color: '#F59E0B',
-    items: [
-      { menuKey: '/postmortem', label: 'Postmortem' },
-      { menuKey: '/deprecation', label: 'Deprecations' },
-    ],
-  },
-  {
-    title: 'INFRASTRUCTURE', color: '#06B6D4',
-    items: [
-      { menuKey: '/servers', label: 'Servers' },
-      { menuKey: '/servers/mounts', label: 'Server Mounts' },
-      { menuKey: '/logs', label: 'Log Viewer' },
-    ],
-  },
-  {
-    title: 'AGENT INTELLIGENCE', color: '#A78BFA',
-    items: [
-      { menuKey: '/agent/memory', label: 'Agent Memory' },
-      { menuKey: '/agent/skills', label: 'Skill Library' },
-      { menuKey: '/agent/context', label: 'Context Monitor' },
-      { menuKey: '/agent/performance', label: 'Agent Performance' },
-      { menuKey: '/agent/runner', label: 'Agent Runner' },
-      { menuKey: '/agent/marketplace', label: 'Marketplace' },
-    ],
-  },
-  {
-    title: 'SYNC & MIGRATION', color: '#F97316',
-    items: [
-      { menuKey: '/sync', label: 'Source Sync' },
-      { menuKey: '/db-migration', label: 'DB Migration' },
-    ],
-  },
-  {
-    title: 'ANALYTICS', color: '#14B8A6',
-    items: [
-      { menuKey: '/analytics', label: 'Insights' },
-      { menuKey: '/reports', label: 'Reports' },
-      { menuKey: '/analytics/audit', label: 'Activity Log' },
-    ],
-  },
-  {
-    title: 'TOOLS', color: '#6B7280',
-    items: [
-      { menuKey: '/postgres', label: 'PostgreSQL' },
-      { menuKey: '/docs', label: 'Docs' },
-    ],
-  },
-  {
-    title: 'SOURCE REGISTRY', color: '#EC4899',
-    items: [
-      { menuKey: '/sources', label: 'Managed Sources' },
-      { menuKey: '/sources/clients', label: 'Client Configs' },
-      { menuKey: '/sources/provision', label: 'New Client Wizard' },
-    ],
-  },
-  {
-    title: 'TESTING', color: '#8B5CF6',
-    items: [
-      { menuKey: '/testing/load', label: 'Load Test' },
-      { menuKey: '/testing/socket', label: 'Socket Test' },
-      { menuKey: '/testing/module', label: 'Module Test' },
-      { menuKey: '/testing/checklist', label: 'Checklist' },
-      { menuKey: '/testing/api-health', label: 'API Health' },
-      { menuKey: '/testing/ssl', label: 'SSL Monitor' },
-    ],
-  },
-];
+/** Dynamically derived from the shared NAVIGATION config */
+export const SECTIONS: SectionMeta[] = NAVIGATION.map(section => ({
+  title: section.title,
+  color: section.color,
+  items: section.items.map(item => ({
+    menuKey: item.href,
+    label: item.label,
+  })),
+}));
 
 interface SidebarFeaturesState {
   /** menuKey → visible. If key is missing, default is true. */

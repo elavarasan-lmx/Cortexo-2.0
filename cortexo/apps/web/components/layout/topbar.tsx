@@ -3,7 +3,7 @@
 import { useTheme } from 'next-themes';
 import {
   Search, Bell, Moon, ChevronDown, User, LogOut, Settings,
-  KeyRound, HelpCircle, CheckCheck, AlertCircle, Rocket, Bug,
+  HelpCircle, CheckCheck, AlertCircle, Rocket, Bug,
   Menu,
 } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -419,7 +419,6 @@ export function Topbar({ isMobile = false }: { isMobile?: boolean }) {
                 {[
                   { href: '/settings', icon: Settings, label: 'Settings' },
                   { href: '/profile', icon: User, label: 'Profile' },
-                  { href: '/settings/api-keys', icon: KeyRound, label: 'API Keys' },
                   { href: '#', icon: HelpCircle, label: 'Help & Docs' },
                 ].map(item => (
                   <Link

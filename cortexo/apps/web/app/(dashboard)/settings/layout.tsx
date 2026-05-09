@@ -4,17 +4,15 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
 import {
-  User, Bell, LayoutGrid, Shield, Database, GripVertical, Users, Lock,
+  User, Bell, LayoutGrid, Shield, Database, Users,
 } from 'lucide-react';
 
 const tabs = [
   { label: 'Profile', href: '/settings', icon: User },
   { label: 'Credentials', href: '/settings/credentials', icon: Shield },
   { label: 'Users', href: '/settings/users', icon: Users },
-  { label: 'Access Control', href: '/settings/access', icon: Lock },
-  { label: 'Menu Order', href: '/settings/menu-order', icon: GripVertical },
   { label: 'Notifications', href: '/settings/notifications', icon: Bell },
-  { label: 'Deploy Profiles', href: '/settings/profiles', icon: Database },
+  { label: 'Base Templates', href: '/settings/profiles', icon: Database },
   { label: 'Modules', href: '/settings/modules', icon: LayoutGrid },
 ];
 
@@ -46,9 +44,9 @@ function SettingsTab({
         position: 'relative',
         transition: 'all 250ms cubic-bezier(0.22, 1, 0.36, 1)',
         background: isActive
-          ? 'linear-gradient(135deg, rgb(var(--primary)), rgba(var(--primary), 0.82))'
+          ? 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--primary) / 0.82))'
           : hovered
-            ? 'rgba(var(--primary), 0.06)'
+            ? 'rgb(var(--primary) / 0.06)'
             : 'transparent',
         color: isActive
           ? '#fff'
@@ -56,7 +54,7 @@ function SettingsTab({
             ? 'rgb(var(--primary))'
             : 'rgb(var(--text-secondary))',
         boxShadow: isActive
-          ? '0 2px 12px -2px rgba(var(--primary), 0.4), 0 1px 3px rgba(var(--primary), 0.15)'
+          ? '0 2px 12px -2px rgb(var(--primary) / 0.4), 0 1px 3px rgb(var(--primary) / 0.15)'
           : 'none',
         transform: hovered && !isActive ? 'translateY(-1px)' : 'none',
       }}
@@ -106,7 +104,7 @@ export default function SettingsLayout({
       <div style={{
         display: 'flex',
         gap: '4px',
-        overflowX: 'auto',
+        flexWrap: 'wrap',
         padding: '5px',
         marginBottom: '28px',
         backgroundColor: 'rgba(var(--surface), 0.7)',
@@ -115,7 +113,6 @@ export default function SettingsLayout({
         border: '1px solid rgba(var(--border), 0.5)',
         borderRadius: '14px',
         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
-        scrollbarWidth: 'none',
       }}>
         {tabs.map((tab) => {
           const isActive = pathname === tab.href;

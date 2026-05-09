@@ -67,7 +67,7 @@ export default function ProjectsPage() {
         <div>
           <h1 style={{ fontSize: '24px', fontWeight: 800, color: 'rgb(var(--text-primary))', margin: 0 }}>Projects</h1>
           <p style={{ fontSize: '14px', color: 'rgb(var(--text-muted))', marginTop: '4px' }}>
-            {allProjects.length} {allProjects.length === 1 ? 'project' : 'projects'} · {allProjects.filter(p => { const st = parseSettings(p); return st.productType; }).length} active deployments
+            {allProjects.length} {allProjects.length === 1 ? 'project' : 'projects'} · {allProjects.filter(p => { const st = parseSettings(p); return st.productType === 'trade'; }).length} trade · {allProjects.filter(p => { const st = parseSettings(p); return st.productType === 'lite'; }).length} lite
           </p>
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -82,8 +82,8 @@ export default function ProjectsPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '20px' }}>
         {[
           { icon: '📂', value: allProjects.length, label: 'Total Projects', color: '#7C3AED' },
-          { icon: '✅', value: allProjects.filter(p => parseSettings(p).productType).length, label: 'Active', color: '#10B981' },
-          { icon: '🚀', value: allProjects.filter(p => parseSettings(p).productType === 'trade').length, label: 'Deploying', color: '#F59E0B' },
+          { icon: '📈', value: allProjects.filter(p => parseSettings(p).productType === 'trade').length, label: 'Trade', color: '#F59E0B' },
+          { icon: '📊', value: allProjects.filter(p => parseSettings(p).productType === 'lite').length, label: 'Lite', color: '#10B981' },
           { icon: '📱', value: allProjects.filter(p => { const st = parseSettings(p); return st.androidVersion || st.iosVersion; }).length, label: 'With Mobile', color: '#3B82F6' },
         ].map((stat, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px', borderRadius: '10px', backgroundColor: 'rgb(var(--card))', border: '1px solid rgb(var(--border))' }}>
@@ -109,7 +109,7 @@ export default function ProjectsPage() {
       )}
 
       {/* Project grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(460px, 1fr))', gap: '16px' }}>
         {filtered.map((project) => {
           const s = parseSettings(project);
           const db = (s.database || {}) as Record<string, string>;
@@ -172,21 +172,20 @@ export default function ProjectsPage() {
               {/* Client config rows */}
               <div style={{ padding: '0 18px 8px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px', fontSize: '11px' }}>
                 {s.domain && <div><span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>Admin URL</span><p style={{ margin: '2px 0 0', color: 'rgb(var(--text-primary))', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(s.adminBaseUrl || '—')}</p></div>}
-                {db.name && <div><span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>Database</span><p style={{ margin: '2px 0 0', color: '#00758F', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>{db.name}</p></div>}
+                {db.name && <div><span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>Database</span><p style={{ margin: '2px 0 0', color: '#00758F', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', wordBreak: 'break-all' }}>{db.name}</p></div>}
                 {s.androidVersion && <div><span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>Android</span><p style={{ margin: '2px 0 0', color: 'rgb(var(--text-primary))', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>v{String(s.androidVersion)}</p></div>}
                 {s.iosVersion && <div><span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>iOS</span><p style={{ margin: '2px 0 0', color: 'rgb(var(--text-primary))', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>v{String(s.iosVersion)}</p></div>}
               </div>
 
-              {/* Tech Tags */}
+              {/* Tech Tags — dynamic based on actual project data */}
               <div style={{ padding: '0 18px 12px', display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                 {[
-                  { label: 'React', color: '#61DAFB', bg: 'rgba(97,218,251,0.1)' },
-                  { label: 'Node.js', color: '#339933', bg: 'rgba(51,153,51,0.1)' },
                   ...(s.productType === 'trade' ? [{ label: 'Trade', color: '#F59E0B', bg: 'rgba(245,158,11,0.1)' }] : [{ label: 'Lite', color: '#10B981', bg: 'rgba(16,185,129,0.1)' }]),
-                  ...(db.name ? [{ label: 'MySQL', color: '#00758F', bg: 'rgba(0,117,143,0.1)' }] : []),
-                  ...(s.androidVersion ? [{ label: 'Android', color: '#3DDC84', bg: 'rgba(61,220,132,0.1)' }] : []),
-                  ...(s.iosVersion ? [{ label: 'iOS', color: '#007AFF', bg: 'rgba(0,122,255,0.1)' }] : []),
-                ].slice(0, 5).map((tag, ti) => (
+                  ...(db.name ? [{ label: db.name, color: '#00758F', bg: 'rgba(0,117,143,0.1)' }] : []),
+                  ...(s.androidVersion ? [{ label: `Android v${s.androidVersion}`, color: '#3DDC84', bg: 'rgba(61,220,132,0.1)' }] : []),
+                  ...(s.iosVersion ? [{ label: `iOS v${s.iosVersion}`, color: '#007AFF', bg: 'rgba(0,122,255,0.1)' }] : []),
+                  ...(((s.deploy || {}) as Record<string, string>).serverId ? [{ label: `Server ${((s.deploy || {}) as Record<string, string>).serverId}`, color: '#10B981', bg: 'rgba(16,185,129,0.1)' }] : []),
+                ].map((tag, ti) => (
                   <span key={ti} style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 600, color: tag.color, backgroundColor: tag.bg }}>{tag.label}</span>
                 ))}
               </div>

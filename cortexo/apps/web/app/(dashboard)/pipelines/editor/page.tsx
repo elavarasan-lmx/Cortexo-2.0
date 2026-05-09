@@ -228,7 +228,7 @@ export default function PipelineEditorPage() {
             <input
               value={projectId}
               onChange={e => setProjectId(e.target.value)}
-              placeholder="Leave blank for demo"
+              placeholder="Optional — links pipeline to a project"
               style={{
                 width: '100%', padding: '8px 12px', borderRadius: '8px',
                 fontSize: '12px', outline: 'none',

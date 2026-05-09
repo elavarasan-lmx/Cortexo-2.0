@@ -27,46 +27,31 @@ import { pipelineRunRoutes } from './routes/pipeline-runs.js';
 import { deploymentRoutes } from './routes/deployments.js';
 import { deployTargetRoutes } from './routes/deploy-targets.js';
 import { errorRoutes } from './routes/errors.js';
-import { webhookRoutes } from './routes/webhooks.js';
 import { authRoutes } from './routes/auth.js';
 import { notificationRoutes } from './routes/notifications.js';
 import { logStreamRoutes } from './routes/log-stream.js';
-import { integrationRoutes } from './routes/integrations.js';
 
 import { credentialsRoutes } from './routes/credentials.js';
 import { orgRoutes } from './routes/org.js';
 
-import { syncRoutes } from './routes/sync.js';
 import { serverRoutes } from './routes/servers.js';
 import { logViewerRoutes } from './routes/log-viewer.js';
-// DISABLED: Uses mysql2 — Cortexo is fully PostgreSQL now
-// import { dbMigrationRoutes } from './routes/db-migration.js';
-
-import { menuPermissionRoutes } from './routes/menu-permissions.js';
 import { serverMountRoutes } from './routes/server-mounts.js';
 import { deployConfigRoutes } from './routes/deploy-configs.js';
 import { auditRoutes } from './routes/audit.js';
-import { sourceRegistryRoutes } from './routes/source-registry.js';
 import { profileRoutes } from './routes/profiles.js';
 
-// Phase 4+ modules
-import { cronJobRoutes } from './routes/cron-jobs.js';
 import { provisionRoutes } from './routes/provision.js';
-import { analyticsRoutes } from './routes/analytics.js';
 import { alertChannelRoutes } from './routes/alert-channels.js';
-import { deprecationRoutes } from './routes/deprecation.js';
 import { judgeScoreRoutes } from './routes/judge-scores.js';
 import { metricsStreamRoutes } from './routes/metrics-stream.js';
 import { winbullRoutes } from './routes/winbull.js';
-import { agentRoutes } from './routes/agents.js';
+import { winbullDeployRoutes } from './routes/winbull-deploy.js';
 import { rootCauseRoutes } from './routes/root-causes.js';
 import { codeReviewRoutes } from './routes/code-review.js';
-import { fixLibraryRoutes } from './routes/fix-library.js';
-import { fleetRoutes } from './routes/fleet.js';
 import { brainRoutes } from './routes/brain.js';
 import { knowledgeRoutes } from './routes/knowledge.js';
 import { testingRoutes } from './routes/testing.js';
-import { securityRoutes } from './routes/security.js';
 import { usageLimitsPlugin } from './middleware/usage-limits.js';
 import { authPlugin, authMiddleware } from './middleware/auth.js';
 import { getDb } from './lib/db.js';
@@ -233,46 +218,32 @@ async function start() {
 
     await rateLimitedApp.register(deploymentRoutes, { prefix: '/v1' });
     await rateLimitedApp.register(serverMountRoutes, { prefix: '/v1' });
-    await rateLimitedApp.register(sourceRegistryRoutes, { prefix: '/v1' });
+    await rateLimitedApp.register(winbullDeployRoutes, { prefix: '/v1' });
   });
   await app.register(deployTargetRoutes, { prefix: '/v1' });
   await app.register(errorRoutes, { prefix: '/v1' });
-  await app.register(webhookRoutes, { prefix: '/v1' });
   await app.register(notificationRoutes, { prefix: '/v1' });
   await app.register(logStreamRoutes, { prefix: '/v1' });
-  await app.register(integrationRoutes, { prefix: '/v1' });
 
   await app.register(credentialsRoutes, { prefix: '/v1' });
   await app.register(orgRoutes, { prefix: '/v1' });
 
-  await app.register(syncRoutes, { prefix: '/v1' });
   await app.register(serverRoutes, { prefix: '/v1' });
   await app.register(logViewerRoutes, { prefix: '/v1' });
-  // await app.register(dbMigrationRoutes, { prefix: '/v1' }); // DISABLED: mysql2 dependency removed
-
-  await app.register(menuPermissionRoutes, { prefix: '/v1' });
   await app.register(deployConfigRoutes, { prefix: '/v1' });
   await app.register(auditRoutes, { prefix: '/v1' });
   await app.register(profileRoutes, { prefix: '/v1' });
 
-  // Phase 4+ modules
-  await app.register(cronJobRoutes, { prefix: '/v1' });
   await app.register(provisionRoutes, { prefix: '/v1' });
-  await app.register(analyticsRoutes, { prefix: '/v1' });
   await app.register(alertChannelRoutes, { prefix: '/v1' });
-  await app.register(deprecationRoutes, { prefix: '/v1' });
   await app.register(judgeScoreRoutes, { prefix: '/v1' });
   await app.register(metricsStreamRoutes, { prefix: '/v1' });
   await app.register(winbullRoutes, { prefix: '/v1' });
-  await app.register(agentRoutes, { prefix: '/v1' });
   await app.register(rootCauseRoutes, { prefix: '/v1' });
   await app.register(codeReviewRoutes, { prefix: '/v1' });
-  await app.register(fixLibraryRoutes, { prefix: '/v1' });
-  await app.register(fleetRoutes, { prefix: '/v1' });
   await app.register(brainRoutes, { prefix: '/v1' });
   await app.register(knowledgeRoutes, { prefix: '/v1' });
   await app.register(testingRoutes, { prefix: '/v1' });
-  await app.register(securityRoutes, { prefix: '/v1' });
 
   // Note: usageLimitsPlugin uses addHook — must be registered at root scope, not prefixed
   await app.register(usageLimitsPlugin);

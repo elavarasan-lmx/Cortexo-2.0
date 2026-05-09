@@ -12,14 +12,7 @@ const card: React.CSSProperties = {
   backgroundColor: 'rgb(var(--card))', padding: '20px',
 };
 
-const MOCK_USERS = [
-  { id: 1, name: 'Jerry Kumar', email: 'jerry@cortexo.dev', role: 'Super Admin', status: 'active', lastActive: '2 mins ago', createdAt: '2024-01-15' },
-  { id: 2, name: 'Priya Nair', email: 'priya@cortexo.dev', role: 'Admin', status: 'active', lastActive: '15 mins ago', createdAt: '2024-02-20' },
-  { id: 3, name: 'Arjun Sharma', email: 'arjun@cortexo.dev', role: 'Developer', status: 'active', lastActive: '1 hr ago', createdAt: '2024-03-10' },
-  { id: 4, name: 'Ravi Subramanian', email: 'ravi@cortexo.dev', role: 'Developer', status: 'suspended', lastActive: '1 day ago', createdAt: '2024-04-05' },
-  { id: 5, name: 'Meera Krishnan', email: 'meera@cortexo.dev', role: 'Viewer', status: 'active', lastActive: '3 hrs ago', createdAt: '2024-05-12' },
-  { id: 6, name: 'karthik@email.com', email: 'karthik@email.com', role: 'Member', status: 'pending', lastActive: 'Never', createdAt: '2024-06-01' },
-];
+
 
 export default function UsersPage() {
   useAutoLoadToken();
@@ -42,7 +35,7 @@ export default function UsersPage() {
     createdAt: u.createdAt,
   }));
 
-  const users = apiUsers.length > 0 ? apiUsers : MOCK_USERS;
+  const users = apiUsers;
 
   const filtered = users.filter((u: any) => {
     if (searchQ && !u.name.toLowerCase().includes(searchQ.toLowerCase()) && !u.email.toLowerCase().includes(searchQ.toLowerCase())) return false;

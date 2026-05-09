@@ -10,11 +10,11 @@ export default function TestingSuitePage() {
 
   const [activeTab, setActiveTab] = useState<'suites' | 'history'>('suites');
 
-  // Load test suites for current active project (Mocked projectId for UI, in reality would get from context or URL if nested)
-  // Hardcoded 'default' or some mock id since we're at a global level or assuming a specific project
-  const projectId = 'e8b8c2d2-1111-4444-8888-abcdef123456'; 
+  // Use first available project — in production this would come from a URL param or project selector
+  const { data: projectsData } = useApiData(() => api.getProjects(), { default: [] as any[] });
+  const projectId = (projectsData as any[])?.[0]?.id || '';
   
-  const { data: suitesData, loading: suitesLoading, refetch: refetchSuites } = useApiData(() => api.request<any>('GET', `/projects/${projectId}/test-suites`));
+  const { data: suitesData, loading: suitesLoading, refetch: refetchSuites } = useApiData(() => projectId ? api.request<any>('GET', `/projects/${projectId}/test-suites`) : Promise.resolve({ data: [] }));
   const suites = suitesData?.data || [];
 
   const handleRunSuite = async (suiteId: string) => {
@@ -186,7 +186,7 @@ export default function TestingSuitePage() {
                 ))
               )}
 
-              {/* Mock visual regression card to show off UI if empty */}
+              {/* Placeholder visual regression card shown when no suites exist */}
               {suites.length === 0 && (
                 <div className="bg-white/5 border border-white/10 rounded-xl p-6 opacity-50 pointer-events-none">
                   <div className="flex justify-between items-start mb-4">
@@ -226,30 +226,11 @@ export default function TestingSuitePage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/10">
-                  {/* Mock rows for history to demonstrate the table structure */}
-                  <tr className="hover:bg-white/5 transition-colors">
-                    <td className="px-6 py-4 font-mono text-white/70">#TR-8821</td>
-                    <td className="px-6 py-4 text-white">Main E2E Flow</td>
-                    <td className="px-6 py-4 text-white/70">Deploy #122</td>
-                    <td className="px-6 py-4 text-white/70">1m 24s</td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-400">
-                        <CheckCircle className="w-3 h-3 mr-1" /> Passed (42/42)
-                      </span>
+                  {/* Empty state — will be populated from API when test runs are available */}
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center text-white/50 text-sm">
+                      No test runs yet. Run a suite to see results here.
                     </td>
-                    <td className="px-6 py-4 text-white/50">Just now</td>
-                  </tr>
-                  <tr className="hover:bg-white/5 transition-colors">
-                    <td className="px-6 py-4 font-mono text-white/70">#TR-8820</td>
-                    <td className="px-6 py-4 text-white">Registration Form</td>
-                    <td className="px-6 py-4 text-white/70">Manual</td>
-                    <td className="px-6 py-4 text-white/70">12s</td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-500/10 text-red-400">
-                        <XCircle className="w-3 h-3 mr-1" /> Failed (1/5)
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-white/50">2 hours ago</td>
                   </tr>
                 </tbody>
               </table>

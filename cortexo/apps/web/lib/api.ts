@@ -282,6 +282,9 @@ class ApiClient {
   createProject(data: CreateProjectInput)            { return this.request<Project>('POST', '/projects', data); }
   deleteProject(id: string)                          { return this.request<{ success: boolean }>('DELETE', `/projects/${id}`); }
   updateProject(id: string, data: Partial<CreateProjectInput>) { return this.request<Project>('PATCH', `/projects/${id}`, data); }
+  validateProjectUnique(data: { clientSlug?: string; dbName?: string; wsPort?: string; socketIoPort?: string; serverPath?: string; excludeProjectId?: string }) {
+    return this.request<{ valid: boolean; conflicts: Record<string, { field: string; existingProject: string; existingValue: string }> }>('POST', '/projects/validate-unique', data);
+  }
 
   // ─── Pipelines ────────────────────────────────────────────────────────────
   getPipelines()                                     { return this.request<Pipeline[]>('GET', '/pipelines'); }
@@ -626,6 +629,11 @@ class ApiClient {
   createDbProfile(data: Record<string, unknown>)     { return this.request<Record<string, unknown>>('POST', '/db-profiles', data); }
   updateDbProfile(id: string, data: Record<string, unknown>) { return this.request<Record<string, unknown>>('PATCH', `/db-profiles/${id}`, data); }
   deleteDbProfile(id: string)                        { return this.request<{ success: boolean }>('DELETE', `/db-profiles/${id}`); }
+
+  // ─── WinBull Deploy Engine ────────────────────────────────────────────────
+  deployWinbull(data: { projectId: number; serverId: number; settings: Record<string, unknown> }) {
+    return this.request<{ success: boolean; slug: string; steps: Array<{ step: string; status: string; output?: string; error?: string; duration?: number }>; summary: { total: number; success: number; failed: number; skipped: number } }>('POST', '/winbull/deploy', data);
+  }
 
   // ─── Cron Jobs ────────────────────────────────────────────────────────────
   getCronJobs(params?: Record<string, string>) {

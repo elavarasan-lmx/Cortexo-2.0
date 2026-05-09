@@ -62,12 +62,12 @@ export default function SettingsPage() {
     setLoadError(null);
     try {
       const res = await api.getMe();
-      const user = res.data;
+      const user = (res.data as any)?.user || res.data;
       if (user) {
         setProfile({
-          name: (user as any).name || '',
-          email: (user as any).email || '',
-          phone: (user as any).phone || '',
+          name: user.name || '',
+          email: user.email || '',
+          phone: user.phone || '',
         });
       }
     } catch (err: unknown) {

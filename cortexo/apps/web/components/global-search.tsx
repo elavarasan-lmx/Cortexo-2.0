@@ -4,36 +4,25 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Search, X, FolderGit2, Bug, Rocket, GitBranch, Server,
-  ArrowLeftRight, ScrollText, Layers, BarChart3, FileText,
-  Settings, Bot, Clock,
+  ScrollText, BarChart3, Settings,
 } from 'lucide-react';
 
-/* ─── Searchable items (static demo) ─── */
+/* ─── Searchable items ─── */
 const SEARCHABLE = [
   { label: 'Dashboard',         href: '/dashboard',           icon: BarChart3,       category: 'Pages' },
   { label: 'All Projects',      href: '/projects',            icon: FolderGit2,      category: 'Pages' },
-  { label: 'Pipelines',         href: '/pipelines',           icon: GitBranch,       category: 'CI/CD' },
-  { label: 'Pipeline Runs',     href: '/pipelines/runs',      icon: Clock,           category: 'CI/CD' },
   { label: 'Deployments',       href: '/deployments',         icon: Rocket,          category: 'CI/CD' },
-  { label: 'Canary Releases',   href: '/deployments/canary',  icon: Rocket,          category: 'CI/CD' },
-  { label: 'Errors',            href: '/errors',              icon: Bug,             category: 'Bugs' },
+  { label: 'Pipelines',         href: '/pipelines',           icon: GitBranch,       category: 'CI/CD' },
+  { label: 'Bug Tracker',       href: '/bug-tracker',         icon: Bug,             category: 'Bugs' },
   { label: 'Root Causes',       href: '/root-causes',         icon: Search,          category: 'Bugs' },
   { label: 'Servers',           href: '/servers',             icon: Server,          category: 'Infrastructure' },
-  { label: 'Log Viewer',        href: '/logs',                icon: ScrollText,      category: 'Infrastructure' },
-  { label: 'Client Fleet',      href: '/fleet',               icon: Layers,          category: 'Infrastructure' },
-  { label: 'Source Sync',       href: '/sync',                icon: ArrowLeftRight,  category: 'Sync' },
-  { label: 'DB Migration',      href: '/db-migration',        icon: ArrowLeftRight,  category: 'Sync' },
-  { label: 'Agent Memory',      href: '/agent/memory',        icon: Bot,             category: 'Agent' },
-  { label: 'Agent Runner',      href: '/agent/runner',        icon: Bot,             category: 'Agent' },
-  { label: 'Postmortem',        href: '/postmortem',          icon: FileText,        category: 'Ops' },
   { label: 'Settings',          href: '/settings',            icon: Settings,        category: 'Settings' },
-  { label: 'Deploy Profiles',   href: '/settings/profiles',     icon: Settings,      category: 'Settings' },
-  { label: 'MySQL Optimizer',   href: '/mysql',               icon: Settings,        category: 'Tools' },
+  { label: 'Deploy Profiles',   href: '/settings/profiles',   icon: Settings,        category: 'Settings' },
 ];
 
 const catColors: Record<string, string> = {
   Pages: '#818CF8', 'CI/CD': '#3B82F6', Bugs: '#EF4444', Infrastructure: '#F97316',
-  Sync: '#10B981', Agent: '#A78BFA', Ops: '#F59E0B', Settings: '#6B7280',
+  Settings: '#6B7280',
 };
 
 export function GlobalSearch() {

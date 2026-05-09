@@ -245,8 +245,8 @@ export async function authRoutes(app: FastifyInstance) {
           data: {
             user: {
               id: devUser?.sub || 'dev-user',
-              name: devUser?.name || 'Dev User',
-              email: devUser?.email || 'dev@example.com',
+              name: devUser?.name || 'Developer',
+              email: devUser?.email || 'dev-bypass@cortexo.local',
               role: devUser?.role || 'admin',
               orgId: devUser?.orgId || '',
               avatarUrl: null,
@@ -292,12 +292,30 @@ export async function authRoutes(app: FastifyInstance) {
    */
   app.put('/auth/profile', async (request, reply) => {
     const authHeader = request.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
+
+    let userId: string | null = null;
+
+    if (authHeader?.startsWith('Bearer ')) {
+      try {
+        const decoded = app.jwt.verify<JwtUser>(authHeader.replace('Bearer ', ''));
+        userId = decoded.sub;
+      } catch { /* fall through */ }
+    }
+
+    // Dev bypass: find first user if no token
+    if (!userId && process.env.UNSAFE_DEV_AUTH === 'true') {
+      try {
+        const db = await getDb();
+        const firstUser = await db.query.users.findFirst();
+        if (firstUser) userId = firstUser.id;
+      } catch { /* fall through */ }
+    }
+
+    if (!userId) {
       return reply.code(401).send({ error: 'Not authenticated' });
     }
 
     try {
-      const decoded = app.jwt.verify<JwtUser>(authHeader.replace('Bearer ', ''));
       const parsed = profileSchema.safeParse(request.body);
       if (!parsed.success) return reply.code(400).send({ error: 'Validation failed', details: parsed.error.flatten() });
       const { name, email } = parsed.data;
@@ -307,9 +325,9 @@ export async function authRoutes(app: FastifyInstance) {
       if (name) updateData.name = name;
       if (email) updateData.email = email;
 
-      await db.update(users).set(updateData).where(eq(users.id, decoded.sub));
+      await db.update(users).set(updateData).where(eq(users.id, userId));
 
-      const user = await db.query.users.findFirst({ where: eq(users.id, decoded.sub) });
+      const user = await db.query.users.findFirst({ where: eq(users.id, userId!) });
       if (!user) return reply.code(404).send({ error: 'User not found' });
 
       // Return new token with updated claims
@@ -340,18 +358,36 @@ export async function authRoutes(app: FastifyInstance) {
    */
   app.post('/auth/change-password', async (request, reply) => {
     const authHeader = request.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
+
+    let userId: string | null = null;
+
+    if (authHeader?.startsWith('Bearer ')) {
+      try {
+        const decoded = app.jwt.verify<JwtUser>(authHeader.replace('Bearer ', ''));
+        userId = decoded.sub;
+      } catch { /* fall through */ }
+    }
+
+    // Dev bypass: find first user if no token
+    if (!userId && process.env.UNSAFE_DEV_AUTH === 'true') {
+      try {
+        const db = await getDb();
+        const firstUser = await db.query.users.findFirst();
+        if (firstUser) userId = firstUser.id;
+      } catch { /* fall through */ }
+    }
+
+    if (!userId) {
       return reply.code(401).send({ error: 'Not authenticated' });
     }
 
     try {
-      const decoded = app.jwt.verify<JwtUser>(authHeader.replace('Bearer ', ''));
       const parsed = changePasswordSchema.safeParse(request.body);
       if (!parsed.success) return reply.code(400).send({ error: 'Validation failed', details: parsed.error.flatten() });
       const { currentPassword, newPassword } = parsed.data;
 
       const db = await getDb();
-      const user = await db.query.users.findFirst({ where: eq(users.id, decoded.sub) });
+      const user = await db.query.users.findFirst({ where: eq(users.id, userId!) });
       if (!user || !user.passwordHash) {
         return reply.code(400).send({ error: 'Cannot change password for OAuth accounts' });
       }
@@ -362,7 +398,7 @@ export async function authRoutes(app: FastifyInstance) {
       }
 
       const newHash = await hashPassword(newPassword);
-      await db.update(users).set({ passwordHash: newHash }).where(eq(users.id, decoded.sub));
+      await db.update(users).set({ passwordHash: newHash }).where(eq(users.id, userId!));
 
       return { data: { message: 'Password changed successfully' } };
     } catch (err: unknown) {

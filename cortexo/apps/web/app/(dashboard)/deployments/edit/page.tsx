@@ -1,9 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Rocket, ArrowLeft, Save, Loader2, Trash2, GitBranch } from 'lucide-react';
 import Link from 'next/link';
-import { useAutoLoadToken } from '@/lib/hooks';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
+import { useAutoLoadToken, useApiData } from '@/lib/hooks';
+import { useToastStore } from '@/lib/toast-store';
 
 const card: React.CSSProperties = { borderRadius: '14px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', overflow: 'hidden' };
 const inputStyle: React.CSSProperties = { width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-primary))', fontSize: '13px', outline: 'none', boxSizing: 'border-box' };
@@ -11,13 +14,81 @@ const labelStyle: React.CSSProperties = { display: 'block', fontSize: '11px', fo
 
 export default function EditDeployPage() {
   useAutoLoadToken();
+  const router = useRouter();
+  const toast = useToastStore();
+  const searchParams = useSearchParams();
+  const deployId = searchParams.get('id');
+
+  const { data: deployData, loading } = useApiData(
+    () => deployId ? api.getDeployment(deployId) : Promise.resolve({ data: null as any })
+  );
+
   const [form, setForm] = useState({
-    project: 'winbull-api', branch: 'main', server: 'prod-api-01', environment: 'production',
-    buildCmd: 'npm run build', deployCmd: './deploy.sh', preDeployHook: 'npm test', postDeployHook: 'pm2 restart all',
+    project: '', branch: 'main', server: '', environment: 'production',
+    buildCmd: '', deployCmd: '', preDeployHook: '', postDeployHook: '',
     autoRollback: true, notifySlack: true, healthCheck: '/api/health',
   });
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    if (deployData) {
+      const d = deployData as any;
+      setForm({
+        project: d.projectName || d.project || '',
+        branch: d.branch || 'main',
+        server: d.serverName || d.server || '',
+        environment: d.environment || 'production',
+        buildCmd: d.buildCmd || '',
+        deployCmd: d.deployCmd || '',
+        preDeployHook: d.preDeployHook || '',
+        postDeployHook: d.postDeployHook || '',
+        autoRollback: d.autoRollback ?? true,
+        notifySlack: d.notifySlack ?? true,
+        healthCheck: d.healthCheck || '/api/health',
+      });
+    }
+  }, [deployData]);
+
   const u = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
+
+  async function handleSave() {
+    if (!deployId) return;
+    setSaving(true);
+    try {
+      await api.updateDeployment(deployId, {
+        branch: form.branch,
+        environment: form.environment,
+      });
+      toast.success('Deployment Updated', 'Changes saved');
+    } catch (err: unknown) {
+      toast.error('Save Failed', err instanceof Error ? err.message : 'Could not update deployment');
+    }
+    setSaving(false);
+  }
+
+  async function handleDelete() {
+    if (!deployId || !confirm('Delete this deployment? This cannot be undone.')) return;
+    setDeleting(true);
+    try {
+      await api.deleteDeployment(deployId);
+      toast.success('Deployment Deleted', 'Removed successfully');
+      router.push('/deployments');
+    } catch (err: unknown) {
+      toast.error('Delete Failed', err instanceof Error ? err.message : 'Could not delete deployment');
+      setDeleting(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
+        <div style={{ width: '32px', height: '32px', border: '3px solid rgba(var(--border),0.3)', borderTopColor: 'rgb(var(--primary))', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      </div>
+    );
+  }
+
+  const d = deployData as any;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -25,11 +96,15 @@ export default function EditDeployPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'linear-gradient(135deg, #10B981, #059669)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Rocket style={{ width: '20px', height: '20px', color: '#fff' }} /></div>
-          <div><h1 style={{ fontSize: '22px', fontWeight: 800, color: 'rgb(var(--text-primary))', margin: 0 }}>✏️ Edit Deploy #1284</h1><span style={{ fontSize: '11px', fontWeight: 600, color: '#10B981', padding: '2px 8px', borderRadius: '4px', backgroundColor: 'rgba(16,185,129,0.1)' }}>Live</span></div>
+          <div><h1 style={{ fontSize: '22px', fontWeight: 800, color: 'rgb(var(--text-primary))', margin: 0 }}>✏️ Edit Deploy {d?.id ? `#${String(d.id).slice(0, 6)}` : ''}</h1><span style={{ fontSize: '11px', fontWeight: 600, color: d?.status === 'success' ? '#10B981' : '#F59E0B', padding: '2px 8px', borderRadius: '4px', backgroundColor: d?.status === 'success' ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)' }}>{d?.status || 'pending'}</span></div>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', border: '1px solid #EF4444', backgroundColor: 'transparent', color: '#EF4444', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}><Trash2 style={{ width: '14px', height: '14px' }} /> Delete</button>
-          <button onClick={() => { setSaving(true); setTimeout(() => setSaving(false), 800); }} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', border: 'none', backgroundColor: '#7C3AED', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>{saving ? <Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} /> : <Save style={{ width: '14px', height: '14px' }} />} {saving ? 'Saving...' : 'Save Changes'}</button>
+          <button onClick={handleDelete} disabled={deleting} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', border: '1px solid #EF4444', backgroundColor: 'transparent', color: '#EF4444', fontSize: '13px', fontWeight: 600, cursor: deleting ? 'wait' : 'pointer', opacity: deleting ? 0.6 : 1 }}>
+            {deleting ? <Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} /> : <Trash2 style={{ width: '14px', height: '14px' }} />} Delete
+          </button>
+          <button onClick={handleSave} disabled={saving} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', border: 'none', backgroundColor: '#7C3AED', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: saving ? 'wait' : 'pointer', opacity: saving ? 0.6 : 1 }}>
+            {saving ? <Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} /> : <Save style={{ width: '14px', height: '14px' }} />} {saving ? 'Saving...' : 'Save Changes'}
+          </button>
         </div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', alignItems: 'start' }}>

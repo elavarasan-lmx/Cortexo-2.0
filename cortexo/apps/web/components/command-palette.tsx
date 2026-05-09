@@ -4,12 +4,11 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation';
 import {
   Search, LayoutDashboard, FolderGit2, GitBranch, Rocket,
-  Bug, Brain, Server, FileText, Settings, Database, Zap,
-  RotateCcw, ScrollText, Layers, Target, BarChart3, Bot,
-  Store, Compass, BookOpen, Activity, Wifi, ClipboardCheck,
-  FlaskConical, ShieldCheck, Boxes, TrendingUp, ArrowLeftRight,
-  GitCompareArrows, FileCode, History, AlertTriangle,
-  Play, FileCheck, Wand2, Settings2, Command, Heart, Package,
+  Bug, Server, Settings, ScrollText,
+  FileCode, History,
+  Activity, Wifi, ClipboardCheck,
+  FlaskConical, ShieldCheck, Boxes,
+  Heart, Command,
 } from 'lucide-react';
 
 interface PaletteItem {
@@ -22,7 +21,7 @@ interface PaletteItem {
 }
 
 const PALETTE_ITEMS: PaletteItem[] = [
-  // Dashboard
+  // Navigation
   { id: 'dashboard', label: 'Dashboard', href: '/dashboard', section: 'Navigation', icon: LayoutDashboard, keywords: ['home', 'overview'] },
   // Projects
   { id: 'projects', label: 'All Projects', href: '/projects', section: 'Projects', icon: FolderGit2, keywords: ['repo', 'repository'] },
@@ -31,41 +30,13 @@ const PALETTE_ITEMS: PaletteItem[] = [
   { id: 'pipeline-runs', label: 'Pipeline Runs', href: '/pipelines/runs', section: 'CI/CD', icon: History, keywords: ['history', 'runs'] },
   { id: 'pipeline-editor', label: 'Pipeline Editor', href: '/pipelines/editor', section: 'CI/CD', icon: FileCode, keywords: ['yaml', 'config'] },
   { id: 'deployments', label: 'Deployments', href: '/deployments', section: 'CI/CD', icon: Rocket, keywords: ['deploy', 'release'] },
-  { id: 'canary', label: 'Canary Releases', href: '/deployments/canary', section: 'CI/CD', icon: Zap, keywords: ['canary', 'rollout'] },
-  { id: 'rollbacks', label: 'Rollbacks', href: '/rollbacks', section: 'CI/CD', icon: RotateCcw },
-  // Bugs
-  { id: 'errors', label: 'Errors', href: '/errors', section: 'Bugs', icon: Bug, keywords: ['bugs', 'exceptions'] },
-  { id: 'root-causes', label: 'Root Causes', href: '/root-causes', section: 'Bugs', icon: Search },
-  { id: 'scans', label: 'Scan Results', href: '/scans', section: 'Bugs', icon: FileCheck },
-  { id: 'code-reviews', label: 'Code Reviews', href: '/code-reviews', section: 'Bugs', icon: FileCode, keywords: ['review', 'scan', 'security', 'quality'] },
-  { id: 'fix-library', label: 'Fix Library', href: '/fix-library', section: 'Bugs', icon: Package, keywords: ['fix', 'recipe', 'propagate', 'patch', 'rollout'] },
-  // Ops
-  { id: 'postmortem', label: 'Postmortem', href: '/postmortem', section: 'Operations', icon: FileText },
-  { id: 'deprecation', label: 'Deprecations', href: '/deprecation', section: 'Operations', icon: AlertTriangle },
+  // Monitoring
+  { id: 'heartbeat', label: 'Heartbeat Monitor', href: '/heartbeat', section: 'Monitoring', icon: Heart, keywords: ['health', 'uptime', 'status', 'monitor', 'pulse'] },
+  { id: 'bug-tracker', label: 'Bug Tracker', href: '/bug-tracker', section: 'Monitoring', icon: Bug, keywords: ['issues', 'tickets'] },
+  { id: 'root-causes', label: 'Root Causes', href: '/root-causes', section: 'Monitoring', icon: Search },
+  { id: 'code-reviews', label: 'Code Reviews', href: '/code-reviews', section: 'Monitoring', icon: FileCode, keywords: ['review', 'scan', 'security', 'quality'] },
   // Infrastructure
-  { id: 'heartbeat', label: 'Heartbeat Monitor', href: '/heartbeat', section: 'Infrastructure', icon: Heart, keywords: ['health', 'uptime', 'status', 'monitor', 'pulse'] },
   { id: 'servers', label: 'Servers', href: '/servers', section: 'Infrastructure', icon: Server },
-  { id: 'logs', label: 'Log Viewer', href: '/logs', section: 'Infrastructure', icon: ScrollText },
-  { id: 'fleet', label: 'Client Fleet', href: '/fleet', section: 'Infrastructure', icon: Layers },
-  // Sync
-  { id: 'sync', label: 'Source Sync', href: '/sync', section: 'Sync', icon: GitCompareArrows },
-  { id: 'db-migration', label: 'DB Migration', href: '/db-migration', section: 'Sync', icon: ArrowLeftRight },
-  // Agent
-  { id: 'agent-memory', label: 'Agent Memory', href: '/agent/memory', section: 'Agent', icon: Brain },
-  { id: 'agent-skills', label: 'Skill Library', href: '/agent/skills', section: 'Agent', icon: BookOpen },
-  { id: 'agent-context', label: 'Context Monitor', href: '/agent/context', section: 'Agent', icon: Target },
-  { id: 'agent-perf', label: 'Agent Performance', href: '/agent/performance', section: 'Agent', icon: BarChart3 },
-  { id: 'agent-runner', label: 'Agent Runner', href: '/agent/runner', section: 'Agent', icon: Bot },
-  { id: 'marketplace', label: 'Marketplace', href: '/agent/marketplace', section: 'Agent', icon: Store },
-
-  // Analytics
-  { id: 'insights', label: 'Insights', href: '/analytics', section: 'Analytics', icon: TrendingUp },
-  { id: 'reports', label: 'Reports', href: '/reports', section: 'Analytics', icon: FileText },
-  { id: 'audit', label: 'Activity Log', href: '/analytics/audit', section: 'Analytics', icon: History, keywords: ['audit', 'trail', 'log', 'activity'] },
-  // Tools
-  { id: 'mysql', label: 'MySQL Optimizer', href: '/mysql', section: 'Tools', icon: Database, keywords: ['query', 'sql', 'slow'] },
-
-  { id: 'docs', label: 'Documentation', href: '/docs', section: 'Tools', icon: BookOpen },
   // Testing
   { id: 'load-test', label: 'Load Test', href: '/testing/load', section: 'Testing', icon: Activity, keywords: ['performance', 'stress'] },
   { id: 'socket-test', label: 'Socket Test', href: '/testing/socket', section: 'Testing', icon: Wifi, keywords: ['websocket', 'ws'] },

@@ -4,90 +4,75 @@ import React, { useState } from 'react';
 import { 
   Bug, AlertOctagon, CheckCircle2, CircleDashed, 
   Search, Plus, Filter, ChevronRight, AlertTriangle,
-  Users, Sparkles, ChevronDown, Activity, Clock
+  Users, Sparkles, ChevronDown, Activity, Clock, Loader2
 } from 'lucide-react';
-
-// Mock Data
-const MOCK_BUGS = [
-  {
-    id: 425,
-    title: 'Payment gateway timeout on bulk orders',
-    priority: 'Critical',
-    status: 'Open',
-    assignee: 'Jerry',
-    updated: '2 mins ago',
-  },
-  {
-    id: 424,
-    title: 'Rate calculation mismatch in gold module',
-    priority: 'High',
-    status: 'In Progress',
-    assignee: 'Tom',
-    updated: '15 mins ago',
-  },
-  {
-    id: 423,
-    title: 'Session hijacking via expired JWT tokens',
-    priority: 'Critical',
-    status: 'Open',
-    assignee: 'Conor',
-    updated: '1 hour ago',
-  },
-  {
-    id: 420,
-    title: 'Dashboard chart not loading for new users',
-    priority: 'Medium',
-    status: 'In Progress',
-    assignee: 'Sathish',
-    updated: '3 hours ago',
-  },
-  {
-    id: 419,
-    title: 'Email notification delivery failure on deploy',
-    priority: 'High',
-    status: 'Resolved',
-    assignee: 'Jerry',
-    updated: 'Yesterday',
-  },
-  {
-    id: 410,
-    title: 'Margin calculation wrong for silver orders',
-    priority: 'Critical',
-    status: 'Open',
-    assignee: 'Kavi',
-    updated: 'Yesterday',
-  }
-];
+import { api } from '@/lib/api';
+import { useApiData, useAutoLoadToken, timeAgo } from '@/lib/hooks';
 
 const priorityConfig: Record<string, { bg: string; color: string; icon: React.ElementType }> = {
-  Critical: { bg: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', icon: AlertOctagon },
-  High: { bg: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', icon: AlertTriangle },
-  Medium: { bg: 'rgba(59, 130, 246, 0.15)', color: '#3B82F6', icon: Activity },
+  critical: { bg: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', icon: AlertOctagon },
+  high: { bg: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', icon: AlertTriangle },
+  medium: { bg: 'rgba(59, 130, 246, 0.15)', color: '#3B82F6', icon: Activity },
+  low: { bg: 'rgba(16, 185, 129, 0.15)', color: '#10B981', icon: CircleDashed },
 };
 
 const statusConfig: Record<string, { bg: string; color: string }> = {
-  Open: { bg: 'rgba(59, 130, 246, 0.15)', color: '#3B82F6' },
-  'In Progress': { bg: 'rgba(99, 102, 241, 0.15)', color: '#6366F1' },
-  Resolved: { bg: 'rgba(34, 197, 94, 0.15)', color: '#22C55E' },
+  unresolved: { bg: 'rgba(59, 130, 246, 0.15)', color: '#3B82F6' },
+  investigating: { bg: 'rgba(99, 102, 241, 0.15)', color: '#6366F1' },
+  resolved: { bg: 'rgba(34, 197, 94, 0.15)', color: '#22C55E' },
+  ignored: { bg: 'rgba(100, 116, 139, 0.15)', color: '#64748B' },
+};
+
+const statusLabels: Record<string, string> = {
+  unresolved: 'Open',
+  investigating: 'In Progress',
+  resolved: 'Resolved',
+  ignored: 'Ignored',
 };
 
 const getBadgeColor = (name: string) => {
   const colors = ['#7C3AED', '#3B82F6', '#EC4899', '#10B981', '#F59E0B', '#EF4444'];
-  return colors[name.charCodeAt(0) % colors.length];
+  return colors[(name || 'U').charCodeAt(0) % colors.length];
 };
 
 export default function BugTrackerPage() {
+  useAutoLoadToken();
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedBugId, setSelectedBugId] = useState<number | null>(425); // Default selection for demo
+  const [selectedBugId, setSelectedBugId] = useState<string | null>(null);
 
-  const filteredBugs = MOCK_BUGS.filter(bug => {
-    if (filter !== 'all' && bug.status !== filter && bug.priority !== filter) return false;
-    if (searchQuery && !bug.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+  const { data: errorsData, loading, refetch } = useApiData(
+    () => api.getErrors(),
+    { default: [] as any[] }
+  );
+
+  const errors = errorsData || [];
+
+  // Compute stats from real data
+  const totalBugs = errors.length;
+  const criticalCount = errors.filter((e: any) => e.severity === 'critical').length;
+  const openCount = errors.filter((e: any) => e.status === 'unresolved').length;
+  const resolvedCount = errors.filter((e: any) => e.status === 'resolved').length;
+
+  const filteredBugs = errors.filter((bug: any) => {
+    if (filter !== 'all') {
+      if (filter === 'critical' && bug.severity !== 'critical') return false;
+      if (filter === 'unresolved' && bug.status !== 'unresolved') return false;
+      if (filter === 'investigating' && bug.status !== 'investigating') return false;
+    }
+    if (searchQuery && !bug.message?.toLowerCase().includes(searchQuery.toLowerCase()) && !bug.type?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
 
-  const selectedBug = MOCK_BUGS.find(b => b.id === selectedBugId);
+  const selectedBug = errors.find((b: any) => b.id === selectedBugId);
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '256px' }}>
+        <Loader2 style={{ width: '32px', height: '32px', color: 'rgb(var(--primary))', animation: 'spin 1s linear infinite' }} />
+      </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -139,7 +124,7 @@ export default function BugTrackerPage() {
           <div>
             <p style={{ margin: 0, fontSize: '13px', fontWeight: 500, color: 'rgb(var(--text-muted))' }}>Total Bugs</p>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-              <p style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>23</p>
+              <p style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>{totalBugs}</p>
             </div>
           </div>
         </div>
@@ -150,7 +135,7 @@ export default function BugTrackerPage() {
           </div>
           <div>
             <p style={{ margin: 0, fontSize: '13px', fontWeight: 500, color: 'rgb(var(--text-muted))' }}>Critical</p>
-            <p style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>5</p>
+            <p style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>{criticalCount}</p>
           </div>
         </div>
         
@@ -160,7 +145,7 @@ export default function BugTrackerPage() {
           </div>
           <div>
             <p style={{ margin: 0, fontSize: '13px', fontWeight: 500, color: 'rgb(var(--text-muted))' }}>Open</p>
-            <p style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>12</p>
+            <p style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>{openCount}</p>
           </div>
         </div>
         
@@ -170,7 +155,7 @@ export default function BugTrackerPage() {
           </div>
           <div>
             <p style={{ margin: 0, fontSize: '13px', fontWeight: 500, color: 'rgb(var(--text-muted))' }}>Resolved</p>
-            <p style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>6</p>
+            <p style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>{resolvedCount}</p>
           </div>
         </div>
       </div>
@@ -183,28 +168,28 @@ export default function BugTrackerPage() {
             fontSize: '13px', fontWeight: filter === 'all' ? 600 : 500,
             backgroundColor: filter === 'all' ? 'rgb(var(--primary))' : 'rgba(var(--text-muted), 0.1)',
             color: filter === 'all' ? '#FFF' : 'rgb(var(--text-muted))', transition: 'all 150ms'
-          }}>All (23)</button>
+          }}>All ({totalBugs})</button>
           
-          <button onClick={() => setFilter('Critical')} style={{
+          <button onClick={() => setFilter('critical')} style={{
             padding: '6px 16px', borderRadius: '20px', border: 'none', cursor: 'pointer',
-            fontSize: '13px', fontWeight: filter === 'Critical' ? 600 : 500,
-            backgroundColor: filter === 'Critical' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(var(--text-muted), 0.1)',
-            color: filter === 'Critical' ? '#EF4444' : 'rgb(var(--text-muted))', transition: 'all 150ms'
-          }}>Critical (5)</button>
+            fontSize: '13px', fontWeight: filter === 'critical' ? 600 : 500,
+            backgroundColor: filter === 'critical' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(var(--text-muted), 0.1)',
+            color: filter === 'critical' ? '#EF4444' : 'rgb(var(--text-muted))', transition: 'all 150ms'
+          }}>Critical ({criticalCount})</button>
           
-          <button onClick={() => setFilter('Open')} style={{
+          <button onClick={() => setFilter('unresolved')} style={{
             padding: '6px 16px', borderRadius: '20px', border: 'none', cursor: 'pointer',
-            fontSize: '13px', fontWeight: filter === 'Open' ? 600 : 500,
-            backgroundColor: filter === 'Open' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(var(--text-muted), 0.1)',
-            color: filter === 'Open' ? '#3B82F6' : 'rgb(var(--text-muted))', transition: 'all 150ms'
-          }}>Open (12)</button>
+            fontSize: '13px', fontWeight: filter === 'unresolved' ? 600 : 500,
+            backgroundColor: filter === 'unresolved' ? 'rgba(59, 130, 246, 0.2)' : 'rgba(var(--text-muted), 0.1)',
+            color: filter === 'unresolved' ? '#3B82F6' : 'rgb(var(--text-muted))', transition: 'all 150ms'
+          }}>Open ({openCount})</button>
           
-          <button onClick={() => setFilter('In Progress')} style={{
+          <button onClick={() => setFilter('investigating')} style={{
             padding: '6px 16px', borderRadius: '20px', border: 'none', cursor: 'pointer',
-            fontSize: '13px', fontWeight: filter === 'In Progress' ? 600 : 500,
-            backgroundColor: filter === 'In Progress' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(var(--text-muted), 0.1)',
-            color: filter === 'In Progress' ? '#6366F1' : 'rgb(var(--text-muted))', transition: 'all 150ms'
-          }}>In Progress (6)</button>
+            fontSize: '13px', fontWeight: filter === 'investigating' ? 600 : 500,
+            backgroundColor: filter === 'investigating' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(var(--text-muted), 0.1)',
+            color: filter === 'investigating' ? '#6366F1' : 'rgb(var(--text-muted))', transition: 'all 150ms'
+          }}>In Progress ({errors.filter((e: any) => e.status === 'investigating').length})</button>
         </div>
         
         <button style={{
@@ -225,18 +210,19 @@ export default function BugTrackerPage() {
             <thead>
               <tr style={{ borderBottom: '1px solid rgb(var(--border))', backgroundColor: 'rgba(var(--text-muted), 0.05)' }}>
                 <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))' }}>ID</th>
-                <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))' }}>Title</th>
-                <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))' }}>Priority</th>
+                <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))' }}>Error</th>
+                <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))' }}>Severity</th>
                 <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))' }}>Status</th>
                 <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))' }}>Assignee</th>
-                <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))' }}>Updated</th>
+                <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))' }}>Last Seen</th>
               </tr>
             </thead>
             <tbody>
-              {filteredBugs.map(bug => {
-                const pc = priorityConfig[bug.priority] || priorityConfig.Medium;
-                const sc = statusConfig[bug.status] || statusConfig.Open;
+              {filteredBugs.length > 0 ? filteredBugs.map((bug: any) => {
+                const pc = priorityConfig[bug.severity] || priorityConfig.medium;
+                const sc = statusConfig[bug.status] || statusConfig.unresolved;
                 const isSelected = selectedBugId === bug.id;
+                const assigneeName = bug.assignedToName || bug.assignedTo || 'Unassigned';
                 
                 return (
                   <tr 
@@ -251,19 +237,23 @@ export default function BugTrackerPage() {
                     onMouseLeave={e => { if(!isSelected) e.currentTarget.style.backgroundColor = 'transparent'; }}
                   >
                     <td style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--primary))', fontFamily: 'JetBrains Mono, monospace' }}>
-                      #{bug.id}
+                      #{bug.id.toString().substring(0, 6)}
                     </td>
-                    <td style={{ padding: '16px', fontSize: '13px', fontWeight: 500, color: 'rgb(var(--text-primary))' }}>
-                      {bug.title}
+                    <td style={{ padding: '16px', fontSize: '13px', fontWeight: 500, color: 'rgb(var(--text-primary))', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div>
+                        <span style={{ fontWeight: 600 }}>{bug.type}</span>
+                        <br />
+                        <span style={{ fontSize: '12px', color: 'rgb(var(--text-muted))' }}>{bug.message?.substring(0, 80)}{bug.message?.length > 80 ? '...' : ''}</span>
+                      </div>
                     </td>
                     <td style={{ padding: '16px' }}>
                       <span style={{
                         display: 'inline-flex', alignItems: 'center', gap: '4px',
                         padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 600,
-                        backgroundColor: pc.bg, color: pc.color
+                        backgroundColor: pc.bg, color: pc.color, textTransform: 'capitalize'
                       }}>
                         <pc.icon style={{ width: '10px', height: '10px' }} />
-                        {bug.priority}
+                        {bug.severity}
                       </span>
                     </td>
                     <td style={{ padding: '16px' }}>
@@ -271,37 +261,40 @@ export default function BugTrackerPage() {
                         padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 600,
                         backgroundColor: sc.bg, color: sc.color
                       }}>
-                        {bug.status}
+                        {statusLabels[bug.status] || bug.status}
                       </span>
                     </td>
                     <td style={{ padding: '16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div style={{
-                          width: '24px', height: '24px', borderRadius: '12px', backgroundColor: getBadgeColor(bug.assignee),
+                          width: '24px', height: '24px', borderRadius: '12px', backgroundColor: getBadgeColor(assigneeName),
                           display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF', fontSize: '10px', fontWeight: 600
                         }}>
-                          {bug.assignee.substring(0, 1)}
+                          {assigneeName.substring(0, 1).toUpperCase()}
                         </div>
-                        <span style={{ fontSize: '13px', color: 'rgb(var(--text-primary))' }}>{bug.assignee}</span>
+                        <span style={{ fontSize: '13px', color: 'rgb(var(--text-primary))' }}>{assigneeName}</span>
                       </div>
                     </td>
                     <td style={{ padding: '16px', fontSize: '13px', color: 'rgb(var(--text-secondary))' }}>
-                      {bug.updated}
+                      {timeAgo(bug.lastSeenAt || bug.firstSeenAt)}
                     </td>
                   </tr>
                 );
-              })}
+              }) : (
+                <tr>
+                  <td colSpan={6} style={{ padding: '48px', textAlign: 'center' }}>
+                    <Bug style={{ width: '24px', height: '24px', color: 'rgb(var(--text-muted))', margin: '0 auto 12px' }} />
+                    <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'rgb(var(--text-primary))' }}>No bugs found</p>
+                    <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'rgb(var(--text-secondary))' }}>
+                      {searchQuery ? 'Try a different search term.' : 'All systems running clean! 🎉'}
+                    </p>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
           <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgb(var(--border))' }}>
-            <span style={{ fontSize: '13px', color: 'rgb(var(--text-muted))' }}>Showing 1-6 of 23 bugs</span>
-            <div style={{ display: 'flex', gap: '4px' }}>
-              <button style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid rgb(var(--border))', background: 'transparent', cursor: 'pointer', color: 'rgb(var(--text-muted))' }}>&lt;</button>
-              <button style={{ padding: '4px 10px', borderRadius: '4px', border: 'none', background: 'rgb(var(--primary))', color: '#fff', cursor: 'pointer' }}>1</button>
-              <button style={{ padding: '4px 10px', borderRadius: '4px', border: '1px solid rgb(var(--border))', background: 'transparent', cursor: 'pointer', color: 'rgb(var(--text-primary))' }}>2</button>
-              <button style={{ padding: '4px 10px', borderRadius: '4px', border: '1px solid rgb(var(--border))', background: 'transparent', cursor: 'pointer', color: 'rgb(var(--text-primary))' }}>3</button>
-              <button style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid rgb(var(--border))', background: 'transparent', cursor: 'pointer', color: 'rgb(var(--text-muted))' }}>&gt;</button>
-            </div>
+            <span style={{ fontSize: '13px', color: 'rgb(var(--text-muted))' }}>Showing {filteredBugs.length} of {totalBugs} bugs</span>
           </div>
         </div>
 
@@ -314,74 +307,54 @@ export default function BugTrackerPage() {
             <div style={{ backgroundColor: 'rgb(var(--primary))', padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: '#FFF', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Bug style={{ width: '18px', height: '18px' }} />
-                Bug Detail — #{selectedBug.id}
+                Bug Detail — #{selectedBug.id.toString().substring(0, 6)}
               </h2>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <span style={{ padding: '2px 8px', borderRadius: '12px', backgroundColor: 'rgba(255,255,255,0.2)', color: '#FFF', fontSize: '11px', fontWeight: 600 }}>{selectedBug.status}</span>
+                <span style={{ padding: '2px 8px', borderRadius: '12px', backgroundColor: 'rgba(255,255,255,0.2)', color: '#FFF', fontSize: '11px', fontWeight: 600 }}>{statusLabels[selectedBug.status] || selectedBug.status}</span>
               </div>
             </div>
             
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <div>
-                <h3 style={{ margin: '0 0 8px', fontSize: '14px', fontWeight: 600, color: 'rgb(var(--text-primary))' }}>Bug Description</h3>
+                <h3 style={{ margin: '0 0 8px', fontSize: '14px', fontWeight: 600, color: 'rgb(var(--text-primary))' }}>Error Details</h3>
+                <p style={{ margin: '0 0 4px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-primary))' }}>{selectedBug.type}</p>
                 <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.5, color: 'rgb(var(--text-secondary))' }}>
-                  Payment gateway timeout on bulk orders. When users place orders exceeding 50 items, the payment gateway fails with HTTP 504 after 30 seconds. This causes order loss and revenue impact.
+                  {selectedBug.message}
                 </p>
               </div>
 
               <div style={{ backgroundColor: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.2)', borderRadius: '8px', padding: '16px' }}>
                 <h3 style={{ margin: '0 0 12px', fontSize: '13px', fontWeight: 600, color: '#F59E0B', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Search style={{ width: '14px', height: '14px' }} /> Root Cause Analysis
+                  <Search style={{ width: '14px', height: '14px' }} /> Error Info
                 </h3>
                 <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '8px', fontSize: '12px' }}>
-                  <span style={{ color: 'rgb(var(--text-muted))', fontWeight: 500 }}>Module:</span>
-                  <span style={{ color: 'rgb(var(--primary))', fontWeight: 500 }}>PaymentGatewayService</span>
                   <span style={{ color: 'rgb(var(--text-muted))', fontWeight: 500 }}>File:</span>
-                  <span style={{ color: 'rgb(var(--text-primary))', fontFamily: 'JetBrains Mono, monospace' }}>src/services/payment/BulkProcessor.js:142</span>
-                  <span style={{ color: 'rgb(var(--text-muted))', fontWeight: 500 }}>Cause:</span>
-                  <span style={{ color: 'rgb(var(--text-primary))' }}>Synchronous DB batch write exceeds gateway timeout limit (30s)</span>
+                  <span style={{ color: 'rgb(var(--text-primary))', fontFamily: 'JetBrains Mono, monospace' }}>{selectedBug.file || '—'}{selectedBug.line ? `:${selectedBug.line}` : ''}</span>
+                  <span style={{ color: 'rgb(var(--text-muted))', fontWeight: 500 }}>Severity:</span>
+                  <span style={{ color: 'rgb(var(--text-primary))', textTransform: 'capitalize' }}>{selectedBug.severity}</span>
+                  <span style={{ color: 'rgb(var(--text-muted))', fontWeight: 500 }}>Events:</span>
+                  <span style={{ color: 'rgb(var(--text-primary))' }}>{selectedBug.eventCount || 0} occurrences</span>
+                  <span style={{ color: 'rgb(var(--text-muted))', fontWeight: 500 }}>First Seen:</span>
+                  <span style={{ color: 'rgb(var(--text-primary))' }}>{timeAgo(selectedBug.firstSeenAt)}</span>
+                  <span style={{ color: 'rgb(var(--text-muted))', fontWeight: 500 }}>Last Seen:</span>
+                  <span style={{ color: 'rgb(var(--text-primary))' }}>{timeAgo(selectedBug.lastSeenAt)}</span>
                 </div>
               </div>
 
-              <div style={{ border: '1px solid rgb(var(--border))', borderRadius: '8px', overflow: 'hidden' }}>
-                <div style={{ padding: '12px 16px', backgroundColor: 'rgba(var(--text-muted), 0.05)', borderBottom: '1px solid rgb(var(--border))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <h3 style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-primary))', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Users style={{ width: '14px', height: '14px' }} /> Affected Clients
-                  </h3>
-                  <span style={{ fontSize: '11px', fontWeight: 600, color: '#EF4444' }}>2 of 12 affected</span>
+              {selectedBug.assignedToName && (
+                <div style={{ border: '1px solid rgb(var(--border))', borderRadius: '8px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{
+                    width: '32px', height: '32px', borderRadius: '16px', backgroundColor: getBadgeColor(selectedBug.assignedToName),
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF', fontSize: '13px', fontWeight: 600
+                  }}>
+                    {selectedBug.assignedToName.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-primary))' }}>Assigned to {selectedBug.assignedToName}</p>
+                    <p style={{ margin: 0, fontSize: '11px', color: 'rgb(var(--text-muted))' }}>Fingerprint: {selectedBug.fingerprint?.substring(0, 20)}...</p>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  {[
-                    { name: 'GoldMine Trading', affected: true },
-                    { name: 'Silver Stack Inc.', affected: false },
-                    { name: 'Platinum Bullion Ltd', affected: true },
-                    { name: 'SuperBull Exchange', affected: false }
-                  ].map((client, i) => (
-                    <div key={i} style={{ padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: i < 3 ? '1px solid rgb(var(--border))' : 'none' }}>
-                      <span style={{ fontSize: '13px', color: 'rgb(var(--text-primary))' }}>{client.name}</span>
-                      <span style={{ 
-                        fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '12px',
-                        backgroundColor: client.affected ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)',
-                        color: client.affected ? '#EF4444' : '#22C55E'
-                      }}>
-                        {client.affected ? 'Affected' : 'Fine'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ border: '1px solid rgba(124, 58, 237, 0.2)', backgroundColor: 'rgba(124, 58, 237, 0.03)', borderRadius: '8px', padding: '16px' }}>
-                <h3 style={{ margin: '0 0 12px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--primary))', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Sparkles style={{ width: '14px', height: '14px' }} /> AI Suggestions
-                </h3>
-                <ul style={{ margin: 0, padding: '0 0 0 20px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px', color: 'rgb(var(--text-secondary))', lineHeight: 1.5 }}>
-                  <li>Convert synchronous batch writes to async chunked processing (50 items -&gt; 10 chunks of 5).</li>
-                  <li>Increase gateway timeout to 60s for bulk endpoints or implement request streaming.</li>
-                  <li>Add retry logic with exponential backoff in <span style={{ fontFamily: 'JetBrains Mono, monospace' }}>BulkProcessor.js</span> for transient failures.</li>
-                  <li>Deploy hotfix to GoldMine & Platinum Bullion first (highest order volume clients).</li>
-                </ul>
-              </div>
+              )}
 
             </div>
           </div>

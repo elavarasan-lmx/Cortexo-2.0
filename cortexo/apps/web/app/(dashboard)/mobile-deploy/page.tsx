@@ -1,10 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Smartphone, Upload, CheckCircle, XCircle, Clock, Loader2,
   Search, Play, Package, Key, RefreshCw, ExternalLink,
 } from 'lucide-react';
+import { api } from '@/lib/api';
+import { useApiData, useAutoLoadToken } from '@/lib/hooks';
+
+
+
+/* ─── Status styling ─── */
+const statusConfig: Record<string, { color: string; bg: string; label: string; icon: typeof CheckCircle }> = {
+  idle:      { color: '#64748B', bg: 'rgba(100,116,139,0.1)', label: 'Ready',     icon: Clock },
+  building:  { color: '#3B82F6', bg: 'rgba(59,130,246,0.1)',  label: 'Building',  icon: Loader2 },
+  signing:   { color: '#F59E0B', bg: 'rgba(245,158,11,0.1)',  label: 'Signing',   icon: Key },
+  uploading: { color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)',  label: 'Uploading', icon: Upload },
+  success:   { color: '#10B981', bg: 'rgba(16,185,129,0.1)',  label: 'Published', icon: CheckCircle },
+  failed:    { color: '#EF4444', bg: 'rgba(239,68,68,0.1)',   label: 'Failed',    icon: XCircle },
+};
 
 /* ─── Client config type ─── */
 interface ClientConfig {
@@ -20,37 +34,41 @@ interface ClientConfig {
   playStoreUrl?: string;
 }
 
-/* ─── Mock client data (will be replaced with API) ─── */
-const initialClients: ClientConfig[] = [
-  { name: 'MNT Traders', type: 'flutter', package: 'com.lmx.mnt', keystore: 'mnttraders.keystore', alias: 'mnttraders', version: '1.0.0', versionCode: 1, status: 'idle', lastPublished: '2026-05-09' },
-  { name: 'Trust Bullion', type: 'ionic', package: 'trustbullion.bullion.price', keystore: 'trustbullion.keystore', alias: 'trustbullion', version: '1.0.5', versionCode: 6, status: 'idle', lastPublished: '2026-05-09' },
-  { name: 'Maharaja Bullion', type: 'ionic', package: 'com.lmx.maharajabulliondealers', keystore: 'maharajabullion.keystore', alias: 'maharajabullion', version: '1.0.3', versionCode: 4, status: 'idle', lastPublished: '2026-04-20' },
-  { name: 'KTS Silvers', type: 'ionic', package: 'com.lmx.ktssilvers', keystore: 'ktssilvers.keystore', alias: 'ktssilvers', version: '1.0.2', versionCode: 3, status: 'idle' },
-  { name: 'Dhanapathi SDJ', type: 'ionic', package: 'com.lmx.dhanapathisdj', keystore: 'dhanapathisdj.keystore', alias: 'dhanapathisdj', version: '1.0.1', versionCode: 2, status: 'idle' },
-  { name: 'AJ Bullion', type: 'ionic', package: 'com.lmx.ajbullion', keystore: 'ajbullion.keystore', alias: 'ajbullion', version: '1.0.0', versionCode: 1, status: 'idle' },
-  { name: 'Alfa Gold', type: 'ionic', package: 'com.lmx.alfagold', keystore: 'alfagold.keystore', alias: 'alfagold', version: '1.0.4', versionCode: 5, status: 'idle', lastPublished: '2026-03-15' },
-  { name: 'Ganesh Bullion', type: 'ionic', package: 'com.lmx.ganeshbullion', keystore: 'ganeshbullion.keystore', alias: 'ganeshbullion', version: '1.0.1', versionCode: 2, status: 'idle' },
-  { name: 'Ruby Precious', type: 'ionic', package: 'com.lmx.rubyprecious', keystore: 'rubyprecious.keystore', alias: 'rubyprecious', version: '1.0.3', versionCode: 4, status: 'idle', lastPublished: '2026-04-10' },
-  { name: 'RV Bullion', type: 'ionic', package: 'com.lmx.rvbullion', keystore: 'rvbullion.keystore', alias: 'rvbullion', version: '1.0.2', versionCode: 3, status: 'idle', lastPublished: '2026-04-01' },
-];
-
-/* ─── Status styling ─── */
-const statusConfig: Record<string, { color: string; bg: string; label: string; icon: typeof CheckCircle }> = {
-  idle:      { color: '#64748B', bg: 'rgba(100,116,139,0.1)', label: 'Ready',     icon: Clock },
-  building:  { color: '#3B82F6', bg: 'rgba(59,130,246,0.1)',  label: 'Building',  icon: Loader2 },
-  signing:   { color: '#F59E0B', bg: 'rgba(245,158,11,0.1)',  label: 'Signing',   icon: Key },
-  uploading: { color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)',  label: 'Uploading', icon: Upload },
-  success:   { color: '#10B981', bg: 'rgba(16,185,129,0.1)',  label: 'Published', icon: CheckCircle },
-  failed:    { color: '#EF4444', bg: 'rgba(239,68,68,0.1)',   label: 'Failed',    icon: XCircle },
-};
-
 export default function MobileDeployPage() {
-  const [clients, setClients] = useState<ClientConfig[]>(initialClients);
+  useAutoLoadToken();
+
+  // Fetch real clients from WinBull config API
+  const { data: rawConfigs, loading: configsLoading } = useApiData(
+    () => api.getWinbullConfigs(),
+    { default: [] as any[] }
+  );
+
+  // Transform API configs into ClientConfig shape
+  const apiClients: ClientConfig[] = ((rawConfigs || []) as any[]).map((c: any) => ({
+    name: c.displayName || c.clientSlug || 'Unknown',
+    type: (c.configJson?.appType as 'flutter' | 'ionic') || 'ionic',
+    package: c.configJson?.packageName || `com.lmx.${(c.clientSlug || '').replace(/-/g, '')}`,
+    keystore: `${(c.clientSlug || '').replace(/-/g, '')}.keystore`,
+    alias: (c.clientSlug || '').replace(/-/g, ''),
+    version: (c.configJson?.version as string) || '1.0.0',
+    versionCode: (c.configJson?.versionCode as number) || 1,
+    status: 'idle' as const,
+    lastPublished: c.lastDeployedAt || undefined,
+  }));
+
+  const [clients, setClients] = useState<ClientConfig[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'flutter' | 'ionic'>('all');
   const [selectedClients, setSelectedClients] = useState<Set<string>>(new Set());
   const [buildLog, setBuildLog] = useState<string[]>([]);
   const [showLog, setShowLog] = useState(false);
+
+  // Sync API data into local state (preserving build status changes)
+  React.useEffect(() => {
+    if (apiClients.length > 0 && clients.length === 0) {
+      setClients(apiClients);
+    }
+  }, [apiClients.length]);
 
   const filtered = clients.filter(c => {
     const matchSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.package.includes(searchQuery.toLowerCase());

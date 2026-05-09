@@ -55,15 +55,7 @@ function StatusIndicator({ status }: { status: 'OK' | 'WARN' | 'AUDIT' }) {
   );
 }
 
-// Mock data to match the design spec if API is empty
-const MOCK_LOGS = [
-  { id: '1', createdAt: '2024-05-01T18:42:15Z', userId: 'jerry@cortexo.io', action: 'deploy.trigger', resource: 'aone-prod -> v3.3.1 (canary)', metadata: { ip: '192.168.1.42', status: 'OK' } },
-  { id: '2', createdAt: '2024-05-01T18:38:00Z', userId: 'tom@cortexo.io', action: 'server.delete', resource: 'staging-web-02 (IP: 10.0.2.15)', metadata: { ip: '10.0.0.1', status: 'WARN' } },
-  { id: '3', createdAt: '2024-05-01T18:31:47Z', userId: 'jerry@cortexo.io', action: 'user.login', resource: 'Session started (2FA verified)', metadata: { ip: '192.168.1.42', status: 'OK' } },
-  { id: '4', createdAt: '2024-05-01T18:25:12Z', userId: 'admin@cortexo.io', action: 'config.update', resource: 'Redis cache TTL -> 3600s (was 1800s)', metadata: { ip: '10.0.0.5', status: 'AUDIT' } },
-  { id: '5', createdAt: '2024-05-01T18:18:30Z', userId: 'tom@cortexo.io', action: 'bug.resolve', resource: 'BUG-1022: Memory leak in worker pool', metadata: { ip: '10.0.0.1', status: 'OK' } },
-  { id: '6', createdAt: '2024-05-01T18:10:22Z', userId: 'jerry@cortexo.io', action: 'cron.create', resource: 'DB backups job -> every 6h', metadata: { ip: '192.168.1.42', status: 'OK' } },
-];
+
 
 export default function AuditLogPage() {
   useAutoLoadToken();
@@ -74,7 +66,7 @@ export default function AuditLogPage() {
     { default: [] as AuditLog[] }
   );
 
-  const logs = apiLogs && apiLogs.length > 0 ? apiLogs : MOCK_LOGS;
+  const logs = apiLogs || [];
 
   const filtered = logs.filter((l: any) => {
     const matchSearch = (l.action || '').toLowerCase().includes(search.toLowerCase()) ||

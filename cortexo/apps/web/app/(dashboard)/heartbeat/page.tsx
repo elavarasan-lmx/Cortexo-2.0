@@ -62,12 +62,12 @@ export default function HeartbeatPage() {
   // Build endpoints from real server data only
   const endpoints = (servers as any[] || []).map((s: any) => ({
     id: String(s.id),
-    name: s.name || s.label || `Server ${s.id}`,
-    url: `${s.host || s.ip}:${s.port || 22}`,
-    uptimePct: s.status === 'online' ? 99.9 : s.status === 'offline' ? 0 : 95,
+    name: s.name || `Server ${s.id}`,
+    url: s.privateIp || '—',
+    uptimePct: s.status === 'active' ? 99.9 : s.status === 'inactive' ? 0 : 95,
     latencyMs: 0,
     lastChecked: 'Now',
-    group: s.environment || 'Production',
+    group: s.publicAddress ? 'Production' : 'Internal',
   }));
 
   // Auto-refresh every 30s

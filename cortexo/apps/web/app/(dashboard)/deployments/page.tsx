@@ -264,25 +264,25 @@ export default function DeploymentsPage() {
         <div style={{ borderRadius: '12px', backgroundColor: 'rgb(var(--surface))', padding: '18px', border: '1px solid rgb(var(--border))', display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <p style={{ margin: 0, fontSize: '12px', fontWeight: 500, color: 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>Total Deploys</p>
           <p style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: 'rgb(var(--text-primary))', fontFamily: 'Inter, sans-serif' }}>{totalDeploys}</p>
-          <p style={{ margin: 0, fontSize: '11px', fontWeight: 500, color: '#16A34A', fontFamily: 'Inter, sans-serif' }}>↑ 12% from last week</p>
+          <p style={{ margin: 0, fontSize: '11px', fontWeight: 500, color: 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>All time</p>
         </div>
         
         <div style={{ borderRadius: '12px', backgroundColor: 'rgb(var(--surface))', padding: '18px', border: '1px solid rgb(var(--border))', display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <p style={{ margin: 0, fontSize: '12px', fontWeight: 500, color: 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>Success Rate</p>
           <p style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: '#16A34A', fontFamily: 'Inter, sans-serif' }}>{successRate}%</p>
-          <p style={{ margin: 0, fontSize: '11px', fontWeight: 500, color: '#16A34A', fontFamily: 'Inter, sans-serif' }}>↑ 2.1% improvement</p>
+          <p style={{ margin: 0, fontSize: '11px', fontWeight: 500, color: successDeploys > 0 ? '#16A34A' : 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>{successDeploys} of {totalDeploys}</p>
         </div>
         
         <div style={{ borderRadius: '12px', backgroundColor: 'rgb(var(--surface))', padding: '18px', border: '1px solid rgb(var(--border))', display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <p style={{ margin: 0, fontSize: '12px', fontWeight: 500, color: 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>Avg Duration</p>
           <p style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: 'rgb(var(--text-primary))', fontFamily: 'Inter, sans-serif' }}>{avgDurationMs ? formatDuration(avgDurationMs) : '0s'}</p>
-          <p style={{ margin: 0, fontSize: '11px', fontWeight: 500, color: '#16A34A', fontFamily: 'Inter, sans-serif' }}>↓ 18s faster</p>
+          <p style={{ margin: 0, fontSize: '11px', fontWeight: 500, color: 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>Across successful deploys</p>
         </div>
         
         <div style={{ borderRadius: '12px', backgroundColor: 'rgb(var(--surface))', padding: '18px', border: '1px solid rgb(var(--border))', display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <p style={{ margin: 0, fontSize: '12px', fontWeight: 500, color: 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>Failed Today</p>
           <p style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: '#EF4444', fontFamily: 'Inter, sans-serif' }}>{failedToday}</p>
-          <p style={{ margin: 0, fontSize: '11px', fontWeight: 500, color: '#EF4444', fontFamily: 'Inter, sans-serif' }}>↑ 2 more than yesterday</p>
+          <p style={{ margin: 0, fontSize: '11px', fontWeight: 500, color: failedToday > 0 ? '#EF4444' : 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>{failedToday > 0 ? 'Needs attention' : 'All clear'}</p>
         </div>
       </div>
 
@@ -358,7 +358,7 @@ export default function DeploymentsPage() {
               const env = envColors[deploy.environment] || envColors.development;
               const projectName = resolveProjectName(deploy.projectId, lookup);
               
-              // Generate a mock user color/initials for "Triggered By"
+              // Generate user color/initials for "Triggered By"
               const getBadgeColor = (name: string) => {
                 const colors = ['#7C3AED', '#3B82F6', '#EC4899', '#10B981', '#F59E0B'];
                 return colors[name.charCodeAt(0) % colors.length];

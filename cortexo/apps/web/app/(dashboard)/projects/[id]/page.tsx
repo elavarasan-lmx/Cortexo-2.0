@@ -7,7 +7,8 @@ import { api } from '@/lib/api';
 import {
   ArrowLeft, GitBranch, Loader2,
   CheckCircle, Edit3, Trash2, Save,
-  ExternalLink, Copy, Github, Globe, Database, Radio, Server, Brain
+  ExternalLink, Copy, Github, Globe, Database, Radio, Server, Brain,
+  Eye, EyeOff
 } from 'lucide-react';
 
 const card: React.CSSProperties = { borderRadius: '14px', backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', overflow: 'hidden' };
@@ -23,8 +24,8 @@ interface SettingsForm {
   clientSlug: string; productType: string; androidVersion: string; iosVersion: string;
   domain: string; webBaseUrl: string; adminBaseUrl: string; appBaseUrl: string; adminUser: string; adminPassword: string;
   dbHost: string; dbPort: string; dbName: string; dbUser: string; dbPassword: string;
-  rateFeed: string; websocketType: string; socketBaseUrl: string; nativeSocketUrl: string;
-  environment: string; serverPath: string;
+  rateFeed: string; websocketType: string; socketBaseUrl: string; nativeSocketUrl: string; wsPort: string; socketIoPort: string;
+  environment: string; serverPath: string; serverId: string;
 }
 
 function parseSettings(p: Record<string, unknown>): SettingsForm {
@@ -39,8 +40,8 @@ function parseSettings(p: Record<string, unknown>): SettingsForm {
     domain: String(s.domain || ''), webBaseUrl: String(s.webBaseUrl || ''), adminBaseUrl: String(s.adminBaseUrl || ''),
     appBaseUrl: String(s.appBaseUrl || ''), adminUser: String(s.adminUser || ''), adminPassword: String(s.adminPassword || ''),
     dbHost: db.host || '', dbPort: db.port || '3306', dbName: db.name || '', dbUser: db.user || '', dbPassword: db.password || '',
-    rateFeed: sk.rateFeed || '4', websocketType: sk.websocketType || '2', socketBaseUrl: sk.socketBaseUrl || '', nativeSocketUrl: sk.nativeSocketUrl || '',
-    environment: dp.environment || 'production', serverPath: dp.serverPath || '',
+    rateFeed: sk.rateFeed || '4', websocketType: sk.websocketType || '2', socketBaseUrl: sk.socketBaseUrl || '', nativeSocketUrl: sk.nativeSocketUrl || '', wsPort: sk.wsPort || '', socketIoPort: sk.socketIoPort || '',
+    environment: dp.environment || 'production', serverPath: dp.serverPath || '', serverId: dp.serverId || '',
   };
 }
 
@@ -53,17 +54,25 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showAdminPass, setShowAdminPass] = useState(false);
+  const [showDbPass, setShowDbPass] = useState(false);
+
+  // Fetch server name for display
+  const { data: servers } = useApiData(() => api.getServers(), []);
+  const serverList = Array.isArray(servers) ? servers : ((servers as any)?.data || []);
+
   const [form, setForm] = useState<SettingsForm & { name: string; repoUrl: string; defaultBranch: string }>({
     name: '', repoUrl: '', defaultBranch: 'main',
     clientSlug: '', productType: 'lite', androidVersion: '', iosVersion: '',
     domain: '', webBaseUrl: '', adminBaseUrl: '', appBaseUrl: '', adminUser: '', adminPassword: '',
     dbHost: '', dbPort: '3306', dbName: '', dbUser: '', dbPassword: '',
-    rateFeed: '4', websocketType: '2', socketBaseUrl: '', nativeSocketUrl: '',
-    environment: 'production', serverPath: '',
+    rateFeed: '4', websocketType: '2', socketBaseUrl: '', nativeSocketUrl: '', wsPort: '', socketIoPort: '',
+    environment: 'production', serverPath: '', serverId: '',
   });
 
   const p = project as Record<string, unknown> | null;
   const s = p ? parseSettings(p) : form;
+  const serverName = s.serverId ? serverList.find((sv: any) => String(sv.id) === String(s.serverId))?.name || `Server ${s.serverId}` : '—';
 
   const startEdit = () => {
     if (!p) return;
@@ -81,8 +90,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         domain: form.domain, webBaseUrl: form.webBaseUrl, adminBaseUrl: form.adminBaseUrl,
         appBaseUrl: form.appBaseUrl, adminUser: form.adminUser, adminPassword: form.adminPassword,
         database: { host: form.dbHost, port: form.dbPort, name: form.dbName, user: form.dbUser, password: form.dbPassword },
-        socket: { rateFeed: form.rateFeed, websocketType: form.websocketType, socketBaseUrl: form.socketBaseUrl, nativeSocketUrl: form.nativeSocketUrl },
-        deploy: { environment: form.environment, serverPath: form.serverPath },
+        socket: { rateFeed: form.rateFeed, websocketType: form.websocketType, wsPort: form.wsPort, socketIoPort: form.socketIoPort, socketBaseUrl: form.socketBaseUrl, nativeSocketUrl: form.nativeSocketUrl },
+        deploy: { environment: form.environment, serverPath: form.serverPath, serverId: form.serverId },
       });
       await api.updateProject(id, { name: form.name, repoUrl: form.repoUrl || undefined, defaultBranch: form.defaultBranch, settings } as Record<string, unknown>);
       setEditing(false);
@@ -208,8 +217,15 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           <div style={row}><span style={rlbl}>Mobile API</span>{field('appBaseUrl', s.appBaseUrl, 'http://www.domain.com/mobileapi/')}</div>
           <div style={row}><span style={rlbl}>Admin User</span>{field('adminUser', s.adminUser, 'admin')}</div>
           <div style={{ ...row, borderBottom: 'none' }}><span style={rlbl}>Admin Pass</span>
-            {editing ? <input type="password" style={inp} value={form.adminPassword} onChange={e => u('adminPassword', e.target.value)} placeholder="••••••••" />
-            : <span style={rval}>{s.adminPassword ? '•'.repeat(8) : '—'}</span>}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%' }}>
+              {editing ? <input type={showAdminPass ? 'text' : 'password'} style={{ ...inp, flex: 1 }} value={form.adminPassword} onChange={e => u('adminPassword', e.target.value)} placeholder="••••••••" />
+              : <span style={{ ...rval, flex: 1 }}>{s.adminPassword ? (showAdminPass ? s.adminPassword : '•'.repeat(8)) : '—'}</span>}
+              {s.adminPassword && (
+                <button onClick={() => setShowAdminPass(!showAdminPass)} style={{ padding: '4px', borderRadius: '6px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', color: 'rgb(var(--text-muted))', cursor: 'pointer', display: 'flex', flexShrink: 0 }} title={showAdminPass ? 'Hide' : 'Show'}>
+                  {showAdminPass ? <EyeOff style={{ width: '13px', height: '13px' }} /> : <Eye style={{ width: '13px', height: '13px' }} />}
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -221,8 +237,15 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           <div style={row}><span style={rlbl}>Database</span>{field('dbName', s.dbName, 'client_db')}</div>
           <div style={row}><span style={rlbl}>Username</span>{field('dbUser', s.dbUser, 'root')}</div>
           <div style={{ ...row, borderBottom: 'none' }}><span style={rlbl}>Password</span>
-            {editing ? <input type="password" style={inp} value={form.dbPassword} onChange={e => u('dbPassword', e.target.value)} placeholder="••••••••" />
-            : <span style={rval}>{s.dbPassword ? '•'.repeat(8) : '—'}</span>}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%' }}>
+              {editing ? <input type={showDbPass ? 'text' : 'password'} style={{ ...inp, flex: 1 }} value={form.dbPassword} onChange={e => u('dbPassword', e.target.value)} placeholder="••••••••" />
+              : <span style={{ ...rval, flex: 1 }}>{s.dbPassword ? (showDbPass ? s.dbPassword : '•'.repeat(8)) : '—'}</span>}
+              {s.dbPassword && (
+                <button onClick={() => setShowDbPass(!showDbPass)} style={{ padding: '4px', borderRadius: '6px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', color: 'rgb(var(--text-muted))', cursor: 'pointer', display: 'flex', flexShrink: 0 }} title={showDbPass ? 'Hide' : 'Show'}>
+                  {showDbPass ? <EyeOff style={{ width: '13px', height: '13px' }} /> : <Eye style={{ width: '13px', height: '13px' }} />}
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -243,6 +266,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               </select>
             ) : <span style={{ ...rval, fontFamily: 'inherit' }}>{wsLabels[s.websocketType] || s.websocketType || '—'}</span>}
           </div>
+          <div style={row}><span style={rlbl}>WS Port</span>{field('wsPort', s.wsPort, '7124')}</div>
+          <div style={row}><span style={rlbl}>Socket.io Port</span>{field('socketIoPort', s.socketIoPort, '7125')}</div>
           <div style={row}><span style={rlbl}>Socket URL</span>{field('socketBaseUrl', s.socketBaseUrl, 'http://www.domain.com/')}</div>
           <div style={{ ...row, borderBottom: 'none' }}><span style={rlbl}>Native WS</span>{field('nativeSocketUrl', s.nativeSocketUrl, 'ws://domain.com/ws')}</div>
         </div>
@@ -258,6 +283,12 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     <option value="production">Production</option><option value="staging">Staging</option><option value="development">Development</option>
                   </select>
                 ) : <span style={{ ...rval, fontFamily: 'inherit', textTransform: 'capitalize' }}>{s.environment || '—'}</span>}
+              </div>
+              <div style={row}><span style={rlbl}>Server</span>
+                <span style={{ ...rval, fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Server style={{ width: '13px', height: '13px', color: '#10B981' }} />
+                  {serverName}
+                </span>
               </div>
               <div style={{ ...row, borderBottom: 'none' }}><span style={rlbl}>Server Path</span>{field('serverPath', s.serverPath, '/var/www/html/client')}</div>
             </div>

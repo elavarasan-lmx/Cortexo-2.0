@@ -84,6 +84,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
   const [postDeployCmd,setPostDeployCmd]=useState(initialData?.postDeployCmd || '');
   const [healthCheckUrl,setHealthCheckUrl]=useState(initialData?.healthCheckUrl || '');
   const [notifyOnComplete,setNotifyOnComplete]=useState(initialData?.notifyOnComplete || false);
+  const [truncateLogs,setTruncateLogs]=useState(initialData?.truncateLogs || false);
 
   const [isClient, setIsClient] = useState(false);
 
@@ -141,6 +142,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
         if (d.postDeployCmd !== undefined) setPostDeployCmd(d.postDeployCmd);
         if (d.healthCheckUrl !== undefined) setHealthCheckUrl(d.healthCheckUrl);
         if (d.notifyOnComplete !== undefined) setNotifyOnComplete(d.notifyOnComplete);
+        if (d.truncateLogs !== undefined) setTruncateLogs(d.truncateLogs);
       }
     } catch(e) {}
   }, []);
@@ -153,7 +155,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
         crons, permUser, permGroup, permFile, permDir, permWritable, permRecursive, folders,
         dbHost, dbPort, dbName, dbUser, dbPass, dbMigrate, dbMigrateCmd, dbImportSql, dbSqlPath,
         pm2Name, pm2Script, pm2Interpreter, pm2Instances, pm2Restart, pm2Args,
-        preDeployCmd, postDeployCmd, healthCheckUrl, notifyOnComplete
+        preDeployCmd, postDeployCmd, healthCheckUrl, notifyOnComplete, truncateLogs
       }));
     }
   }, [
@@ -162,7 +164,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
     crons, permUser, permGroup, permFile, permDir, permWritable, permRecursive, folders,
     dbHost, dbPort, dbName, dbUser, dbPass, dbMigrate, dbMigrateCmd, dbImportSql, dbSqlPath,
     pm2Name, pm2Script, pm2Interpreter, pm2Instances, pm2Restart, pm2Args,
-    preDeployCmd, postDeployCmd, healthCheckUrl, notifyOnComplete, isClient
+    preDeployCmd, postDeployCmd, healthCheckUrl, notifyOnComplete, truncateLogs, isClient
   ]);
 
   const clearDraft = () => {
@@ -173,7 +175,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
       setCrons([]); setPermUser('ubuntu'); setPermGroup('ubuntu'); setPermFile('644'); setPermDir('755'); setPermWritable(''); setPermRecursive(true); setFolders([]);
       setDbHost(''); setDbPort('3306'); setDbName(''); setDbUser(''); setDbPass(''); setDbMigrate(false); setDbMigrateCmd('php index.php migrate'); setDbImportSql(false); setDbSqlPath('');
       setPm2Name(''); setPm2Script(''); setPm2Interpreter('node'); setPm2Instances('1'); setPm2Restart(true); setPm2Args('');
-      setPreDeployCmd(''); setPostDeployCmd(''); setHealthCheckUrl(''); setNotifyOnComplete(false);
+      setPreDeployCmd(''); setPostDeployCmd(''); setHealthCheckUrl(''); setNotifyOnComplete(false); setTruncateLogs(false);
     }
   };
 
@@ -261,7 +263,8 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
     try{
       const res = await api.triggerDeploy({
         projectId:selectedProject, branch, environment, serverId, remotePath,
-        preDeployCmd, postDeployCmd, healthCheckUrl, notifyOnComplete,
+        preDeployCmd: truncateLogs ? `${preDeployCmd ? preDeployCmd + ' && ' : ''}find ${remotePath}/application/logs -name '*.php' -type f -exec truncate -s 0 {} + 2>/dev/null; find ${remotePath}/lmxtrade/winbullliteapi/storage/logs -name '*.log' -type f -exec truncate -s 0 {} + 2>/dev/null; find ${remotePath}/logs -type f -exec truncate -s 0 {} + 2>/dev/null; echo '[cortexo] logs truncated'` : preDeployCmd,
+        postDeployCmd, healthCheckUrl, notifyOnComplete, truncateLogs,
         nginx: { domain:nginxDomain, port:nginxPort, root:nginxRoot, phpVer, socketPort, rateSocketPort, wsPort, sslCert, sslKey, enableAdmin, enableMobileApi, enableLaravel, laravelPath, extraDirectives:nginxExtra, autoGenerate:nginxAutoGen },
         crons,
         permissions: { user:permUser, group:permGroup, fileMode:permFile, dirMode:permDir, writablePaths:permWritable, recursive:permRecursive, folders },
@@ -445,8 +448,17 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
 
             {/* Health & Notifications */}
             <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'rgb(var(--primary))',margin:'6px 0 0',borderTop:'1px solid rgb(var(--border))',paddingTop:'14px'}}>Health & Notifications</p>
-            <div><label style={lbl}>Health Check URL</label><input value={healthCheckUrl} onChange={e=>setHealthCheckUrl(e.target.value)} placeholder="https://example.com" style={inp}/></div>
+            <div><label style={lbl}>Health Check URL</label><input value={healthCheckUrl} onChange={e=>setHealthCheckUrl(e.target.value)} placeholder="https://your-app.com/api/health" style={inp}/></div>
             <Toggle checked={notifyOnComplete} onChange={setNotifyOnComplete} label="Send email notification on complete"/>
+            <Toggle checked={truncateLogs} onChange={setTruncateLogs} label="Truncate logs on deploy"/>
+            {truncateLogs && (
+              <div style={{padding:'10px 14px',borderRadius:'8px',backgroundColor:'rgba(245,158,11,0.06)',border:'1px solid rgba(245,158,11,0.15)',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',color:'rgb(var(--text-secondary))',lineHeight:1.8}}>
+                <div style={{color:'#F59E0B',fontWeight:600,marginBottom:'4px'}}>🗑️ Will clear on deploy:</div>
+                <div>• {remotePath || '/var/www/html/client'}/application/logs/*.php</div>
+                <div>• {remotePath || '/var/www/html/client'}/lmxtrade/winbullliteapi/storage/logs/*.log</div>
+                <div>• {remotePath || '/var/www/html/client'}/logs/*</div>
+              </div>
+            )}
           </>)}
 
           {step===1&&(<>
