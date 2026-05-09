@@ -33,7 +33,6 @@ export const NAVIGATION: NavSection[] = [
     items: [
       { label: 'Heartbeat',     href: '/heartbeat',    emoji: '💓' },
       { label: 'Bug Tracker',   href: '/bug-tracker',  emoji: '🐛' },
-      { label: 'Code Reviews',  href: '/code-reviews', emoji: '📝' },
     ],
   },
   {
@@ -41,7 +40,6 @@ export const NAVIGATION: NavSection[] = [
     items: [
       { label: 'Servers',        href: '/servers',        emoji: '🖥' },
       { label: 'SSHFS',          href: '/servers/mounts', emoji: '📂' },
-      { label: 'Mobile Deploy',  href: '/mobile-deploy',  emoji: '📱' },
       { label: 'Pipelines',      href: '/pipelines',      emoji: '🔀' },
     ],
   },
