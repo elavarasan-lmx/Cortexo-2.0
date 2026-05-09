@@ -228,15 +228,15 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
 
       // Step 1: Project & Server — fallback to project.settings.deploy
       setBranch(info.branch||project.defaultBranch||'main');
-      setServerId(info.matchedServerId||Number(deploy.serverId)||0);
-      setRemotePath(info.remotePath||deploy.serverPath||'');
+      setServerId(Number(deploy.serverId)||info.matchedServerId||0);
+      setRemotePath(deploy.serverPath||info.remotePath||'');
       setPostDeployCmd(info.postDeployCmd||'');
       setHealthCheckUrl(info.healthCheckUrl||(s.domain?`https://${s.domain}`:''));
 
       // Step 2: Nginx — domain, root, socket ports from project settings
       const domain = s.domain||info.domain||'';
       if(domain) setNginxDomain(domain);
-      const root = info.remotePath||deploy.serverPath||'';
+      const root = deploy.serverPath||info.remotePath||'';
       if(root) setNginxRoot(root);
       // Socket ports — from settings.socket or URL parsing
       if(sock.socketIoPort) setSocketPort(sock.socketIoPort);
