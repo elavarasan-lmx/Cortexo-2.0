@@ -10,6 +10,7 @@ import {
   ExternalLink, Copy, Github, Globe, Database, Radio, Server, Brain,
   Eye, EyeOff
 } from 'lucide-react';
+import { useModal } from '@/components/modal-provider';
 
 const card: React.CSSProperties = { borderRadius: '14px', backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', overflow: 'hidden' };
 const row: React.CSSProperties = { display: 'grid', gridTemplateColumns: '140px 1fr', gap: '8px', padding: '8px 0', borderBottom: '1px solid rgb(var(--border))', alignItems: 'center' };
@@ -100,8 +101,12 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     setSaving(false);
   };
 
+  const { confirm: confirmModal } = useModal();
+
   const handleDelete = async () => {
-    if (!p || !confirm(`Delete "${p.name}"? This cannot be undone.`)) return;
+    if (!p) return;
+    const ok = await confirmModal({ title: 'Delete Project', message: `Delete "${p.name}"? This cannot be undone.`, variant: 'danger', confirmText: 'Delete' });
+    if (!ok) return;
     try { await api.deleteProject(id); router.push('/projects'); } catch { /* */ }
   };
 

@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useApiData, useAutoLoadToken } from '@/lib/hooks';
+import { useModal } from '@/components/modal-provider';
+import { useToastStore } from '@/lib/toast-store';
 
 /* ── Icon by file type ── */
 function FileIcon({ type }: { type: string }) {
@@ -92,36 +94,40 @@ export default function ServerMountsPage() {
   const setAction = (id: number, action: string) => setActionLoading(p => ({ ...p, [id]: action }));
   const clearAction = (id: number) => setActionLoading(p => { const n = { ...p }; delete n[id]; return n; });
 
+  const { confirm: confirmModal } = useModal();
+  const toast = useToastStore();
+
   const handleMount = async (id: number) => {
     setAction(id, 'mounting');
     try { await api.mountServer(id); await refetch(); } catch (e: any) {
       const details = e.details?.details || e.details?.error || '';
-      alert(`Mount failed${details ? ':\n' + details : ': ' + e.message}`);
+      toast.error('Mount Failed', details || e.message);
     }
     clearAction(id);
   };
 
   const handleUnmount = async (id: number) => {
     setAction(id, 'unmounting');
-    try { await api.unmountServer(id); await refetch(); } catch (e: any) { alert(e.message); }
+    try { await api.unmountServer(id); await refetch(); } catch (e: any) { toast.error('Unmount Failed', e.message); }
     clearAction(id);
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Delete this mount config?')) return;
+    const ok = await confirmModal({ title: 'Delete Mount', message: 'Delete this mount config?', variant: 'danger', confirmText: 'Delete' });
+    if (!ok) return;
     setAction(id, 'deleting');
-    try { await api.deleteServerMount(id); await refetch(); } catch (e: any) { alert(e.message); }
+    try { await api.deleteServerMount(id); await refetch(); } catch (e: any) { toast.error('Delete Failed', e.message); }
     clearAction(id);
   };
 
   const handleCreate = async () => {
-    if (!form.name || !form.remotePath || !form.localMountPath || !form.serverId) return alert('Fill all fields');
+    if (!form.name || !form.remotePath || !form.localMountPath || !form.serverId) { toast.error('Validation', 'Fill all fields'); return; }
     try {
       await api.createServerMount(form);
       setShowCreate(false);
       setForm({ serverId: 0, name: '', remotePath: '', localMountPath: '', sshUser: 'ubuntu', autoMount: false });
       await refetch();
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { toast.error('Create Failed', e.message); }
   };
 
   const handleBrowse = async (mountId: number, mountName: string, path = '.') => {
@@ -131,7 +137,7 @@ export default function ServerMountsPage() {
     try {
       const res = await api.browseServerMount(mountId, path);
       setBrowseData(res.data);
-    } catch (e: any) { alert(e.message); setBrowseData(null); }
+    } catch (e: any) { toast.error('Browse Failed', e.message); setBrowseData(null); }
     setBrowseLoading(false);
   };
 
@@ -140,7 +146,7 @@ export default function ServerMountsPage() {
     try {
       const res = await api.readServerFile(mountId, filePath);
       setViewFile(res.data);
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { toast.error('Read Failed', e.message); }
     setFileLoading(false);
   };
 

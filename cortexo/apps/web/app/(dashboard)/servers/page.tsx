@@ -8,6 +8,7 @@ import {
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useApiData, useAutoLoadToken } from '@/lib/hooks';
+import { useToastStore } from '@/lib/toast-store';
 
 
 
@@ -35,6 +36,8 @@ export default function ServersPage() {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [collecting, setCollecting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
+  const [editTarget, setEditTarget] = useState<any | null>(null);
   const [form, setForm] = useState({ name: '', privateIp: '', publicAddress: '', sshKey: '' });
 
   const collectLiveMetrics = async () => {
@@ -54,16 +57,36 @@ export default function ServersPage() {
       setForm({ name: '', privateIp: '', publicAddress: '', sshKey: '' });
       setShowForm(false);
       await refetch();
-    } catch (err) { console.error(err); }
+      useToastStore.getState().success('Server Added', `${form.name} has been added successfully`);
+    } catch (err) { console.error(err); useToastStore.getState().error('Failed', 'Could not add server'); }
     setSaving(false);
   };
 
-  const deleteServer = async (id: number) => {
-    if (!confirm('Delete this server?')) return;
+  const deleteServer = async () => {
+    if (!deleteTarget) return;
     try {
-      await api.deleteServer(id);
+      const name = deleteTarget.name;
+      await api.deleteServer(deleteTarget.id);
+      setDeleteTarget(null);
       await refetch();
-    } catch (err) { console.error(err); }
+      useToastStore.getState().success('Server Deleted', `${name} has been removed`);
+    } catch (err) { console.error(err); useToastStore.getState().error('Failed', 'Could not delete server'); }
+  };
+
+  const openEdit = (srv: any) => {
+    setEditTarget({ id: srv.id, name: srv.name, privateIp: srv.privateIp || '', publicAddress: srv.publicAddress || '', sshKey: srv.sshKey || '' });
+  };
+
+  const saveEdit = async () => {
+    if (!editTarget) return;
+    setSaving(true);
+    try {
+      await api.updateServer(editTarget.id, { name: editTarget.name, privateIp: editTarget.privateIp, publicAddress: editTarget.publicAddress, sshKey: editTarget.sshKey });
+      useToastStore.getState().success('Server Updated', `${editTarget.name} has been updated`);
+      setEditTarget(null);
+      await refetch();
+    } catch (err) { console.error(err); useToastStore.getState().error('Failed', 'Could not update server'); }
+    setSaving(false);
   };
 
   if (loading) {
@@ -97,11 +120,8 @@ export default function ServersPage() {
           <Link href="/servers/mounts" style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', fontSize: '13px', fontWeight: 500, color: 'rgb(var(--text-secondary))', cursor: 'pointer', textDecoration: 'none' }}>
             <FolderSync style={{ width: '14px', height: '14px' }} /> SSHFS Mounts
           </Link>
-          <button onClick={refetch} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', fontSize: '13px', fontWeight: 500, color: 'rgb(var(--text-secondary))', cursor: 'pointer' }}>
-            <RefreshCw style={{ width: '14px', height: '14px' }} /> Refresh
-          </button>
-          <button onClick={collectLiveMetrics} disabled={collecting} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '10px', border: '1px solid #10B981', backgroundColor: 'rgba(16,185,129,0.08)', fontSize: '13px', fontWeight: 600, color: '#10B981', cursor: collecting ? 'wait' : 'pointer', opacity: collecting ? 0.7 : 1 }}>
-            {collecting ? <Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} /> : <Wifi style={{ width: '14px', height: '14px' }} />} {collecting ? 'Scanning...' : '📡 Live Scan'}
+          <button onClick={collectLiveMetrics} disabled={collecting} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', cursor: collecting ? 'wait' : 'pointer', opacity: collecting ? 0.7 : 1 }}>
+            {collecting ? <Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} /> : <RefreshCw style={{ width: '14px', height: '14px' }} />} {collecting ? 'Scanning...' : 'Refresh'}
           </button>
           <button onClick={() => setShowForm(!showForm)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '12px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#fff', background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))', boxShadow: '0 4px 12px rgba(var(--primary), 0.3)' }}>
             <Plus style={{ width: '16px', height: '16px' }} /> Add Server
@@ -109,21 +129,43 @@ export default function ServersPage() {
         </div>
       </div>
 
-      {/* Add Server Form */}
+      {/* Add Server Modal */}
       {showForm && (
-        <div style={{ borderRadius: '14px', border: '1px solid rgb(var(--border))', borderTop: '3px solid rgb(var(--primary))', backgroundColor: 'rgb(var(--surface))', padding: '20px', marginBottom: '20px' }}>
-          <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 16px' }}>Add New Server</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-            <div><label style={labelStyle}>Server Name *</label><input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Production Web 1" style={inputStyle} /></div>
-            <div><label style={labelStyle}>Private IP</label><input value={form.privateIp} onChange={e => setForm(f => ({ ...f, privateIp: e.target.value }))} placeholder="e.g. 172.31.0.10" style={inputStyle} /></div>
-            <div><label style={labelStyle}>Public Address</label><input value={form.publicAddress} onChange={e => setForm(f => ({ ...f, publicAddress: e.target.value }))} placeholder="e.g. ec2-xx-xx-xx.compute.amazonaws.com" style={inputStyle} /></div>
-            <div><label style={labelStyle}>SSH Key Path</label><input value={form.sshKey} onChange={e => setForm(f => ({ ...f, sshKey: e.target.value }))} placeholder="e.g. ~/.ssh/id_rsa" style={inputStyle} /></div>
-          </div>
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-            <button onClick={() => setShowForm(false)} style={{ padding: '9px 18px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', border: '1px solid rgb(var(--border))', cursor: 'pointer', background: 'transparent' }}>Cancel</button>
-            <button onClick={addServer} disabled={!form.name || saving} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, color: '#fff', border: 'none', cursor: !form.name ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))', opacity: !form.name ? 0.5 : 1 }}>
-              {saving ? <Loader2 style={{ width: 14, height: 14, animation: 'spin 1s linear infinite' }} /> : <Plus style={{ width: 14, height: 14 }} />} {saving ? 'Adding...' : 'Add Server'}
-            </button>
+        <div onClick={() => setShowForm(false)} style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: '520px', borderRadius: '16px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', boxShadow: '0 24px 48px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
+            {/* Header */}
+            <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid rgb(var(--border))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, rgba(var(--primary),0.15), rgba(var(--agent),0.1))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Server style={{ width: '18px', height: '18px', color: 'rgb(var(--primary))' }} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>Add New Server</h3>
+                  <p style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', margin: 0 }}>Register a server for monitoring</p>
+                </div>
+              </div>
+              <button onClick={() => setShowForm(false)} style={{ width: '32px', height: '32px', borderRadius: '8px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: 'rgb(var(--text-muted))', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+            </div>
+            {/* Body */}
+            <div style={{ padding: '20px 24px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div><label style={labelStyle}>Server Name *</label><input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Production Web 1" style={inputStyle} autoFocus /></div>
+                  <div><label style={labelStyle}>Private IP *</label><input value={form.privateIp} onChange={e => setForm(f => ({ ...f, privateIp: e.target.value }))} placeholder="e.g. 10.0.1.50" style={inputStyle} /></div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div><label style={labelStyle}>Public Address</label><input value={form.publicAddress} onChange={e => setForm(f => ({ ...f, publicAddress: e.target.value }))} placeholder="e.g. ec2-xx.compute.amazonaws.com" style={inputStyle} /></div>
+                  <div><label style={labelStyle}>SSH Key Path</label><input value={form.sshKey} onChange={e => setForm(f => ({ ...f, sshKey: e.target.value }))} placeholder="e.g. ~/.ssh/id_rsa" style={inputStyle} /></div>
+                </div>
+              </div>
+            </div>
+            {/* Footer */}
+            <div style={{ padding: '16px 24px', borderTop: '1px solid rgb(var(--border))', display: 'flex', gap: '8px', justifyContent: 'flex-end', backgroundColor: 'rgba(var(--surface-hover), 0.5)' }}>
+              <button onClick={() => setShowForm(false)} style={{ padding: '10px 20px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', border: '1px solid rgb(var(--border))', cursor: 'pointer', background: 'transparent' }}>Cancel</button>
+              <button onClick={addServer} disabled={!form.name || saving} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 24px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, color: '#fff', border: 'none', cursor: !form.name ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))', opacity: !form.name ? 0.5 : 1, boxShadow: '0 4px 12px rgba(var(--primary), 0.3)' }}>
+                {saving ? <Loader2 style={{ width: 14, height: 14, animation: 'spin 1s linear infinite' }} /> : <Plus style={{ width: 14, height: 14 }} />} {saving ? 'Adding...' : 'Add Server'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -158,8 +200,8 @@ export default function ServersPage() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '4px' }}>
-                  <button title="Edit" style={{ padding: '6px', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: 'rgb(var(--text-muted))' }}><Edit3 style={{ width: '14px', height: '14px' }} /></button>
-                  <button title="Delete" onClick={() => deleteServer(srv.id)} style={{ padding: '6px', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: 'rgb(var(--text-muted))' }}
+                  <button title="Edit" onClick={() => openEdit(srv)} style={{ padding: '6px', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: 'rgb(var(--text-muted))' }}><Edit3 style={{ width: '14px', height: '14px' }} /></button>
+                  <button title="Delete" onClick={() => setDeleteTarget({ id: srv.id, name: srv.name })} style={{ padding: '6px', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: 'rgb(var(--text-muted))' }}
                     onMouseEnter={e => { e.currentTarget.style.color = '#EF4444'; }}
                     onMouseLeave={e => { e.currentTarget.style.color = 'rgb(var(--text-muted))'; }}
                   ><Trash2 style={{ width: '14px', height: '14px' }} /></button>
@@ -185,6 +227,65 @@ export default function ServersPage() {
           );
         })}
       </div>
+
+      {/* Edit Server Modal */}
+      {editTarget && (
+        <div onClick={() => setEditTarget(null)} style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: '520px', borderRadius: '16px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', boxShadow: '0 24px 48px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
+            <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid rgb(var(--border))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, rgba(var(--primary),0.15), rgba(var(--agent),0.1))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Edit3 style={{ width: '18px', height: '18px', color: 'rgb(var(--primary))' }} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>Edit Server</h3>
+                  <p style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', margin: 0 }}>Update server details</p>
+                </div>
+              </div>
+              <button onClick={() => setEditTarget(null)} style={{ width: '32px', height: '32px', borderRadius: '8px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: 'rgb(var(--text-muted))', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+            </div>
+            <div style={{ padding: '20px 24px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div><label style={labelStyle}>Server Name *</label><input value={editTarget.name} onChange={e => setEditTarget((p: any) => ({ ...p, name: e.target.value }))} style={inputStyle} autoFocus /></div>
+                  <div><label style={labelStyle}>Private IP *</label><input value={editTarget.privateIp} onChange={e => setEditTarget((p: any) => ({ ...p, privateIp: e.target.value }))} style={inputStyle} /></div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div><label style={labelStyle}>Public Address</label><input value={editTarget.publicAddress} onChange={e => setEditTarget((p: any) => ({ ...p, publicAddress: e.target.value }))} style={inputStyle} /></div>
+                  <div><label style={labelStyle}>SSH Key Path</label><input value={editTarget.sshKey} onChange={e => setEditTarget((p: any) => ({ ...p, sshKey: e.target.value }))} style={inputStyle} /></div>
+                </div>
+              </div>
+            </div>
+            <div style={{ padding: '16px 24px', borderTop: '1px solid rgb(var(--border))', display: 'flex', gap: '8px', justifyContent: 'flex-end', backgroundColor: 'rgba(var(--surface-hover), 0.5)' }}>
+              <button onClick={() => setEditTarget(null)} style={{ padding: '10px 20px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', border: '1px solid rgb(var(--border))', cursor: 'pointer', background: 'transparent' }}>Cancel</button>
+              <button onClick={saveEdit} disabled={!editTarget.name || saving} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 24px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, color: '#fff', border: 'none', cursor: !editTarget.name ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))', opacity: !editTarget.name ? 0.5 : 1, boxShadow: '0 4px 12px rgba(var(--primary), 0.3)' }}>
+                {saving ? <Loader2 style={{ width: 14, height: 14, animation: 'spin 1s linear infinite' }} /> : <Edit3 style={{ width: 14, height: 14 }} />} {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div onClick={() => setDeleteTarget(null)} style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: '400px', borderRadius: '16px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', boxShadow: '0 24px 48px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
+            <div style={{ padding: '24px', textAlign: 'center' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <Trash2 style={{ width: '22px', height: '22px', color: '#EF4444' }} />
+              </div>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 8px' }}>Delete Server</h3>
+              <p style={{ fontSize: '13px', color: 'rgb(var(--text-muted))', margin: 0, lineHeight: 1.5 }}>
+                Are you sure you want to delete <strong style={{ color: 'rgb(var(--text-primary))' }}>{deleteTarget.name}</strong>? This action cannot be undone.
+              </p>
+            </div>
+            <div style={{ padding: '16px 24px', borderTop: '1px solid rgb(var(--border))', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setDeleteTarget(null)} style={{ padding: '10px 20px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', border: '1px solid rgb(var(--border))', cursor: 'pointer', background: 'transparent' }}>Cancel</button>
+              <button onClick={deleteServer} style={{ padding: '10px 20px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, color: '#fff', border: 'none', cursor: 'pointer', backgroundColor: '#EF4444', boxShadow: '0 4px 12px rgba(239,68,68,0.3)' }}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

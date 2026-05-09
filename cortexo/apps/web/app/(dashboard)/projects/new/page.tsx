@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Check, FolderGit2, Loader2, ArrowLeft, ArrowRight, Github, Search, Trash2, GitBranch, ChevronDown, AlertTriangle, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useApiData } from '@/lib/hooks';
+import { useModal } from '@/components/modal-provider';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/v1';
 
@@ -145,8 +146,11 @@ export default function NewProjectPage() {
     }
   }, [form, step, isClient]);
 
-  const clearDraft = () => {
-    if (confirm('Are you sure you want to clear the draft project details?')) {
+  const { confirm: confirmModal, showAlert } = useModal();
+
+  const clearDraft = async () => {
+    const ok = await confirmModal({ title: 'Clear Draft', message: 'Are you sure you want to clear the draft project details?', variant: 'danger', confirmText: 'Clear All' });
+    if (ok) {
       setForm(DEFAULT_FORM);
       setStep(1);
       localStorage.removeItem('cortexo_new_project_form');
@@ -389,7 +393,7 @@ export default function NewProjectPage() {
         setTimeout(() => router.push(`/projects/${projId}`), 1500);
       }
     } catch (e: unknown) {
-      alert('Failed: ' + (e as Error).message);
+      showAlert({ title: 'Error', message: 'Failed: ' + (e as Error).message, variant: 'error' });
     } finally { setSaving(false); }
   }
 

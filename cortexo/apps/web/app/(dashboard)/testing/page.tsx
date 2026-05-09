@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { Play, Plus, Clock, History, FileText, CheckCircle, XCircle, Beaker, FileSearch, Zap, MoreVertical } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useApiData, useAutoLoadToken, timeAgo } from '@/lib/hooks';
+import { useModal } from '@/components/modal-provider';
 
 export default function TestingSuitePage() {
   useAutoLoadToken();
@@ -17,12 +18,14 @@ export default function TestingSuitePage() {
   const { data: suitesData, loading: suitesLoading, refetch: refetchSuites } = useApiData(() => projectId ? api.request<any>('GET', `/projects/${projectId}/test-suites`) : Promise.resolve({ data: [] }));
   const suites = suitesData?.data || [];
 
+  const { showAlert } = useModal();
+
   const handleRunSuite = async (suiteId: string) => {
     try {
       await api.request('POST', `/test-suites/${suiteId}/run`);
-      alert('Test suite triggered successfully!');
+      showAlert({ title: 'Success', message: 'Test suite triggered successfully!', variant: 'success' });
     } catch (error) {
-      alert('Failed to trigger suite');
+      showAlert({ title: 'Error', message: 'Failed to trigger suite', variant: 'error' });
     }
   };
 

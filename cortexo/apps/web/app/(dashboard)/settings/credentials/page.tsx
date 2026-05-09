@@ -5,6 +5,7 @@ import {
   Shield, Eye, EyeOff, Save, Trash2, Loader2, CheckCircle, XCircle,
   GitBranch, Cloud, Key, Terminal, Bot, Zap, Lock, Edit3, X, Mail,
 } from 'lucide-react';
+import { useModal } from '@/components/modal-provider';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/v1';
 
@@ -121,8 +122,11 @@ export default function CredentialsPage() {
     setSaving(null);
   }
 
+  const { confirm: confirmModal } = useModal();
+
   async function handleDelete(key: string) {
-    if (!confirm(`Delete credential "${key}"? This cannot be undone.`)) return;
+    const ok = await confirmModal({ title: 'Delete Credential', message: `Delete credential "${key}"? This cannot be undone.`, variant: 'danger', confirmText: 'Delete' });
+    if (!ok) return;
     try {
       await fetch(`${API}/credentials/${key}`, { method: 'DELETE', headers });
       showToast('Credential deleted');

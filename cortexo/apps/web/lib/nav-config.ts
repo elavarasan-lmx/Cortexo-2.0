@@ -44,7 +44,6 @@ export const NAVIGATION: NavSection[] = [
   {
     title: 'ADMIN', color: '#6B7280',
     items: [
-      { label: 'Audit Log', href: '/audit-log', emoji: '📜' },
       { label: 'Testing',   href: '/testing',   emoji: '🧪' },
       { label: 'Settings',  href: '/settings',  emoji: '⚙' },
     ],

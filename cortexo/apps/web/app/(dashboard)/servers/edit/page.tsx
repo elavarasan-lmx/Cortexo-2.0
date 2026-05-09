@@ -7,6 +7,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAutoLoadToken, useApiData } from '@/lib/hooks';
 import { useToastStore } from '@/lib/toast-store';
+import { useModal } from '@/components/modal-provider';
 
 const card: React.CSSProperties = {
   borderRadius: '14px', border: '1px solid rgb(var(--border))',
@@ -82,8 +83,12 @@ export default function EditServerPage() {
     setSaving(false);
   }
 
+  const { confirm: confirmModal } = useModal();
+
   async function handleDelete() {
-    if (!serverId || !confirm(`Delete server "${form.name}"? This cannot be undone.`)) return;
+    if (!serverId) return;
+    const ok = await confirmModal({ title: 'Delete Server', message: `Delete server "${form.name}"? This cannot be undone.`, variant: 'danger', confirmText: 'Delete' });
+    if (!ok) return;
     setDeleting(true);
     try {
       await api.deleteServer(Number(serverId));

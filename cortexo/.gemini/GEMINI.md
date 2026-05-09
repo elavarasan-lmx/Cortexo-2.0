@@ -55,6 +55,7 @@ Cortexo is a **Turborepo monorepo** with 3 packages:
 15. **NEVER** copy-paste code between routes — extract to `lib/` if shared by 2+ routes
 16. **NEVER** skip `npm run build` check before pushing to production — catch type errors early
 17. **NEVER** add a page without checking if the API actually returns data for it — empty pages = waste
+18. **NEVER** use native browser dialogs (`confirm()`, `alert()`, `prompt()`) — use custom modal components instead
 
 ---
 

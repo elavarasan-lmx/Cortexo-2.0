@@ -7,6 +7,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAutoLoadToken, useApiData } from '@/lib/hooks';
 import { useToastStore } from '@/lib/toast-store';
+import { useModal } from '@/components/modal-provider';
 
 const card: React.CSSProperties = { borderRadius: '14px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', overflow: 'hidden' };
 const inputStyle: React.CSSProperties = { width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-primary))', fontSize: '13px', outline: 'none', boxSizing: 'border-box' };
@@ -67,8 +68,12 @@ export default function EditDeployPage() {
     setSaving(false);
   }
 
+  const { confirm: confirmModal } = useModal();
+
   async function handleDelete() {
-    if (!deployId || !confirm('Delete this deployment? This cannot be undone.')) return;
+    if (!deployId) return;
+    const ok = await confirmModal({ title: 'Delete Deployment', message: 'Delete this deployment? This cannot be undone.', variant: 'danger', confirmText: 'Delete' });
+    if (!ok) return;
     setDeleting(true);
     try {
       await api.deleteDeployment(deployId);

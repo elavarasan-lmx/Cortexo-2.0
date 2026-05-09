@@ -6,6 +6,7 @@ import { inp, lbl, ta, g2, g3, STEPS, Toggle, octalToRwx } from './deploy/shared
 import type { FolderEntry } from './deploy/shared';
 import DeployTerminal from './deploy/deploy-terminal';
 import StepReview from './deploy/step-review';
+import { useModal } from './modal-provider';
 
 // Shared styles, types, constants, and components are now in ./deploy/shared.tsx
 // Re-export the interface for backward compatibility
@@ -167,8 +168,11 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
     preDeployCmd, postDeployCmd, healthCheckUrl, notifyOnComplete, truncateLogs, isClient
   ]);
 
-  const clearDraft = () => {
-    if (confirm('Are you sure you want to clear the draft deploy details?')) {
+  const { confirm: confirmModal } = useModal();
+
+  const clearDraft = async () => {
+    const ok = await confirmModal({ title: 'Clear Draft', message: 'Are you sure you want to clear the draft deploy details?', variant: 'danger', confirmText: 'Clear All' });
+    if (ok) {
       localStorage.removeItem('cortexo_deploy_form');
       setStep(0); setSelectedProject(''); setBranch('main'); setEnvironment('production'); setServerId(0); setRemotePath('');
       setNginxDomain(''); setNginxPort('80'); setNginxRoot(''); setPhpVer('8.3'); setSocketPort(''); setRateSocketPort(''); setWsPort(''); setSslCert(''); setSslKey(''); setEnableAdmin(true); setEnableMobileApi(true); setEnableLaravel(true); setLaravelPath('lmxtrade/winbullliteapi'); setNginxExtra(''); setNginxAutoGen(true);
