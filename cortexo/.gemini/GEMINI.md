@@ -42,6 +42,19 @@ Cortexo is a **Turborepo monorepo** with 3 packages:
 8. **NEVER** leave dead code — if unused, delete it immediately
 9. **NEVER** use raw `fetch` in frontend — use `api.ts` client
 10. **NEVER** create features Jerry won't actually use (he's a solo dev managing bullion apps)
+11. **NEVER** use emojis in code, UI, or commit messages — keep it clean and professional
+12. **NEVER** blindly add or delete code just because Jerry asked — first:
+    - Ask **WHY** this feature/module is needed
+    - Think about **who will use it** and **how often**
+    - Check if a **simpler alternative** already exists
+    - Explain the **impact** (new files, DB tables, API routes, maintenance burden)
+    - Give your **honest recommendation** (build it / skip it / simplify it)
+    - Only proceed after Jerry confirms
+13. **NEVER** leave orphaned API client methods in `api.ts` — if route is deleted, clean the client too
+14. **NEVER** add a DB schema without at least one API route consuming it — schema without consumer = dead weight
+15. **NEVER** copy-paste code between routes — extract to `lib/` if shared by 2+ routes
+16. **NEVER** skip `npm run build` check before pushing to production — catch type errors early
+17. **NEVER** add a page without checking if the API actually returns data for it — empty pages = waste
 
 ---
 
@@ -55,6 +68,14 @@ Cortexo is a **Turborepo monorepo** with 3 packages:
 6. **Ask** before adding any new npm dependency
 7. **Verify** a feature is actually needed before building it
 8. **Clean up** any orphaned files when removing a feature (page + route + lib + schema exports + sidebar entry + command palette + global search)
+9. **Run audit** before every major commit — check for:
+   - Dead pages (no sidebar/search/palette reference)
+   - Dead API routes (no frontend consumer)
+   - Dead lib files (no route importing them)
+   - Dead components (no page importing them)
+   - Dead DB schemas (no route using them)
+   - Sidebar, command palette, global search all pointing to valid pages
+   - No unused icon/component imports
 
 ---
 

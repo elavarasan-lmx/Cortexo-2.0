@@ -3,8 +3,6 @@ import { z } from 'zod';
 import { eq, and, desc, like, or, ne, sql } from 'drizzle-orm';
 import { getDb } from '../lib/db.js';
 import { errors, errorEvents, deployments, rootCauses } from '@cortexo/db/schema';
-// AI root cause analysis engine (OpenAI / Anthropic / rule-based fallback)
-import { analyzeRootCause } from '../lib/ai-root-cause.js';
 import crypto from 'crypto';
 import { sendCriticalErrorAlert } from '../lib/email.js';
 import { incrementErrorCount } from '../middleware/usage-limits.js';
@@ -527,54 +525,7 @@ export async function errorRoutes(app: FastifyInstance) {
     }
   });
 
-  // Trigger AI Root Cause Analysis
-  app.post('/errors/:id/analyze', async (request, reply) => {
-    const { id } = request.params as { id: string };
-    const orgId = getOrgId(request);
 
-    try {
-      const db = await getDb();
-      const errorGroup = await db.query.errors.findFirst({
-        where: (e, { eq, and }) => and(eq(e.id, id), eq(e.orgId, orgId))
-      });
-
-      if (!errorGroup) {
-        return reply.code(404).send({ error: 'Error not found' });
-      }
-
-      const existingPending = await db.query.rootCauses.findFirst({
-        where: (rc, { eq, and }) => and(
-          eq(rc.errorId, id),
-          eq(rc.status, 'pending')
-        )
-      });
-
-      if (existingPending) {
-        return reply.code(409).send({ error: 'An analysis is already pending for this error' });
-      }
-
-      const rootCauseId = crypto.randomUUID();
-      await db.insert(rootCauses).values({
-        id: rootCauseId,
-        errorId: id,
-        projectId: errorGroup.projectId,
-        orgId: errorGroup.orgId,
-        status: 'pending'
-      } as any);
-
-      analyzeRootCause(id, rootCauseId, errorGroup.projectId, orgId).catch((err) => {
-        app.log.error(err, `Root cause analysis failed for error ${id}`);
-      });
-
-      return reply.code(202).send({ 
-        message: 'Root cause analysis triggered',
-        rootCauseId 
-      });
-    } catch (err: any) {
-      app.log.error(err);
-      return reply.code(500).send({ error: 'Failed to trigger analysis' });
-    }
-  });
 
   // ── Cross-Client Error Intelligence ──────────────────────────────────────
   /**
