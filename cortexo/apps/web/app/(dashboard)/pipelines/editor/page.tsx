@@ -48,36 +48,6 @@ stages:
   - name: Deploy
     run: npm run deploy
 ` },
-  flutter: { name: 'Flutter', yaml: `name: Flutter Pipeline
-trigger:
-  push:
-    branches: [main]
-stages:
-  - name: Get Dependencies
-    run: flutter pub get
-  - name: Analyze
-    run: flutter analyze
-  - name: Test
-    run: flutter test
-  - name: Build APK
-    run: flutter build apk --release
-  - name: Deploy to Firebase
-    run: firebase appdistribution:distribute build/app/outputs/apk/release/app-release.apk
-` },
-  docker: { name: 'Docker', yaml: `name: Docker Pipeline
-trigger:
-  push:
-    branches: [main]
-stages:
-  - name: Build Image
-    run: docker build -t myapp:$COMMIT_SHA .
-  - name: Run Tests in Container
-    run: docker run --rm myapp:$COMMIT_SHA npm test
-  - name: Push to Registry
-    run: docker push myregistry/myapp:$COMMIT_SHA
-  - name: Deploy
-    run: docker service update --image myregistry/myapp:$COMMIT_SHA myapp_service
-` },
 };
 
 /* ─── Shared Styles ─── */

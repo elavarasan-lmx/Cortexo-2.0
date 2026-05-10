@@ -145,6 +145,8 @@ export async function pipelineRoutes(app: FastifyInstance) {
         where: (p, { eq }) => eq(p.id, id),
       });
       if (!existing) return reply.code(404).send({ error: 'Pipeline not found' });
+      // Delete related runs first (FK constraint)
+      await db.delete(pipelineRuns).where(eq(pipelineRuns.pipelineId, id));
       await db.delete(pipelinesTable).where(eq(pipelinesTable.id, id));
       return { data: { id, message: 'Pipeline deleted' } };
     } catch (err) {

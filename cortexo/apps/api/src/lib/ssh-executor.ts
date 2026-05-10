@@ -46,6 +46,7 @@ export interface DeployOptions {
   timeoutMs?: number;
   // ── Provisioning config (optional) ──
   database?: { host: string; port?: string; name: string; user: string; password: string; migrate?: boolean; migrateCmd?: string; importSql?: boolean; sqlPath?: string };
+  sourceDatabase?: { host: string; port?: string; name: string; user: string; password?: string };
   nginx?: { domain: string; port?: string; root?: string; phpVer?: string; socketPort?: string; rateSocketPort?: string; wsPort?: string; sslCert?: string; sslKey?: string; enableAdmin?: boolean; enableMobileApi?: boolean; enableLaravel?: boolean; laravelPath?: string; extraDirectives?: string; autoGenerate?: boolean };
   permissions?: { user?: string; group?: string; fileMode?: string; dirMode?: string; writablePaths?: string; recursive?: boolean; folders?: { path: string; perm: string; owner: string; group: string }[] };
   pm2?: { name?: string; script?: string; interpreter?: string; instances?: number; autoRestart?: boolean; args?: string };
@@ -411,6 +412,19 @@ export async function runDeploySequence(
       await pushLog(dbLog);
       // Non-fatal: log but continue (DB may already exist)
 
+      // Clone from source database (mysqldump source | mysql target)
+      if (opts.sourceDatabase?.name && opts.sourceDatabase?.host) {
+        const src = opts.sourceDatabase;
+        await pushStarting('db_clone', `Cloning database ${src.name} → ${db.name}...`);
+        const srcPassFlag = src.password ? `-p"${src.password}"` : `-p"${db.password}"`;
+        const cloneCmd = `mysqldump -h "${src.host}" -P ${src.port || '3306'} -u "${src.user}" ${srcPassFlag} --single-transaction --routines --triggers "${src.name}" 2>/dev/null | mysql -h "${db.host}" -P ${db.port || '3306'} -u "${db.user}" -p"${db.password}" "${db.name}" 2>&1 && echo "Database cloned successfully"`;
+        const cloneLog = await runStep(conn, 'db_clone', cloneCmd, 600_000);
+        await pushLog(cloneLog);
+        if (cloneLog.exitCode !== 0) {
+          return { success: false, status: 'failed' as const, logs, totalDurationMs: Date.now() - totalStart, error: `Database clone failed: ${cloneLog.stderr || cloneLog.stdout}` };
+        }
+      }
+
       // Import SQL if configured
       if (db.importSql && db.sqlPath) {
         await pushStarting('db_import', `Importing SQL from ${db.sqlPath}...`);
@@ -683,7 +697,8 @@ export interface ProvisionOptions {
 
   /** Server paths */
   remotePath: string;          // e.g. "/var/www/html/trustbullion"
-  baseSourcePath: string;      // e.g. "/var/www/html/winbullSource" — clone FROM here
+  baseSourcePath?: string;     // local fallback: e.g. "/var/www/html/winbullSource"
+  sourceTemplate?: { repoUrl: string; branch: string };  // Git-based source clone
 
   /** Domain & URLs */
   domain: string;              // e.g. "trustbullion.com"
@@ -692,14 +707,22 @@ export interface ProvisionOptions {
   adminUser?: string;
   adminPassword?: string;
 
-  /** Database */
+  /** Target Database (client's new DB) */
   db: {
     host: string;
     port?: string;
     user: string;
     password: string;
-    baseName: string;          // source DB to clone FROM (e.g. "winbullSource")
     targetName: string;        // new DB name (e.g. "trustbullion")
+  };
+
+  /** Source Database (clone FROM here) */
+  sourceDb?: {
+    host: string;
+    port?: string;
+    user: string;
+    password?: string;         // falls back to db.password if not provided
+    name: string;              // source DB name (e.g. "maharaj")
   };
 
   /** Socket ports */
@@ -753,11 +776,11 @@ export async function runProvisionSequence(
   const logs: DeployLog[] = [];
   let conn: Client | null = null;
 
-  const BASE = opts.baseSlug || 'lmxtrade';
-  const BASE_UPPER = opts.baseSlugUpper || 'LMXTRADE';
+  let BASE = opts.baseSlug || 'lmxtrade';
+  let BASE_UPPER = opts.baseSlugUpper || 'LMXTRADE';
   const SLUG = opts.clientSlug;
   const SLUG_UPPER = SLUG.toUpperCase();
-  const BASE_DOMAIN = opts.baseDomain || 'bullion_v4.logimaxindia.com';
+  let BASE_DOMAIN = opts.baseDomain || 'bullion_v4.logimaxindia.com';
   const NEW_DOMAIN = `www.${opts.domain}`;
   const PATH = opts.remotePath;
   const db = opts.db;
@@ -790,28 +813,90 @@ export async function runProvisionSequence(
     });
 
     // ── Step 2: Clone base source files ──
-    await pushStarting('clone_files', `Cloning ${opts.baseSourcePath} → ${PATH}...`);
-    const cloneCmd = `sudo cp -a "${opts.baseSourcePath}" "${PATH}" && sudo chown -R ${creds.username}:${creds.username} "${PATH}" && echo "Files cloned"`;
-    const cloneLog = await runStep(conn, 'clone_files', cloneCmd, 300_000);
-    await pushLog(cloneLog);
-    if (cloneLog.exitCode !== 0) {
-      return { success: false, status: 'failed', logs, totalDurationMs: Date.now() - totalStart, error: `File clone failed: ${cloneLog.stderr}` };
+    if (opts.sourceTemplate?.repoUrl) {
+      // Git clone from source template repo (latest code)
+      await pushStarting('clone_files', `Git cloning ${opts.sourceTemplate.repoUrl} (${opts.sourceTemplate.branch}) → ${PATH}...`);
+      const cloneCmd = [
+        `sudo rm -rf "${PATH}" 2>/dev/null || true`,
+        `git clone --branch "${opts.sourceTemplate.branch}" --depth 1 "${opts.sourceTemplate.repoUrl}" "${PATH}" 2>&1`,
+        `sudo chown -R ${creds.username}:${creds.username} "${PATH}"`,
+        'echo "Files cloned from git"',
+      ].join(' && ');
+      const cloneLog = await runStep(conn, 'clone_files', cloneCmd, 600_000);
+      await pushLog(cloneLog);
+      if (cloneLog.exitCode !== 0) {
+        return { success: false, status: 'failed', logs, totalDurationMs: Date.now() - totalStart, error: `Git clone failed: ${cloneLog.stderr || cloneLog.stdout}` };
+      }
+    } else if (opts.baseSourcePath) {
+      // Fallback: local cp -a
+      await pushStarting('clone_files', `Cloning ${opts.baseSourcePath} → ${PATH}...`);
+      const cloneCmd = `sudo cp -a "${opts.baseSourcePath}" "${PATH}" && sudo chown -R ${creds.username}:${creds.username} "${PATH}" && echo "Files cloned"`;
+      const cloneLog = await runStep(conn, 'clone_files', cloneCmd, 300_000);
+      await pushLog(cloneLog);
+      if (cloneLog.exitCode !== 0) {
+        return { success: false, status: 'failed', logs, totalDurationMs: Date.now() - totalStart, error: `File clone failed: ${cloneLog.stderr}` };
+      }
     }
 
-    // ── Step 3: Clone base DB ──
-    await pushStarting('clone_db', `Cloning DB ${db.baseName} → ${db.targetName}...`);
-    const dbCloneCmd = [
-      `mysql -h "${db.host}" -P ${db.port || '3306'} -u "${db.user}" -p"${db.password}" -e "CREATE DATABASE IF NOT EXISTS \\\`${db.targetName}\\\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>&1`,
-      `mysqldump -h "${db.host}" -P ${db.port || '3306'} -u "${db.user}" -p"${db.password}" "${db.baseName}" 2>/dev/null | mysql -h "${db.host}" -P ${db.port || '3306'} -u "${db.user}" -p"${db.password}" "${db.targetName}" 2>&1`,
-      'echo "DB cloned"',
+    // ── Step 3: Clone source DB → target DB ──
+    if (opts.sourceDb?.name) {
+      const src = opts.sourceDb;
+      const srcPass = src.password || db.password;
+      const srcHost = src.host;
+      const srcPort = src.port || '3306';
+      const srcUser = src.user;
+      const tgtHost = db.host;
+      const tgtPort = db.port || '3306';
+      const tgtUser = db.user;
+      const tgtPass = db.password;
+
+      // Step 3a: Create target database
+      await pushStarting('create_db', `Creating database ${db.targetName}...`);
+      const createDbCmd = `mysql -h "${tgtHost}" -P ${tgtPort} -u "${tgtUser}" -p"${tgtPass}" -e "CREATE DATABASE IF NOT EXISTS \\\`${db.targetName}\\\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>&1`;
+      const createLog = await runStep(conn, 'create_db', createDbCmd, 30_000);
+      await pushLog(createLog);
+
+      // Step 3b: mysqldump source → mysql target (RDS compatible: strip DEFINER, skip GTID)
+      await pushStarting('clone_db', `Cloning DB ${src.name} → ${db.targetName} (cross-host)...`);
+      const dumpCmd = [
+        `mysqldump -h "${srcHost}" -P ${srcPort} -u "${srcUser}" -p"${srcPass}"`,
+        `--single-transaction --routines --triggers --set-gtid-purged=OFF --no-tablespaces --column-statistics=0`,
+        `"${src.name}" 2>/dev/null`,
+        `| sed 's/DEFINER=[^*]*\\*/\\*/g; s/DEFINER=[^*]*PROCEDURE/PROCEDURE/g; s/DEFINER=[^*]*FUNCTION/FUNCTION/g; s/DEFINER=[^*]*TRIGGER/TRIGGER/g; s/DEFINER=[^*]*EVENT/EVENT/g; s/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g; s/utf8mb4_0900_as_cs/utf8mb4_unicode_ci/g; s/utf8mb3_unicode_ci/utf8_unicode_ci/g; s/CHARSET=utf8mb3/CHARSET=utf8/g'`,
+        `| mysql -h "${tgtHost}" -P ${tgtPort} -u "${tgtUser}" -p"${tgtPass}" "${db.targetName}" 2>&1`,
+        `&& echo "DB cloned successfully"`,
+      ].join(' ');
+      const dbCloneLog = await runStep(conn, 'clone_db', dumpCmd, 600_000);
+      await pushLog(dbCloneLog);
+      if (dbCloneLog.exitCode !== 0) {
+        return { success: false, status: 'failed', logs, totalDurationMs: Date.now() - totalStart, error: `DB clone failed: ${dbCloneLog.stderr || dbCloneLog.stdout}` };
+      }
+    }
+
+    // ── Step 3c: Auto-detect source slug & domain from cloned global_configs.php ──
+    await pushStarting('detect_source', 'Detecting source template identity...');
+    const detectCmd = [
+      `cd "${PATH}"`,
+      `SRC_CLIENT=$(grep -oP '\\$client\\s*=\\s*"\\K[^"]+' global_configs.php | head -1)`,
+      `SRC_DOMAIN=$(grep -oP '\\$web_base_url\\s*=\\s*"https?://\\K[^"/]+' global_configs.php | head -1)`,
+      `echo "SOURCE_CLIENT=$SRC_CLIENT"`,
+      `echo "SOURCE_DOMAIN=$SRC_DOMAIN"`,
     ].join(' && ');
-    const dbCloneLog = await runStep(conn, 'clone_db', dbCloneCmd, 300_000);
-    await pushLog(dbCloneLog);
-    if (dbCloneLog.exitCode !== 0) {
-      return { success: false, status: 'failed', logs, totalDurationMs: Date.now() - totalStart, error: `DB clone failed: ${dbCloneLog.stderr}` };
+    const detectLog = await runStep(conn, 'detect_source', detectCmd, 10_000);
+    await pushLog(detectLog);
+
+    // Parse detected values from stdout
+    const srcClientMatch = detectLog.stdout.match(/SOURCE_CLIENT=(\S+)/);
+    const srcDomainMatch = detectLog.stdout.match(/SOURCE_DOMAIN=(\S+)/);
+    if (srcClientMatch?.[1]) {
+      BASE = srcClientMatch[1];
+      BASE_UPPER = BASE.toUpperCase();
+    }
+    if (srcDomainMatch?.[1]) {
+      BASE_DOMAIN = srcDomainMatch[1];
     }
 
-    // ── Step 4: File renames (lmxtrade → clientSlug) ──
+    // ── Step 4: File renames (${BASE} → clientSlug) ──
     await pushStarting('rename_files', `Renaming files: ${BASE} → ${SLUG}...`);
     const renameCmd = [
       `cd "${PATH}"`,
@@ -922,20 +1007,19 @@ export async function runProvisionSequence(
     await pushStarting('db_configure', `Configuring ${db.targetName} for ${opts.clientName}...`);
     const adminUser = opts.adminUser || 'admin';
     const adminPwd = opts.adminPassword || 'admin@123';
-    const updateSql = [
-      // General settings
-      `UPDATE dt_generalsettings SET admin_company_name='${opts.clientName}', admin_mail='', admin_mail_server='', admin_mail_password='', admin_mob1='', admin_mob2='', admin_mob3='', admin_mob4='', admin_mob5='', is_admin_mob1=0, is_admin_mob2=0, is_admin_mob3=0, is_admin_mob4=0, is_admin_mob5=0, invoice_comp_name='', address='', city='', state='', pincode=0, mobile='', email='', gst_no='', pan_no='', website_logo='logo.png', admin_logo=NULL, website_favicon='favicon.ico' WHERE genid=1;`,
-      // Admin credentials (bullion admin user = id 3)
-      `UPDATE dt_admin_user SET admin_user_name='${adminUser}', admin_user_password=MD5('${adminPwd}') WHERE admin_user_id=3;`,
-      // Email templates
-      `UPDATE dt_email_settings SET email_content=REPLACE(email_content,'LOGIMAX Bullion','${opts.clientName}'), email_signature=REPLACE(email_signature,'LOGIMAX Bullion','${opts.clientName}');`,
-      // SMS templates
-      `UPDATE dt_sms_settings SET sms_footer=REPLACE(sms_footer,'LOGIMAX BULLION','${opts.clientName.toUpperCase()}');`,
-      // WhatsApp templates
-      `UPDATE dt_whatsapp_settings SET whatsapp_footer=REPLACE(whatsapp_footer,'Logimax','${opts.clientName}'), instance_id='';`,
-    ].join(' ');
-    const updateCmd = `mysql -h "${db.host}" -P ${db.port || '3306'} -u "${db.user}" -p"${db.password}" "${db.targetName}" -e "${updateSql}" 2>&1 && echo "DB configured"`;
-    const updateLog = await runStep(conn, 'db_configure', updateCmd, 30_000);
+    // Run each UPDATE separately so one missing column/table doesn't block all
+    const dbUpdates = [
+      { label: 'general_settings', sql: `UPDATE dt_generalsettings SET admin_company_name='${opts.clientName}', admin_mail='', admin_mail_server='', admin_mail_password='', admin_mob1='', admin_mob2='', admin_mob3='', admin_mob4='', admin_mob5='', is_admin_mob1=0, is_admin_mob2=0, is_admin_mob3=0, is_admin_mob4=0, is_admin_mob5=0, invoice_comp_name='', address='', city='', state='', pincode=0, mobile='', email='', gst_no='', pan_no='' WHERE genid=1;` },
+      { label: 'admin_user', sql: `UPDATE dt_admin_user SET admin_user_name='${adminUser}', admin_user_password=MD5('${adminPwd}') WHERE admin_user_id=3;` },
+      { label: 'email_settings', sql: `UPDATE dt_email_settings SET email_content=REPLACE(REPLACE(email_content,'${baseCompany}','${opts.clientName}'),'${BASE_UPPER}','${SLUG_UPPER}'), email_signature=REPLACE(REPLACE(email_signature,'${baseCompany}','${opts.clientName}'),'${BASE_UPPER}','${SLUG_UPPER}');` },
+      { label: 'sms_settings', sql: `UPDATE dt_sms_settings SET sms_footer=REPLACE(sms_footer,'${baseCompany.toUpperCase()}','${opts.clientName.toUpperCase()}');` },
+      { label: 'whatsapp_settings', sql: `UPDATE dt_whatsapp_settings SET whatsapp_footer=REPLACE(whatsapp_footer,'${baseCompany}','${opts.clientName}');` },
+    ];
+    const dbConfigParts = dbUpdates.map(u =>
+      `mysql -h "${db.host}" -P ${db.port || '3306'} -u "${db.user}" -p"${db.password}" "${db.targetName}" -e "${u.sql}" 2>&1 && echo "${u.label}: OK" || echo "${u.label}: SKIPPED"`
+    );
+    const updateCmd = dbConfigParts.join(' && ') + ' && echo "DB configured"';
+    const updateLog = await runStep(conn, 'db_configure', updateCmd, 60_000);
     await pushLog(updateLog);
 
     // ── Step 9: Nginx vhost ──
@@ -1008,12 +1092,15 @@ export async function runProvisionSequence(
     await pushStarting('pm2', `Starting PM2 processes for ${SLUG}...`);
     const pm2Cmd = [
       `cd "${PATH}"`,
-      // Native WebSocket — Rate file watcher
-      `pm2 delete "${SLUG}-ws" 2>/dev/null; pm2 start "client/${SLUG}-ws.js" --name "${SLUG}-ws"`,
-      // Socket.IO — Redis pub/sub events
-      `pm2 delete "${SLUG}-socketio" 2>/dev/null; pm2 start "${BASE}/${SLUG}winlitesocket.js" --name "${SLUG}-socketio"`,
+      // Delete existing processes if any
+      `pm2 delete "${SLUG}-ws" 2>/dev/null || true`,
+      `pm2 delete "${SLUG}-socketio" 2>/dev/null || true`,
+      // Native WebSocket — try renamed file first, then detect from client/
+      `WS_FILE="client/${SLUG}-ws.js"; [ ! -f "$WS_FILE" ] && WS_FILE=$(find client/ -name '*-ws.js' -o -name '*_rate.js' | head -1); [ -f "$WS_FILE" ] && pm2 start "$WS_FILE" --name "${SLUG}-ws" && echo "Started: $WS_FILE" || echo "No WS file found, skipping"`,
+      // Socket.IO — try renamed file first, then detect from BASE/ folder
+      `SIO_FILE="${BASE}/${SLUG}winlitesocket.js"; [ ! -f "$SIO_FILE" ] && SIO_FILE=$(find ${BASE}/ -name '*winlitesocket.js' -o -name '*socket*.js' | head -1) 2>/dev/null; [ -f "$SIO_FILE" ] && pm2 start "$SIO_FILE" --name "${SLUG}-socketio" && echo "Started: $SIO_FILE" || echo "No Socket.IO file found, skipping"`,
       'pm2 save',
-      'echo "PM2 processes started"',
+      'echo "PM2 processes configured"',
     ].join(' && ');
     const pm2Log = await runStep(conn, 'pm2', pm2Cmd, 30_000);
     await pushLog(pm2Log);

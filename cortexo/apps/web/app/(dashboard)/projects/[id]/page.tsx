@@ -256,20 +256,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         {/* Rate & Socket */}
         <div style={{ ...card, padding: '20px' }}>
           <h3 style={secHead}><Radio style={{ width: '14px', height: '14px', color: '#818CF8' }} /> Rate & Socket</h3>
-          <div style={row}><span style={rlbl}>Rate Feed</span>
-            {editing ? (
-              <select style={{ ...inp, cursor: 'pointer' }} value={form.rateFeed} onChange={e => u('rateFeed', e.target.value)}>
-                {Object.entries(feedLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-              </select>
-            ) : <span style={{ ...rval, fontFamily: 'inherit' }}>{feedLabels[s.rateFeed] || s.rateFeed || '—'}</span>}
-          </div>
-          <div style={row}><span style={rlbl}>WS Type</span>
-            {editing ? (
-              <select style={{ ...inp, cursor: 'pointer' }} value={form.websocketType} onChange={e => u('websocketType', e.target.value)}>
-                {Object.entries(wsLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-              </select>
-            ) : <span style={{ ...rval, fontFamily: 'inherit' }}>{wsLabels[s.websocketType] || s.websocketType || '—'}</span>}
-          </div>
+
           <div style={row}><span style={rlbl}>WS Port</span>{field('wsPort', s.wsPort, '7124')}</div>
           <div style={row}><span style={rlbl}>Socket.io Port</span>{field('socketIoPort', s.socketIoPort, '7125')}</div>
           <div style={row}><span style={rlbl}>Socket URL</span>{field('socketBaseUrl', s.socketBaseUrl, 'http://www.domain.com/')}</div>
@@ -296,17 +283,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               </div>
               <div style={{ ...row, borderBottom: 'none' }}><span style={rlbl}>Server Path</span>{field('serverPath', s.serverPath, '/var/www/html/client')}</div>
             </div>
-            <div style={{ gridColumn: '2 / -1' }}>
-              <div style={{ ...row, borderBottom: 'none' }}>
-                <span style={rlbl}>SDK API Key</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <code style={{ ...rval, fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(p.sdkApiKey || '—')}</code>
-                  <button onClick={copyKey} title="Copy" style={{ padding: '4px', borderRadius: '6px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', color: copied ? '#10B981' : 'rgb(var(--text-muted))', cursor: 'pointer', display: 'flex', flexShrink: 0 }}>
-                    {copied ? <CheckCircle style={{ width: '12px', height: '12px' }} /> : <Copy style={{ width: '12px', height: '12px' }} />}
-                  </button>
-                </div>
-              </div>
-            </div>
+
           </div>
         </div>
       </div>

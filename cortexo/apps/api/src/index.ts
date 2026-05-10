@@ -47,6 +47,7 @@ import { judgeScoreRoutes } from './routes/judge-scores.js';
 import { metricsStreamRoutes } from './routes/metrics-stream.js';
 import { winbullRoutes } from './routes/winbull.js';
 import { winbullDeployRoutes } from './routes/winbull-deploy.js';
+import { filePushRoutes } from './routes/file-push.js';
 
 import { knowledgeRoutes } from './routes/knowledge.js';
 
@@ -219,6 +220,7 @@ async function start() {
     await rateLimitedApp.register(deploymentRoutes, { prefix: '/v1' });
     await rateLimitedApp.register(serverMountRoutes, { prefix: '/v1' });
     await rateLimitedApp.register(winbullDeployRoutes, { prefix: '/v1' });
+    await rateLimitedApp.register(filePushRoutes, { prefix: '/v1' });
   });
   await app.register(deployTargetRoutes, { prefix: '/v1' });
   await app.register(errorRoutes, { prefix: '/v1' });

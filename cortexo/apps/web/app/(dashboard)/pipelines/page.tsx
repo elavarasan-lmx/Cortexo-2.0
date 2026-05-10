@@ -1,14 +1,18 @@
 'use client';
 
+import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Play, CheckCircle, XCircle, Clock, Loader2,
   Plus, Zap, GitBranch, Timer, MoreVertical,
-  Activity, Cpu,
+  Activity, Cpu, Edit3, Trash2, Power, List, Upload,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useApiData, useProjectLookup, parseJsonField, resolveProjectName, timeAgo } from '@/lib/hooks';
+import { useModal } from '@/components/modal-provider';
+import { useToastStore } from '@/lib/toast-store';
 
-/* ─── last-run status config ─── */
+/* --- last-run status config --- */
 const runStatus: Record<string, { color: string; bg: string; label: string; icon: typeof CheckCircle }> = {
   success: { color: '#10B981', bg: 'rgba(16,185,129,0.1)',  label: 'Passed',  icon: CheckCircle },
   failed:  { color: '#EF4444', bg: 'rgba(239,68,68,0.1)',   label: 'Failed',  icon: XCircle },
@@ -16,7 +20,7 @@ const runStatus: Record<string, { color: string; bg: string; label: string; icon
   queued:  { color: '#F59E0B', bg: 'rgba(245,158,11,0.1)',  label: 'Queued',  icon: Clock },
 };
 
-/* ─── stage colors cycling ─── */
+/* --- stage colors cycling --- */
 const stageColors = [
   { color: '#818CF8', bg: 'rgba(129,140,248,0.12)' },
   { color: '#10B981', bg: 'rgba(16,185,129,0.12)'  },
@@ -25,11 +29,163 @@ const stageColors = [
   { color: '#8B5CF6', bg: 'rgba(139,92,246,0.12)'  },
 ];
 
+/* --- Dropdown Menu Component --- */
+function DropdownMenu({ pipeline, onRefetch }: { pipeline: any; onRefetch: () => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const { confirm } = useModal();
+  const [toggling, setToggling] = useState(false);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const handleEdit = () => {
+    setOpen(false);
+    router.push(`/pipelines/editor?id=${pipeline.id}`);
+  };
+
+  const handleViewRuns = () => {
+    setOpen(false);
+    router.push(`/pipelines/runs?pipelineId=${pipeline.id}`);
+  };
+
+  const handleToggleActive = async () => {
+    setOpen(false);
+    setToggling(true);
+    try {
+      const newState = !pipeline.isActive;
+      await api.updatePipeline(pipeline.id, { isActive: newState } as any);
+      useToastStore.getState().success(
+        newState ? 'Pipeline Activated' : 'Pipeline Deactivated',
+        `${pipeline.name} is now ${newState ? 'active' : 'inactive'}`
+      );
+      onRefetch();
+    } catch {
+      useToastStore.getState().error('Failed', 'Could not update pipeline status');
+    }
+    setToggling(false);
+  };
+
+  const handleDelete = async () => {
+    setOpen(false);
+    const ok = await confirm({
+      title: 'Delete Pipeline',
+      message: `Delete "${pipeline.name}"? This cannot be undone.`,
+      variant: 'danger',
+      confirmText: 'Delete',
+    });
+    if (!ok) return;
+    try {
+      await api.deletePipeline(pipeline.id);
+      useToastStore.getState().success('Pipeline Deleted', `${pipeline.name} has been removed`);
+      onRefetch();
+    } catch {
+      useToastStore.getState().error('Failed', 'Could not delete pipeline');
+    }
+  };
+
+  const menuItem: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
+    padding: '8px 14px', border: 'none', cursor: 'pointer',
+    fontSize: '12px', fontWeight: 500, backgroundColor: 'transparent',
+    color: 'rgb(var(--text-secondary))', textAlign: 'left',
+    borderRadius: '6px', transition: 'background-color 100ms',
+  };
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button
+        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+        style={{
+          width: '32px', height: '32px', borderRadius: '8px', border: 'none',
+          cursor: 'pointer', backgroundColor: open ? 'rgb(var(--surface-hover))' : 'transparent',
+          color: 'rgb(var(--text-muted))',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'background-color 150ms',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))'; }}
+        onMouseLeave={e => { if (!open) e.currentTarget.style.backgroundColor = 'transparent'; }}
+      >
+        <MoreVertical style={{ width: '15px', height: '15px' }} />
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute', right: 0, top: '100%', marginTop: '4px',
+          width: '180px', borderRadius: '10px', overflow: 'hidden',
+          backgroundColor: 'rgb(var(--surface))',
+          border: '1px solid rgb(var(--border))',
+          boxShadow: '0 8px 24px -4px rgba(0,0,0,0.2)',
+          zIndex: 50, padding: '4px',
+        }}>
+          <button style={menuItem}
+            onClick={handleEdit}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))'; }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+          >
+            <Edit3 style={{ width: '13px', height: '13px' }} /> Edit Pipeline
+          </button>
+          <button style={menuItem}
+            onClick={handleViewRuns}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))'; }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+          >
+            <List style={{ width: '13px', height: '13px' }} /> View Runs
+          </button>
+          <button style={menuItem}
+            onClick={handleToggleActive}
+            disabled={toggling}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))'; }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+          >
+            <Power style={{ width: '13px', height: '13px' }} />
+            {pipeline.isActive ? 'Deactivate' : 'Activate'}
+          </button>
+          <div style={{ height: '1px', backgroundColor: 'rgb(var(--border))', margin: '4px 0' }} />
+          <button style={{ ...menuItem, color: '#EF4444' }}
+            onClick={handleDelete}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.08)'; }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+          >
+            <Trash2 style={{ width: '13px', height: '13px' }} /> Delete
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function PipelinesPage() {
+  const router = useRouter();
   const { lookup } = useProjectLookup();
   const { data: pipelines, loading, error, refetch } = useApiData(
     () => api.getPipelines(),
   );
+  const [runningIds, setRunningIds] = useState<Set<string>>(new Set());
+
+  const handleRun = async (pipeline: any) => {
+    setRunningIds(prev => new Set(prev).add(pipeline.id));
+    try {
+      await api.triggerPipelineRun(pipeline.id);
+      useToastStore.getState().success('Pipeline Triggered', `${pipeline.name} run has been queued`);
+      refetch();
+    } catch {
+      useToastStore.getState().error('Run Failed', `Could not trigger ${pipeline.name}`);
+    }
+    setRunningIds(prev => {
+      const next = new Set(prev);
+      next.delete(pipeline.id);
+      return next;
+    });
+  };
 
   if (loading) {
     return (
@@ -46,7 +202,7 @@ export default function PipelinesPage() {
 
   return (
     <div>
-      {/* ─── Header ─── */}
+      {/* --- Header --- */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '28px' }}>
         <div>
           <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>Pipelines</h1>
@@ -54,27 +210,41 @@ export default function PipelinesPage() {
             {allPipelines.length} configured · {activePipelines} active
           </p>
         </div>
-        <button style={{
-          display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0,
-          padding: '10px 20px', borderRadius: '12px', border: 'none', cursor: 'pointer',
-          fontSize: '13px', fontWeight: 600, color: '#fff',
-          background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))',
-          boxShadow: '0 4px 12px rgba(var(--primary), 0.3)',
-          transition: 'all 150ms',
-        }}
-          onMouseEnter={e => {
-            e.currentTarget.style.boxShadow = '0 6px 20px rgba(var(--primary), 0.45)';
-            e.currentTarget.style.transform = 'translateY(-1px)';
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button style={{
+            display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0,
+            padding: '10px 20px', borderRadius: '12px', cursor: 'pointer',
+            fontSize: '13px', fontWeight: 600, color: 'rgb(var(--foreground))',
+            background: 'rgba(var(--surface), 0.8)',
+            border: '1px solid rgba(var(--border), 0.2)',
+            transition: 'all 150ms',
           }}
-          onMouseLeave={e => {
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(var(--primary), 0.3)';
-            e.currentTarget.style.transform = 'none';
-          }}>
-          <Plus style={{ width: '16px', height: '16px' }} /> New Pipeline
-        </button>
+            onClick={() => router.push('/pipelines/push')}>
+            <Upload style={{ width: '16px', height: '16px' }} /> File Push
+          </button>
+          <button style={{
+            display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0,
+            padding: '10px 20px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+            fontSize: '13px', fontWeight: 600, color: '#fff',
+            background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))',
+            boxShadow: '0 4px 12px rgba(var(--primary), 0.3)',
+            transition: 'all 150ms',
+          }}
+            onMouseEnter={e => {
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(var(--primary), 0.45)';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(var(--primary), 0.3)';
+              e.currentTarget.style.transform = 'none';
+            }}
+            onClick={() => router.push('/pipelines/editor')}>
+            <Plus style={{ width: '16px', height: '16px' }} /> New Pipeline
+          </button>
+        </div>
       </div>
 
-      {/* ─── Summary bar ─── */}
+      {/* --- Summary bar --- */}
       {allPipelines.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '24px' }}>
           {[
@@ -110,13 +280,14 @@ export default function PipelinesPage() {
         </div>
       )}
 
-      {/* ─── Pipeline cards ─── */}
+      {/* --- Pipeline cards --- */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {allPipelines.map((pipeline: any) => {
           const stages = parseJsonField<any[]>(pipeline.stages, []);
           const projectName = resolveProjectName(pipeline.projectId, lookup);
           const lastStatus = runStatus[pipeline.lastRunStatus] || null;
           const accentColor = pipeline.isActive ? 'rgb(var(--primary))' : '#6B7280';
+          const isTriggering = runningIds.has(pipeline.id);
 
           return (
             <div
@@ -126,7 +297,6 @@ export default function PipelinesPage() {
                 border: '1px solid rgb(var(--border))',
                 borderLeft: `4px solid ${accentColor}`,
                 backgroundColor: 'rgb(var(--surface))',
-                overflow: 'hidden',
                 transition: 'box-shadow 200ms, transform 200ms',
               }}
               onMouseEnter={e => {
@@ -185,34 +355,31 @@ export default function PipelinesPage() {
 
                   {/* Actions */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                    <button style={{
-                      display: 'flex', alignItems: 'center', gap: '6px',
-                      padding: '7px 14px', borderRadius: '8px', border: 'none', cursor: 'pointer',
-                      fontSize: '12px', fontWeight: 600, color: '#fff',
-                      background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))',
-                      boxShadow: '0 2px 6px rgba(var(--primary), 0.25)',
-                      transition: 'all 150ms',
-                    }}
-                      onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 12px rgba(var(--primary), 0.4)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                    <button
+                      onClick={() => handleRun(pipeline)}
+                      disabled={isTriggering}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '6px',
+                        padding: '7px 14px', borderRadius: '8px', border: 'none', cursor: isTriggering ? 'not-allowed' : 'pointer',
+                        fontSize: '12px', fontWeight: 600, color: '#fff',
+                        background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))',
+                        boxShadow: '0 2px 6px rgba(var(--primary), 0.25)',
+                        transition: 'all 150ms',
+                        opacity: isTriggering ? 0.7 : 1,
+                      }}
+                      onMouseEnter={e => { if (!isTriggering) { e.currentTarget.style.boxShadow = '0 4px 12px rgba(var(--primary), 0.4)'; e.currentTarget.style.transform = 'translateY(-1px)'; } }}
                       onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 6px rgba(var(--primary), 0.25)'; e.currentTarget.style.transform = 'none'; }}
                     >
-                      <Play style={{ width: '12px', height: '12px' }} /> Run
+                      {isTriggering
+                        ? <Loader2 style={{ width: '12px', height: '12px', animation: 'spin 1s linear infinite' }} />
+                        : <Play style={{ width: '12px', height: '12px' }} />}
+                      {isTriggering ? 'Starting...' : 'Run'}
                     </button>
-                    <button style={{
-                      width: '32px', height: '32px', borderRadius: '8px', border: 'none',
-                      cursor: 'pointer', backgroundColor: 'transparent',
-                      color: 'rgb(var(--text-muted))',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      transition: 'background-color 150ms',
-                    }}
-                      onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))'; }}
-                      onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}>
-                      <MoreVertical style={{ width: '15px', height: '15px' }} />
-                    </button>
+                    <DropdownMenu pipeline={pipeline} onRefetch={refetch} />
                   </div>
                 </div>
 
-                {/* ─── Stage flow ─── */}
+                {/* --- Stage flow --- */}
                 {stages.length > 0 && (
                   <div style={{ marginTop: '14px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                     {stages.map((stage: any, i: number) => {
@@ -228,7 +395,7 @@ export default function PipelinesPage() {
                             {stage.name}
                           </span>
                           {i < stages.length - 1 && (
-                            <span style={{ fontSize: '14px', color: 'rgb(var(--text-muted))', fontWeight: 300 }}>→</span>
+                            <span style={{ fontSize: '14px', color: 'rgb(var(--text-muted))', fontWeight: 300 }}>{'\u2192'}</span>
                           )}
                         </div>
                       );
@@ -236,7 +403,7 @@ export default function PipelinesPage() {
                   </div>
                 )}
 
-                {/* ─── Meta footer ─── */}
+                {/* --- Meta footer --- */}
                 <div style={{
                   marginTop: '12px', paddingTop: '10px',
                   borderTop: '1px solid rgba(var(--border), 0.6)',
@@ -262,7 +429,7 @@ export default function PipelinesPage() {
         })}
       </div>
 
-      {/* ─── Empty state ─── */}
+      {/* --- Empty state --- */}
       {allPipelines.length === 0 && (
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
@@ -282,13 +449,15 @@ export default function PipelinesPage() {
               Create a pipeline to automate your build, test, and deploy workflow.
             </p>
           </div>
-          <button style={{
-            display: 'flex', alignItems: 'center', gap: '8px',
-            padding: '10px 24px', borderRadius: '12px', border: 'none', cursor: 'pointer',
-            fontSize: '13px', fontWeight: 600, color: '#fff',
-            background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))',
-            boxShadow: '0 4px 12px rgba(var(--primary), 0.3)',
-          }}>
+          <button
+            onClick={() => router.push('/pipelines/editor')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '10px 24px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+              fontSize: '13px', fontWeight: 600, color: '#fff',
+              background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))',
+              boxShadow: '0 4px 12px rgba(var(--primary), 0.3)',
+            }}>
             <Plus style={{ width: '16px', height: '16px' }} /> New Pipeline
           </button>
         </div>

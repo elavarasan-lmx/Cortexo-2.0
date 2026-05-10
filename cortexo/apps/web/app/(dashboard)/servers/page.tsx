@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import {
   Server, Plus, Trash2, Edit3, HardDrive, Cpu, MemoryStick,
-  Loader2, RefreshCw, Wifi, WifiOff, Globe, Shield, FolderSync,
+  Loader2, RefreshCw, Wifi, WifiOff, Globe, Shield, FolderSync, Plug,
 } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
@@ -39,6 +39,25 @@ export default function ServersPage() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
   const [editTarget, setEditTarget] = useState<any | null>(null);
   const [form, setForm] = useState({ name: '', privateIp: '', publicAddress: '', sshKey: '' });
+  const [testingIds, setTestingIds] = useState<Set<number>>(new Set());
+  const [testResults, setTestResults] = useState<Record<number, { success: boolean; latencyMs: number; hostname?: string; uptime?: string; error?: string }>>({});
+
+  const testConnection = async (srv: any) => {
+    setTestingIds(prev => new Set(prev).add(srv.id));
+    try {
+      const res = await api.testServerConnection(srv.id);
+      setTestResults(prev => ({ ...prev, [srv.id]: res.data as any }));
+      if ((res.data as any)?.success) {
+        useToastStore.getState().success('Connected', `${srv.name} — ${(res.data as any).latencyMs}ms`);
+      } else {
+        useToastStore.getState().error('Failed', (res.data as any)?.error || 'Connection failed');
+      }
+    } catch (err: any) {
+      setTestResults(prev => ({ ...prev, [srv.id]: { success: false, latencyMs: 0, error: err.message } }));
+      useToastStore.getState().error('Failed', err.message);
+    }
+    setTestingIds(prev => { const n = new Set(prev); n.delete(srv.id); return n; });
+  };
 
   const collectLiveMetrics = async () => {
     setCollecting(true);
@@ -228,13 +247,27 @@ export default function ServersPage() {
                     <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>{srv.name}</h3>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
                       <span style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', fontFamily: "'JetBrains Mono', monospace" }}>{srv.privateIp}</span>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '1px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 600, backgroundColor: 'rgba(16,185,129,0.1)', color: '#10B981' }}>
-                        <Wifi style={{ width: '8px', height: '8px' }} /> online
-                      </span>
+                      {testResults[srv.id] ? (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '1px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 600,
+                          backgroundColor: testResults[srv.id].success ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                          color: testResults[srv.id].success ? '#10B981' : '#EF4444',
+                        }}>
+                          {testResults[srv.id].success ? <Wifi style={{ width: '8px', height: '8px' }} /> : <WifiOff style={{ width: '8px', height: '8px' }} />}
+                          {testResults[srv.id].success ? `${testResults[srv.id].latencyMs}ms` : 'offline'}
+                        </span>
+                      ) : (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '1px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 500, backgroundColor: 'rgba(var(--border), 0.3)', color: 'rgb(var(--text-muted))' }}>
+                          untested
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '4px' }}>
+                  <button title="Test SSH" onClick={() => testConnection(srv)} disabled={testingIds.has(srv.id)} style={{ padding: '6px', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: testingIds.has(srv.id) ? 'wait' : 'pointer', color: 'rgb(var(--text-muted))' }}
+                    onMouseEnter={e => { e.currentTarget.style.color = 'rgb(var(--primary))'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'rgb(var(--text-muted))'; }}
+                  >{testingIds.has(srv.id) ? <Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} /> : <Plug style={{ width: '14px', height: '14px' }} />}</button>
                   <button title="Edit" onClick={() => openEdit(srv)} style={{ padding: '6px', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: 'rgb(var(--text-muted))' }}><Edit3 style={{ width: '14px', height: '14px' }} /></button>
                   <button title="Delete" onClick={() => setDeleteTarget({ id: srv.id, name: srv.name })} style={{ padding: '6px', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: 'rgb(var(--text-muted))' }}
                     onMouseEnter={e => { e.currentTarget.style.color = '#EF4444'; }}

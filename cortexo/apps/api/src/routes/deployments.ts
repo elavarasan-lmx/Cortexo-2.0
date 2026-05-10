@@ -8,7 +8,7 @@ import { getOrgId, getUser } from '../lib/request-context.js';
 import { deployments, deployTargets, servers, winbullConfigs, projects, deployConfigs } from '@cortexo/db/schema';
 import { eq, desc, sql, and } from 'drizzle-orm';
 import { decrypt } from '../lib/crypto.js';
-import { runDeploySequence, type DeployLog, type DeployResult, type SSHCredentials, type DeployOptions } from '../lib/ssh-executor.js';
+import { runDeploySequence, runProvisionSequence, type DeployLog, type DeployResult, type SSHCredentials, type DeployOptions, type ProvisionOptions } from '../lib/ssh-executor.js';
 import { getRedis } from '../lib/redis.js';
 
 // ── Deploy log store (Redis + in-memory fallback) ────────────────────────
@@ -452,7 +452,7 @@ export async function deploymentRoutes(app: FastifyInstance) {
         where: (p, { eq }) => eq(p.id, parsed.data.projectId),
       });
 
-      const deployOpts: DeployOptions = {
+      const deployOpts: DeployOptions & { _projectId?: string } = {
         remotePath: parsed.data.remotePath,
         repoUrl: project?.repoUrl || undefined,
         branch: parsed.data.branch,
@@ -460,10 +460,12 @@ export async function deploymentRoutes(app: FastifyInstance) {
         postDeployCmd: parsed.data.postDeployCmd,
         healthCheckUrl: parsed.data.healthCheckUrl,
         database: (parsed.data as any).database || undefined,
+        sourceDatabase: (parsed.data as any).sourceDatabase || undefined,
         nginx: (parsed.data as any).nginx || undefined,
         permissions: (parsed.data as any).permissions || undefined,
         pm2: (parsed.data as any).pm2 || undefined,
         sourceTemplate: (parsed.data as any).sourceTemplate || undefined,
+        _projectId: parsed.data.projectId,
       };
 
       // Fire and forget — the deploy runs in the background
@@ -561,7 +563,52 @@ async function executeDeployAsync(
       await setDeployLogs(deploymentId, { logs: [...stepLogs] });
     };
 
-    const result = await runDeploySequence(creds, opts, onProgress);
+    // Determine if this is a first-time provisioning deploy (has sourceTemplate)
+    let result: DeployResult;
+    if (opts.sourceTemplate) {
+      // Build ProvisionOptions from DeployOptions + project data
+      const project = await db.query.projects.findFirst({
+        where: (p: any, { eq }: any) => eq(p.id, (opts as any)._projectId),
+      });
+      const descParts = (project?.description || '').split('|').map((s: string) => s.trim());
+      const clientSlug = descParts[1] || project?.name?.toLowerCase().replace(/\s+/g, '') || opts.remotePath.split('/').filter(Boolean).pop() || 'client';
+      const clientName = project?.name || clientSlug;
+
+      const provisionOpts: ProvisionOptions = {
+        clientSlug,
+        clientName,
+        productType: (descParts[0]?.toLowerCase() || 'lite') as 'lite' | 'trade',
+        remotePath: opts.remotePath,
+        sourceTemplate: opts.sourceTemplate,  // Git-based clone (preferred)
+        baseSourcePath: '/var/www/html/winbullSource',  // local fallback
+        domain: opts.nginx?.domain || '',
+        webTitle: (opts as any).webTitle,
+        webCopyright: (opts as any).webCopyright,
+        adminUser: (opts as any).adminUser,
+        adminPassword: (opts as any).adminPassword,
+        db: {
+          host: opts.database?.host || '',
+          port: opts.database?.port,
+          user: opts.database?.user || '',
+          password: opts.database?.password || '',
+          targetName: opts.database?.name || clientSlug,
+        },
+        sourceDb: opts.sourceDatabase ? {
+          host: opts.sourceDatabase.host,
+          port: opts.sourceDatabase.port,
+          user: opts.sourceDatabase.user,
+          password: opts.sourceDatabase.password,
+          name: opts.sourceDatabase.name,
+        } : undefined,
+        wsPort: opts.nginx?.wsPort || '',
+        socketIoPort: opts.nginx?.socketPort || '',
+        nginx: { phpVer: opts.nginx?.phpVer, autoGenerate: opts.nginx?.autoGenerate },
+      };
+
+      result = await runProvisionSequence(creds, provisionOpts, onProgress);
+    } else {
+      result = await runDeploySequence(creds, opts, onProgress);
+    }
 
     // Store logs in Redis (survives restarts)
     await setDeployLogs(deploymentId, {

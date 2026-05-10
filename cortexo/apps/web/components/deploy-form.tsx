@@ -41,7 +41,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
   const [newClientGit,setNewClientGit] = useState({name:'',repoUrl:'',branch:'main',templatePath:'',notes:''});
   const [savingClientGit,setSavingClientGit] = useState(false);
   const [selectedClientGit,setSelectedClientGit] = useState('');
-  const [sourceDbInfo,setSourceDbInfo] = useState<{name:string;host:string;port:string;databaseName:string;username:string}|null>(null);
+  const [sourceDbInfo,setSourceDbInfo] = useState<{name:string;host:string;port:string;databaseName:string;username:string;password?:string}|null>(null);
   const [sourceTemplateInfo,setSourceTemplateInfo] = useState<{name:string;repoUrl:string;branch:string}|null>(null);
   const [clientGitInfo,setClientGitInfo] = useState<{name:string;repoUrl:string;branch:string;templatePath:string}|null>(null);
 
@@ -202,7 +202,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
     api.getSourceProfiles().then((r:any)=>{ const d=(r?.data||r) as any[]; setSourceProfiles(d); sourceProfilesRef.current=d; if(d.length>0){ setSourceTemplateInfo({name:d[0].name,repoUrl:d[0].repoUrl||'',branch:d[0].branch||'main'}); } }).catch(()=>{});
     api.getDbProfiles().then((r:any)=>setDbProfiles((r?.data||r) as any[])).catch(()=>{});
     // Auto-resolve Source DB info from first available profile (same for all clients)
-    api.getDbProfiles().then((r2:any)=>{ const d2=(r2?.data||r2) as any[]; if(d2.length>0){ setSourceDbInfo({name:d2[0].name,host:d2[0].host,port:String(d2[0].port||3306),databaseName:d2[0].databaseName||'',username:d2[0].username||''}); } }).catch(()=>{});
+    api.getDbProfiles().then((r2:any)=>{ const d2=(r2?.data||r2) as any[]; if(d2.length>0){ setSourceDbInfo({name:d2[0].name,host:d2[0].host,port:String(d2[0].port||3306),databaseName:d2[0].databaseName||'',username:d2[0].username||'',password:d2[0].password||undefined}); } }).catch(()=>{});
     api.getClientGitProfiles().then((r:any)=>{
       const d=(r?.data||r) as any[];
       setClientGitProfiles(d);
@@ -426,7 +426,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
       // Source DB — auto-resolve from first db profile (same for all clients)
       if(!sourceDbInfo && dbProfiles.length > 0) {
         const src = dbProfiles[0];
-        setSourceDbInfo({name:src.name,host:src.host,port:String(src.port||3306),databaseName:src.databaseName||'',username:src.username||''});
+        setSourceDbInfo({name:src.name,host:src.host,port:String(src.port||3306),databaseName:src.databaseName||'',username:src.username||'',password:(src as any).password||undefined});
       }
 
 
@@ -448,7 +448,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
         crons: [],
         permissions: { user:permUser, group:permGroup, fileMode:permFile, dirMode:permDir, writablePaths:permWritable, recursive:permRecursive, folders },
         database: { host:dbHost, port:dbPort, name:dbName, user:dbUser, password:dbPass, migrate:dbMigrate, migrateCmd:dbMigrateCmd, importSql:dbImportSql, sqlPath:dbSqlPath },
-        sourceDatabase: sourceDbInfo ? { host:sourceDbInfo.host, port:sourceDbInfo.port, name:sourceDbInfo.databaseName, user:sourceDbInfo.username } : undefined,
+        sourceDatabase: sourceDbInfo ? { host:sourceDbInfo.host, port:sourceDbInfo.port, name:sourceDbInfo.databaseName, user:sourceDbInfo.username, password:sourceDbInfo.password } : undefined,
         pm2: { name:pm2Name, script:pm2Script, interpreter:pm2Interpreter, instances:pm2Instances, autoRestart:pm2Restart, args:pm2Args },
         sourceTemplate: sourceTemplateInfo ? { repoUrl:sourceTemplateInfo.repoUrl, branch:sourceTemplateInfo.branch } : undefined,
       });

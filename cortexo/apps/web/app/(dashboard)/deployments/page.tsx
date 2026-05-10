@@ -3,7 +3,7 @@
 import {
   Rocket, CheckCircle, XCircle, Clock, Loader2, RotateCcw,
   GitBranch, MoreVertical, Timer, Activity, Trash2, Edit3, Save,
-  ChevronUp, Terminal as TerminalIcon, Search, Layers, Zap, GitCompareArrows,
+  ChevronUp, Terminal as TerminalIcon, Search,
   Calendar,
 } from 'lucide-react';
 import DeployForm, { type DeployFormInitialData } from '@/components/deploy-form';
@@ -12,8 +12,7 @@ import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { useApiData, useAutoLoadToken, useProjectLookup, resolveProjectName, timeAgo, formatDuration } from '@/lib/hooks';
 import { useToastStore } from '@/lib/toast-store';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+
 
 /* ─── Status config ─── */
 const statusMap: Record<string, { icon: typeof CheckCircle; color: string; label: string; bg: string }> = {
@@ -79,7 +78,7 @@ function DeployLogViewer({ deployId }: { deployId: string }) {
 export default function DeploymentsPage() {
   useAutoLoadToken();
   const toast = useToastStore();
-  const pathname = usePathname();
+
   const [filter, setFilter] = useState<string>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showDeploy, setShowDeploy] = useState(false);
@@ -93,13 +92,7 @@ export default function DeploymentsPage() {
   const [dateRange, setDateRange] = useState(7);
   const [showDateDropdown, setShowDateDropdown] = useState(false);
 
-  /* ─── Sub-page tabs ─── */
-  const tabs = [
-    { label: 'Deployments', href: '/deployments', icon: Rocket },
-    { label: 'Canary', href: '/deployments/canary', icon: Zap },
-    { label: 'Batch Deploy', href: '/deployments/batch', icon: Layers },
-    { label: 'Compare', href: '/deployments/compare', icon: GitCompareArrows },
-  ];
+
 
   // Click outside to close context menu
   useEffect(() => {
@@ -274,24 +267,6 @@ export default function DeploymentsPage() {
       </div>
 
       {/* ─── Sub-page Tabs ─── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '20px', padding: '4px', borderRadius: '12px', backgroundColor: 'rgba(var(--text-muted), 0.06)', width: 'fit-content' }}>
-        {tabs.map(tab => {
-          const isActive = pathname === tab.href;
-          const Icon = tab.icon;
-          return (
-            <Link key={tab.href} href={tab.href} style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
-              padding: '8px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: isActive ? 600 : 500,
-              color: isActive ? '#fff' : 'rgb(var(--text-muted))',
-              backgroundColor: isActive ? 'rgb(var(--primary))' : 'transparent',
-              textDecoration: 'none', transition: 'all 150ms', fontFamily: 'Inter, sans-serif',
-            }}>
-              <Icon style={{ width: '14px', height: '14px' }} />
-              {tab.label}
-            </Link>
-          );
-        })}
-      </div>
 
       {/* ─── Stat Cards (PWDUz) ─── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>

@@ -641,59 +641,71 @@ export async function serverMountRoutes(app: FastifyInstance) {
         .set({ readOnly } as any)
         .where(eq(serverMounts.id, parseInt(id)));
 
-      // If currently mounted, remount with new permission
+      // If currently mounted, try to remount with new permission
+      let remounted = false;
       if (isMounted(row.localMountPath)) {
         const localPath = expandHome(row.localMountPath);
 
-        // Unmount first
-        try {
-          spawnSync('fusermount', ['-u', localPath], { timeout: 10000, encoding: 'utf-8' });
-        } catch {
-          try { spawnSync('fusermount', ['-uz', localPath], { timeout: 10000, encoding: 'utf-8' }); } catch {}
+        // Try unmount (fusermount3 first, then fusermount)
+        let unmounted = false;
+        for (const cmd of ['fusermount3', 'fusermount']) {
+          try {
+            const r = spawnSync(cmd, ['-u', localPath], { timeout: 10000, encoding: 'utf-8' });
+            if (r.status === 0) { unmounted = true; break; }
+          } catch { /* try next */ }
+          // Try lazy unmount
+          try {
+            const r = spawnSync(cmd, ['-uz', localPath], { timeout: 10000, encoding: 'utf-8' });
+            if (r.status === 0) { unmounted = true; break; }
+          } catch { /* try next */ }
         }
 
-        // Get server info for remount
-        const server = await db.query.servers.findFirst({
-          where: (s, { eq }) => eq(s.id, row.serverId),
-        });
-        if (server) {
-          const privateIp = server.privateIp || '';
-          const publicAddr = server.publicAddress || '';
-          let sshUser = row.sshUser;
-          let sshHost = privateIp || publicAddr;
-          if (!privateIp && publicAddr && publicAddr.includes('@')) {
-            const parts = publicAddr.split('@');
-            sshUser = parts[0] || sshUser;
-            sshHost = parts[1];
-          }
-
-          const sshKeyOpts = server.sshKey && server.sshKey.length > 0 && !server.sshKey.startsWith('ssh-')
-            ? `,IdentityFile=${expandHome(server.sshKey)}`
-            : '';
-          const roFlag = readOnly ? ',ro' : '';
-
-          const sshfsArgs = [
-            `${sshUser}@${sshHost}:${row.remotePath}`,
-            localPath,
-            '-o', `reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,ConnectTimeout=20,cache=yes,kernel_cache,auto_cache,compression=no,StrictHostKeyChecking=no${sshKeyOpts}${roFlag}`,
-          ];
-
-          app.log.info(`SSHFS remount (readOnly=${readOnly}): sshfs ${sshfsArgs.join(' ')}`);
-
-          const result = spawnSync('sshfs', sshfsArgs, {
-            timeout: 60000, encoding: 'utf-8',
-            env: { ...process.env, HOME: homedir() },
+        if (!unmounted) {
+          // Can't unmount (permission denied etc.) — just update DB, skip remount
+          app.log.warn(`Cannot unmount ${localPath} for readonly toggle — will apply on next mount cycle`);
+        } else {
+          // Remount with new permission
+          const server = await db.query.servers.findFirst({
+            where: (s, { eq }) => eq(s.id, row.serverId),
           });
+          if (server) {
+            const privateIp = server.privateIp || '';
+            const publicAddr = server.publicAddress || '';
+            let sshUser = row.sshUser;
+            let sshHost = privateIp || publicAddr;
+            if (!privateIp && publicAddr && publicAddr.includes('@')) {
+              const parts = publicAddr.split('@');
+              sshUser = parts[0] || sshUser;
+              sshHost = parts[1];
+            }
 
-          if (result.status !== 0) {
-            const errMsg = (result.stderr || '').trim() || `sshfs exited with code ${result.status}`;
-            app.log.error(`SSHFS remount failed: ${errMsg}`);
-            return reply.code(500).send({ error: 'Remount failed', details: errMsg });
+            const sshKeyOpts = server.sshKey && server.sshKey.length > 0 && !server.sshKey.startsWith('ssh-')
+              ? `,IdentityFile=${expandHome(server.sshKey)}`
+              : '';
+            const roFlag = readOnly ? ',ro' : '';
+
+            const sshfsArgs = [
+              `${sshUser}@${sshHost}:${row.remotePath}`,
+              localPath,
+              '-o', `reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,ConnectTimeout=20,cache=yes,kernel_cache,auto_cache,compression=no,StrictHostKeyChecking=no${sshKeyOpts}${roFlag}`,
+            ];
+
+            app.log.info(`SSHFS remount (readOnly=${readOnly}): sshfs ${sshfsArgs.join(' ')}`);
+
+            const result = spawnSync('sshfs', sshfsArgs, {
+              timeout: 60000, encoding: 'utf-8',
+              env: { ...process.env, HOME: homedir() },
+            });
+
+            if (result.status === 0) {
+              remounted = true;
+              await db.update(serverMounts)
+                .set({ status: 'mounted', lastMountedAt: new Date() } as any)
+                .where(eq(serverMounts.id, parseInt(id)));
+            } else {
+              app.log.warn(`SSHFS remount failed: ${(result.stderr || '').trim()}`);
+            }
           }
-
-          await db.update(serverMounts)
-            .set({ status: 'mounted', lastMountedAt: new Date() } as any)
-            .where(eq(serverMounts.id, parseInt(id)));
         }
       }
 
@@ -709,7 +721,7 @@ export async function serverMountRoutes(app: FastifyInstance) {
         ipAddress: (request.ip || request.headers['x-forwarded-for'] || '') as string,
       });
 
-      return { data: { readOnly, remounted: isMounted(row.localMountPath) } };
+      return { data: { readOnly, remounted } };
     } catch (err: any) {
       app.log.error(err);
       return reply.code(500).send({ error: 'Toggle failed', details: err.message });

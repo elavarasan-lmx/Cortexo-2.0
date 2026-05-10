@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   FolderGit2,
   Plus, Search,
   Loader2, Github, Globe, X, Edit3, Trash2, Eye, EyeOff, GitBranch as GitBranchIcon,
+  Filter, ChevronDown,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { Project } from '@/lib/api';
@@ -21,6 +22,12 @@ function parseSettings(p: Project) {
   } catch { return {} as Record<string, unknown>; }
 }
 
+type Filters = {
+  productType: string | null;
+  serverId: string | null;
+  repoProvider: string | null;
+};
+
 export default function ProjectsPage() {
   useAutoLoadToken();
   const router = useRouter();
@@ -30,7 +37,51 @@ export default function ProjectsPage() {
   const [deleteProject, setDeleteProject] = useState<Project | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [visiblePassId, setVisiblePassId] = useState<string | null>(null);
+  const [showFilter, setShowFilter] = useState(false);
+  const [filters, setFilters] = useState<Filters>({ productType: null, serverId: null, repoProvider: null });
+  const filterRef = useRef<HTMLDivElement>(null);
 
+  // Close filter dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) setShowFilter(false);
+    }
+    if (showFilter) document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showFilter]);
+
+  const activeFilterCount = Object.values(filters).filter(Boolean).length;
+
+  const allProjects = (projects as Project[]) || [];
+
+  // Derive unique filter options from data (must be before any early return)
+  const filterOptions = useMemo(() => {
+    const servers = new Set<string>();
+    const repos = new Set<string>();
+    allProjects.forEach(p => {
+      const s = parseSettings(p);
+      const deploy = (s.deploy || {}) as Record<string, string>;
+      if (deploy.serverId) servers.add(deploy.serverId);
+      if (p.repoProvider) repos.add(p.repoProvider);
+    });
+    return { servers: Array.from(servers).sort(), repos: Array.from(repos).sort() };
+  }, [allProjects]);
+
+  const filtered = allProjects.filter(p => {
+    const s = parseSettings(p);
+    if (search) {
+      const q = search.toLowerCase();
+      const matchesSearch = p.name.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q) || String(s.domain || '').toLowerCase().includes(q) || String(s.clientSlug || '').toLowerCase().includes(q);
+      if (!matchesSearch) return false;
+    }
+    if (filters.productType && String(s.productType) !== filters.productType) return false;
+    if (filters.serverId) {
+      const deploy = (s.deploy || {}) as Record<string, string>;
+      if (deploy.serverId !== filters.serverId) return false;
+    }
+    if (filters.repoProvider && (p.repoProvider || 'github') !== filters.repoProvider) return false;
+    return true;
+  });
 
   const handleDelete = async (p: Project) => {
     setDeleting(true);
@@ -44,12 +95,22 @@ export default function ProjectsPage() {
     </div>
   );
 
-  const allProjects = (projects as Project[]) || [];
-  const filtered = allProjects.filter(p => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    const s = parseSettings(p);
-    return p.name.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q) || String(s.domain || '').toLowerCase().includes(q) || String(s.clientSlug || '').toLowerCase().includes(q);
+  const clearFilters = () => setFilters({ productType: null, serverId: null, repoProvider: null });
+
+  const toggleFilter = (key: keyof Filters, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: prev[key] === value ? null : value }));
+  };
+
+  const chipStyle = (active: boolean, color: string) => ({
+    padding: '5px 12px',
+    borderRadius: '20px',
+    fontSize: '11px',
+    fontWeight: 600 as const,
+    cursor: 'pointer' as const,
+    border: active ? `1.5px solid ${color}` : '1px solid rgb(var(--border))',
+    backgroundColor: active ? `${color}18` : 'transparent',
+    color: active ? color : 'rgb(var(--text-muted))',
+    transition: 'all 150ms ease',
   });
 
   return (
@@ -63,12 +124,127 @@ export default function ProjectsPage() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', color: 'rgb(var(--text-muted))', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>⚡ Filter</button>
+          <div ref={filterRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => setShowFilter(!showFilter)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px',
+                border: activeFilterCount > 0 ? '1.5px solid rgb(var(--primary))' : '1px solid rgb(var(--border))',
+                backgroundColor: activeFilterCount > 0 ? 'rgba(var(--primary), 0.08)' : 'transparent',
+                color: activeFilterCount > 0 ? 'rgb(var(--primary))' : 'rgb(var(--text-muted))',
+                fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: 'all 150ms',
+              }}
+            >
+              <Filter style={{ width: '13px', height: '13px' }} />
+              Filter
+              {activeFilterCount > 0 && (
+                <span style={{
+                  width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'rgb(var(--primary))',
+                  color: '#fff', fontSize: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {activeFilterCount}
+                </span>
+              )}
+              <ChevronDown style={{ width: '12px', height: '12px', transition: 'transform 200ms', transform: showFilter ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+            </button>
+
+            {/* Filter Dropdown */}
+            {showFilter && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: '320px', zIndex: 100,
+                borderRadius: '14px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))',
+                boxShadow: '0 16px 48px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.2)',
+                overflow: 'hidden', animation: 'fadeInDown 150ms ease',
+              }}>
+                {/* Dropdown Header */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid rgb(var(--border))' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>Filters</span>
+                  {activeFilterCount > 0 && (
+                    <button onClick={clearFilters} style={{ fontSize: '11px', fontWeight: 600, color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px', borderRadius: '4px' }}>
+                      Clear all
+                    </button>
+                  )}
+                </div>
+
+                {/* Product Type */}
+                <div style={{ padding: '14px 16px', borderBottom: '1px solid rgb(var(--border))' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgb(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>Product Type</div>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    <button onClick={() => toggleFilter('productType', 'trade')} style={chipStyle(filters.productType === 'trade', '#F59E0B')}>
+                      Trade
+                    </button>
+                    <button onClick={() => toggleFilter('productType', 'lite')} style={chipStyle(filters.productType === 'lite', '#10B981')}>
+                      Lite
+                    </button>
+                  </div>
+                </div>
+
+                {/* Server */}
+                {filterOptions.servers.length > 0 && (
+                  <div style={{ padding: '14px 16px', borderBottom: '1px solid rgb(var(--border))' }}>
+                    <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgb(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>Server</div>
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      {filterOptions.servers.map(sid => (
+                        <button key={sid} onClick={() => toggleFilter('serverId', sid)} style={chipStyle(filters.serverId === sid, '#8B5CF6')}>
+                          Server {sid}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Repo Provider */}
+                {filterOptions.repos.length > 0 && (
+                  <div style={{ padding: '14px 16px' }}>
+                    <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgb(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>Repository</div>
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      {filterOptions.repos.map(rp => (
+                        <button key={rp} onClick={() => toggleFilter('repoProvider', rp)} style={chipStyle(filters.repoProvider === rp, '#3B82F6')}>
+                          {rp === 'github' ? 'GitHub' : rp}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Footer with result count */}
+                <div style={{ padding: '10px 16px', borderTop: '1px solid rgb(var(--border))', backgroundColor: 'rgba(var(--primary), 0.03)' }}>
+                  <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>{filtered.length} of {allProjects.length} projects</span>
+                </div>
+              </div>
+            )}
+          </div>
           <Link href="/projects/new" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, padding: '10px 20px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#fff', background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))', boxShadow: '0 4px 12px rgba(var(--primary), 0.3)', textDecoration: 'none' }}>
             <Plus style={{ width: '16px', height: '16px' }} /> Add Project
           </Link>
         </div>
       </div>
+
+      {/* Active Filter Tags */}
+      {activeFilterCount > 0 && (
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', fontWeight: 600 }}>Active:</span>
+          {filters.productType && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, backgroundColor: filters.productType === 'trade' ? 'rgba(245,158,11,0.12)' : 'rgba(16,185,129,0.12)', color: filters.productType === 'trade' ? '#F59E0B' : '#10B981' }}>
+              {filters.productType === 'trade' ? 'Trade' : 'Lite'}
+              <button onClick={() => setFilters(f => ({ ...f, productType: null }))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: 'inherit', opacity: 0.7 }}><X style={{ width: '10px', height: '10px' }} /></button>
+            </span>
+          )}
+          {filters.serverId && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, backgroundColor: 'rgba(139,92,246,0.12)', color: '#8B5CF6' }}>
+              Server {filters.serverId}
+              <button onClick={() => setFilters(f => ({ ...f, serverId: null }))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: 'inherit', opacity: 0.7 }}><X style={{ width: '10px', height: '10px' }} /></button>
+            </span>
+          )}
+          {filters.repoProvider && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, backgroundColor: 'rgba(59,130,246,0.12)', color: '#3B82F6' }}>
+              {filters.repoProvider === 'github' ? 'GitHub' : filters.repoProvider}
+              <button onClick={() => setFilters(f => ({ ...f, repoProvider: null }))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: 'inherit', opacity: 0.7 }}><X style={{ width: '10px', height: '10px' }} /></button>
+            </span>
+          )}
+          <button onClick={clearFilters} style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: '2px 4px' }}>Clear all</button>
+        </div>
+      )}
 
       {/* Stat Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '20px' }}>

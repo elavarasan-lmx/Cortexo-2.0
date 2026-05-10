@@ -280,6 +280,8 @@ class ApiClient {
   getPipelines()                                     { return this.request<Pipeline[]>('GET', '/pipelines'); }
   getPipeline(id: string)                            { return this.request<Pipeline>('GET', `/pipelines/${id}`); }
   createPipeline(data: Partial<Pipeline>)            { return this.request<Pipeline>('POST', '/pipelines', data); }
+  updatePipeline(id: string, data: Partial<Pipeline>){ return this.request<Pipeline>('PUT', `/pipelines/${id}`, data); }
+  deletePipeline(id: string)                         { return this.request<{ success: boolean }>('DELETE', `/pipelines/${id}`); }
   triggerPipelineRun(id: string, data?: Record<string, unknown>) { return this.request<PipelineRun>('POST', `/pipelines/${id}/run`, data || {}); }
 
   // ─── Pipeline Runs ────────────────────────────────────────────────────────
@@ -326,13 +328,8 @@ class ApiClient {
     return this.request<Deployment>('PUT', `/deployments/${id}`, data);
   }
 
-  // ─── Canary Deployments ────────────────────────────────────────────────────
-  createCanary(data: { deploymentId: string; projectId: string; branch: string; environment: string; autoPromote: boolean; autoRollbackThreshold: number }) {
-    return this.request<Record<string, unknown>>('POST', '/deployments/canary', data);
-  }
-  getCanaries()                                      { return this.request<Record<string, unknown>[]>('GET', '/deployments/canary'); }
-  promoteCanary(id: string)                          { return this.request<Record<string, unknown>>('POST', `/deployments/canary/${id}/promote`); }
-  rollbackCanary(id: string)                         { return this.request<Record<string, unknown>>('POST', `/deployments/canary/${id}/rollback`); }
+
+
 
   // ─── Deploy Targets ───────────────────────────────────────────────────────
   getDeployTargets()                                 { return this.request<DeployTarget[]>('GET', '/deploy-targets'); }
@@ -384,6 +381,7 @@ class ApiClient {
   createServer(data: Partial<Server>)                { return this.request<Server>('POST', '/servers', data); }
   updateServer(id: number, data: Partial<Server>)    { return this.request<Server>('PUT', `/servers/${id}`, data); }
   deleteServer(id: number)                           { return this.request<{ success: boolean }>('DELETE', `/servers/${id}`); }
+  testServerConnection(id: number)                   { return this.request<{ success: boolean; latencyMs: number; hostname?: string; uptime?: string; error?: string }>('POST', `/servers/${id}/test-connection`); }
   getServerResourcesLatest()                         { return this.request<Record<string, unknown>[]>('GET', '/servers/resources/latest'); }
   getServerResourceHistory(ip: string)               { return this.request<Record<string, unknown>[]>('GET', `/servers/resources/${ip}/history`); }
   getServerProjectCounts()                           { return this.request<Record<string, number>>('GET', '/servers/project-counts'); }
@@ -623,6 +621,12 @@ class ApiClient {
     return this.request<Record<string, unknown>[]>('GET', `/testing/history${qs}`);
   }
   runTest(data: Record<string, unknown>)              { return this.request<Record<string, unknown>>('POST', '/testing/run', data); }
+
+  // ── File Push (Patch Deploy) ───────────────────────────────
+  getDeployConfigs()                                   { return this.request<Record<string, unknown>[]>('GET', '/deploy-configs'); }
+  listSourceFiles(serverId: number, path: string, pattern?: string) {
+    return this.request<string[]>('POST', '/file-push/list-files', { serverId, path, pattern });
+  }
 }
 
 class ApiError extends Error {

@@ -245,4 +245,112 @@ export async function serverRoutes(app: FastifyInstance) {
       });
     }
   });
+
+  // ── SSH Connection Test ──────────────────────────────────────
+  app.post('/servers/:id/test-connection', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    try {
+      const db = await getDb();
+      const srv = await db.query.servers.findFirst({
+        where: (s, { eq }) => eq(s.id, parseInt(id)),
+      });
+      if (!srv) return reply.code(404).send({ error: 'Server not found' });
+      if (!srv.privateIp) return reply.code(400).send({ error: 'No IP configured for this server' });
+
+      const { Client } = await import('ssh2');
+      const { readFileSync } = await import('fs');
+      const { homedir } = await import('os');
+
+      // Resolve SSH key — server-specific or default
+      const resolveKey = (keyPath?: string | null): Buffer | undefined => {
+        const p = (keyPath || '~/.ssh/prod-ec2-key.pem').replace('~', homedir());
+        try { return readFileSync(p); } catch { return undefined; }
+      };
+
+      const privateKey = resolveKey(srv.sshKey);
+      if (!privateKey) {
+        return reply.code(400).send({ error: 'SSH key not found: ' + (srv.sshKey || '~/.ssh/prod-ec2-key.pem') });
+      }
+
+      // Jump host config (bastion/gateway)
+      const JUMP_HOST = process.env.SSH_JUMP_HOST || '13.201.238.28';
+      const JUMP_USER = process.env.SSH_JUMP_USER || 'ubuntu';
+
+      const startMs = Date.now();
+
+      const result = await new Promise<{ success: boolean; latencyMs: number; hostname?: string; uptime?: string; error?: string }>((resolve) => {
+        const jumpConn = new Client();
+        const timeout = setTimeout(() => {
+          jumpConn.end();
+          resolve({ success: false, latencyMs: Date.now() - startMs, error: 'Connection timed out (15s)' });
+        }, 15000);
+
+        jumpConn.on('ready', () => {
+          // Tunnel through jump host to target server
+          jumpConn.forwardOut('127.0.0.1', 0, srv.privateIp!, 22, (err, stream) => {
+            if (err) {
+              clearTimeout(timeout);
+              jumpConn.end();
+              resolve({ success: false, latencyMs: Date.now() - startMs, error: 'Tunnel failed: ' + err.message });
+              return;
+            }
+
+            const targetConn = new Client();
+            targetConn.on('ready', () => {
+              const latencyMs = Date.now() - startMs;
+              targetConn.exec('hostname && uptime -p 2>/dev/null || uptime', (execErr, execStream) => {
+                if (execErr) {
+                  clearTimeout(timeout);
+                  targetConn.end();
+                  jumpConn.end();
+                  resolve({ success: true, latencyMs, error: 'Connected but command failed' });
+                  return;
+                }
+                let output = '';
+                execStream.on('data', (d: Buffer) => { output += d.toString(); });
+                execStream.on('close', () => {
+                  clearTimeout(timeout);
+                  targetConn.end();
+                  jumpConn.end();
+                  const lines = output.trim().split('\n');
+                  resolve({ success: true, latencyMs, hostname: lines[0], uptime: lines[1] || '' });
+                });
+              });
+            });
+
+            targetConn.on('error', (targetErr) => {
+              clearTimeout(timeout);
+              jumpConn.end();
+              resolve({ success: false, latencyMs: Date.now() - startMs, error: 'Target SSH failed: ' + targetErr.message });
+            });
+
+            targetConn.connect({
+              sock: stream,
+              username: 'ubuntu',
+              privateKey,
+              readyTimeout: 10000,
+            });
+          });
+        });
+
+        jumpConn.on('error', (err) => {
+          clearTimeout(timeout);
+          resolve({ success: false, latencyMs: Date.now() - startMs, error: 'Jump host failed: ' + err.message });
+        });
+
+        jumpConn.connect({
+          host: JUMP_HOST,
+          port: 22,
+          username: JUMP_USER,
+          privateKey,
+          readyTimeout: 10000,
+        });
+      });
+
+      return { data: result };
+    } catch (err: any) {
+      app.log.error(err);
+      return reply.code(500).send({ error: err.message || 'Test failed' });
+    }
+  });
 }
