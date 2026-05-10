@@ -12,4 +12,4 @@
 export { default as DeployTerminal } from './deploy-terminal';
 export { default as StepReview } from './step-review';
 export { Toggle, STEPS, octalToRwx, inp, lbl, ta, g2, g3 } from './shared';
-export type { DeployFormInitialData, CronEntry, FolderEntry } from './shared';
+export type { DeployFormInitialData, FolderEntry } from './shared';

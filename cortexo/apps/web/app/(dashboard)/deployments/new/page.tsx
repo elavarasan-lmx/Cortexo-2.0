@@ -53,7 +53,7 @@ export default function DeployNewPage() {
     setDeploying(true);
     try {
       await api.triggerDeploy({
-        projectId: Number(selectedProject) || undefined,
+        projectId: selectedProject,
         serverId: Number(selectedServer) || undefined,
         branch,
         environment: env,

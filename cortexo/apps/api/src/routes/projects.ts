@@ -163,6 +163,7 @@ export async function projectRoutes(app: FastifyInstance) {
         resource: 'project',
         resourceId: id,
         userId: user?.id || 'system',
+        userName: user?.name || 'System',
         description: `Created project "${parsed.data.name}"`,
         metadata: { name: parsed.data.name },
       });
@@ -200,6 +201,7 @@ export async function projectRoutes(app: FastifyInstance) {
         resource: 'project',
         resourceId: id,
         userId: (request as any).user?.id || 'system',
+        userName: (request as any).user?.name || 'System',
         description: `Updated project "${existing.name}"`,
       });
 
@@ -234,6 +236,7 @@ export async function projectRoutes(app: FastifyInstance) {
         resource: 'project',
         resourceId: id,
         userId: (request as any).user?.id || 'system',
+        userName: (request as any).user?.name || 'System',
         description: `Deleted project #${id.slice(0, 8)}`,
       });
 

@@ -9,73 +9,7 @@ import {
   jsonb,
   index,
 } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
 import { organizations } from './organizations';
-
-// ─── Cron Jobs ──────────────────────────────────────────────────────────────
-
-export const cronJobs = pgTable(
-  'cron_jobs',
-  {
-    id: uuid('id')
-      .primaryKey()
-      .defaultRandom(),
-    orgId: uuid('org_id')
-      .references(() => organizations.id)
-      .notNull(),
-    name: varchar('name', { length: 100 }).notNull(),
-    schedule: varchar('schedule', { length: 50 }).notNull(),
-    command: text('command').notNull(),
-    targetServer: varchar('target_server', { length: 100 }),
-    timezone: varchar('timezone', { length: 50 }).default('UTC'),
-    isActive: boolean('is_active').default(true),
-    lastRunAt: timestamp('last_run_at'),
-    nextRunAt: timestamp('next_run_at'),
-    createdBy: uuid('created_by'),
-    createdAt: timestamp('created_at')
-      .defaultNow()
-      .notNull(),
-    updatedAt: timestamp('updated_at')
-      .defaultNow()
-      .notNull(),
-  },
-  (table) => [
-    index('idx_cronjobs_org').on(table.orgId),
-    index('idx_cronjobs_active').on(table.orgId, table.isActive),
-  ],
-);
-
-export type CronJob = typeof cronJobs.$inferSelect;
-export type NewCronJob = typeof cronJobs.$inferInsert;
-
-export const cronExecutions = pgTable(
-  'cron_executions',
-  {
-    id: uuid('id')
-      .primaryKey()
-      .defaultRandom(),
-    cronJobId: uuid('cron_job_id')
-      .references(() => cronJobs.id, { onDelete: 'cascade' })
-      .notNull(),
-    status: varchar('status', { length: 20 }).default('running'),
-    output: text('output'),
-    errorMessage: text('error_message'),
-    exitCode: integer('exit_code'),
-    durationMs: integer('duration_ms'),
-    triggeredBy: varchar('triggered_by', { length: 20 }).default('schedule'),
-    startedAt: timestamp('started_at')
-      .defaultNow()
-      .notNull(),
-    completedAt: timestamp('completed_at'),
-  },
-  (table) => [
-    index('idx_cronexec_job').on(table.cronJobId),
-    index('idx_cronexec_status').on(table.status),
-  ],
-);
-
-export type CronExecution = typeof cronExecutions.$inferSelect;
-export type NewCronExecution = typeof cronExecutions.$inferInsert;
 
 // ─── Alert Channels & Rules ────────────────────────────────────────────────
 
@@ -169,43 +103,6 @@ export const alertHistory = pgTable(
 export type AlertHistoryRow = typeof alertHistory.$inferSelect;
 export type NewAlertHistory = typeof alertHistory.$inferInsert;
 
-// ─── Deprecation Scanner ────────────────────────────────────────────────────
-
-export const deprecationResults = pgTable(
-  'deprecation_results',
-  {
-    id: uuid('id')
-      .primaryKey()
-      .defaultRandom(),
-    orgId: uuid('org_id')
-      .references(() => organizations.id)
-      .notNull(),
-    projectId: uuid('project_id'),
-    projectName: varchar('project_name', { length: 100 }),
-    packageName: varchar('package_name', { length: 200 }).notNull(),
-    currentVersion: varchar('current_version', { length: 50 }),
-    latestVersion: varchar('latest_version', { length: 50 }),
-    deprecationType: varchar('deprecation_type', { length: 30 }).notNull(),
-    severity: varchar('severity', { length: 20 }).default('warning'),
-    message: text('message'),
-    affectedFiles: jsonb('affected_files').$type<string[]>().default([]),
-    remediationUrl: varchar('remediation_url', { length: 500 }),
-    isSuppressed: boolean('is_suppressed').default(false),
-    suppressedBy: uuid('suppressed_by'),
-    suppressedUntil: timestamp('suppressed_until'),
-    scannedAt: timestamp('scanned_at')
-      .defaultNow()
-      .notNull(),
-  },
-  (table) => [
-    index('idx_deprecation_org').on(table.orgId),
-    index('idx_deprecation_sev').on(table.severity),
-    index('idx_deprecation_pkg').on(table.packageName),
-  ],
-);
-
-export type DeprecationResult = typeof deprecationResults.$inferSelect;
-export type NewDeprecationResult = typeof deprecationResults.$inferInsert;
 
 // ─── AI Judge Scores ────────────────────────────────────────────────────────
 

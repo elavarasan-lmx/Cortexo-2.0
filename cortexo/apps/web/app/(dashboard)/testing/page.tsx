@@ -15,14 +15,14 @@ export default function TestingSuitePage() {
   const { data: projectsData } = useApiData(() => api.getProjects(), { default: [] as any[] });
   const projectId = (projectsData as any[])?.[0]?.id || '';
   
-  const { data: suitesData, loading: suitesLoading, refetch: refetchSuites } = useApiData(() => projectId ? api.request<any>('GET', `/projects/${projectId}/test-suites`) : Promise.resolve({ data: [] }));
-  const suites = suitesData?.data || [];
+  const { data: suitesData, loading: suitesLoading, refetch: refetchSuites } = useApiData(() => projectId ? api.getQaHistory({ projectId }) : Promise.resolve([] as any));
+  const suites = (suitesData as any)?.data || suitesData || [];
 
   const { showAlert } = useModal();
 
   const handleRunSuite = async (suiteId: string) => {
     try {
-      await api.request('POST', `/test-suites/${suiteId}/run`);
+      await api.runTest({ suiteId });
       showAlert({ title: 'Success', message: 'Test suite triggered successfully!', variant: 'success' });
     } catch (error) {
       showAlert({ title: 'Error', message: 'Failed to trigger suite', variant: 'error' });

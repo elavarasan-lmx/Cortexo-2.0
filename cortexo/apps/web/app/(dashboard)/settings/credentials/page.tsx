@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import {
   Shield, Eye, EyeOff, Save, Trash2, Loader2, CheckCircle, XCircle,
-  GitBranch, Cloud, Key, Terminal, Bot, Zap, Lock, Edit3, X, Mail,
+  GitBranch, Key, Bot, Zap, Lock, Edit3, X, Mail,
 } from 'lucide-react';
 import { useModal } from '@/components/modal-provider';
 
@@ -35,10 +35,6 @@ const categoryMeta: Record<string, { icon: any; label: string; color: string; de
   openai:  { icon: Bot,       label: 'OpenAI',     color: '#10B981', description: 'API key for Knowledge Base AI Assistant and postmortem generation' },
   gemini:  { icon: Zap,       label: 'Google Gemini', color: '#4285F4', description: 'Free AI for Knowledge Base Assistant (gemini-2.5-flash)' },
   groq:    { icon: Zap,       label: 'Groq',       color: '#F55036', description: 'Free ultra-fast AI for Knowledge Base (Llama 3.3 70B, 30 RPM)' },
-  aws:     { icon: Cloud,     label: 'AWS',        color: '#FF9900', description: 'EC2, S3, and other AWS service credentials' },
-  ssh:     { icon: Terminal,   label: 'SSH Keys',   color: '#818CF8', description: 'Private keys for secure server deployment' },
-  docker:  { icon: Key,       label: 'Docker',     color: '#2496ED', description: 'Container registry authentication' },
-  slack:   { icon: Zap,       label: 'Slack',      color: '#E01E5A', description: 'Webhook URL for deployment alerts' },
   email:   { icon: Mail,      label: 'Email/SMTP', color: '#3B82F6', description: 'SMTP credentials for sending email notifications' },
 };
 

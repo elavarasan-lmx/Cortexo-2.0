@@ -169,6 +169,15 @@ export const deployments = pgTable(
     durationMs: integer('duration_ms'),
     healthCheckUrl: varchar('health_check_url', { length: 500 }),
     healthCheckStatus: varchar('health_check_status', { length: 20 }),
+    deployLogs: jsonb('deploy_logs').$type<Array<{
+      step: string;
+      command?: string;
+      stdout: string;
+      stderr: string;
+      exitCode: number | null;
+      durationMs: number;
+      timestamp: string;
+    }>>(),
     createdAt: timestamp('created_at')
       .defaultNow()
       .notNull(),

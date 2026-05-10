@@ -37,7 +37,8 @@ export interface SSHCredentials {
 
 export interface DeployOptions {
   remotePath: string;
-  repoUrl?: string;      // Git clone URL for first-time deploys
+  repoUrl?: string;      // Client Git repo URL
+  sourceTemplate?: { repoUrl: string; branch: string };  // Source template repo — cloned FIRST, then client git overlays
   branch?: string;
   preDeployCmd?: string;
   postDeployCmd?: string;
@@ -342,16 +343,52 @@ export async function runDeploySequence(
       if (!opts.repoUrl) {
         return { success: false, status: 'failed' as const, logs, totalDurationMs: Date.now() - totalStart, error: 'First-time deploy requires a git repo URL' };
       }
-      let cloneUrl = opts.repoUrl;
-      const ghMatch = cloneUrl.match(/^https?:\/\/github\.com\/(.+?)(?:\.git)?$/);
-      if (ghMatch) cloneUrl = `git@github.com:${ghMatch[1]}.git`;
+      let clientUrl = opts.repoUrl;
+      const ghMatch = clientUrl.match(/^https?:\/\/github\.com\/(.+?)(?:\.git)?$/);
+      if (ghMatch) clientUrl = `git@github.com:${ghMatch[1]}.git`;
 
-      const cloneCmd = `cd "${opts.remotePath}" && git clone -b ${branch} "${cloneUrl}" .`;
-      await pushStarting('git_clone', `Cloning repository (${branch} branch)...`);
-      const cloneLog = await runStep(conn, 'git_clone', cloneCmd, 300_000);
-      await pushLog(cloneLog);
-      if (cloneLog.exitCode !== 0) {
-        return { success: false, status: 'failed' as const, logs, totalDurationMs: Date.now() - totalStart, error: `Git clone failed: ${cloneLog.stderr || cloneLog.stdout}` };
+      if (opts.sourceTemplate?.repoUrl) {
+        // ── Source Template + Client Git overlay flow ──
+        // 1. Clone source template (latest base framework)
+        let srcUrl = opts.sourceTemplate.repoUrl;
+        const srcMatch = srcUrl.match(/^https?:\/\/github\.com\/(.+?)(?:\.git)?$/);
+        if (srcMatch) srcUrl = `git@github.com:${srcMatch[1]}.git`;
+        const srcBranch = opts.sourceTemplate.branch || 'main';
+
+        await pushStarting('git_clone_source', `Cloning source template (${srcBranch})...`);
+        const srcCloneCmd = `cd "${opts.remotePath}" && git clone -b ${srcBranch} "${srcUrl}" .`;
+        const srcCloneLog = await runStep(conn, 'git_clone_source', srcCloneCmd, 300_000);
+        await pushLog(srcCloneLog);
+        if (srcCloneLog.exitCode !== 0) {
+          return { success: false, status: 'failed' as const, logs, totalDurationMs: Date.now() - totalStart, error: `Source template clone failed: ${srcCloneLog.stderr || srcCloneLog.stdout}` };
+        }
+
+        // 2. Remove source .git, re-init with client git, push source code to client repo
+        await pushStarting('git_push_client', `Pushing source code to client git (${branch})...`);
+        const pushCmd = [
+          `cd "${opts.remotePath}"`,
+          `rm -rf .git`,
+          `git init`,
+          `git remote add origin "${clientUrl}"`,
+          `git add .`,
+          `git commit -m "Initial provisioning from source template"`,
+          `git push -u origin ${branch} --force`,
+          `echo "Source code pushed to client git"`,
+        ].join(' && ');
+        const pushLog2 = await runStep(conn, 'git_push_client', pushCmd, 300_000);
+        await pushLog(pushLog2);
+        if (pushLog2.exitCode !== 0) {
+          return { success: false, status: 'failed' as const, logs, totalDurationMs: Date.now() - totalStart, error: `Client git push failed: ${pushLog2.stderr || pushLog2.stdout}` };
+        }
+      } else {
+        // No source template — plain client git clone
+        const cloneCmd = `cd "${opts.remotePath}" && git clone -b ${branch} "${clientUrl}" .`;
+        await pushStarting('git_clone', `Cloning repository (${branch} branch)...`);
+        const cloneLog = await runStep(conn, 'git_clone', cloneCmd, 300_000);
+        await pushLog(cloneLog);
+        if (cloneLog.exitCode !== 0) {
+          return { success: false, status: 'failed' as const, logs, totalDurationMs: Date.now() - totalStart, error: `Git clone failed: ${cloneLog.stderr || cloneLog.stdout}` };
+        }
       }
     } else {
       await pushStarting('git_pull', `Pulling latest changes (${branch})...`);

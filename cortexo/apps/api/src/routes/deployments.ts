@@ -11,29 +11,57 @@ import { decrypt } from '../lib/crypto.js';
 import { runDeploySequence, type DeployLog, type DeployResult, type SSHCredentials, type DeployOptions } from '../lib/ssh-executor.js';
 import { getRedis } from '../lib/redis.js';
 
-// ── Redis-backed deploy log store ────────────────────────────────────────
-// Survives server restarts. Logs expire after 2 hours via TTL.
+// ── Deploy log store (Redis + in-memory fallback) ────────────────────────
+// Redis is preferred (survives server restarts), but if Redis is down,
+// we fall back to an in-memory Map so live terminal still works.
 const DEPLOY_LOG_PREFIX = 'cortexo:deploy-logs:';
 const DEPLOY_LOG_TTL = 7200; // 2 hours
 
-async function getDeployLogs(deploymentId: string): Promise<{ logs: DeployLog[]; result?: DeployResult } | null> {
-  try {
-    const redis = getRedis();
-    const data = await redis.get(`${DEPLOY_LOG_PREFIX}${deploymentId}`);
-    return data ? JSON.parse(data) : null;
-  } catch {
-    return null;
+// In-memory fallback store (for when Redis is unavailable)
+const memoryLogStore = new Map<string, { data: string; expiresAt: number }>();
+
+function memCleanup() {
+  const now = Date.now();
+  for (const [k, v] of memoryLogStore) {
+    if (v.expiresAt < now) memoryLogStore.delete(k);
   }
 }
 
-async function setDeployLogs(deploymentId: string, entry: { logs: DeployLog[]; result?: DeployResult }): Promise<void> {
+async function getDeployLogs(deploymentId: string): Promise<{ logs: DeployLog[]; result?: DeployResult } | null> {
+  // 1. Try Redis
   try {
     const redis = getRedis();
-    await redis.set(`${DEPLOY_LOG_PREFIX}${deploymentId}`, JSON.stringify(entry), 'EX', DEPLOY_LOG_TTL);
-  } catch { /* best-effort — don't fail deploys if Redis has issues */ }
+    const data = await redis.get(`${DEPLOY_LOG_PREFIX}${deploymentId}`);
+    if (data) return JSON.parse(data);
+  } catch { /* Redis unavailable */ }
+
+  // 2. Fallback: in-memory
+  const mem = memoryLogStore.get(deploymentId);
+  if (mem && mem.expiresAt > Date.now()) {
+    return JSON.parse(mem.data);
+  }
+
+  return null;
+}
+
+async function setDeployLogs(deploymentId: string, entry: { logs: DeployLog[]; result?: DeployResult }): Promise<void> {
+  const json = JSON.stringify(entry);
+
+  // Always write to memory (fast, reliable)
+  memoryLogStore.set(deploymentId, { data: json, expiresAt: Date.now() + DEPLOY_LOG_TTL * 1000 });
+
+  // Also try Redis (best-effort)
+  try {
+    const redis = getRedis();
+    await redis.set(`${DEPLOY_LOG_PREFIX}${deploymentId}`, json, 'EX', DEPLOY_LOG_TTL);
+  } catch { /* Redis unavailable — memory fallback is active */ }
+
+  // Periodic cleanup
+  if (memoryLogStore.size > 50) memCleanup();
 }
 
 async function deleteDeployLogs(deploymentId: string): Promise<void> {
+  memoryLogStore.delete(deploymentId);
   try {
     const redis = getRedis();
     await redis.del(`${DEPLOY_LOG_PREFIX}${deploymentId}`);
@@ -233,12 +261,15 @@ export async function deploymentRoutes(app: FastifyInstance) {
         return { logs: [], result: null, isRunning: false };
       }
 
-      // Deploy finished (failed or success) — return final result from DB
+      // Deploy finished (failed or success) — return full logs from DB
       if (deploy.status === 'failed' || deploy.status === 'success') {
+        const dbLogs = (deploy as any).deployLogs || [];
         return {
-          logs: deploy.commitMessage
-            ? [{ step: deploy.status, command: '', stdout: deploy.commitMessage, stderr: '', exitCode: deploy.status === 'success' ? 0 : 1, durationMs: deploy.durationMs || 0, timestamp: (deploy.finishedAt || new Date()).toISOString() }]
-            : [],
+          logs: dbLogs.length > 0
+            ? dbLogs
+            : deploy.commitMessage
+              ? [{ step: deploy.status, command: '', stdout: deploy.commitMessage, stderr: '', exitCode: deploy.status === 'success' ? 0 : 1, durationMs: deploy.durationMs || 0, timestamp: (deploy.finishedAt || new Date()).toISOString() }]
+              : [],
           result: {
             success: deploy.status === 'success',
             status: deploy.status,
@@ -432,6 +463,7 @@ export async function deploymentRoutes(app: FastifyInstance) {
         nginx: (parsed.data as any).nginx || undefined,
         permissions: (parsed.data as any).permissions || undefined,
         pm2: (parsed.data as any).pm2 || undefined,
+        sourceTemplate: (parsed.data as any).sourceTemplate || undefined,
       };
 
       // Fire and forget — the deploy runs in the background
@@ -520,7 +552,7 @@ async function executeDeployAsync(
   deploymentId: string,
   creds: SSHCredentials,
   opts: DeployOptions,
-  user: { sub: string; name: string },
+  user: { sub: string; name: string; orgId: string },
   targetName: string,
 ) {
   try {
@@ -537,7 +569,7 @@ async function executeDeployAsync(
       result,
     });
 
-    // Update deployment record
+    // Update deployment record — persist full logs to DB
     await db.update(deployments)
       .set({
         status: result.success ? 'success' : 'failed',
@@ -545,6 +577,7 @@ async function executeDeployAsync(
         finishedAt: new Date(),
         durationMs: result.totalDurationMs,
         commitMessage: result.error || (result.success ? `Deployed ${opts.branch || 'main'} successfully` : null),
+        deployLogs: result.logs,
       } as any)
       .where(eq(deployments.id, deploymentId));
 

@@ -75,8 +75,8 @@ export default function NotificationsPage() {
 
   // Load preferences
   useEffect(() => {
-    api.request<any>('GET', '/notifications/preferences')
-      .then((res) => setPrefs(res.data || []))
+    api.getNotificationPrefs()
+      .then((res: any) => setPrefs(res.data || res || []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -95,7 +95,7 @@ export default function NotificationsPage() {
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      await api.request('PUT', '/notifications/preferences', {
+      await api.updateNotificationPrefs({
         preferences: prefs.map((p) => ({
           event: p.event,
           inApp: p.inApp,

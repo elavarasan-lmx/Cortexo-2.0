@@ -4,9 +4,9 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  FolderGit2, GitBranch,
-  Plus, ExternalLink, Search,
-  Loader2, Github, Globe, X, Edit3, Trash2, Save,
+  FolderGit2,
+  Plus, Search,
+  Loader2, Github, Globe, X, Edit3, Trash2, Eye, EyeOff, GitBranch as GitBranchIcon,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { Project } from '@/lib/api';
@@ -27,9 +27,10 @@ export default function ProjectsPage() {
   const { data: projects, loading, refetch } = useApiData(() => api.getProjects());
 
   const [search, setSearch] = useState('');
-  const [editProject, setEditProject] = useState<Project | null>(null);
   const [deleteProject, setDeleteProject] = useState<Project | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [visiblePassId, setVisiblePassId] = useState<string | null>(null);
+
 
   const handleDelete = async (p: Project) => {
     setDeleting(true);
@@ -132,18 +133,8 @@ export default function ProjectsPage() {
                     </div>
                   </div>
                 </div>
-                {/* Action icons */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-                  {project.repoUrl && (
-                    <button onClick={e => { e.stopPropagation(); window.open(project.repoUrl!, '_blank'); }}
-                      title="Open Repo"
-                      style={{ padding: '6px', borderRadius: '8px', border: 'none', backgroundColor: 'transparent', color: 'rgb(var(--text-muted))', cursor: 'pointer', transition: 'all 150ms' }}
-                      onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(107,114,128,0.12)'; e.currentTarget.style.color = '#818CF8'; }}
-                      onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'rgb(var(--text-muted))'; }}>
-                      <ExternalLink style={{ width: '14px', height: '14px' }} />
-                    </button>
-                  )}
-                  <button onClick={e => { e.stopPropagation(); setEditProject(project); }}
+                  <button onClick={e => { e.stopPropagation(); router.push(`/projects/${project.id}`); }}
                     title="Edit"
                     style={{ padding: '6px', borderRadius: '8px', border: 'none', backgroundColor: 'transparent', color: 'rgb(var(--text-muted))', cursor: 'pointer', transition: 'all 150ms' }}
                     onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(129,140,248,0.12)'; e.currentTarget.style.color = '#818CF8'; }}
@@ -164,6 +155,8 @@ export default function ProjectsPage() {
               <div style={{ padding: '0 18px 8px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px', fontSize: '11px' }}>
                 {s.domain && <div><span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>Admin URL</span><p style={{ margin: '2px 0 0', color: 'rgb(var(--text-primary))', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(s.adminBaseUrl || '—')}</p></div>}
                 {db.name && <div><span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>Database</span><p style={{ margin: '2px 0 0', color: '#00758F', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', wordBreak: 'break-all' }}>{db.name}</p></div>}
+                {s.adminUser && <div><span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>Admin User</span><p style={{ margin: '2px 0 0', color: '#A78BFA', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>{String(s.adminUser)}</p></div>}
+                {s.adminPassword && <div><span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>Admin Pass</span><div style={{ margin: '2px 0 0', display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ color: '#A78BFA', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>{visiblePassId === project.id ? String(s.adminPassword) : '••••••••'}</span><button onClick={e => { e.stopPropagation(); setVisiblePassId(visiblePassId === project.id ? null : project.id); }} style={{ padding: '2px', border: 'none', backgroundColor: 'transparent', color: 'rgb(var(--text-muted))', cursor: 'pointer', display: 'flex', flexShrink: 0 }} title={visiblePassId === project.id ? 'Hide' : 'Show'}>{visiblePassId === project.id ? <EyeOff style={{ width: '12px', height: '12px' }} /> : <Eye style={{ width: '12px', height: '12px' }} />}</button></div></div>}
                 {s.androidVersion && <div><span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>Android</span><p style={{ margin: '2px 0 0', color: 'rgb(var(--text-primary))', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>v{String(s.androidVersion)}</p></div>}
                 {s.iosVersion && <div><span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>iOS</span><p style={{ margin: '2px 0 0', color: 'rgb(var(--text-primary))', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>v{String(s.iosVersion)}</p></div>}
               </div>
@@ -188,8 +181,8 @@ export default function ProjectsPage() {
                     {project.repoProvider === 'github' ? <Github style={{ width: '11px', height: '11px' }} /> : <Globe style={{ width: '11px', height: '11px' }} />}
                     {project.repoProvider || 'github'}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'rgb(var(--text-muted))' }}>
-                    <GitBranch style={{ width: '11px', height: '11px' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 500, color: 'rgb(var(--text-muted))' }}>
+                    <GitBranchIcon style={{ width: '11px', height: '11px' }} />
                     {project.defaultBranch || 'main'}
                   </div>
                 </div>
@@ -227,10 +220,6 @@ export default function ProjectsPage() {
         </div>
       )}
 
-      {/* Edit Project Modal */}
-      {editProject && (
-        <EditProjectModal project={editProject} onClose={() => setEditProject(null)} onSaved={() => { setEditProject(null); refetch(); }} />
-      )}
 
       {/* Delete Confirmation */}
       {deleteProject && (
@@ -258,53 +247,6 @@ export default function ProjectsPage() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-/* ─── Edit Project Modal ─── */
-function EditProjectModal({ project, onClose, onSaved }: { project: Project; onClose: () => void; onSaved: () => void }) {
-  const [form, setForm] = useState({ name: project.name, description: project.description || '', repoUrl: project.repoUrl || '', defaultBranch: project.defaultBranch || 'main' });
-  const [saving, setSaving] = useState(false);
-  const [err, setErr] = useState('');
-  const inp: React.CSSProperties = { width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-primary))', fontSize: '13px', outline: 'none', boxSizing: 'border-box' };
-  const lbl: React.CSSProperties = { fontSize: '11px', fontWeight: 600, color: 'rgb(var(--text-secondary))', marginBottom: '6px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.06em' };
-
-  const submit = async () => {
-    if (!form.name.trim()) { setErr('Project name is required'); return; }
-    setSaving(true); setErr('');
-    try {
-      await api.updateProject(project.id, { name: form.name, description: form.description || undefined, repoUrl: form.repoUrl || undefined, defaultBranch: form.defaultBranch } as Record<string, unknown>);
-      useToastStore.getState().success('Project Updated', `${form.name} has been updated`);
-      onSaved();
-    } catch (e: unknown) { setErr((e as Error).message || 'Failed to update'); useToastStore.getState().error('Update Failed', (e as Error).message || 'Could not update project'); }
-    setSaving(false);
-  };
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{ width: '500px', borderRadius: '16px', backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', overflow: 'hidden', boxShadow: '0 24px 48px rgba(0,0,0,0.3)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid rgb(var(--border))' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg, rgba(var(--primary),0.15), rgba(var(--agent),0.08))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Edit3 style={{ width: '16px', height: '16px', color: 'rgb(var(--primary))' }} />
-            </div>
-            <span style={{ fontSize: '15px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>Edit Project</span>
-          </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgb(var(--text-muted))', padding: '4px' }}><X style={{ width: '18px', height: '18px' }} /></button>
-        </div>
-        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <div><label style={lbl}>Project Name *</label><input style={inp} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
-          <div><label style={lbl}>Description</label><input style={inp} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="e.g. Lite | ajbullion | www.ajbullion.in" /></div>
-          <div><label style={lbl}>Repository URL</label><input style={inp} value={form.repoUrl} onChange={e => setForm(f => ({ ...f, repoUrl: e.target.value }))} /></div>
-          <div><label style={lbl}>Default Branch</label><input style={inp} value={form.defaultBranch} onChange={e => setForm(f => ({ ...f, defaultBranch: e.target.value }))} /></div>
-          {err && <p style={{ fontSize: '12px', color: '#EF4444', margin: 0 }}>{err}</p>}
-          <button onClick={submit} disabled={saving} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '12px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 600, color: '#fff', background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))', opacity: saving ? 0.7 : 1 }}>
-            {saving ? <Loader2 style={{ width: '15px', height: '15px', animation: 'spin 1s linear infinite' }} /> : <Save style={{ width: '15px', height: '15px' }} />}
-            {saving ? 'Saving…' : 'Save Changes'}
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

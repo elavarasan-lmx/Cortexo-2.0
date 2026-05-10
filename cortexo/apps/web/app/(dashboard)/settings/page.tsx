@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { User, Mail, Camera, Save, Shield, Phone, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { User, Mail, Camera, Save, Shield, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAutoLoadToken } from '@/lib/hooks';
 import { useToastStore } from '@/lib/toast-store';
@@ -48,7 +48,6 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState({
     name: '',
     email: '',
-    phone: '',
   });
   const [passwords, setPasswords] = useState({ current: '', newPassword: '', confirm: '' });
   const [saving, setSaving] = useState(false);
@@ -68,7 +67,6 @@ export default function SettingsPage() {
         setProfile({
           name: user.name || '',
           email: user.email || '',
-          phone: user.phone || '',
         });
       }
     } catch (err: unknown) {
@@ -252,25 +250,7 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '16px' }}>
-              {/* Phone */}
-              <div>
-                <label style={labelStyle}>Phone</label>
-                <div style={{ position: 'relative' }}>
-                  <Phone style={{
-                    position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)',
-                    width: '16px', height: '16px', color: 'rgb(var(--text-muted))',
-                  }} />
-                  <input
-                    type="tel"
-                    value={profile.phone}
-                    onChange={e => setProfile({ ...profile, phone: e.target.value })}
-                    style={inputBase}
-                    placeholder="+91 XXXXX XXXXX"
-                  />
-                </div>
-              </div>
-            </div>
+
 
             {/* Role badge + membership */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingTop: '4px' }}>

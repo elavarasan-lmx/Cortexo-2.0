@@ -6,7 +6,7 @@ import { userMenuPermissions } from '@cortexo/db/schema';
 export async function menuPermissionRoutes(app: FastifyInstance) {
   // GET /menu-permissions — fetch current user's menu visibility settings
   app.get('/menu-permissions', async (request) => {
-    const db = getDb();
+    const db = await getDb();
     const userId = (request as any).userId;
 
     const rows = await db
@@ -24,7 +24,7 @@ export async function menuPermissionRoutes(app: FastifyInstance) {
 
   // PUT /menu-permissions — update menu visibility settings
   app.put('/menu-permissions', async (request) => {
-    const db = getDb();
+    const db = await getDb();
     const userId = (request as any).userId;
     const { permissions } = request.body as { permissions: Record<string, boolean> };
 

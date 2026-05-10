@@ -4,6 +4,7 @@ import {
   Rocket, CheckCircle, XCircle, Clock, Loader2, RotateCcw,
   GitBranch, MoreVertical, Timer, Activity, Trash2, Edit3, Save,
   ChevronUp, Terminal as TerminalIcon, Search, Layers, Zap, GitCompareArrows,
+  Calendar,
 } from 'lucide-react';
 import DeployForm, { type DeployFormInitialData } from '@/components/deploy-form';
 import ConfirmModal from '@/components/confirm-modal';
@@ -31,15 +32,13 @@ const envColors: Record<string, { color: string; bg: string }> = {
   development: { color: '#3B82F6', bg: 'rgba(59,130,246,0.1)' },
 };
 
-/* ─── Stat card definitions ─── */
-const statCards = [
-  { key: 'total',   label: 'Total Deploys', color: '#818CF8', icon: Rocket   },
-  { key: 'success', label: 'Successful',    color: '#10B981', icon: CheckCircle },
-  { key: 'failed',  label: 'Failed',        color: '#EF4444', icon: XCircle  },
-  { key: 'active',  label: 'Active Now',    color: '#3B82F6', icon: Activity },
+/* ─── Date range options ─── */
+const dateRanges = [
+  { label: 'Today', days: 0 },
+  { label: 'Last 7 Days', days: 7 },
+  { label: 'Last 30 Days', days: 30 },
+  { label: 'All Time', days: -1 },
 ] as const;
-
-const filters = ['all', 'success', 'failed', 'running', 'deploying', 'pending', 'rolled_back'] as const;
 
 /* ─── Expandable log viewer ─── */
 function DeployLogViewer({ deployId }: { deployId: string }) {
@@ -91,6 +90,8 @@ export default function DeploymentsPage() {
   const [editSaving, setEditSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [dateRange, setDateRange] = useState(7);
+  const [showDateDropdown, setShowDateDropdown] = useState(false);
 
   /* ─── Sub-page tabs ─── */
   const tabs = [
@@ -151,7 +152,6 @@ export default function DeploymentsPage() {
       data.pm2Interpreter = deploy.pm2.interpreter || 'node';
       data.pm2Instances = deploy.pm2.instances || '1';
     }
-    if (deploy.crons) data.crons = deploy.crons;
     if (deploy.permissions) {
       data.permUser = deploy.permissions.user || 'ubuntu';
       data.permGroup = deploy.permissions.group || 'ubuntu';
@@ -197,36 +197,50 @@ export default function DeploymentsPage() {
   }
 
   const allDeploys = (deployments as any[]) || [];
+
+  // Date range filter
+  const now = new Date();
+  const dateFiltered = dateRange === -1 ? allDeploys : allDeploys.filter((d: any) => {
+    const created = new Date(d.createdAt);
+    if (dateRange === 0) {
+      return created.getDate() === now.getDate() && created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
+    }
+    const cutoff = new Date(now.getTime() - dateRange * 24 * 60 * 60 * 1000);
+    return created >= cutoff;
+  });
+
   const searched = searchQuery.trim()
-    ? allDeploys.filter((d: any) => {
+    ? dateFiltered.filter((d: any) => {
         const q = searchQuery.toLowerCase();
         const projName = resolveProjectName(d.projectId, lookup).toLowerCase();
         return projName.includes(q) || (d.branch || '').toLowerCase().includes(q) || (d.commitMessage || '').toLowerCase().includes(q) || (d.environment || '').toLowerCase().includes(q);
       })
-    : allDeploys;
+    : dateFiltered;
   const filtered = filter === 'all' ? searched : searched.filter((d: any) => d.status === filter);
 
   // Compute stats
-  const totalDeploys = allDeploys.length;
-  const successDeploys = allDeploys.filter((d: any) => d.status === 'success').length;
+  const totalDeploys = dateFiltered.length;
+  const successDeploys = dateFiltered.filter((d: any) => d.status === 'success').length;
   const successRate = totalDeploys > 0 ? ((successDeploys / totalDeploys) * 100).toFixed(1) : '0.0';
   
   // Calculate average duration for successful deployments
-  const successWithDuration = allDeploys.filter((d: any) => d.status === 'success' && d.durationMs);
+  const successWithDuration = dateFiltered.filter((d: any) => d.status === 'success' && d.durationMs);
   const avgDurationMs = successWithDuration.length > 0 
-    ? successWithDuration.reduce((acc, d) => acc + d.durationMs, 0) / successWithDuration.length 
+    ? successWithDuration.reduce((acc: number, d: any) => acc + d.durationMs, 0) / successWithDuration.length 
     : 0;
   
-  const failedToday = allDeploys.filter((d: any) => {
+  const failedToday = dateFiltered.filter((d: any) => {
     if (d.status !== 'failed') return false;
     const date = new Date(d.createdAt);
     const today = new Date();
     return date.getDate() === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
   }).length;
 
+  const dateLabel = dateRanges.find(r => r.days === dateRange)?.label || 'Last 7 Days';
+
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
-      {/* ─── Header (p01fyR) ─── */}
+      {/* ─── Header ─── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'rgb(var(--text-primary))', fontFamily: 'Inter, sans-serif', margin: 0 }}>
@@ -257,6 +271,26 @@ export default function DeploymentsPage() {
         >
           + New Deploy
         </button>
+      </div>
+
+      {/* ─── Sub-page Tabs ─── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '20px', padding: '4px', borderRadius: '12px', backgroundColor: 'rgba(var(--text-muted), 0.06)', width: 'fit-content' }}>
+        {tabs.map(tab => {
+          const isActive = pathname === tab.href;
+          const Icon = tab.icon;
+          return (
+            <Link key={tab.href} href={tab.href} style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '8px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: isActive ? 600 : 500,
+              color: isActive ? '#fff' : 'rgb(var(--text-muted))',
+              backgroundColor: isActive ? 'rgb(var(--primary))' : 'transparent',
+              textDecoration: 'none', transition: 'all 150ms', fontFamily: 'Inter, sans-serif',
+            }}>
+              <Icon style={{ width: '14px', height: '14px' }} />
+              {tab.label}
+            </Link>
+          );
+        })}
       </div>
 
       {/* ─── Stat Cards (PWDUz) ─── */}
@@ -296,7 +330,7 @@ export default function DeploymentsPage() {
             color: filter === 'all' ? '#FFFFFF' : 'rgb(var(--text-muted))',
             transition: 'all 150ms',
           }}>
-            All ({allDeploys.length})
+            All ({dateFiltered.length})
           </button>
           
           <button onClick={() => setFilter('success')} style={{
@@ -306,7 +340,7 @@ export default function DeploymentsPage() {
             color: filter === 'success' ? '#16A34A' : 'rgb(var(--text-muted))',
             transition: 'all 150ms',
           }}>
-            ✅ Success ({allDeploys.filter((d: any) => d.status === 'success').length})
+            ✅ Success ({dateFiltered.filter((d: any) => d.status === 'success').length})
           </button>
           
           <button onClick={() => setFilter('deploying')} style={{
@@ -316,7 +350,7 @@ export default function DeploymentsPage() {
             color: filter === 'deploying' ? '#D97706' : 'rgb(var(--text-muted))',
             transition: 'all 150ms',
           }}>
-            ⟳ Building ({allDeploys.filter((d: any) => d.status === 'deploying' || d.status === 'running').length})
+            ⟳ Building ({dateFiltered.filter((d: any) => d.status === 'deploying' || d.status === 'running').length})
           </button>
           
           <button onClick={() => setFilter('failed')} style={{
@@ -326,13 +360,38 @@ export default function DeploymentsPage() {
             color: filter === 'failed' ? '#EF4444' : 'rgb(var(--text-muted))',
             transition: 'all 150ms',
           }}>
-            ✗ Failed ({allDeploys.filter((d: any) => d.status === 'failed').length})
+            ✗ Failed ({dateFiltered.filter((d: any) => d.status === 'failed').length})
           </button>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', cursor: 'pointer' }}>
-          <span style={{ fontSize: '12px', fontWeight: 500, color: 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>📅 Last 7 Days</span>
-          <span style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>▾</span>
+        <div style={{ position: 'relative' }}>
+          <button
+            onClick={() => setShowDateDropdown(!showDateDropdown)}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', cursor: 'pointer' }}
+          >
+            <Calendar style={{ width: '13px', height: '13px', color: 'rgb(var(--text-muted))' }} />
+            <span style={{ fontSize: '12px', fontWeight: 500, color: 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>{dateLabel}</span>
+            <span style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>▾</span>
+          </button>
+          {showDateDropdown && (
+            <div style={{
+              position: 'absolute', right: 0, top: '100%', marginTop: '4px', zIndex: 50,
+              backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', borderRadius: '10px',
+              padding: '4px', minWidth: '150px', boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+            }}>
+              {dateRanges.map(r => (
+                <button key={r.days} onClick={() => { setDateRange(r.days); setShowDateDropdown(false); }} style={{
+                  display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', borderRadius: '6px',
+                  border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: dateRange === r.days ? 600 : 400,
+                  backgroundColor: dateRange === r.days ? 'rgba(var(--primary), 0.15)' : 'transparent',
+                  color: dateRange === r.days ? 'rgb(var(--primary))' : 'rgb(var(--text-secondary))',
+                  fontFamily: 'Inter, sans-serif', transition: 'all 100ms',
+                }}>
+                  {r.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -363,7 +422,7 @@ export default function DeploymentsPage() {
                 const colors = ['#7C3AED', '#3B82F6', '#EC4899', '#10B981', '#F59E0B'];
                 return colors[name.charCodeAt(0) % colors.length];
               };
-              const triggerName = deploy.status === 'running' || deploy.status === 'deploying' ? 'CI/CD' : 'System';
+              const triggerName = deploy.triggeredBy || (deploy.status === 'running' || deploy.status === 'deploying' ? 'CI/CD' : 'System');
               const triggerInitials = triggerName.substring(0, 2).toUpperCase();
 
               return (
@@ -461,6 +520,13 @@ export default function DeploymentsPage() {
                           <RotateCcw style={{ width: '14px', height: '14px' }} />
                         </button>
                       )}
+                      
+                      <button onClick={() => setDeleteTarget({ id: deploy.id, name: `#${deploy.id.toString().substring(0, 6)} (${projectName})` })} title="Delete" style={{
+                        padding: '4px 8px', borderRadius: '6px', backgroundColor: 'rgba(239, 68, 68, 0.08)', border: 'none', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EF4444', transition: 'background-color 150ms'
+                      }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)'}>
+                        <Trash2 style={{ width: '13px', height: '13px' }} />
+                      </button>
                     </div>
                   </td>
                 </tr>

@@ -1,12 +1,13 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { Loader2, X, Plus, Minus, CheckCircle, Server, Trash2, ChevronRight, ChevronLeft, Rocket } from 'lucide-react';
+import { Loader2, X, Plus, Minus, CheckCircle, Server, Trash2, ChevronRight, ChevronLeft, Rocket, GitBranch, FolderPlus, Copy } from 'lucide-react';
 import { api } from '@/lib/api';
 import { inp, lbl, ta, g2, g3, STEPS, Toggle, octalToRwx } from './deploy/shared';
-import type { FolderEntry } from './deploy/shared';
+import type { FolderEntry, DeployFormInitialData } from './deploy/shared';
 import DeployTerminal from './deploy/deploy-terminal';
 import StepReview from './deploy/step-review';
 import { useModal } from './modal-provider';
+import { useToastStore } from '@/lib/toast-store';
 
 // Shared styles, types, constants, and components are now in ./deploy/shared.tsx
 // Re-export the interface for backward compatibility
@@ -32,6 +33,17 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
   const termRef = useRef<HTMLDivElement>(null);
   const [sourceProfiles,setSourceProfiles] = useState<any[]>([]);
   const [dbProfiles,setDbProfiles] = useState<any[]>([]);
+  const [clientGitProfiles,setClientGitProfiles] = useState<any[]>([]);
+  const sourceProfilesRef = useRef<any[]>([]);
+  const clientGitProfilesRef = useRef<any[]>([]);
+  const [selectedSourceTemplate,setSelectedSourceTemplate] = useState('');
+  const [showNewClientGit,setShowNewClientGit] = useState(false);
+  const [newClientGit,setNewClientGit] = useState({name:'',repoUrl:'',branch:'main',templatePath:'',notes:''});
+  const [savingClientGit,setSavingClientGit] = useState(false);
+  const [selectedClientGit,setSelectedClientGit] = useState('');
+  const [sourceDbInfo,setSourceDbInfo] = useState<{name:string;host:string;port:string;databaseName:string;username:string}|null>(null);
+  const [sourceTemplateInfo,setSourceTemplateInfo] = useState<{name:string;repoUrl:string;branch:string}|null>(null);
+  const [clientGitInfo,setClientGitInfo] = useState<{name:string;repoUrl:string;branch:string;templatePath:string}|null>(null);
 
   const [branch,setBranch]=useState(initialData?.branch || 'main');
   const [environment,setEnvironment]=useState(initialData?.environment || 'production');
@@ -78,14 +90,14 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
   const [pm2Script,setPm2Script]=useState(initialData?.pm2Script || '');
   const [pm2Interpreter,setPm2Interpreter]=useState(initialData?.pm2Interpreter || 'node');
   const [pm2Instances,setPm2Instances]=useState(initialData?.pm2Instances || '1');
-  const [pm2Restart,setPm2Restart]=useState(initialData?.pm2Restart !== false);
+  const [pm2Restart]=useState(true);
   const [pm2Args,setPm2Args]=useState(initialData?.pm2Args || '');
 
   const [preDeployCmd,setPreDeployCmd]=useState(initialData?.preDeployCmd || '');
   const [postDeployCmd,setPostDeployCmd]=useState(initialData?.postDeployCmd || '');
   const [healthCheckUrl,setHealthCheckUrl]=useState(initialData?.healthCheckUrl || '');
-  const [notifyOnComplete,setNotifyOnComplete]=useState(initialData?.notifyOnComplete || false);
-  const [truncateLogs,setTruncateLogs]=useState(initialData?.truncateLogs || false);
+  const [notifyOnComplete]=useState(true);
+  const [truncateLogs]=useState(true);
 
   const [isClient, setIsClient] = useState(false);
 
@@ -137,13 +149,13 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
         if (d.pm2Script !== undefined) setPm2Script(d.pm2Script);
         if (d.pm2Interpreter !== undefined) setPm2Interpreter(d.pm2Interpreter);
         if (d.pm2Instances !== undefined) setPm2Instances(d.pm2Instances);
-        if (d.pm2Restart !== undefined) setPm2Restart(d.pm2Restart);
+        // pm2Restart is always true
         if (d.pm2Args !== undefined) setPm2Args(d.pm2Args);
         if (d.preDeployCmd !== undefined) setPreDeployCmd(d.preDeployCmd);
         if (d.postDeployCmd !== undefined) setPostDeployCmd(d.postDeployCmd);
         if (d.healthCheckUrl !== undefined) setHealthCheckUrl(d.healthCheckUrl);
-        if (d.notifyOnComplete !== undefined) setNotifyOnComplete(d.notifyOnComplete);
-        if (d.truncateLogs !== undefined) setTruncateLogs(d.truncateLogs);
+        // notifyOnComplete is always true
+        // truncateLogs is always true
       }
     } catch(e) {}
   }, []);
@@ -169,6 +181,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
   ]);
 
   const { confirm: confirmModal } = useModal();
+  const toast = useToastStore();
 
   const clearDraft = async () => {
     const ok = await confirmModal({ title: 'Clear Draft', message: 'Are you sure you want to clear the draft deploy details?', variant: 'danger', confirmText: 'Clear All' });
@@ -186,16 +199,61 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
   useEffect(()=>{
     api.getProjects().then((r:any)=>setProjects((r?.data||r) as any[]));
     api.getServers().then((r:any)=>setServerList((r?.data||r) as any[]));
-    api.getSourceProfiles().then((r:any)=>setSourceProfiles((r?.data||r) as any[])).catch(()=>{});
+    api.getSourceProfiles().then((r:any)=>{ const d=(r?.data||r) as any[]; setSourceProfiles(d); sourceProfilesRef.current=d; if(d.length>0){ setSourceTemplateInfo({name:d[0].name,repoUrl:d[0].repoUrl||'',branch:d[0].branch||'main'}); } }).catch(()=>{});
     api.getDbProfiles().then((r:any)=>setDbProfiles((r?.data||r) as any[])).catch(()=>{});
+    // Auto-resolve Source DB info from first available profile (same for all clients)
+    api.getDbProfiles().then((r2:any)=>{ const d2=(r2?.data||r2) as any[]; if(d2.length>0){ setSourceDbInfo({name:d2[0].name,host:d2[0].host,port:String(d2[0].port||3306),databaseName:d2[0].databaseName||'',username:d2[0].username||''}); } }).catch(()=>{});
+    api.getClientGitProfiles().then((r:any)=>{
+      const d=(r?.data||r) as any[];
+      setClientGitProfiles(d);
+      clientGitProfilesRef.current=d;
+      // If a project was restored from draft, trigger resolve to sync client git
+      const saved = localStorage.getItem('cortexo_deploy_form');
+      if (saved) {
+        try {
+          const draft = JSON.parse(saved);
+          if (draft.selectedProject) {
+            handleProjectChange(draft.selectedProject);
+          }
+        } catch {}
+      }
+    }).catch(()=>{});
   },[]);
 
   const handleSourceProfile = (id:string) => {
+    setSelectedSourceTemplate(id);
     const p = sourceProfiles.find((s:any)=>s.id===id);
     if(!p) return;
     if(p.branch) setBranch(p.branch);
-    // Note: p.repoUrl is the git URL (e.g. git@github.com:...), NOT the server filesystem path.
-    // remotePath should only be set from the project's deploy info or manually.
+    // Pre-fill new client git form with template values
+    setNewClientGit(prev => ({...prev, repoUrl: p.repoUrl || '', branch: p.branch || 'main'}));
+  };
+
+  const handleClientGitSelect = (id:string) => {
+    setSelectedClientGit(id);
+    const p = clientGitProfiles.find((s:any)=>s.id===id);
+    if(!p) return;
+    if(p.branch) setBranch(p.branch);
+    if(p.templatePath) setRemotePath(p.templatePath);
+  };
+
+  const handleSaveNewClientGit = async () => {
+    if(!newClientGit.name || !newClientGit.repoUrl) return;
+    setSavingClientGit(true);
+    try {
+      const res = await api.createClientGitProfile(newClientGit) as any;
+      const created = res?.data || res;
+      setClientGitProfiles(prev => { const next = [...prev, created]; clientGitProfilesRef.current = next; return next; });
+      setSelectedClientGit(created.id);
+      if(created.branch) setBranch(created.branch);
+      if(created.templatePath) setRemotePath(created.templatePath);
+      setShowNewClientGit(false);
+      setNewClientGit({name:'',repoUrl:'',branch:'main',templatePath:'',notes:''});
+      toast.success('Client Git Created', `Profile "${created.name}" saved.`);
+    } catch (e: any) {
+      toast.error('Save Failed', e.message || 'Could not create client git profile.');
+    }
+    setSavingClientGit(false);
   };
 
   const handleDbProfile = (id:string) => {
@@ -237,6 +295,112 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
       setPostDeployCmd(info.postDeployCmd||'');
       setHealthCheckUrl(info.healthCheckUrl||(s.domain?`https://${s.domain}`:''));
 
+      // Auto-match Source Template by project repoUrl or settings.deploy.sourceProfileId
+      // Use refs to get latest profiles (avoids stale closure from async fetch)
+      const latestSP = sourceProfilesRef.current;
+      const latestCG = clientGitProfilesRef.current;
+      const projRepo = (project.repoUrl || '').replace(/\.git$/, '').toLowerCase();
+      // Extract org/repo slug and just org name for matching
+      const projSlugMatch = projRepo.match(/[:/]([^/]+\/[^/]+?)$/);
+      const projRepoSlug = projSlugMatch ? projSlugMatch[1] : '';
+      const projOrg = projRepoSlug.split('/')[0] || '';
+
+      if (deploy.sourceProfileId && latestSP.find((sp:any) => sp.id === deploy.sourceProfileId)) {
+        setSelectedSourceTemplate(deploy.sourceProfileId);
+        const sp = latestSP.find((s:any) => s.id === deploy.sourceProfileId);
+        if (sp?.branch) setBranch(sp.branch);
+        setNewClientGit(prev => ({...prev, repoUrl: sp?.repoUrl || '', branch: sp?.branch || 'main'}));
+      } else if (projRepo && latestSP.length > 0) {
+        // Try exact repo match first, then same-org match
+        const exactMatch = latestSP.find((sp:any) => {
+          const spUrl = (sp.repoUrl || '').replace(/\.git$/, '').toLowerCase();
+          const spSlugMatch = spUrl.match(/[:/]([^/]+\/[^/]+?)$/);
+          const spSlug = spSlugMatch ? spSlugMatch[1] : '';
+          return spSlug && projRepoSlug && spSlug === projRepoSlug;
+        });
+        const orgMatch = !exactMatch && projOrg ? latestSP.find((sp:any) => {
+          const spUrl = (sp.repoUrl || '').replace(/\.git$/, '').toLowerCase();
+          const spSlugMatch = spUrl.match(/[:/]([^/]+\/[^/]+?)$/);
+          const spOrg = spSlugMatch ? spSlugMatch[1].split('/')[0] : '';
+          return spOrg && spOrg === projOrg;
+        }) : null;
+        const matched = exactMatch || orgMatch;
+        if (matched) {
+          setSelectedSourceTemplate(matched.id);
+          setNewClientGit(prev => ({...prev, repoUrl: matched.repoUrl || '', branch: matched.branch || 'main'}));
+        }
+      }
+
+      // Auto-match Client Git by project repoUrl, settings.deploy.clientGitProfileId, or remotePath
+      const projPath = deploy.serverPath || info.remotePath || '';
+      let clientGitMatched = false;
+      if (deploy.clientGitProfileId && latestCG.find((cg:any) => cg.id === deploy.clientGitProfileId)) {
+        setSelectedClientGit(deploy.clientGitProfileId);
+        const cg = latestCG.find((c:any) => c.id === deploy.clientGitProfileId);
+        if (cg?.branch) setBranch(cg.branch);
+        clientGitMatched = true;
+      } else if ((projRepo || projPath) && latestCG.length > 0) {
+        // Try exact repo match, then org match, then path match
+        const exactMatch = latestCG.find((cg:any) => {
+          const cgUrl = (cg.repoUrl || '').replace(/\.git$/, '').toLowerCase();
+          const cgSlugMatch = cgUrl.match(/[:/]([^/]+\/[^/]+?)$/);
+          const cgSlug = cgSlugMatch ? cgSlugMatch[1] : '';
+          return cgSlug && projRepoSlug && cgSlug === projRepoSlug;
+        });
+        const orgMatch = !exactMatch && projOrg ? latestCG.find((cg:any) => {
+          const cgUrl = (cg.repoUrl || '').replace(/\.git$/, '').toLowerCase();
+          const cgSlugMatch = cgUrl.match(/[:/]([^/]+\/[^/]+?)$/);
+          const cgOrg = cgSlugMatch ? cgSlugMatch[1].split('/')[0] : '';
+          return cgOrg && cgOrg === projOrg;
+        }) : null;
+        const pathMatch = !exactMatch && !orgMatch && projPath ? latestCG.find((cg:any) => {
+          const cgPath = (cg.templatePath || '').toLowerCase();
+          return cgPath && cgPath === projPath.toLowerCase();
+        }) : null;
+        const matched = exactMatch || orgMatch || pathMatch;
+        if (matched) {
+          setSelectedClientGit(matched.id);
+          if (matched.templatePath && !projPath) setRemotePath(matched.templatePath);
+          clientGitMatched = true;
+          setClientGitInfo({name:matched.name||'',repoUrl:matched.repoUrl||'',branch:matched.branch||'main',templatePath:matched.templatePath||''});
+        }
+      }
+
+      // Fallback: if no client git profile matched, auto-create one from the project's repo info
+      // so the user doesn't have to manually enter it every time
+      if (!clientGitMatched && project.repoUrl) {
+        const repoUrl = project.repoUrl;
+        const repoSlug = repoUrl.replace(/\.git$/, '').match(/[:/]([^/]+\/[^/]+?)$/)?.[1] || '';
+        const clientName = project.name || repoSlug.split('/').pop() || '';
+        const profileData = {
+          name: clientName,
+          repoUrl: repoUrl,
+          branch: info.branch || project.defaultBranch || 'main',
+          templatePath: projPath,
+          notes: `Auto-created from project "${project.name}"`,
+        };
+        try {
+          const created = await api.createClientGitProfile(profileData) as any;
+          const profile = created?.data || created;
+          if (profile?.id) {
+            setClientGitProfiles(prev => { const next = [...prev, profile]; clientGitProfilesRef.current = next; return next; });
+            setSelectedClientGit(profile.id);
+            setClientGitInfo({name:profile.name||clientName,repoUrl:profile.repoUrl||repoUrl,branch:profile.branch||'main',templatePath:profile.templatePath||projPath});
+            toast.success('Client Git Synced', `Profile "${clientName}" auto-created from project.`);
+          }
+        } catch {
+          // If auto-create fails, fall back to filling the form manually
+          setNewClientGit(prev => ({
+            ...prev,
+            name: prev.name || clientName,
+            repoUrl: prev.repoUrl || repoUrl,
+            branch: prev.branch || info.branch || project.defaultBranch || 'main',
+            templatePath: prev.templatePath || projPath,
+          }));
+          setShowNewClientGit(true);
+        }
+      }
+
       // Step 2: Nginx — domain, root, socket ports from project settings
       const domain = s.domain||info.domain||'';
       if(domain) setNginxDomain(domain);
@@ -250,7 +414,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
       // Rate socket = wsPort - 1 (convention)
       if(sock.wsPort && !rateSocketPort) setRateSocketPort(String(Number(sock.wsPort) - 1));
 
-      // Step 4: Database — from project settings
+      // Step 4: Client Database — from project settings
       if(db.host) setDbHost(db.host);
       else if(info.dbHost) setDbHost(info.dbHost);
       if(db.port) setDbPort(db.port);
@@ -258,6 +422,13 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
       else if(info.dbName) setDbName(info.dbName);
       if(db.user) setDbUser(db.user);
       if(db.password) setDbPass(db.password);
+
+      // Source DB — auto-resolve from first db profile (same for all clients)
+      if(!sourceDbInfo && dbProfiles.length > 0) {
+        const src = dbProfiles[0];
+        setSourceDbInfo({name:src.name,host:src.host,port:String(src.port||3306),databaseName:src.databaseName||'',username:src.username||''});
+      }
+
 
       // Step 5: PM2 — auto-fill from slug
       if(slug && !pm2Name) setPm2Name(`${slug}-socket`);
@@ -277,7 +448,9 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
         crons: [],
         permissions: { user:permUser, group:permGroup, fileMode:permFile, dirMode:permDir, writablePaths:permWritable, recursive:permRecursive, folders },
         database: { host:dbHost, port:dbPort, name:dbName, user:dbUser, password:dbPass, migrate:dbMigrate, migrateCmd:dbMigrateCmd, importSql:dbImportSql, sqlPath:dbSqlPath },
+        sourceDatabase: sourceDbInfo ? { host:sourceDbInfo.host, port:sourceDbInfo.port, name:sourceDbInfo.databaseName, user:sourceDbInfo.username } : undefined,
         pm2: { name:pm2Name, script:pm2Script, interpreter:pm2Interpreter, instances:pm2Instances, autoRestart:pm2Restart, args:pm2Args },
+        sourceTemplate: sourceTemplateInfo ? { repoUrl:sourceTemplateInfo.repoUrl, branch:sourceTemplateInfo.branch } : undefined,
       });
       localStorage.removeItem('cortexo_deploy_form');
       const id = (res as any)?.data?.id || (res as any)?.id;
@@ -432,101 +605,113 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
                 <Server style={{width:'14px',height:'14px',flexShrink:0}}/><strong>{resolved.projectName}</strong> → {resolved.matchedServerName||'No server'} ({resolved.matchedServerIp||'—'})
               </div>
             )}
-            {sourceProfiles.length>0&&(
-              <div style={{padding:'12px 14px',borderRadius:'10px',backgroundColor:'rgba(99,102,241,0.06)',border:'1px solid rgba(99,102,241,0.15)'}}>
-                <label style={{...lbl,color:'#818CF8'}}>Source Profile (auto-fill repo & branch)</label>
-                <select onChange={e=>handleSourceProfile(e.target.value)} style={{...inp,fontFamily:'inherit'}}>
-                  <option value="">— Manual entry —</option>
-                  {sourceProfiles.map((p:any)=><option key={p.id} value={p.id}>{p.name} ({p.repoUrl})</option>)}
-                </select>
+            {sourceTemplateInfo && (
+              <div style={{padding:'14px 16px',borderRadius:'12px',backgroundColor:'rgba(99,102,241,0.06)',border:'1px solid rgba(99,102,241,0.15)'}}>
+                <label style={{...lbl,color:'#818CF8',margin:'0 0 10px',display:'flex',alignItems:'center',gap:'6px'}}><Copy style={{width:'12px',height:'12px'}}/> SOURCE TEMPLATE <span style={{fontWeight:400,fontSize:'10px',color:'rgb(var(--text-muted))',textTransform:'none'}}>Same for all clients</span></label>
+                <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:'8px',fontSize:'12px'}}>
+                    <span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'40px'}}>Name</span>
+                    <span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',fontWeight:600}}>{sourceTemplateInfo.name}</span>
+                  </div>
+                  <div style={{padding:'8px 12px',borderRadius:'8px',backgroundColor:'rgba(99,102,241,0.08)',fontSize:'11px',color:'rgb(var(--text-muted))',fontFamily:"'JetBrains Mono',monospace",display:'flex',flexDirection:'column',gap:'4px'}}>
+                    <div style={{display:'flex',alignItems:'center',gap:'6px'}}><GitBranch style={{width:'11px',height:'11px',color:'#818CF8',flexShrink:0}}/><span style={{color:'#818CF8',fontWeight:600}}>{sourceTemplateInfo.branch}</span></div>
+                    <div style={{wordBreak:'break-all',lineHeight:1.5,paddingLeft:'17px'}}>{sourceTemplateInfo.repoUrl}</div>
+                  </div>
+                </div>
               </div>
             )}
-            <div style={g2}>
-              <div><label style={lbl}>Branch</label><input value={branch} onChange={e=>setBranch(e.target.value)} style={inp}/></div>
-              <div><label style={lbl}>Environment</label><select value={environment} onChange={e=>setEnvironment(e.target.value)} style={{...inp,fontFamily:'inherit'}}><option value="production">Production</option><option value="staging">Staging</option><option value="development">Development</option></select></div>
+
+            {/* Client Git — read-only info from project */}
+            {clientGitInfo && (
+              <div style={{padding:'14px 16px',borderRadius:'12px',backgroundColor:'rgba(16,185,129,0.05)',border:'1px solid rgba(16,185,129,0.15)'}}>
+                <label style={{...lbl,color:'#10B981',margin:'0 0 10px',display:'flex',alignItems:'center',gap:'6px'}}><FolderPlus style={{width:'12px',height:'12px'}}/> CLIENT GIT <span style={{fontWeight:400,fontSize:'10px',color:'rgb(var(--text-muted))',textTransform:'none'}}>From project settings</span></label>
+                <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:'8px',fontSize:'12px'}}>
+                    <span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'40px'}}>Name</span>
+                    <span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',fontWeight:600}}>{clientGitInfo.name}</span>
+                  </div>
+                  <div style={{padding:'8px 12px',borderRadius:'8px',backgroundColor:'rgba(16,185,129,0.08)',fontSize:'11px',color:'rgb(var(--text-muted))',fontFamily:"'JetBrains Mono',monospace",display:'flex',flexDirection:'column',gap:'4px'}}>
+                    <div style={{display:'flex',alignItems:'center',gap:'6px'}}><GitBranch style={{width:'11px',height:'11px',color:'#10B981',flexShrink:0}}/><span style={{color:'#10B981',fontWeight:600}}>{clientGitInfo.branch}</span></div>
+                    <div style={{wordBreak:'break-all',lineHeight:1.5,paddingLeft:'17px'}}>{clientGitInfo.repoUrl}</div>
+                    {clientGitInfo.templatePath && <div style={{paddingLeft:'17px',color:'rgb(var(--text-primary))',fontWeight:500}}>{clientGitInfo.templatePath}</div>}
+                  </div>
+                </div>
+              </div>
+            )}
+            {!clientGitInfo && !resolving && selectedProject && (
+              <div style={{padding:'12px 16px',borderRadius:'12px',backgroundColor:'rgba(239,68,68,0.06)',border:'1px solid rgba(239,68,68,0.15)',fontSize:'11px',color:'#EF4444',fontWeight:600}}>
+                ⚠️ No Client Git found for this project. Add repository info in project settings.
+              </div>
+            )}
+
+            {/* Deploy Info — read-only from project settings */}
+            <div style={{padding:'14px 16px',borderRadius:'12px',backgroundColor:'rgba(251,191,36,0.04)',border:'1px solid rgba(251,191,36,0.12)'}}>
+              <label style={{...lbl,color:'#FBBF24',margin:'0 0 10px',display:'block'}}>⚙️ DEPLOY CONFIG <span style={{fontWeight:400,fontSize:'10px',color:'rgb(var(--text-muted))',textTransform:'none'}}>Auto-resolved from project</span></label>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px 16px',fontSize:'12px'}}>
+                <div style={{display:'flex',alignItems:'center',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'70px'}}>Branch</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',fontWeight:600}}>{branch || '—'}</span></div>
+                <div style={{display:'flex',alignItems:'center',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'70px'}}>Env</span><span style={{color:'#FBBF24',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',fontWeight:600,textTransform:'capitalize'}}>{environment}</span></div>
+                <div style={{display:'flex',alignItems:'center',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'70px'}}>Server</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px'}}>{serverList.find((s:any)=>s.id===serverId)?.name || '—'} {serverId ? `(${serverList.find((s:any)=>s.id===serverId)?.privateIp || ''})` : ''}</span></div>
+                <div style={{display:'flex',alignItems:'center',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'70px'}}>Health</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',wordBreak:'break-all'}}>{healthCheckUrl || '—'}</span></div>
+              </div>
+              <div style={{marginTop:'8px',display:'flex',alignItems:'center',gap:'6px',fontSize:'12px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'70px'}}>Path</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',wordBreak:'break-all'}}>{remotePath || '—'}</span></div>
             </div>
-            <div><label style={lbl}>Server</label><select value={serverId} onChange={e=>setServerId(parseInt(e.target.value))} style={{...inp,fontFamily:'inherit'}}><option value={0}>Select server...</option>{serverList.map((s:any)=><option key={s.id} value={s.id}>{s.name} ({s.privateIp})</option>)}</select></div>
-            <div><label style={lbl}>Remote Path</label><input value={remotePath} onChange={e=>setRemotePath(e.target.value)} placeholder="/var/www/html/client" style={inp}/></div>
 
-            {/* Health & Notifications */}
-            <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'rgb(var(--primary))',margin:'6px 0 0',borderTop:'1px solid rgb(var(--border))',paddingTop:'14px'}}>Health & Notifications</p>
-            <div><label style={lbl}>Health Check URL</label><input value={healthCheckUrl} onChange={e=>setHealthCheckUrl(e.target.value)} placeholder="https://your-app.com/api/health" style={inp}/></div>
-            <Toggle checked={notifyOnComplete} onChange={setNotifyOnComplete} label="Send email notification on complete"/>
-            <Toggle checked={truncateLogs} onChange={setTruncateLogs} label="Truncate logs on deploy"/>
-            {truncateLogs && (
-              <div style={{marginTop:'8px'}}>
-                <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'#F59E0B',margin:'0 0 6px',display:'flex',alignItems:'center',gap:'6px'}}>
-                  ⚡ Log Cleanup Preview
-                  <span style={{fontSize:'9px',fontWeight:500,color:'rgb(var(--text-muted))',textTransform:'none',letterSpacing:0}}>— executed after deployment</span>
-                </p>
-                <pre style={{margin:0,padding:'12px 14px',borderRadius:'8px',backgroundColor:'rgba(0,0,0,0.2)',border:'1px solid rgba(245,158,11,0.2)',fontSize:'11px',fontFamily:"'JetBrains Mono',monospace",color:'rgb(var(--text-primary))',overflowX:'auto',whiteSpace:'pre-wrap',lineHeight:1.7}}>
-{`# ===========================
-# Truncate all log files
-# ===========================
-
-# Laravel logs
-> ${remotePath || '/var/www/html/<slug>'}/lmxtrade/winbullliteapi/storage/logs/lumen.log
-
-# CodeIgniter logs (truncate data, keep files)
-find ${remotePath || '/var/www/html/<slug>'}/application/logs -name 'log-*.php' -exec truncate -s 0 {} +
-
-# Admin logs (truncate data, keep files)
-find ${remotePath || '/var/www/html/<slug>'}/admin/application/logs -name 'log-*.php' -exec truncate -s 0 {} +
-
-# Laravel cache & sessions (safe to remove, framework regenerates)
-rm -rf ${remotePath || '/var/www/html/<slug>'}/lmxtrade/winbullliteapi/storage/framework/cache/data/*
-rm -rf ${remotePath || '/var/www/html/<slug>'}/lmxtrade/winbullliteapi/storage/framework/sessions/*
-rm -rf ${remotePath || '/var/www/html/<slug>'}/lmxtrade/winbullliteapi/storage/framework/views/*
-
-# PM2 logs
+            {/* Log Cleanup Preview — always active */}
+            <div style={{marginTop:'4px'}}>
+              <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'#F59E0B',margin:'0 0 6px',display:'flex',alignItems:'center',gap:'6px'}}>
+                ⚡ Log Cleanup <span style={{fontSize:'9px',fontWeight:500,color:'rgb(var(--text-muted))',textTransform:'none',letterSpacing:0}}>— auto-executed on every deploy</span>
+              </p>
+              <pre style={{margin:0,padding:'12px 14px',borderRadius:'8px',backgroundColor:'rgba(0,0,0,0.2)',border:'1px solid rgba(245,158,11,0.12)',fontSize:'10px',fontFamily:"'JetBrains Mono',monospace",color:'rgb(var(--text-muted))',overflowX:'auto',whiteSpace:'pre-wrap',lineHeight:1.6,maxHeight:'180px',overflow:'auto'}}>
+{`> ${remotePath || '<path>'}/lmxtrade/winbullliteapi/storage/logs/lumen.log
+find ${remotePath || '<path>'}/application/logs -name 'log-*.php' -exec truncate -s 0 {} +
+find ${remotePath || '<path>'}/admin/application/logs -name 'log-*.php' -exec truncate -s 0 {} +
+rm -rf ${remotePath || '<path>'}/lmxtrade/winbullliteapi/storage/framework/{cache,sessions,views}/*
 pm2 flush ${(remotePath || '').split('/').pop() || '<slug>'}-ws
 pm2 flush ${(remotePath || '').split('/').pop() || '<slug>'}-socketio`}
-                </pre>
-              </div>
-            )}
+              </pre>
+            </div>
           </>)}
 
           {step===1&&(<>
-            {/* Server basics */}
-            <div style={g2}>
-              <div><label style={lbl}>Server Name (Domain)</label><input value={nginxDomain} onChange={e=>setNginxDomain(e.target.value)} placeholder="www.maharajgoldsmith.com" style={inp}/></div>
-              <div><label style={lbl}>Listen Port</label><input value={nginxPort} onChange={e=>setNginxPort(e.target.value)} placeholder="80" style={inp}/></div>
-            </div>
-            <div style={g2}>
-              <div style={{gridColumn:'1 / -1'}}><label style={lbl}>Document Root</label><input value={nginxRoot} onChange={e=>setNginxRoot(e.target.value)} placeholder="/var/www/html/maharaj" style={inp}/></div>
-            </div>
-
-            {/* Socket proxies */}
-            <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'rgb(var(--primary))',margin:'6px 0 0',borderTop:'1px solid rgb(var(--border))',paddingTop:'14px'}}>Socket Proxies</p>
-            <div style={g3}>
-              <div><label style={lbl}>Main Socket Port</label><input value={socketPort} onChange={e=>setSocketPort(e.target.value)} placeholder="7124" style={inp}/></div>
-              <div><label style={lbl}>Rate Socket Port</label><input value={rateSocketPort} onChange={e=>setRateSocketPort(e.target.value)} placeholder="57123" style={inp}/></div>
-              <div><label style={lbl}>WebSocket Port</label><input value={wsPort} onChange={e=>setWsPort(e.target.value)} placeholder="57124" style={inp}/></div>
-            </div>
-            <div style={{padding:'10px 12px',borderRadius:'8px',backgroundColor:'rgba(59,130,246,0.06)',border:'1px solid rgba(59,130,246,0.15)',fontSize:'11px',color:'rgb(var(--text-muted))',lineHeight:1.6,fontFamily:"'JetBrains Mono',monospace"}}>
-              {socketPort && <div>/socket.io/ → localhost:{socketPort}</div>}
-              {rateSocketPort && <div>/ratesocket/ → localhost:{rateSocketPort}</div>}
-              {wsPort && <div>/ws → 127.0.0.1:{wsPort}</div>}
-              {!socketPort && !rateSocketPort && !wsPort && <div style={{opacity:0.5}}>Enter ports to preview proxy routes</div>}
+            {/* Nginx Config — read-only from project settings */}
+            <div style={{padding:'14px 16px',borderRadius:'12px',backgroundColor:'rgba(59,130,246,0.04)',border:'1px solid rgba(59,130,246,0.12)'}}>
+              <label style={{...lbl,color:'#3B82F6',margin:'0 0 10px',display:'block'}}>🌐 NGINX CONFIG <span style={{fontWeight:400,fontSize:'10px',color:'rgb(var(--text-muted))',textTransform:'none'}}>Auto-resolved from project</span></label>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px 16px',fontSize:'12px'}}>
+                <div style={{display:'flex',alignItems:'center',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'70px'}}>Domain</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',fontWeight:600,wordBreak:'break-all'}}>{nginxDomain || '—'}</span></div>
+                <div style={{display:'flex',alignItems:'center',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'70px'}}>Port</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px'}}>{nginxPort || '80'}</span></div>
+              </div>
+              <div style={{marginTop:'8px',display:'flex',alignItems:'center',gap:'6px',fontSize:'12px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'70px'}}>Root</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',wordBreak:'break-all'}}>{nginxRoot || '—'}</span></div>
             </div>
 
-            {/* SSL */}
-            <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'rgb(var(--primary))',margin:'6px 0 0',borderTop:'1px solid rgb(var(--border))',paddingTop:'14px'}}>SSL (Optional)</p>
-            <div style={g2}>
-              <div><label style={lbl}>SSL Certificate Path</label><input value={sslCert} onChange={e=>setSslCert(e.target.value)} placeholder="/etc/ssl/certs/domain.pem" style={inp}/></div>
-              <div><label style={lbl}>SSL Key Path</label><input value={sslKey} onChange={e=>setSslKey(e.target.value)} placeholder="/etc/ssl/private/domain.key" style={inp}/></div>
+            {/* Socket Proxies — read-only */}
+            <div style={{padding:'14px 16px',borderRadius:'12px',backgroundColor:'rgba(16,185,129,0.04)',border:'1px solid rgba(16,185,129,0.12)'}}>
+              <label style={{...lbl,color:'#10B981',margin:'0 0 10px',display:'block'}}>🔌 SOCKET PROXIES <span style={{fontWeight:400,fontSize:'10px',color:'rgb(var(--text-muted))',textTransform:'none'}}>Port mapping</span></label>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'8px',fontSize:'12px'}}>
+                <div style={{display:'flex',flexDirection:'column',gap:'2px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase'}}>Socket</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',fontWeight:600}}>{socketPort || '—'}</span></div>
+                <div style={{display:'flex',flexDirection:'column',gap:'2px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase'}}>Rate</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',fontWeight:600}}>{rateSocketPort || '—'}</span></div>
+                <div style={{display:'flex',flexDirection:'column',gap:'2px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase'}}>WS</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',fontWeight:600}}>{wsPort || '—'}</span></div>
+              </div>
             </div>
 
-            <Toggle checked={nginxAutoGen} onChange={setNginxAutoGen} label="Auto-generate nginx config file on deploy"/>
+            {/* SSL — read-only */}
+            {(sslCert || sslKey) && (
+              <div style={{padding:'14px 16px',borderRadius:'12px',backgroundColor:'rgba(251,191,36,0.04)',border:'1px solid rgba(251,191,36,0.12)'}}>
+                <label style={{...lbl,color:'#FBBF24',margin:'0 0 10px',display:'block'}}>🔒 SSL</label>
+                <div style={{display:'flex',flexDirection:'column',gap:'4px',fontSize:'12px'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'40px'}}>Cert</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',wordBreak:'break-all'}}>{sslCert || '—'}</span></div>
+                  <div style={{display:'flex',alignItems:'center',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'40px'}}>Key</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',wordBreak:'break-all'}}>{sslKey || '—'}</span></div>
+                </div>
+              </div>
+            )}
 
-            {/* Live Nginx Config Preview */}
+            {/* Nginx Config Preview */}
             {(nginxDomain || nginxRoot) && (
-              <div style={{marginTop:'8px'}}>
+              <div>
                 <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'#A855F7',margin:'0 0 6px',display:'flex',alignItems:'center',gap:'6px'}}>
                   ⚡ Nginx Config Preview
-                  <span style={{fontSize:'9px',fontWeight:500,color:'rgb(var(--text-muted))',textTransform:'none',letterSpacing:0}}>— auto-generated from above fields</span>
+                  <span style={{fontSize:'9px',fontWeight:500,color:'rgb(var(--text-muted))',textTransform:'none',letterSpacing:0}}>— auto-generated on deploy</span>
                 </p>
-                <pre style={{margin:0,padding:'12px 14px',borderRadius:'8px',backgroundColor:'rgba(0,0,0,0.2)',border:'1px solid rgba(168,85,247,0.2)',fontSize:'11px',fontFamily:"'JetBrains Mono',monospace",color:'rgb(var(--text-primary))',overflowX:'auto',whiteSpace:'pre-wrap',lineHeight:1.7}}>
+                <pre style={{margin:0,padding:'12px 14px',borderRadius:'8px',backgroundColor:'rgba(0,0,0,0.2)',border:'1px solid rgba(168,85,247,0.15)',fontSize:'10px',fontFamily:"'JetBrains Mono',monospace",color:'rgb(var(--text-muted))',overflowX:'auto',whiteSpace:'pre-wrap',lineHeight:1.6,maxHeight:'250px',overflow:'auto'}}>
 {`server {
     listen ${nginxPort || '80'};
     server_name ${nginxDomain || '<domain>'};
@@ -534,65 +719,35 @@ pm2 flush ${(remotePath || '').split('/').pop() || '<slug>'}-socketio`}
     root ${nginxRoot || '<document-root>'};
     index index.php index.html;
 ${socketPort ? `
-    # Main Socket (port ${socketPort})
     location /socket.io/ {
         proxy_pass http://localhost:${socketPort};
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_cache_bypass $http_upgrade;
         proxy_read_timeout 86400;
     }
 ` : ''}${rateSocketPort ? `
-    # Rate Socket (port ${rateSocketPort})
     location /ratesocket/ {
         proxy_pass http://localhost:${rateSocketPort};
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_cache_bypass $http_upgrade;
         proxy_read_timeout 86400;
     }
 ` : ''}${wsPort ? `
-    # Native WebSocket (port ${wsPort})
     location /ws {
         proxy_pass http://127.0.0.1:${wsPort};
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
         proxy_read_timeout 86400;
-        proxy_send_timeout 86400;
-        proxy_buffering off;
     }
 ` : ''}
-    # Admin Panel
-    location /admin/ {
-        try_files $uri $uri/ /admin/index.php?$query_string;
-    }
-
-    # CodeIgniter routing
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-
-    # Mobile API
-    location /mobileapi/ {
-        try_files $uri $uri/ /mobileapi/index.php?$query_string;
-    }
-
-    # Laravel
-    location /lmxtrade/winbullliteapi/ {
-        try_files $uri $uri/ /lmxtrade/winbullliteapi/index.php?$query_string;
-    }
-
-    location ~ /\\.ht {
-        deny all;
-    }
+    location /admin/ { try_files $uri $uri/ /admin/index.php?$query_string; }
+    location / { try_files $uri $uri/ /index.php?$query_string; }
+    location /mobileapi/ { try_files $uri $uri/ /mobileapi/index.php?$query_string; }
+    location /lmxtrade/winbullliteapi/ { try_files $uri $uri/ /lmxtrade/winbullliteapi/index.php?$query_string; }
+    location ~ /\\.ht { deny all; }
 }`}
                 </pre>
               </div>
@@ -600,23 +755,29 @@ ${socketPort ? `
           </>)}
 
           {step===2&&(<>
-            {dbProfiles.length>0&&(
-              <div style={{padding:'12px 14px',borderRadius:'10px',backgroundColor:'rgba(236,72,153,0.06)',border:'1px solid rgba(236,72,153,0.15)'}}>
-                <label style={{...lbl,color:'#EC4899'}}>DB Profile (auto-fill host, port, user, password)</label>
-                <select onChange={e=>handleDbProfile(e.target.value)} style={{...inp,fontFamily:'inherit'}}>
-                  <option value="">— Manual entry —</option>
-                  {dbProfiles.map((p:any)=><option key={p.id} value={p.id}>{p.name} ({p.host}:{p.port})</option>)}
-                </select>
+            {/* Source DB — read-only info from Base Templates */}
+            {sourceDbInfo && (
+              <div style={{padding:'14px 16px',borderRadius:'10px',backgroundColor:'rgba(168,85,247,0.06)',border:'1px solid rgba(168,85,247,0.15)'}}>
+                <label style={{...lbl,color:'#A855F7',margin:'0 0 10px'}}>📦 SOURCE DB <span style={{fontWeight:400,fontSize:'10px',color:'rgb(var(--text-muted))',textTransform:'none'}}>Template database (clone from here)</span></label>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'6px 16px',fontSize:'12px'}}>
+                  <div style={{display:'flex',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'40px'}}>Name</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px'}}>{sourceDbInfo.name}</span></div>
+                  <div style={{display:'flex',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'40px'}}>DB</span><span style={{color:'#A855F7',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',fontWeight:600}}>{sourceDbInfo.databaseName || '—'}</span></div>
+                  <div style={{display:'flex',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'40px'}}>Host</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',wordBreak:'break-all'}}>{sourceDbInfo.host}</span></div>
+                  <div style={{display:'flex',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'40px'}}>User</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px'}}>{sourceDbInfo.username} • Port {sourceDbInfo.port}</span></div>
+                </div>
               </div>
             )}
-            <div style={g3}>
-              <div><label style={lbl}>DB Host</label><input value={dbHost} onChange={e=>setDbHost(e.target.value)} placeholder="localhost" style={inp}/></div>
-              <div><label style={lbl}>DB Port</label><input value={dbPort} onChange={e=>setDbPort(e.target.value)} style={inp}/></div>
-              <div><label style={lbl}>DB Name</label><input value={dbName} onChange={e=>setDbName(e.target.value)} style={inp}/></div>
-            </div>
-            <div style={g2}>
-              <div><label style={lbl}>DB User</label><input value={dbUser} onChange={e=>setDbUser(e.target.value)} style={inp}/></div>
-              <div><label style={lbl}>DB Password</label><input type="password" value={dbPass} onChange={e=>setDbPass(e.target.value)} style={inp}/></div>
+
+            {/* Client DB — read-only from project settings */}
+            <div style={{padding:'14px 16px',borderRadius:'12px',backgroundColor:'rgba(34,211,238,0.04)',border:'1px solid rgba(34,211,238,0.12)'}}>
+              <label style={{...lbl,color:'#22D3EE',margin:'0 0 10px',display:'block'}}>🗄️ CLIENT DB <span style={{fontWeight:400,fontSize:'10px',color:'rgb(var(--text-muted))',textTransform:'none'}}>Auto-resolved from project</span></label>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px 16px',fontSize:'12px'}}>
+                <div style={{display:'flex',alignItems:'center',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'60px'}}>Host</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px'}}>{dbHost || '—'}</span></div>
+                <div style={{display:'flex',alignItems:'center',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'60px'}}>Port</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px'}}>{dbPort || '3306'}</span></div>
+                <div style={{display:'flex',alignItems:'center',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'60px'}}>DB Name</span><span style={{color:'#22D3EE',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',fontWeight:600}}>{dbName || '—'}</span></div>
+                <div style={{display:'flex',alignItems:'center',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'60px'}}>User</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px'}}>{dbUser || '—'}</span></div>
+              </div>
+              <div style={{marginTop:'8px',display:'flex',alignItems:'center',gap:'6px',fontSize:'12px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'60px'}}>Pass</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px'}}>{dbPass ? '••••••••' : '—'}</span></div>
             </div>
 
             {/* Live Database Setup Preview */}
@@ -628,15 +789,15 @@ ${socketPort ? `
                 </p>
                 <pre style={{margin:0,padding:'12px 14px',borderRadius:'8px',backgroundColor:'rgba(0,0,0,0.2)',border:'1px solid rgba(236,72,153,0.2)',fontSize:'11px',fontFamily:"'JetBrains Mono',monospace",color:'rgb(var(--text-primary))',overflowX:'auto',whiteSpace:'pre-wrap',lineHeight:1.7,maxHeight:'400px',overflow:'auto'}}>
 {`-- ========================
--- Phase 1: Create Database
+-- Phase 1: Create Client Database
 -- ========================
 CREATE DATABASE IF NOT EXISTS \`${dbName}\`
   CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- ========================
--- Phase 2: Import Base Schema
+-- Phase 2: Clone from Source DB
 -- ========================
--- mysqldump -h ${dbHost || '<host>'} -u ${dbUser || '<user>'} winbullSource | mysql ${dbName}
+-- mysqldump -h ${sourceDbInfo?.host || '<source_host>'} -u ${sourceDbInfo?.username || '<source_user>'} ${sourceDbInfo?.databaseName || '<source_db>'} | mysql -h ${dbHost || '<client_host>'} -u ${dbUser || '<client_user>'} ${dbName}
 
 -- ========================
 -- Phase 3: Truncate & Configure
@@ -720,7 +881,7 @@ UPDATE dt_whatsapp_settings SET
           </>)}
 
           {step===3&&(<>
-            <Toggle checked={pm2Restart} onChange={setPm2Restart} label="Auto-restart process on deploy"/>
+
 
             {/* Live PM2 Preview */}
             <div style={{marginTop:'8px'}}>
@@ -746,9 +907,10 @@ pm2 save`}
               environment={environment} serverId={serverId} serverList={serverList}
               remotePath={remotePath} healthCheckUrl={healthCheckUrl}
               nginxDomain={nginxDomain} nginxPort={nginxPort} nginxRoot={nginxRoot}
-              phpVer={phpVer} socketPort={socketPort} wsPort={wsPort} sslCert={sslCert}
-              crons={[]} dbHost={dbHost} dbPort={dbPort} dbName={dbName}
+              phpVer={phpVer} socketPort={socketPort} rateSocketPort={rateSocketPort} wsPort={wsPort} sslCert={sslCert}
+              dbHost={dbHost} dbPort={dbPort} dbName={dbName}
               dbUser={dbUser} dbMigrate={dbMigrate} dbMigrateCmd={dbMigrateCmd}
+              sourceDbInfo={sourceDbInfo}
               pm2Restart={pm2Restart}
               permUser={permUser} permGroup={permGroup} permFile={permFile}
               permDir={permDir} folders={folders} permWritable={permWritable}

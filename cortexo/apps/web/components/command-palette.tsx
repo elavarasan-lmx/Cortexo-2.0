@@ -4,11 +4,10 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation';
 import {
   Search, LayoutDashboard, FolderGit2, GitBranch, Rocket,
-  Bug, Server, Settings, ScrollText,
+  Bug, Server, Settings,
   FileCode, History,
   Activity, Wifi, ClipboardCheck,
   FlaskConical, ShieldCheck, Boxes,
-  Heart, Command,
 } from 'lucide-react';
 
 interface PaletteItem {

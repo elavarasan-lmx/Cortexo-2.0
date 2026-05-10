@@ -174,6 +174,9 @@ export interface Server {
   host: string;
   port: number;
   username: string;
+  privateIp?: string;
+  publicAddress?: string;
+  sshKey?: string;
   status?: string;
   createdAt?: string;
 }
@@ -224,19 +227,6 @@ export interface AuthResponse {
   token: string;
   refreshToken: string;
   user: AuthUser;
-}
-
-export interface SyncHistory {
-  id: number;
-  status: string;
-  startedAt: string;
-  completedAt?: string;
-}
-
-export interface SyncClient {
-  id: string;
-  name: string;
-  environment: string;
 }
 
 // ─── API Client ─────────────────────────────────────────────────────────────
@@ -316,16 +306,19 @@ class ApiClient {
     environment: string;
     serverId?: number;
     deployTargetId?: string;
-    remotePath: string;
+    remotePath?: string;
     preDeployCmd?: string;
     postDeployCmd?: string;
     healthCheckUrl?: string;
     notifyOnComplete?: boolean;
+    truncateLogs?: boolean;
     nginx?: Record<string, unknown>;
     crons?: { schedule: string; command: string }[];
     permissions?: Record<string, unknown>;
     database?: Record<string, unknown>;
+    sourceDatabase?: Record<string, unknown>;
     pm2?: Record<string, unknown>;
+    sourceTemplate?: { repoUrl: string; branch: string };
   })                                                 { return this.request<{ id: string; status: string }>('POST', '/deployments', data); }
   rollbackDeployment(id: string)                     { return this.request<Deployment>('POST', `/deployments/${id}/rollback`); }
   deleteDeployment(id: string)                       { return this.request<{ success: boolean }>('DELETE', `/deployments/${id}`); }
@@ -384,101 +377,6 @@ class ApiClient {
   batchUpdateWinbull(data: { slugs: string[]; updates: Partial<WinbullConfig> }) { return this.request<{ updated: number }>('POST', '/winbull/batch/update', data); }
   getWinbullStats()                                  { return this.request<Record<string, number>>('GET', '/winbull/stats/summary'); }
   getWinbullChangelog(limit?: number)                { return this.request<AuditLog[]>('GET', `/winbull/changelog${limit ? `?limit=${limit}` : ''}`); }
-
-  // ─── Source Registry ──────────────────────────────────────────────────────
-  getSources()                                       { return this.request<Record<string, unknown>[]>('GET', '/sources'); }
-  getSource(slug: string)                            { return this.request<Record<string, unknown>>('GET', `/sources/${slug}`); }
-  createSource(data: Record<string, unknown>)        { return this.request<Record<string, unknown>>('POST', '/sources', data); }
-  getSourceSchema(slug: string)                      { return this.request<Record<string, unknown>>('GET', `/sources/${slug}/schema`); }
-  getSourceManifest(slug: string)                    { return this.request<Record<string, unknown>>('GET', `/sources/${slug}/manifest`); }
-
-  // ─── Client Configs ────────────────────────────────────────────────────────
-  getClientConfigs(params?: { sourceId?: number; status?: string; limit?: number }) {
-    const qs = params ? '?' + new URLSearchParams(Object.entries(params).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)])).toString() : '';
-    return this.request<Record<string, unknown>[]>('GET', `/client-configs${qs}`);
-  }
-  getClientConfig(slug: string)                      { return this.request<Record<string, unknown>>('GET', `/client-configs/${slug}`); }
-  createClientConfig(data: Record<string, unknown>)  { return this.request<Record<string, unknown>>('POST', '/client-configs', data); }
-  updateClientConfig(slug: string, data: Record<string, unknown>) { return this.request<Record<string, unknown>>('PUT', `/client-configs/${slug}`, data); }
-  deleteClientConfig(slug: string)                   { return this.request<{ success: boolean }>('DELETE', `/client-configs/${slug}`); }
-  cloneClientConfig(slug: string, data: { newSlug: string; newDisplayName: string; newDomain?: string }) {
-    return this.request<Record<string, unknown>>('POST', `/client-configs/${slug}/clone`, data);
-  }
-  renderClientConfig(slug: string)                   { return this.request<{ rendered: string; clientSlug: string; sourceVersion: string }>('GET', `/client-configs/${slug}/render`); }
-  validateClientConfig(data: { sourceSlug: string; configData: Record<string, unknown> }) {
-    return this.request<{ valid: boolean; errors?: string[] }>('POST', '/client-configs/validate', data);
-  }
-  getClientConfigHistory(slug: string, limit?: number) {
-    return this.request<Record<string, unknown>[]>('GET', `/client-configs/${slug}/history${limit ? `?limit=${limit}` : ''}`);
-  }
-  getClientConfigStats()                             { return this.request<Record<string, number>>('GET', '/client-configs/stats/summary'); }
-
-  // ─── Drift Detection ──────────────────────────────────────────────────────
-  scanClientDrift(slug: string, sshData: { host: string; username: string; port?: number; privateKey?: string; password?: string; remotePath: string }) {
-    return this.request<{ status: string; driftedFiles: number; totalFiles: number; details: Record<string, unknown>[] }>('POST', `/client-configs/${slug}/scan-drift`, sshData);
-  }
-  getClientDriftReport(slug: string)                 { return this.request<Record<string, unknown>>('GET', `/client-configs/${slug}/drift-report`); }
-  getClientDriftHistory(slug: string, limit?: number) {
-    return this.request<Record<string, unknown>[]>('GET', `/client-configs/${slug}/drift-history${limit ? `?limit=${limit}` : ''}`);
-  }
-
-  // ─── Health Checks ───────────────────────────────────────────────────────
-  runHealthCheckAll()                                { return this.request<{ results: { url: string; status: number; ok: boolean; responseTimeMs: number }[] }>('POST', '/health/check-all'); }
-  checkSingleUrl(url: string)                       { return this.request<{ url: string; status: number; ok: boolean; responseTimeMs: number }>('POST', '/health/check-url', { url }); }
-  controlHealthScheduler(action: 'start' | 'stop', intervalMinutes?: number) {
-    return this.request<{ action: string; intervalMinutes?: number; status: string }>('POST', '/health/scheduler', { action, intervalMinutes });
-  }
-
-  // ─── DB Schema Validation ────────────────────────────────────────────────
-  validateClientSchema(slug: string, data: {
-    goldenHost: string; goldenUsername: string; goldenPort?: number; goldenKey?: string; goldenPassword?: string; goldenDb: string;
-    clientHost: string; clientUsername: string; clientPort?: number; clientKey?: string; clientPassword?: string; clientDb: string;
-  }) {
-    return this.request<{ match: boolean; missingTables: string[]; extraTables: string[]; columnDiffs: Record<string, { missing: string[]; extra: string[] }> }>('POST', `/client-configs/${slug}/validate-schema`, data);
-  }
-
-  // ─── Log Aggregation ─────────────────────────────────────────────────────
-  tailClientLogs(slug: string, sshData: { host: string; username: string; port?: number; privateKey?: string; password?: string; logPath?: string; lines?: number }) {
-    return this.request<{ lines: string[]; total: number }>('POST', `/client-configs/${slug}/tail-logs`, sshData);
-  }
-
-  // ─── Fix Propagation ─────────────────────────────────────────────────────
-  prepareSourceUpdate(sourceSlug: string)            { return this.request<{ ready: boolean; changes: string[]; version: string }>('GET', `/sources/${sourceSlug}/prepare-update`); }
-  deployClientUpdate(slug: string, sshData: { host: string; username: string; port?: number; privateKey?: string; password?: string; remotePath: string }) {
-    return this.request<{ success: boolean; filesUpdated: number; status: string }>('POST', `/client-configs/${slug}/deploy-update`, sshData);
-  }
-  saveSourceCheckpoint(sourceSlug: string)           { return this.request<{ success: boolean; version: string }>('POST', `/sources/${sourceSlug}/checkpoint`); }
-
-  // ─── Module Testing ──────────────────────────────────────────────────────
-  discoverModules(sourceSlug: string)                { return this.request<{ modules: { controller: string; path: string }[] }>('GET', `/sources/${sourceSlug}/modules`); }
-  testSingleModule(data: { clientSlug: string; clientUrl: string; sourceSlug: string; controller: string; sessionCookie?: string }) {
-    return this.request<{ controller: string; url: string; status: number; ok: boolean; responseTimeMs: number }>('POST', '/module-test/single', data);
-  }
-  testAllModules(data: { clientSlug: string; clientUrl: string; sourceSlug: string; sessionCookie?: string; layer?: 'admin' | 'web' }) {
-    return this.request<{ results: { controller: string; url: string; status: number; ok: boolean; responseTimeMs: number }[]; summary: { total: number; passed: number; failed: number } }>('POST', '/module-test/full', data);
-  }
-
-  // ─── Source Sync ──────────────────────────────────────────────────────────
-  getSyncHistory(params?: { status?: string; limit?: number }) {
-    const qs = params ? '?' + new URLSearchParams(Object.entries(params).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)])).toString() : '';
-    return this.request<SyncHistory[]>('GET', `/sync${qs}`);
-  }
-  triggerSync(data: { clientId: string; branch?: string })     { return this.request<SyncHistory>('POST', '/sync/trigger', data); }
-  getSyncClients()                                   { return this.request<SyncClient[]>('GET', '/sync/clients'); }
-  createSyncClient(data: Partial<SyncClient>)        { return this.request<SyncClient>('POST', '/sync/clients', data); }
-  getSyncExcludeRules()                              { return this.request<{ id: number; pattern: string; is_active: boolean }[]>('GET', '/sync/exclude-rules'); }
-  createSyncExcludeRule(data: { pattern: string })   { return this.request<{ id: number }>('POST', '/sync/exclude-rules', data); }
-  toggleSyncExcludeRule(id: number, active: boolean) { return this.request<{ success: boolean }>('PATCH', `/sync/exclude-rules/${id}`, { is_active: active }); }
-  deleteSyncExcludeRule(id: number)                  { return this.request<{ success: boolean }>('DELETE', `/sync/exclude-rules/${id}`); }
-  getDivergenceLatest()                              { return this.request<Record<string, unknown>>('GET', '/sync/analyze/latest'); }
-  getDivergence(clientId: string)                    { return this.request<Record<string, unknown>>('GET', `/sync/analyze/${clientId}`); }
-  getSyncDeployments(params?: { environment?: string; status?: string }) {
-    const qs = params ? '?' + new URLSearchParams(Object.entries(params).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)])).toString() : '';
-    return this.request<Deployment[]>('GET', `/sync/deployments${qs}`);
-  }
-  createSyncDeploy(data: { clientId: string; environment: string }) { return this.request<Deployment>('POST', '/sync/deploy', data); }
-  approveSyncDeploy(id: number)                      { return this.request<{ success: boolean }>('POST', `/sync/approvals/${id}/approve`); }
-  rejectSyncDeploy(id: number, reason?: string)      { return this.request<{ success: boolean }>('POST', `/sync/approvals/${id}/reject`, { reason }); }
 
   // ─── Servers ──────────────────────────────────────────────────────────────
   getServers()                                       { return this.request<Server[]>('GET', '/servers'); }
@@ -567,16 +465,6 @@ class ApiClient {
   updateMemberRole(id: string, role: string)         { return this.request<Record<string, unknown>>('PUT', `/org/members/${id}/role`, { role }); }
   removeMember(id: string)                           { return this.request<{ success: boolean }>('DELETE', `/org/members/${id}`); }
 
-  // ─── AI Agents ────────────────────────────────────────────────────────────
-  getAgents()                                        { return this.request<Record<string, unknown>[]>('GET', '/agents'); }
-  getAgent(id: string)                               { return this.request<Record<string, unknown>>('GET', `/agents/${id}`); }
-  createAgent(data: Record<string, unknown>)         { return this.request<Record<string, unknown>>('POST', '/agents', data); }
-  updateAgent(id: string, data: Record<string, unknown>) { return this.request<Record<string, unknown>>('PUT', `/agents/${id}`, data); }
-  deleteAgent(id: string)                            { return this.request<{ success: boolean }>('DELETE', `/agents/${id}`); }
-  getAgentRuns(id: string, limit?: number)           { return this.request<Record<string, unknown>[]>('GET', `/agents/${id}/runs${limit ? `?limit=${limit}` : ''}`); }
-  triggerAgentRun(id: string, input?: Record<string, unknown>) { return this.request<Record<string, unknown>>('POST', `/agents/${id}/run`, { input }); }
-  getAgentStats()                                    { return this.request<{ totalAgents: number; activeNow: number; totalRuns: number; avgAccuracy: string }>('GET', '/agents/stats'); }
-
   // ─── Audit Trail ──────────────────────────────────────────────────────────
   getAuditLogs(params?: Record<string, string>) {
     const qs = params ? '?' + new URLSearchParams(params).toString() : '';
@@ -658,29 +546,6 @@ class ApiClient {
     return this.request<{ success: boolean; slug: string; steps: Array<{ step: string; status: string; output?: string; error?: string; duration?: number }>; summary: { total: number; success: number; failed: number; skipped: number } }>('POST', '/winbull/deploy', data);
   }
 
-  // ─── Cron Jobs ────────────────────────────────────────────────────────────
-  getCronJobs(params?: Record<string, string>) {
-    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    return this.request<Record<string, unknown>[]>('GET', `/cron-jobs${qs}`);
-  }
-  getCronJob(id: string)                               { return this.request<Record<string, unknown>>('GET', `/cron-jobs/${id}`); }
-  createCronJob(data: Record<string, unknown>)         { return this.request<Record<string, unknown>>('POST', '/cron-jobs', data); }
-  updateCronJob(id: string, data: Record<string, unknown>) { return this.request<Record<string, unknown>>('PUT', `/cron-jobs/${id}`, data); }
-  deleteCronJob(id: string)                            { return this.request<{ success: boolean }>('DELETE', `/cron-jobs/${id}`); }
-  runCronJob(id: string)                               { return this.request<Record<string, unknown>>('POST', `/cron-jobs/${id}/run`); }
-  getCronExecutions(jobId: string, params?: Record<string, string>) {
-    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    return this.request<Record<string, unknown>[]>('GET', `/cron-jobs/${jobId}/executions${qs}`);
-  }
-
-  // ─── Analytics ────────────────────────────────────────────────────────────
-  getAnalyticsSummary()                                { return this.request<Record<string, unknown>>('GET', '/analytics/summary'); }
-  getAnalyticsDaily(days?: number)                     { return this.request<Record<string, unknown>[]>('GET', `/analytics/daily${days ? `?days=${days}` : ''}`); }
-  getAnalyticsErrorTrends(days?: number)               { return this.request<Record<string, unknown>[]>('GET', `/analytics/errors/trends${days ? `?days=${days}` : ''}`); }
-  getAnalyticsServerUsage()                            { return this.request<Record<string, unknown>[]>('GET', '/analytics/servers/usage'); }
-  getAnalyticsDeployFrequency()                        { return this.request<Record<string, unknown>[]>('GET', '/analytics/deployments/frequency'); }
-  getAnalyticsHealthScore()                            { return this.request<Record<string, unknown>>('GET', '/analytics/health-score'); }
-
   // ─── Alert Channels ──────────────────────────────────────────────────────
   getAlertChannels()                                   { return this.request<Record<string, unknown>[]>('GET', '/alert-channels'); }
   createAlertChannel(data: Record<string, unknown>)    { return this.request<Record<string, unknown>>('POST', '/alert-channels', data); }
@@ -693,53 +558,6 @@ class ApiClient {
     const qs = params ? '?' + new URLSearchParams(params).toString() : '';
     return this.request<Record<string, unknown>[]>('GET', `/alert-history${qs}`);
   }
-
-  // ─── Deprecation Scanner ─────────────────────────────────────────────────
-  getDeprecationResults(params?: Record<string, string>) {
-    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    return this.request<Record<string, unknown>[]>('GET', `/deprecation/results${qs}`);
-  }
-  getDeprecationSummary()                              { return this.request<Record<string, unknown>>('GET', '/deprecation/summary'); }
-  triggerDeprecationScan(data: { projectId: number; type?: string }) { return this.request<{ scanId: string }>('POST', '/deprecation/scan', data); }
-  suppressDeprecation(id: string, data?: { reason?: string; until?: string }) { return this.request<{ success: boolean }>('POST', `/deprecation/${id}/suppress`, data); }
-  getDeprecationScans(params?: Record<string, string>) {
-    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    return this.request<Record<string, unknown>[]>('GET', `/deprecation/scans${qs}`);
-  }
-
-  // ─── AI Judge Scores ─────────────────────────────────────────────────────
-  getJudgeScores(params?: Record<string, string>) {
-    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    return this.request<Record<string, unknown>[]>('GET', `/judge-scores${qs}`);
-  }
-  getJudgeScore(id: string)                            { return this.request<Record<string, unknown>>('GET', `/judge-scores/${id}`); }
-  submitJudgeScore(data: Record<string, unknown>)      { return this.request<Record<string, unknown>>('POST', '/judge-scores', data); }
-  getJudgeScoreStats()                                 { return this.request<Record<string, unknown>>('GET', '/judge-scores/stats/aggregate'); }
-  triggerJudgeScore(data: { targetType: string; targetId: string }) { return this.request<{ jobId: string }>('POST', '/judge-scores/trigger', data); }
-
-  // ─── Code Review Engine (F6) ──────────────────────────────────────────────
-  getCodeReviews(projectId: string, params?: Record<string, string>) {
-    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    return this.request<Record<string, unknown>[]>('GET', `/projects/${projectId}/code-reviews${qs}`);
-  }
-  triggerCodeReview(projectId: string, data: { files: { path: string; content: string }[]; commitSha?: string; branch?: string; aiEnabled?: boolean }) {
-    return this.request<Record<string, unknown>>('POST', `/projects/${projectId}/code-reviews`, data);
-  }
-  getCodeReview(reviewId: string)                    { return this.request<Record<string, unknown>>('GET', `/code-reviews/${reviewId}`); }
-  getCodeReviewFindings(reviewId: string, params?: Record<string, string>) {
-    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    return this.request<Record<string, unknown>[]>('GET', `/code-reviews/${reviewId}/findings${qs}`);
-  }
-  updateCodeReviewFinding(findingId: string, data: { status: string }) {
-    return this.request<Record<string, unknown>>('PUT', `/code-review-findings/${findingId}`, data);
-  }
-  getCodeReviewStats(projectId: string)              { return this.request<Record<string, unknown>>('GET', `/projects/${projectId}/code-review-stats`); }
-  getCodeReviewRules()                               { return this.request<Record<string, unknown>[]>('GET', '/code-review-rules'); }
-
-  // ─── SSL Scan helpers (used by scans page) ────────────────────────────────
-  getSSLScanResults()                                { return this.sslScan(); }
-  runSSLScan()                                       { return this.sslScan(); }
-  runDeprecationScan()                               { return this.triggerDeprecationScan({ projectId: 1 }); }
 
   // ─── Real-Time Metrics Stream ─────────────────────────────────────────
   getMetricsSnapshot()                                 { return this.request<Record<string, unknown>>('GET', '/metrics/snapshot'); }
@@ -778,48 +596,33 @@ class ApiClient {
     return es;
   }
 
-  // ─── Root Cause Analysis (Sprint 2 — F8) ──────────────────────────────
-  /** Trigger new AI root cause analysis for an error */
-  triggerRootCauseAnalysis(errorId: string) {
-    return this.request<any>('POST', `/errors/${errorId}/root-cause/trigger`);
+  // ─── Knowledge Base ─────────────────────────────────────────────────────────
+  getKnowledgeDocs(params?: Record<string, string>)  {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    return this.request<Record<string, unknown>[]>('GET', `/knowledge/docs${qs}`);
+  }
+  createKnowledgeDoc(data: Record<string, unknown>)  { return this.request<Record<string, unknown>>('POST', '/knowledge/docs', data); }
+  updateKnowledgeDoc(id: string, data: Record<string, unknown>) { return this.request<Record<string, unknown>>('PUT', `/knowledge/docs/${id}`, data); }
+  deleteKnowledgeDoc(id: string)                     { return this.request<{ success: boolean }>('DELETE', `/knowledge/docs/${id}`); }
+  getKnowledgeHistory()                              { return this.request<any>('GET', '/knowledge/history'); }
+  getKnowledgeProviders()                            { return this.request<any>('GET', '/knowledge/providers'); }
+  askKnowledge(data: { question: string; provider?: string }) { return this.request<any>('POST', '/knowledge/ask', data); }
+  submitKnowledgeFeedback(id: string, data: Record<string, unknown>) {
+    return this.request<{ success: boolean }>('POST', `/knowledge/feedback/${id}`, data);
   }
 
-  /** Get latest root cause analysis for an error */
-  getErrorRootCause(errorId: string) {
-    return this.request<any>('GET', `/errors/${errorId}/root-cause`);
+  // ─── Notification Preferences ───────────────────────────────────────────────
+  getNotificationPrefs()                              { return this.request<Record<string, unknown>[]>('GET', '/notifications/preferences'); }
+  updateNotificationPrefs(data: Record<string, unknown>) {
+    return this.request<{ success: boolean }>('PUT', '/notifications/preferences', data);
   }
 
-  /** Get root cause by ID with full error + deploy details */
-  getRootCause(id: string) {
-    return this.request<any>('GET', `/root-causes/${id}`);
+  // ─── Testing / QA ───────────────────────────────────────────────────────────
+  getQaHistory(params?: Record<string, string>)      {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    return this.request<Record<string, unknown>[]>('GET', `/testing/history${qs}`);
   }
-
-  /** List all root cause analyses */
-  listRootCauses() {
-    return this.request<any>('GET', '/root-causes');
-  }
-
-  /** Submit correct/wrong feedback for an RCA */
-  submitRootCauseFeedback(id: string, verdict: 'correct' | 'wrong', rating?: number, comment?: string) {
-    return this.request<any>('PATCH', `/root-causes/${id}/feedback`, {
-      verdict, rating, comment,
-    });
-  }
-
-  /** Find similar past bugs for an error */
-  findSimilarBugs(errorId: string) {
-    return this.request<any>('GET', `/root-causes/similar/${errorId}`);
-  }
-
-  /** Mark a root cause fix as applied */
-  applyRootCauseFix(id: string) {
-    return this.request<any>('POST', `/root-causes/${id}/apply-fix`);
-  }
-
-  /** Get aggregate RCA stats */
-  getRootCauseStats() {
-    return this.request<any>('GET', '/root-causes/stats');
-  }
+  runTest(data: Record<string, unknown>)              { return this.request<Record<string, unknown>>('POST', '/testing/run', data); }
 }
 
 class ApiError extends Error {

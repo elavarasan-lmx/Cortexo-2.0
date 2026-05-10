@@ -64,6 +64,27 @@
       "when": 1778218665838,
       "tag": "0008_wide_sister_grimm",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1728518400000,
+      "tag": "0009_drop_brain_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1736438400000,
+      "tag": "0010_cleanup_dead_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1746844800000,
+      "tag": "0011_add_menu_items_updated_at",
+      "breakpoints": true
     }
   ]
 }

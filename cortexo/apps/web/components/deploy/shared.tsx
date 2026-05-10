@@ -44,6 +44,7 @@ export interface DeployFormInitialData {
   pm2Restart?: boolean; pm2Args?: string;
   preDeployCmd?: string; postDeployCmd?: string;
   healthCheckUrl?: string; notifyOnComplete?: boolean;
+  truncateLogs?: boolean;
 }
 
 // ─── Shared Components ──────────────────────────────────────────────────────

@@ -11,7 +11,7 @@ export default function KnowledgeBasePage() {
   const [searchQuery, setSearchQuery] = useState('');
   
   // Docs Tab Data
-  const { data: docs, loading: docsLoading, refetch: refetchDocs } = useApiData(() => api.request<any>('GET', `/knowledge/docs?q=${encodeURIComponent(searchQuery)}`), [searchQuery]);
+  const { data: docs, loading: docsLoading, refetch: refetchDocs } = useApiData(() => api.getKnowledgeDocs({ q: searchQuery }), [searchQuery]);
 
   // Doc CRUD state
   const [showDocModal, setShowDocModal] = useState(false);
@@ -20,14 +20,14 @@ export default function KnowledgeBasePage() {
   const [savingDoc, setSavingDoc] = useState(false);
 
   // Q&A Tab Data
-  const { data: history, loading: historyLoading, refetch: refetchHistory } = useApiData(() => api.request<any>('GET', '/knowledge/history'));
+  const { data: history, loading: historyLoading, refetch: refetchHistory } = useApiData(() => api.getKnowledgeHistory());
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
   const [isAsking, setIsAsking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // AI Provider selector
-  const { data: providersData } = useApiData(() => api.request<any>('GET', '/knowledge/providers'));
+  const { data: providersData } = useApiData(() => api.getKnowledgeProviders()) as { data: any };
   const [selectedProvider, setSelectedProvider] = useState<string>('');
 
   // Sync history with messages initially
@@ -55,16 +55,17 @@ export default function KnowledgeBasePage() {
     setIsAsking(true);
 
     try {
-      const res = await api.request<any>('POST', '/knowledge/ask', {
+      const res = await api.askKnowledge({
         question: userMessage.content,
         provider: selectedProvider || undefined,
-      });
-      if (res && res.data) {
+      }) as any;
+      if (res && (res.data || res.answer)) {
+        const answer = res.data?.answer || res.answer;
         setMessages(prev => [...prev, {
           role: 'assistant',
-          content: res.data.answer,
-          id: `a-${res.data.id}`,
-          sources: res.data.sourcesUsed
+          content: answer,
+          id: `a-${res.data?.id || Date.now()}`,
+          sources: res.data?.sourcesUsed || res.sources
         }]);
         refetchHistory();
       }
@@ -86,9 +87,9 @@ export default function KnowledgeBasePage() {
         tags: docForm.tags.split(',').map(t => t.trim()).filter(Boolean),
       };
       if (editingDocId) {
-        await api.request('PUT', `/knowledge/docs/${editingDocId}`, payload);
+        await api.updateKnowledgeDoc(editingDocId, payload);
       } else {
-        await api.request('POST', '/knowledge/docs', payload);
+        await api.createKnowledgeDoc(payload);
       }
       setShowDocModal(false);
       setDocForm({ title: '', content: '', category: 'general', tags: '' });
@@ -101,7 +102,7 @@ export default function KnowledgeBasePage() {
   const handleDeleteDoc = async (id: string) => {
     if (!confirm('Delete this document?')) return;
     try {
-      await api.request('DELETE', `/knowledge/docs/${id}`);
+      await api.deleteKnowledgeDoc(id);
       refetchDocs();
     } catch (err) { console.error(err); }
   };

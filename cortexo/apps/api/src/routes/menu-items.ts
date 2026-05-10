@@ -6,7 +6,7 @@ import { menuItems } from '@cortexo/db/schema';
 export async function menuItemRoutes(app: FastifyInstance) {
   // GET /menu-items — fetch all menu items grouped by section
   app.get('/menu-items', async () => {
-    const db = getDb();
+    const db = await getDb();
 
     const rows = await db
       .select()
@@ -37,7 +37,7 @@ export async function menuItemRoutes(app: FastifyInstance) {
 
   // GET /menu-items/all — admin: fetch ALL items (including hidden)
   app.get('/menu-items/all', async () => {
-    const db = getDb();
+    const db = await getDb();
     const rows = await db
       .select()
       .from(menuItems)
@@ -47,7 +47,7 @@ export async function menuItemRoutes(app: FastifyInstance) {
 
   // POST /menu-items — admin: add a new menu item
   app.post('/menu-items', async (request) => {
-    const db = getDb();
+    const db = await getDb();
     const body = request.body as any;
 
     const [item] = await db.insert(menuItems).values({
@@ -65,7 +65,7 @@ export async function menuItemRoutes(app: FastifyInstance) {
 
   // PUT /menu-items/:id — admin: update a menu item
   app.put('/menu-items/:id', async (request) => {
-    const db = getDb();
+    const db = await getDb();
     const { id } = request.params as { id: string };
     const body = request.body as any;
 
@@ -79,7 +79,7 @@ export async function menuItemRoutes(app: FastifyInstance) {
 
   // DELETE /menu-items/:id — admin: remove a menu item
   app.delete('/menu-items/:id', async (request) => {
-    const db = getDb();
+    const db = await getDb();
     const { id } = request.params as { id: string };
 
     await db.delete(menuItems).where(eq(menuItems.id, parseInt(id)));
@@ -89,7 +89,7 @@ export async function menuItemRoutes(app: FastifyInstance) {
 
   // POST /menu-items/seed — seed DB from default config (one-time setup)
   app.post('/menu-items/seed', async () => {
-    const db = getDb();
+    const db = await getDb();
 
     // Check if already seeded
     const existing = await db.select().from(menuItems);

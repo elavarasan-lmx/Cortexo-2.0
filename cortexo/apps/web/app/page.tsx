@@ -247,7 +247,7 @@ export default function LandingPage() {
             <FeatureCard
               icon={Brain}
               title="Agent Intelligence"
-              description="Autonomous AI agents review code, fix bugs, and learn from your codebase patterns."
+              description="Autonomous AI agents review code, detect anomalies, and learn from your deployment patterns."
               gradient="from-violet-500 to-purple-500"
               glowColor="violet"
             />
@@ -407,7 +407,7 @@ export default function LandingPage() {
           <div className="flex flex-col gap-3">
             <FaqItem
               question="What makes Cortexo different from Sentry or Datadog?"
-              answer="Cortexo combines CI/CD, error monitoring, and AI root cause analysis in one tool. Sentry only monitors — Cortexo also deploys and fixes. Plus, our Source Code Brain learns your codebase patterns."
+              answer="Cortexo combines CI/CD, error monitoring, and AI root cause analysis in one tool. Sentry only monitors — Cortexo also deploys and fixes. Plus, our AI learns your deployment patterns over time."
             />
             <FaqItem
               question="Does it work with SSH/SFTP servers?"

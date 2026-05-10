@@ -14,7 +14,7 @@ const ENCRYPTION_KEY = process.env.VAULT_KEY || 'cortexo-vault-default-key-32ch'
 
 interface Credential {
   id: string;
-  category: 'github' | 'aws' | 'ssh' | 'openai' | 'gemini' | 'groq' | 'docker' | 'slack' | 'custom';
+  category: 'github' | 'openai' | 'gemini' | 'groq' | 'email' | 'custom';
   label: string;
   key: string;       // e.g. "GITHUB_TOKEN", "AWS_ACCESS_KEY_ID"
   value: string;     // encrypted at rest
@@ -77,30 +77,6 @@ const CATEGORY_CONFIG: Record<string, { keys: string[]; labels: Record<string, s
   groq: {
     keys: ['GROQ_API_KEY'],
     labels: { GROQ_API_KEY: 'Groq API Key' },
-  },
-  aws: {
-    keys: ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_REGION'],
-    labels: {
-      AWS_ACCESS_KEY_ID: 'Access Key ID',
-      AWS_SECRET_ACCESS_KEY: 'Secret Access Key',
-      AWS_REGION: 'Default Region',
-    },
-  },
-  ssh: {
-    keys: ['SSH_PRIVATE_KEY', 'SSH_PASSPHRASE'],
-    labels: { SSH_PRIVATE_KEY: 'Private Key (PEM)', SSH_PASSPHRASE: 'Key Passphrase' },
-  },
-  docker: {
-    keys: ['DOCKER_REGISTRY', 'DOCKER_USERNAME', 'DOCKER_PASSWORD'],
-    labels: {
-      DOCKER_REGISTRY: 'Registry URL',
-      DOCKER_USERNAME: 'Username',
-      DOCKER_PASSWORD: 'Password/Token',
-    },
-  },
-  slack: {
-    keys: ['SLACK_WEBHOOK_URL'],
-    labels: { SLACK_WEBHOOK_URL: 'Incoming Webhook URL' },
   },
   email: {
     keys: ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USERNAME', 'SMTP_PASSWORD', 'SMTP_FROM_EMAIL'],
