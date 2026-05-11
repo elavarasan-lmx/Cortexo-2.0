@@ -54,3 +54,5 @@ sources/
 playwright-report/
 test-results/
 
+/cortexo/.screenshots
+/cortexo/.screenshots

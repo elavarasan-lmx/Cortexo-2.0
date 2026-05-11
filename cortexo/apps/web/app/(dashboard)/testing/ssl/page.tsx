@@ -6,6 +6,7 @@ import {
   XCircle, Globe, Clock, Lock, Search,
 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAutoLoadToken } from '@/lib/hooks';
 
 interface SslResult {
   domain: string;
@@ -39,6 +40,7 @@ const statusConfig: Record<string, { color: string; bg: string; border: string; 
 };
 
 export default function SslMonitorPage() {
+  useAutoLoadToken();
   const [domains, setDomains] = useState<SslResult[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [checking, setChecking] = useState(false);

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { GitBranch, RotateCcw, CheckCircle, XCircle, Clock, Loader2, Terminal, Play } from 'lucide-react';
-import { useApiData, timeAgo, formatDuration, parseJsonField } from '@/lib/hooks';
+import { useApiData, useAutoLoadToken, timeAgo, formatDuration, parseJsonField } from '@/lib/hooks';
 import { api } from '@/lib/api';
 import { LiveLogViewer } from '@/components/live-log-viewer';
 
@@ -20,6 +20,7 @@ const cardStyle: React.CSSProperties = {
 };
 
 export default function PipelineRunsPage() {
+  useAutoLoadToken();
   const { data: runs, loading, refetch } = useApiData(() => api.getPipelineRuns({ limit: 100 }));
   const { data: pipelines } = useApiData(() => api.getPipelines());
   const [retrying, setRetrying] = useState<string | null>(null);

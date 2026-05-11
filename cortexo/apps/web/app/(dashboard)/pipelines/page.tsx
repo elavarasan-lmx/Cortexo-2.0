@@ -8,7 +8,7 @@ import {
   Activity, Cpu, Edit3, Trash2, Power, List, Upload,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useApiData, useProjectLookup, parseJsonField, resolveProjectName, timeAgo } from '@/lib/hooks';
+import { useApiData, useAutoLoadToken, useProjectLookup, parseJsonField, resolveProjectName, timeAgo } from '@/lib/hooks';
 import { useModal } from '@/components/modal-provider';
 import { useToastStore } from '@/lib/toast-store';
 
@@ -164,6 +164,7 @@ function DropdownMenu({ pipeline, onRefetch }: { pipeline: any; onRefetch: () =>
 }
 
 export default function PipelinesPage() {
+  useAutoLoadToken();
   const router = useRouter();
   const { lookup } = useProjectLookup();
   const { data: pipelines, loading, error, refetch } = useApiData(

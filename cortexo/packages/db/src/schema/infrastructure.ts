@@ -35,13 +35,15 @@ export const servers = pgTable(
 
 /**
  * Server Resources — CPU/RAM/Disk metrics snapshots.
- * Collected via SSH checks, stored per-IP over time.
+ * Collected via SSH checks, stored per server over time.
+ * Uses serverId FK for proper referential integrity.
  */
 export const serverResources = pgTable(
   'server_resources',
   {
     id: serial('id').primaryKey(),
-    serverIp: varchar('server_ip', { length: 45 }).notNull(),
+    serverId: integer('server_id').notNull().references(() => servers.id, { onDelete: 'cascade' }),
+    serverIp: varchar('server_ip', { length: 45 }),  // Kept for backward compat, will be deprecated
     cpuPercent: numeric('cpu_percent', { precision: 5, scale: 2 }),
     ramUsedMb: integer('ram_used_mb'),
     ramTotalMb: integer('ram_total_mb'),
@@ -54,6 +56,7 @@ export const serverResources = pgTable(
       .notNull(),
   },
   (table) => [
+    index('idx_resources_server').on(table.serverId),
     index('idx_resources_ip').on(table.serverIp),
     index('idx_resources_checked').on(table.checkedAt),
   ],

@@ -64,6 +64,24 @@ const ingestSchema = z.object({
   sdkVersion: z.string().optional(),
 });
 
+/** Auto-classify a bug into a business module based on its metadata */
+function classifyModule(data: { type?: string; message?: string; file?: string; url?: string }): string {
+  const text = [data.type, data.message, data.file, data.url].filter(Boolean).join(' ').toLowerCase();
+  const rules: [RegExp, string][] = [
+    [/register|registration|signup|c_client_main|kyc/, 'registration'],
+    [/login|auth|otp|session|password|forgot|token/, 'login_auth'],
+    [/rate|getrates|liverate|spot|mcx|socket|feed/, 'rate_engine'],
+    [/trade|book|order|booking|close|pnl|sauda/, 'trading'],
+    [/client|ledger|margin|limits|ban|unban|customer/, 'client_mgmt'],
+    [/report|closing|brokerage|bill|statement|daily/, 'reports'],
+    [/notification|push|fcm|sms|whatsapp|alert/, 'notifications'],
+    [/admin|settings|config|banner|version|market.?hour/, 'admin_settings'],
+    [/server|db|connection|timeout|memory|cpu|disk/, 'infrastructure'],
+  ];
+  for (const [re, mod] of rules) if (re.test(text)) return mod;
+  return 'uncategorized';
+}
+
 /**
  * Errors API — /v1/errors + /v1/ingest/error
  * Error tracking CRUD + SDK ingest endpoint.
@@ -71,8 +89,8 @@ const ingestSchema = z.object({
 export async function errorRoutes(app: FastifyInstance) {
   // List errors (grouped, paginated, org-isolated)
   app.get('/errors', async (request, reply) => {
-    const { projectId, status, severity } = request.query as {
-      projectId?: string; status?: string; severity?: string;
+    const { projectId, status, severity, module } = request.query as {
+      projectId?: string; status?: string; severity?: string; module?: string;
     };
     const { page, limit, offset } = parsePagination(request.query as Record<string, unknown>);
     const orgId = getOrgId(request);
@@ -82,6 +100,7 @@ export async function errorRoutes(app: FastifyInstance) {
       if (projectId) conditions.push(eq(errors.projectId, projectId));
       if (status) conditions.push(eq(errors.status, status as any));
       if (severity) conditions.push(eq(errors.severity, severity as any));
+      if (module) conditions.push(eq(errors.module, module));
 
       const where = and(...conditions);
 
@@ -98,6 +117,32 @@ export async function errorRoutes(app: FastifyInstance) {
     } catch (err) {
       app.log.error(err);
       return reply.code(500).send({ error: 'Failed to fetch errors' });
+    }
+  });
+
+  // Module stats — bug counts per module
+  app.get('/errors/module-stats', async (request, reply) => {
+    const orgId = getOrgId(request);
+    try {
+      const db = await getDb();
+      const rows = await db.execute(sql`
+        SELECT
+          COALESCE(module, 'uncategorized') as module,
+          COUNT(*) as total,
+          COUNT(*) FILTER (WHERE status = 'unresolved') as open,
+          COUNT(*) FILTER (WHERE status = 'resolved') as resolved,
+          COUNT(*) FILTER (WHERE severity = 'critical') as critical,
+          COUNT(*) FILTER (WHERE severity = 'high') as high,
+          MAX(last_seen_at) as last_bug
+        FROM errors
+        WHERE org_id = ${orgId}
+        GROUP BY module
+        ORDER BY total DESC
+      `);
+      return { data: rows.rows || rows };
+    } catch (err) {
+      app.log.error(err);
+      return reply.code(500).send({ error: 'Failed to fetch module stats' });
     }
   });
 
@@ -237,6 +282,7 @@ export async function errorRoutes(app: FastifyInstance) {
           line: data.line,
           severity: data.severity,
           status: 'unresolved',
+          module: classifyModule({ type: data.type, message: data.message, file: data.file, url: data.url }),
           eventCount: 1,
           firstSeenAt: new Date(),
           lastSeenAt: new Date(),

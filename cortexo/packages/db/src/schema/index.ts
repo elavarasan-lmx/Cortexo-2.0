@@ -86,3 +86,19 @@ export type {
   KnowledgeDoc, NewKnowledgeDoc,
   QaHistory, NewQaHistory,
 } from './knowledge';
+
+// Phase 23: Testing Module (multi-client endpoint testing)
+export { testTargets, testCases, testRuns, testResults } from './testing';
+export type {
+  TestTarget, NewTestTarget,
+  TestCase, NewTestCase,
+  TestRun, NewTestRun,
+  TestResult, NewTestResult,
+} from './testing';
+
+// Phase 24: Custom DevOps Docs & Deployment Checklists
+export { customDocs, deployChecklists } from './custom-docs';
+export type {
+  CustomDoc, NewCustomDoc,
+  DeployChecklist, NewDeployChecklist,
+} from './custom-docs';

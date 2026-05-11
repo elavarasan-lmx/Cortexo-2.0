@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, FolderGit2, Loader2, ArrowLeft, ArrowRight, Github, Search, Trash2, GitBranch, ChevronDown, AlertTriangle, X } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useApiData } from '@/lib/hooks';
+import { useApiData, useAutoLoadToken } from '@/lib/hooks';
 import { useModal } from '@/components/modal-provider';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/v1';
@@ -78,6 +78,7 @@ const DEFAULT_FORM = {
 };
 
 export default function NewProjectPage() {
+  useAutoLoadToken();
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);

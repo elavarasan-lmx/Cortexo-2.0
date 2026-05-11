@@ -121,11 +121,11 @@ export async function serverRoutes(app: FastifyInstance) {
       const rows = await db.query.serverResources.findMany({
         orderBy: (r, { desc }) => [desc(r.checkedAt)],
       });
-      // Dedupe by serverIp (keep latest)
-      const seen = new Set<string>();
+      // Dedupe by serverId (keep latest per server)
+      const seen = new Set<number>();
       const latest = rows.filter(r => {
-        if (!r.serverIp || seen.has(r.serverIp)) return false;
-        seen.add(r.serverIp);
+        if (!r.serverId || seen.has(r.serverId)) return false;
+        seen.add(r.serverId);
         return true;
       });
       return { data: latest };
@@ -135,13 +135,13 @@ export async function serverRoutes(app: FastifyInstance) {
     }
   });
 
-  // Get resource history for a specific server
-  app.get('/servers/resources/:ip/history', async (request, reply) => {
-    const { ip } = request.params as { ip: string };
+  // Get resource history for a specific server (by server ID)
+  app.get('/servers/:id/resources/history', async (request, reply) => {
+    const { id } = request.params as { id: string };
     try {
       const db = await getDb();
       const rows = await db.query.serverResources.findMany({
-        where: (r, { eq }) => eq(r.serverIp, ip),
+        where: (r, { eq }) => eq(r.serverId, parseInt(id)),
         orderBy: (r, { desc }) => [desc(r.checkedAt)],
         limit: 100,
       });
@@ -186,12 +186,19 @@ export async function serverRoutes(app: FastifyInstance) {
     try {
       const db = await getDb();
 
-      // Get all server IPs from DB
+      // Get all servers with IPs from DB
       const allServers = await db.query.servers.findMany();
-      const ips = allServers.map(s => s.privateIp).filter(Boolean) as string[];
+      const serversWithIp = allServers.filter(s => s.privateIp);
+      const ips = serversWithIp.map(s => s.privateIp) as string[];
 
       if (ips.length === 0) {
         return reply.code(400).send({ error: 'No servers with IPs configured' });
+      }
+
+      // Build IP → server ID lookup map
+      const ipToServerId = new Map<string, number>();
+      for (const s of serversWithIp) {
+        ipToServerId.set(s.privateIp!, s.id);
       }
 
       // Run collector script
@@ -209,12 +216,18 @@ export async function serverRoutes(app: FastifyInstance) {
         return reply.code(500).send({ error: 'Failed to parse metrics output' });
       }
 
-      // Insert fresh metrics
+      // Insert fresh metrics with serverId FK
       let inserted = 0;
       for (const m of metrics) {
         if (!m.serverIp) continue;
+        const serverId = ipToServerId.get(m.serverIp);
+        if (!serverId) {
+          app.log.warn(`Metrics received for unknown IP: ${m.serverIp}`);
+          continue;
+        }
         await db.insert(serverResources).values({
-          serverIp: m.serverIp,
+          serverId,
+          serverIp: m.serverIp,  // Keep for backward compat
           cpuPercent: m.cpuPercent?.toString() || '0',
           ramUsedMb: m.ramUsedMb || 0,
           ramTotalMb: m.ramTotalMb || 0,

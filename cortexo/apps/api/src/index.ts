@@ -50,12 +50,16 @@ import { winbullDeployRoutes } from './routes/winbull-deploy.js';
 import { filePushRoutes } from './routes/file-push.js';
 
 import { knowledgeRoutes } from './routes/knowledge.js';
+import { testingRoutes } from './routes/testing.js';
+import { browserTestRoutes } from './routes/browser-tests.js';
+import { devopsDocsRoutes } from './routes/devops-docs.js';
 
 import { menuPermissionRoutes } from './routes/menu-permissions.js';
 import { menuItemRoutes } from './routes/menu-items.js';
 import { usageLimitsPlugin } from './middleware/usage-limits.js';
 import { authMiddleware } from './middleware/auth.js';
 import { getDb } from './lib/db.js';
+import { startMetricsCron, stopMetricsCron } from './lib/metric-cron.js';
 import { deployments } from '@cortexo/db/schema';
 import { eq, and, lt, sql as drizzleSql } from 'drizzle-orm';
 
@@ -243,6 +247,9 @@ async function start() {
   await app.register(winbullRoutes, { prefix: '/v1' });
 
   await app.register(knowledgeRoutes, { prefix: '/v1' });
+  await app.register(testingRoutes, { prefix: '/v1' });
+  await app.register(browserTestRoutes, { prefix: '/v1' });
+  await app.register(devopsDocsRoutes, { prefix: '/v1' });
 
   await app.register(menuPermissionRoutes, { prefix: '/v1' });
   await app.register(menuItemRoutes, { prefix: '/v1' });
@@ -293,6 +300,9 @@ async function start() {
     } catch (err) {
       console.warn('[Recovery] Could not check for orphan deployments:', err);
     }
+
+    // ── Start Cron Jobs ────────────────────────────────────────
+    startMetricsCron();
   } catch (err) {
     app.log.error(err);
     process.exit(1);
@@ -301,6 +311,7 @@ async function start() {
   // --- Graceful shutdown ---
   const shutdown = async (signal: string) => {
     app.log.info(`${signal} received — shutting down gracefully...`);
+    stopMetricsCron();
     try {
       await app.close();
       app.log.info('Server closed. Goodbye.');

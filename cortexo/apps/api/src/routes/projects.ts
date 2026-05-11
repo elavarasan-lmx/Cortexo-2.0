@@ -7,6 +7,53 @@ import { parsePagination, paginatedResponse } from '../lib/pagination.js';
 import { cacheFetch, cacheInvalidate } from '../lib/redis.js';
 import { getOrgId } from '../lib/request-context.js';
 import { logAudit } from './audit.js';
+import { encrypt, decrypt } from '../lib/crypto.js';
+
+// ─── Settings Encryption ─────────────────────────────────────────────────────
+// Sensitive fields inside the JSONB `settings` column are encrypted at rest.
+const SENSITIVE_TOP_KEYS = ['adminPassword'] as const;
+const SENSITIVE_DB_KEYS = ['password'] as const;
+
+function encryptSettings(settings: Record<string, unknown>): Record<string, unknown> {
+  const s = { ...settings };
+  for (const key of SENSITIVE_TOP_KEYS) {
+    if (s[key] && typeof s[key] === 'string') s[key] = encrypt(s[key] as string);
+  }
+  if (s.database && typeof s.database === 'object') {
+    const db = { ...(s.database as Record<string, unknown>) };
+    for (const key of SENSITIVE_DB_KEYS) {
+      if (db[key] && typeof db[key] === 'string') db[key] = encrypt(db[key] as string);
+    }
+    s.database = db;
+  }
+  return s;
+}
+
+function decryptSettings(settings: Record<string, unknown>): Record<string, unknown> {
+  const s = { ...settings };
+  for (const key of SENSITIVE_TOP_KEYS) {
+    if (s[key] && typeof s[key] === 'string') {
+      try { s[key] = decrypt(s[key] as string); } catch { /* not encrypted or legacy */ }
+    }
+  }
+  if (s.database && typeof s.database === 'object') {
+    const db = { ...(s.database as Record<string, unknown>) };
+    for (const key of SENSITIVE_DB_KEYS) {
+      if (db[key] && typeof db[key] === 'string') {
+        try { db[key] = decrypt(db[key] as string); } catch { /* not encrypted or legacy */ }
+      }
+    }
+    s.database = db;
+  }
+  return s;
+}
+
+function decryptProjectRow(row: Record<string, unknown>): Record<string, unknown> {
+  if (row.settings && typeof row.settings === 'object') {
+    return { ...row, settings: decryptSettings(row.settings as Record<string, unknown>) };
+  }
+  return row;
+}
 
 // Validation schemas
 const createProjectSchema = z.object({
@@ -20,6 +67,24 @@ const createProjectSchema = z.object({
 });
 
 const updateProjectSchema = createProjectSchema.partial();
+
+/**
+ * Validates that settings.deploy.serverId references a real server.
+ * Returns error message or null if valid.
+ */
+async function validateServerId(settings: Record<string, unknown>): Promise<string | null> {
+  const deploy = settings?.deploy as Record<string, unknown> | undefined;
+  if (!deploy?.serverId) return null;
+  const serverId = parseInt(String(deploy.serverId));
+  if (isNaN(serverId)) return `Invalid serverId: ${deploy.serverId}`;
+  const db = await getDb();
+  const { servers } = await import('@cortexo/db/schema');
+  const server = await db.query.servers.findFirst({
+    where: (s, { eq: eqFn }) => eqFn(s.id, serverId),
+  });
+  if (!server) return `Server #${serverId} not found — check server ID`;
+  return null;
+}
 
 /**
  * Projects API — /v1/projects
@@ -45,7 +110,8 @@ export async function projectRoutes(app: FastifyInstance) {
           db.select({ count: sql<number>`count(*)` }).from(projects).where(where),
         ]);
         const total = Number(countResult[0]?.count || 0);
-        return paginatedResponse(rows, total, page, limit);
+        const decrypted = rows.map(r => decryptProjectRow(r as Record<string, unknown>));
+        return paginatedResponse(decrypted, total, page, limit);
       }, 300); // 5 minute cache
 
       return result;
@@ -129,7 +195,7 @@ export async function projectRoutes(app: FastifyInstance) {
         where: (p, { eq }) => eq(p.id, id),
       });
       if (!project) return reply.code(404).send({ error: 'Project not found' });
-      return { data: project };
+      return { data: decryptProjectRow(project as Record<string, unknown>) };
     } catch (err) {
       app.log.error(err);
       return reply.code(500).send({ error: 'Failed to fetch project' });
@@ -148,12 +214,29 @@ export async function projectRoutes(app: FastifyInstance) {
       const user = (request as any).user;
       const id = crypto.randomUUID();
       const sdkKey = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
-      await db.insert(projects).values({
+      const insertData: Record<string, unknown> = {
         id,
         ...parsed.data,
         orgId: user?.orgId || getOrgId(request),
         sdkApiKey: sdkKey,
-      } as any);
+      };
+      // Validate serverId reference if present
+      let settingsObj = insertData.settings;
+      if (typeof settingsObj === 'string') { try { settingsObj = JSON.parse(settingsObj); } catch { settingsObj = null; } }
+      if (settingsObj && typeof settingsObj === 'object') {
+        const serverErr = await validateServerId(settingsObj as Record<string, unknown>);
+        if (serverErr) return reply.code(400).send({ error: serverErr });
+      }
+      // Encrypt sensitive settings before storing
+      if (insertData.settings && typeof insertData.settings === 'object') {
+        insertData.settings = encryptSettings(insertData.settings as Record<string, unknown>);
+      } else if (typeof insertData.settings === 'string') {
+        try {
+          const parsed = JSON.parse(insertData.settings as string);
+          insertData.settings = encryptSettings(parsed);
+        } catch { /* keep as string */ }
+      }
+      await db.insert(projects).values(insertData as any);
 
       // Invalidate project list cache
       await cacheInvalidate('projects:list:*');
@@ -188,9 +271,18 @@ export async function projectRoutes(app: FastifyInstance) {
         where: (p, { eq: eqFn }) => eqFn(p.id, id),
       });
       if (!existing) return reply.code(404).send({ error: 'Project not found' });
-      const updateData: Record<string, unknown> = { ...parsed.data };
+      const updateData: Record<string, unknown> = { ...parsed.data, updatedAt: new Date() };
       if (typeof updateData.settings === 'string') {
         try { updateData.settings = JSON.parse(updateData.settings as string); } catch { /* keep as string */ }
+      }
+      // Validate serverId reference if present
+      if (updateData.settings && typeof updateData.settings === 'object') {
+        const serverErr = await validateServerId(updateData.settings as Record<string, unknown>);
+        if (serverErr) return reply.code(400).send({ error: serverErr });
+      }
+      // Encrypt sensitive settings before storing
+      if (updateData.settings && typeof updateData.settings === 'object') {
+        updateData.settings = encryptSettings(updateData.settings as Record<string, unknown>);
       }
       await db.update(projects).set(updateData as any).where(eq(projects.id, id));
 
@@ -219,14 +311,8 @@ export async function projectRoutes(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     try {
       const db = await getDb();
-      // Delete related records first (foreign key constraints)
-      const schema = await import('@cortexo/db/schema');
-      await db.delete(schema.errorEvents).where(eq(schema.errorEvents.projectId, id));
-      await db.delete(schema.rootCauses).where(eq(schema.rootCauses.projectId, id));
-      await db.delete(schema.errors).where(eq(schema.errors.projectId, id));
-      await db.delete(schema.pipelineRuns).where(eq(schema.pipelineRuns.projectId, id));
-      await db.delete(schema.pipelines).where(eq(schema.pipelines.projectId, id));
-      await db.delete(schema.deployments).where(eq(schema.deployments.projectId, id));
+      // ON DELETE CASCADE in schema handles related records automatically
+      // (errors, errorEvents, rootCauses, pipelines, pipelineRuns, deployments)
       await db.delete(projects).where(eq(projects.id, id));
 
       await cacheInvalidate('projects:*');

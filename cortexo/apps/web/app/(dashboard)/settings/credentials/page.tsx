@@ -6,8 +6,10 @@ import {
   GitBranch, Key, Bot, Zap, Lock, Edit3, X, Mail,
 } from 'lucide-react';
 import { useModal } from '@/components/modal-provider';
+import { useAutoLoadToken } from '@/lib/hooks';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/v1';
+const DOTS = '••••••••••••••••••••';
 
 interface CredentialKey {
   key: string;
@@ -69,6 +71,7 @@ const labelStyle: React.CSSProperties = {
 };
 
 export default function CredentialsPage() {
+  useAutoLoadToken();
   const [categories, setCategories] = useState<Category[]>([]);
   const [savedCreds, setSavedCreds] = useState<SavedCred[]>([]);
   const [loading, setLoading] = useState(true);
@@ -240,12 +243,25 @@ export default function CredentialsPage() {
                           color: 'rgb(var(--text-secondary))',
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                         }}>
-                          <span>{saved.maskedValue}</span>
+                          <span>{revealed[k.key] ? saved.maskedValue : DOTS}</span>
                           <span style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>
                             Updated {new Date(saved.updatedAt).toLocaleDateString()}
                           </span>
                         </div>
-                        <button onClick={() => { setEditing(e => ({ ...e, [k.key]: true })); setValues(v => ({ ...v, [k.key]: '' })); }}
+                        <button onClick={() => setRevealed(r => ({ ...r, [k.key]: !r[k.key] }))}
+                          title={revealed[k.key] ? 'Hide' : 'Reveal'}
+                          style={{ padding: '8px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', cursor: 'pointer', color: 'rgb(var(--text-muted))' }}>
+                          {revealed[k.key] ? <EyeOff style={{ width: 14, height: 14 }} /> : <Eye style={{ width: 14, height: 14 }} />}
+                        </button>
+                        <button onClick={async () => {
+                          setEditing(e => ({ ...e, [k.key]: true }));
+                          // Fetch and pre-fill the decrypted value
+                          try {
+                            const res = await fetch(`${API}/credentials/${k.key}/reveal`, { headers });
+                            const json = await res.json();
+                            if (json.data?.value) setValues(v => ({ ...v, [k.key]: json.data.value }));
+                          } catch { setValues(v => ({ ...v, [k.key]: '' })); }
+                        }}
                           title="Edit"
                           style={{ padding: '8px', borderRadius: '8px', border: '1px solid rgba(var(--primary),0.2)', backgroundColor: 'rgba(var(--primary),0.04)', cursor: 'pointer', color: 'rgb(var(--primary))' }}>
                           <Edit3 style={{ width: 14, height: 14 }} />

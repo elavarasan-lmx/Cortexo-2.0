@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { GitBranch, Code2, Play, Plus, Trash2, CheckCircle, Loader2, FileCode } from 'lucide-react';
-
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/v1';
+import { useAutoLoadToken } from '@/lib/hooks';
+import { api } from '@/lib/api';
 
 const TEMPLATES = {
   blank: { name: 'Blank', yaml: `name: My Pipeline
@@ -69,6 +69,7 @@ const labelStyle: React.CSSProperties = {
 };
 
 export default function PipelineEditorPage() {
+  useAutoLoadToken();
   const [yaml, setYaml] = useState(TEMPLATES.blank.yaml);
   const [selectedTemplate, setSelectedTemplate] = useState('blank');
   const [projectId, setProjectId] = useState('');
@@ -107,14 +108,9 @@ export default function PipelineEditorPage() {
     const stages = stageMatches.map(m => ({ name: m[1].trim(), type: 'shell', run: '' }));
 
     try {
-      const r = await fetch(`${API}/pipelines`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('cortexo_token')}` },
-        body: JSON.stringify({ name, projectId: projectId || undefined, stages, yamlConfig: yaml }),
-      });
-      if (r.ok) { setSaved(true); setTimeout(() => setSaved(false), 3000); }
-      else { const d = await r.json(); setError(d.error || 'Failed to save pipeline'); }
-    } catch { setError('Network error — check API is running'); }
+      await api.createPipeline({ name, projectId: projectId || undefined, stages, yamlConfig: yaml });
+      setSaved(true); setTimeout(() => setSaved(false), 3000);
+    } catch (err: any) { setError(err.message || 'Failed to save pipeline'); }
     setSaving(false);
   }
 

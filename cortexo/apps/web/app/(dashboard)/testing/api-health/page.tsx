@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { FlaskConical, Play, RefreshCw, CheckCircle, XCircle, Clock, Globe, Loader2, TrendingUp, AlertTriangle } from 'lucide-react';
+import { useAutoLoadToken } from '@/lib/hooks';
 
 interface Endpoint { name: string; url: string; group: string; critical: boolean; }
 interface Health { status: 'up'|'down'|'slow'|'checking'; code: number; latency: number; lastCheck: string; uptime: number; }
@@ -26,6 +27,7 @@ const endpoints: Endpoint[] = [
 const groups = [...new Set(endpoints.map(e=>e.group))];
 
 export default function ApiHealthPage() {
+  useAutoLoadToken();
   const [baseUrl, setBaseUrl] = useState('');
   const [health, setHealth] = useState<Record<string,Health>>({});
   const [checking, setChecking] = useState(false);

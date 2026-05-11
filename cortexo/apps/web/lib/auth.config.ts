@@ -2,7 +2,7 @@ import type { NextAuthConfig } from 'next-auth';
 
 /**
  * Edge-compatible NextAuth config (no Node.js-only imports).
- * Used by middleware.ts which runs in the Edge Runtime.
+ * Used by proxy.ts which runs in the Edge Runtime.
  *
  * Providers with DB access (Credentials) are added in auth.ts (Node.js runtime only).
  */

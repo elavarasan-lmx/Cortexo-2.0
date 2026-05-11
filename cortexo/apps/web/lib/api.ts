@@ -339,11 +339,12 @@ class ApiClient {
   testServerSSH(id: number)                          { return this.request<{ success: boolean; message: string; details?: Record<string, unknown>; durationMs: number }>('POST', `/servers/${id}/test-ssh`); }
 
   // ─── Errors ───────────────────────────────────────────────────────────────
-  getErrors(params?: { projectId?: string; status?: string; severity?: string }) {
+  getErrors(params?: { projectId?: string; status?: string; severity?: string; module?: string }) {
     const qs = params ? '?' + new URLSearchParams(Object.entries(params).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)])).toString() : '';
     return this.request<TrackedError[]>('GET', `/errors${qs}`);
   }
   getError(id: string)                               { return this.request<TrackedError>('GET', `/errors/${id}`); }
+  getErrorModuleStats()                              { return this.request<any>('GET', '/errors/module-stats'); }
   updateError(id: string, data: { status?: string; assignedTo?: string }) { return this.request<{ success: boolean }>('PATCH', `/errors/${id}`, data); }
 
   // ─── Root Causes ──────────────────────────────────────────────────────────
@@ -383,7 +384,7 @@ class ApiClient {
   deleteServer(id: number)                           { return this.request<{ success: boolean }>('DELETE', `/servers/${id}`); }
   testServerConnection(id: number)                   { return this.request<{ success: boolean; latencyMs: number; hostname?: string; uptime?: string; error?: string }>('POST', `/servers/${id}/test-connection`); }
   getServerResourcesLatest()                         { return this.request<Record<string, unknown>[]>('GET', '/servers/resources/latest'); }
-  getServerResourceHistory(ip: string)               { return this.request<Record<string, unknown>[]>('GET', `/servers/resources/${ip}/history`); }
+  getServerResourceHistory(serverId: number)          { return this.request<Record<string, unknown>[]>('GET', `/servers/${serverId}/resources/history`); }
   getServerProjectCounts()                           { return this.request<Record<string, number>>('GET', '/servers/project-counts'); }
   collectServerMetrics()                             { return this.request<{ success: boolean; collected: number }>('POST', '/servers/collect-metrics'); }
 
@@ -473,6 +474,33 @@ class ApiClient {
   }
   getAuditStats()                                    { return this.request<Record<string, number>>('GET', '/audit/stats'); }
   getUserAuditLogs(userId: string, page?: number)    { return this.request<AuditLog[]>('GET', `/audit/user/${userId}${page ? `?page=${page}` : ''}`); }
+
+  // ─── Testing Module ───────────────────────────────────────────────────────
+  getTestTargets()                                   { return this.request<any[]>('GET', '/testing/targets'); }
+  createTestTarget(data: { name: string; baseUrl: string; environment?: string }) {
+    return this.request<any>('POST', '/testing/targets', data);
+  }
+  deleteTestTarget(id: number)                       { return this.request<any>('DELETE', `/testing/targets/${id}`); }
+  scanProject(data?: { projectPath?: string })       { return this.request<any>('POST', '/testing/scan', data || {}); }
+  getTestCases(category?: string) {
+    const qs = category ? `?category=${category}` : '';
+    return this.request<any[]>('GET', `/testing/cases${qs}`);
+  }
+  deleteTestCase(id: number)                         { return this.request<any>('DELETE', `/testing/cases/${id}`); }
+  clearTestCases()                                   { return this.request<any>('DELETE', '/testing/cases'); }
+  runTests(targetId: number)                         { return this.request<any>('POST', '/testing/run', { targetId }); }
+  runFullTests(targetId: number, levels?: string[])  { return this.request<any>('POST', '/testing/run-full', { targetId, levels: levels || ['L1','L2','L3'] }); }
+  getTestRuns()                                      { return this.request<any[]>('GET', '/testing/runs'); }
+  getTestRun(id: number)                             { return this.request<any>('GET', `/testing/runs/${id}`); }
+  getTestBugs(runId: number)                         { return this.request<any>('GET', `/testing/bugs/${runId}`); }
+  getTestLevels(runId: number)                       { return this.request<any>('GET', `/testing/runs/${runId}/levels`); }
+  getTestModules()                                   { return this.request<any[]>('GET', '/testing/modules'); }
+  getTestModuleResults(runId: number)                 { return this.request<any[]>('GET', `/testing/modules/${runId}`); }
+  exportTestBugs(runId: number, severity?: string) {
+    const qs = severity ? `?severity=${severity}` : '';
+    return this.request<any>('POST', `/testing/bugs/${runId}/export${qs}`);
+  }
+  getExportedTestBugs()                              { return this.request<any>('GET', '/testing/bugs/exported'); }
 
   // ─── Auth ─────────────────────────────────────────────────────────────────
   async register(data: { name: string; email: string; password: string; orgName?: string }) {
@@ -609,6 +637,25 @@ class ApiClient {
     return this.request<{ success: boolean }>('POST', `/knowledge/feedback/${id}`, data);
   }
 
+  // ─── DevOps Docs ──────────────────────────────────────────────────────────
+  getDevopsDocs(params?: Record<string, string>) {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+    return this.request<any[]>('GET', `/devops-docs${qs}`);
+  }
+  getDevopsDoc(id: string)                         { return this.request<any>('GET', `/devops-docs/${id}`); }
+  getDevopsTools()                                  { return this.request<any>('GET', '/devops-docs/tools'); }
+  searchDevopsDocs(q: string)                       { return this.request<any>('GET', `/devops-docs/search?q=${encodeURIComponent(q)}`); }
+  // Custom docs CRUD
+  getCustomDocs()                                   { return this.request<any>('GET', '/devops-docs/custom'); }
+  createCustomDoc(data: any)                        { return this.request<any>('POST', '/devops-docs/custom', data); }
+  updateCustomDoc(id: number, data: any)            { return this.request<any>('PUT', `/devops-docs/custom/${id}`, data); }
+  deleteCustomDoc(id: number)                       { return this.request<any>('DELETE', `/devops-docs/custom/${id}`); }
+  // Deployment checklists
+  getChecklists(status?: string)                    { return this.request<any>('GET', `/devops-docs/checklists${status ? `?status=${status}` : ''}`); }
+  createChecklist(data: any)                        { return this.request<any>('POST', '/devops-docs/checklists', data); }
+  updateChecklist(id: number, data: any)            { return this.request<any>('PUT', `/devops-docs/checklists/${id}`, data); }
+  deleteChecklist(id: number)                       { return this.request<any>('DELETE', `/devops-docs/checklists/${id}`); }
+
   // ─── Notification Preferences ───────────────────────────────────────────────
   getNotificationPrefs()                              { return this.request<Record<string, unknown>[]>('GET', '/notifications/preferences'); }
   updateNotificationPrefs(data: Record<string, unknown>) {
@@ -623,7 +670,7 @@ class ApiClient {
   runTest(data: Record<string, unknown>)              { return this.request<Record<string, unknown>>('POST', '/testing/run', data); }
 
   // ── File Push (Patch Deploy) ───────────────────────────────
-  getDeployConfigs()                                   { return this.request<Record<string, unknown>[]>('GET', '/deploy-configs'); }
+  // Note: getDeployConfigs() is defined in the Deploy Configs section above
   listSourceFiles(serverId: number, path: string, pattern?: string) {
     return this.request<string[]>('POST', '/file-push/list-files', { serverId, path, pattern });
   }

@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useRef, useCallback } from 'react';
 import { Wifi, Play, Square, CheckCircle, XCircle, Clock, ArrowDown, ArrowUp, Loader2, Zap, Radio } from 'lucide-react';
+import { useAutoLoadToken } from '@/lib/hooks';
 
 interface SocketChannel { id: string; name: string; url: string; desc: string; type: 'websocket'|'socketio'|'polling'; }
 interface ChannelState { status: 'disconnected'|'connecting'|'connected'|'error'; latency: number; msgIn: number; msgOut: number; lastMsg: string; uptime: number; reconnects: number; }
@@ -30,6 +31,7 @@ const statusDot = (s: string): React.CSSProperties => ({
 });
 
 export default function SocketTestPage() {
+  useAutoLoadToken();
   const [baseUrl, setBaseUrl] = useState('');
   const [states, setStates] = useState<Record<string,ChannelState>>({});
   const intervals = useRef<Record<string,NodeJS.Timeout>>({});

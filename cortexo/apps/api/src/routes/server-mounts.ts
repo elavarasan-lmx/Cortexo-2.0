@@ -4,7 +4,8 @@ import { getDb } from '../lib/db.js';
 import { eq } from 'drizzle-orm';
 import { serverMounts } from '@cortexo/db/schema';
 import { logAudit } from './audit.js';
-import { spawnSync } from 'child_process';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 import { readdirSync, statSync, readFileSync, existsSync, mkdirSync } from 'fs';
 import { join, resolve, basename, extname, relative } from 'path';
 import { homedir } from 'os';
@@ -39,11 +40,13 @@ function expandHome(p: string): string {
   return p;
 }
 
-/** Check if a path is currently mounted via SSHFS (safe — no user input in command) */
-function isMounted(localPath: string): boolean {
+const execFileAsync = promisify(execFile);
+
+/** Check if a path is currently mounted via SSHFS (async — no user input in command) */
+async function isMounted(localPath: string): Promise<boolean> {
   try {
-    const result = spawnSync('mount', [], { encoding: 'utf-8', timeout: 5000 });
-    return (result.stdout || '').includes(expandHome(localPath));
+    const { stdout } = await execFileAsync('mount', [], { encoding: 'utf-8', timeout: 5000 });
+    return (stdout || '').includes(expandHome(localPath));
   } catch {
     return false;
   }
@@ -92,10 +95,10 @@ export async function serverMountRoutes(app: FastifyInstance) {
         orderBy: (m, { asc }) => [asc(m.name)],
       });
       // Enrich with live status
-      const enriched = rows.map(row => ({
+      const enriched = await Promise.all(rows.map(async row => ({
         ...row,
-        status: isMounted(row.localMountPath) ? 'mounted' : 'unmounted',
-      }));
+        status: await isMounted(row.localMountPath) ? 'mounted' : 'unmounted',
+      })));
       return { data: enriched, total: enriched.length };
     } catch (err) {
       app.log.error(err);
@@ -121,7 +124,7 @@ export async function serverMountRoutes(app: FastifyInstance) {
       return {
         data: {
           ...row,
-          status: isMounted(row.localMountPath) ? 'mounted' : 'unmounted',
+          status: await isMounted(row.localMountPath) ? 'mounted' : 'unmounted',
           server: server || null,
         },
       };
@@ -179,9 +182,9 @@ export async function serverMountRoutes(app: FastifyInstance) {
       const row = await db.query.serverMounts.findFirst({
         where: (m, { eq }) => eq(m.id, parseInt(id)),
       });
-      if (row && isMounted(row.localMountPath)) {
+      if (row && await isMounted(row.localMountPath)) {
         try {
-          spawnSync('fusermount', ['-u', expandHome(row.localMountPath)], { timeout: 10000 });
+          await execFileAsync('fusermount', ['-u', expandHome(row.localMountPath)], { timeout: 10000 });
         } catch { /* best-effort unmount */ }
       }
       const deleted = await db.delete(serverMounts)
@@ -235,7 +238,7 @@ export async function serverMountRoutes(app: FastifyInstance) {
       }
 
       // Already mounted?
-      if (isMounted(row.localMountPath)) {
+      if (await isMounted(row.localMountPath)) {
         return { data: { status: 'mounted', message: 'Already mounted' } };
       }
 
@@ -263,28 +266,18 @@ export async function serverMountRoutes(app: FastifyInstance) {
         const sshfsArgs = [
           `${sshUser}@${sshHost}:${row.remotePath}`,
           localPath,
-          '-o', `reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,ConnectTimeout=20,cache=yes,kernel_cache,auto_cache,compression=no,StrictHostKeyChecking=no${sshKeyOpts}${roFlag}`,
+          '-o', `reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,ConnectTimeout=20,cache=yes,kernel_cache,auto_cache,compression=no,StrictHostKeyChecking=accept-new${sshKeyOpts}${roFlag}`,
         ];
 
         app.log.info(`SSHFS mount: sshfs ${sshfsArgs.join(' ')}`);
 
-        const result = spawnSync('sshfs', sshfsArgs, {
+        const result = await execFileAsync('sshfs', sshfsArgs, {
           timeout: 60000,
           encoding: 'utf-8',
           env: { ...process.env, HOME: homedir() },
         });
 
-        if (result.signal) {
-          const errMsg = `SSHFS timed out (killed by ${result.signal}). The remote server may be unreachable.`;
-          app.log.error(errMsg);
-          throw { stderr: '', message: errMsg };
-        }
-
-        if (result.status !== 0) {
-          const errMsg = (result.stderr || '').trim() || (result.stdout || '').trim() || `sshfs exited with code ${result.status}`;
-          app.log.error(`SSHFS failed (exit ${result.status}): ${errMsg}`);
-          throw { stderr: result.stderr, message: errMsg };
-        }
+        // execFileAsync throws on non-zero exit, so if we reach here it's success
       } catch (execErr: any) {
         // Update status to error
         await db.update(serverMounts)
@@ -320,7 +313,7 @@ export async function serverMountRoutes(app: FastifyInstance) {
 
       const localPath = expandHome(row.localMountPath);
 
-      if (!isMounted(row.localMountPath)) {
+      if (!await isMounted(row.localMountPath)) {
         await db.update(serverMounts)
           .set({ status: 'unmounted' } as any)
           .where(eq(serverMounts.id, parseInt(id)));
@@ -328,12 +321,11 @@ export async function serverMountRoutes(app: FastifyInstance) {
       }
 
       try {
-        const unmount = spawnSync('fusermount', ['-u', localPath], { timeout: 10000, encoding: 'utf-8' });
-        if (unmount.status !== 0) throw { stderr: unmount.stderr, message: unmount.stderr };
+        const unmount = await execFileAsync('fusermount', ['-u', localPath], { timeout: 10000, encoding: 'utf-8' });
       } catch (execErr: any) {
         // Try lazy unmount
         try {
-          spawnSync('fusermount', ['-uz', localPath], { timeout: 10000, encoding: 'utf-8' });
+          await execFileAsync('fusermount', ['-uz', localPath], { timeout: 10000, encoding: 'utf-8' });
         } catch {
           return reply.code(500).send({
             error: 'Unmount failed',
@@ -363,14 +355,14 @@ export async function serverMountRoutes(app: FastifyInstance) {
       });
       if (!row) return reply.code(404).send({ error: 'Mount config not found' });
 
-      const mounted = isMounted(row.localMountPath);
+      const mounted = await isMounted(row.localMountPath);
       const localPath = expandHome(row.localMountPath);
 
       let diskInfo: any = null;
       if (mounted) {
         try {
-          const dfResult = spawnSync('df', ['-h', localPath], { encoding: 'utf-8', timeout: 5000 });
-          const dfLines = (dfResult.stdout || '').trim().split('\n');
+          const { stdout } = await execFileAsync('df', ['-h', localPath], { encoding: 'utf-8', timeout: 5000 });
+          const dfLines = (stdout || '').trim().split('\n');
           const df = dfLines[dfLines.length - 1] || '';
           const parts = df.trim().split(/\s+/);
           diskInfo = {
@@ -407,7 +399,7 @@ export async function serverMountRoutes(app: FastifyInstance) {
       });
       if (!row) return reply.code(404).send({ error: 'Mount config not found' });
 
-      if (!isMounted(row.localMountPath)) {
+      if (!await isMounted(row.localMountPath)) {
         return reply.code(400).send({ error: 'Mount is not active. Mount it first.' });
       }
 
@@ -484,7 +476,7 @@ export async function serverMountRoutes(app: FastifyInstance) {
       });
       if (!row) return reply.code(404).send({ error: 'Mount config not found' });
 
-      if (!isMounted(row.localMountPath)) {
+      if (!await isMounted(row.localMountPath)) {
         return reply.code(400).send({ error: 'Mount is not active' });
       }
 
@@ -551,7 +543,7 @@ export async function serverMountRoutes(app: FastifyInstance) {
       });
       if (!row) return reply.code(404).send({ error: 'Mount config not found' });
 
-      if (!isMounted(row.localMountPath)) {
+      if (!await isMounted(row.localMountPath)) {
         return reply.code(400).send({ error: 'Mount is not active' });
       }
 
@@ -559,7 +551,7 @@ export async function serverMountRoutes(app: FastifyInstance) {
       const minsNum = Math.min(Math.max(1, parseInt(minutes)), 1440); // 1 min to 24 hrs
 
       // Use `find` to detect recently modified files
-      const result = spawnSync('find', [
+      const { stdout } = await execFileAsync('find', [
         localPath,
         '-maxdepth', '6',
         '-type', 'f',
@@ -571,7 +563,7 @@ export async function serverMountRoutes(app: FastifyInstance) {
         '-not', '-path', '*/cache/*',
       ], { encoding: 'utf-8', timeout: 15000 });
 
-      const files = (result.stdout || '').trim().split('\n').filter(Boolean);
+      const files = (stdout || '').trim().split('\n').filter(Boolean);
       const changes: any[] = [];
 
       for (const fileFull of files) {
@@ -643,20 +635,20 @@ export async function serverMountRoutes(app: FastifyInstance) {
 
       // If currently mounted, try to remount with new permission
       let remounted = false;
-      if (isMounted(row.localMountPath)) {
+      if (await isMounted(row.localMountPath)) {
         const localPath = expandHome(row.localMountPath);
 
         // Try unmount (fusermount3 first, then fusermount)
         let unmounted = false;
         for (const cmd of ['fusermount3', 'fusermount']) {
           try {
-            const r = spawnSync(cmd, ['-u', localPath], { timeout: 10000, encoding: 'utf-8' });
-            if (r.status === 0) { unmounted = true; break; }
+            await execFileAsync(cmd, ['-u', localPath], { timeout: 10000, encoding: 'utf-8' });
+            unmounted = true; break;
           } catch { /* try next */ }
           // Try lazy unmount
           try {
-            const r = spawnSync(cmd, ['-uz', localPath], { timeout: 10000, encoding: 'utf-8' });
-            if (r.status === 0) { unmounted = true; break; }
+            await execFileAsync(cmd, ['-uz', localPath], { timeout: 10000, encoding: 'utf-8' });
+            unmounted = true; break;
           } catch { /* try next */ }
         }
 
@@ -687,23 +679,22 @@ export async function serverMountRoutes(app: FastifyInstance) {
             const sshfsArgs = [
               `${sshUser}@${sshHost}:${row.remotePath}`,
               localPath,
-              '-o', `reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,ConnectTimeout=20,cache=yes,kernel_cache,auto_cache,compression=no,StrictHostKeyChecking=no${sshKeyOpts}${roFlag}`,
+              '-o', `reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,ConnectTimeout=20,cache=yes,kernel_cache,auto_cache,compression=no,StrictHostKeyChecking=accept-new${sshKeyOpts}${roFlag}`,
             ];
 
             app.log.info(`SSHFS remount (readOnly=${readOnly}): sshfs ${sshfsArgs.join(' ')}`);
 
-            const result = spawnSync('sshfs', sshfsArgs, {
-              timeout: 60000, encoding: 'utf-8',
-              env: { ...process.env, HOME: homedir() },
-            });
-
-            if (result.status === 0) {
+            try {
+              await execFileAsync('sshfs', sshfsArgs, {
+                timeout: 60000, encoding: 'utf-8',
+                env: { ...process.env, HOME: homedir() },
+              });
               remounted = true;
               await db.update(serverMounts)
                 .set({ status: 'mounted', lastMountedAt: new Date() } as any)
                 .where(eq(serverMounts.id, parseInt(id)));
-            } else {
-              app.log.warn(`SSHFS remount failed: ${(result.stderr || '').trim()}`);
+            } catch (remountErr: any) {
+              app.log.warn(`SSHFS remount failed: ${(remountErr.stderr || '').trim()}`);
             }
           }
         }

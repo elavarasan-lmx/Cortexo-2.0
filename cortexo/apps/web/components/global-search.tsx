@@ -4,8 +4,9 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Search, X, FolderGit2, Bug, Rocket, GitBranch, Server,
-  ScrollText, BarChart3, Settings,
+  ScrollText, BarChart3, Settings, BookOpen, Terminal,
 } from 'lucide-react';
+import { api } from '@/lib/api';
 
 /* ─── Searchable items ─── */
 const SEARCHABLE = [
@@ -17,23 +18,39 @@ const SEARCHABLE = [
   { label: 'Servers',           href: '/servers',             icon: Server,          category: 'Infrastructure' },
   { label: 'Settings',          href: '/settings',            icon: Settings,        category: 'Settings' },
   { label: 'Deploy Profiles',   href: '/settings/profiles',   icon: Settings,        category: 'Settings' },
+  { label: 'DevOps Docs',       href: '/devops-docs',         icon: BookOpen,        category: 'DevOps' },
 ];
 
 const catColors: Record<string, string> = {
   Pages: '#818CF8', 'CI/CD': '#3B82F6', Bugs: '#EF4444', Infrastructure: '#F97316',
-  Settings: '#6B7280',
+  Settings: '#6B7280', DevOps: '#10B981',
 };
 
 export function GlobalSearch() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selectedIdx, setSelectedIdx] = useState(0);
+  const [devopsResults, setDevopsResults] = useState<any[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   const filtered = query.trim()
     ? SEARCHABLE.filter(s => s.label.toLowerCase().includes(query.toLowerCase()) || s.category.toLowerCase().includes(query.toLowerCase()))
     : SEARCHABLE;
+
+  // DevOps docs search (debounced API call)
+  useEffect(() => {
+    if (!open || !query.trim() || query.length < 2) { setDevopsResults([]); return; }
+    const timer = setTimeout(async () => {
+      try {
+        api.loadToken();
+        const res = await api.searchDevopsDocs(query) as any;
+        const combined = [...(res.data?.static || []), ...(res.data?.custom || [])];
+        setDevopsResults(combined.slice(0, 5));
+      } catch { setDevopsResults([]); }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query, open]);
 
   const handleOpen = useCallback(() => {
     setOpen(true);
@@ -189,6 +206,45 @@ export function GlobalSearch() {
               })}
             </div>
           ))}
+
+          {/* DevOps Docs results */}
+          {devopsResults.length > 0 && (
+            <div style={{ marginBottom: '6px' }}>
+              <p style={{
+                padding: '6px 10px 4px', margin: 0,
+                fontSize: '10px', fontWeight: 700, textTransform: 'uppercase',
+                letterSpacing: '0.08em', color: catColors['DevOps'],
+              }}>DevOps Docs</p>
+              {devopsResults.map((doc: any) => (
+                <button
+                  key={doc.id}
+                  onClick={() => navigate(`/devops-docs?highlight=${doc.id}`)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '10px', width: '100%',
+                    padding: '9px 12px', borderRadius: '10px', border: 'none',
+                    cursor: 'pointer', textAlign: 'left', transition: 'background-color 100ms',
+                    backgroundColor: 'transparent',
+                    color: 'rgb(var(--text-secondary))',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(16,185,129,0.12)'; e.currentTarget.style.color = '#10B981'; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'rgb(var(--text-secondary))'; }}
+                >
+                  <div style={{
+                    width: '30px', height: '30px', borderRadius: '8px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                    backgroundColor: doc.color ? `${doc.color}20` : 'rgba(var(--border),0.3)',
+                  }}>
+                    <Terminal style={{ width: '14px', height: '14px' }} />
+                  </div>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <span style={{ fontSize: '13px', fontWeight: 500, display: 'block' }}>{doc.title}</span>
+                    <span style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>{doc.tool} · {doc.category}</span>
+                  </div>
+                  <BookOpen style={{ width: '12px', height: '12px', flexShrink: 0, opacity: 0.5 }} />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Footer hint */}

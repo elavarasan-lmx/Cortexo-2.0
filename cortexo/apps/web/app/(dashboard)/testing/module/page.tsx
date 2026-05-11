@@ -1,240 +1,288 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Boxes, Play, CheckCircle, XCircle, Loader2, Clock, ChevronDown, ChevronRight, Smartphone, Globe } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Boxes, Play, CheckCircle, XCircle, Loader2, Clock, ShieldAlert, AlertTriangle, ChevronDown, ChevronRight, ArrowLeft } from 'lucide-react';
+import { useAutoLoadToken } from '@/lib/hooks';
 
-/* ── Types ── */
-interface ModuleEntry { name: string; endpoint: string; platform: 'ionic' | 'flutter' | 'both'; }
-interface ModuleResult extends ModuleEntry { status: 'pass' | 'fail' | 'pending' | 'running'; latency?: number; statusCode?: number; error?: string; }
-interface ModuleGroup { title: string; modules: ModuleEntry[]; }
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/v1';
 
-/* ── All WinBull Modules ── */
-const MODULE_GROUPS: ModuleGroup[] = [
-  { title: 'Core & Auth', modules: [
-    { name: 'Health Check', endpoint: '/api/health', platform: 'both' },
-    { name: 'Auth Login', endpoint: '/api/auth/login', platform: 'both' },
-    { name: 'Auth OTP Verify', endpoint: '/api/auth/otp/verify', platform: 'both' },
-    { name: 'Session Validate', endpoint: '/api/auth/session', platform: 'both' },
-    { name: 'Client Config', endpoint: '/api/config', platform: 'both' },
-    { name: 'DB Connection', endpoint: '/api/db/ping', platform: 'both' },
-  ]},
-  { title: 'Rate Engine', modules: [
-    { name: 'Live Rates', endpoint: '/api/rates/latest', platform: 'both' },
-    { name: 'Rate Feed (Socket)', endpoint: '/api/socket/status', platform: 'both' },
-    { name: 'Rate History', endpoint: '/api/rates/history', platform: 'both' },
-    { name: 'Spot Rate', endpoint: '/api/rates/spot', platform: 'both' },
-    { name: 'MCX Rate Sync', endpoint: '/api/rates/mcx', platform: 'ionic' },
-    { name: 'Rate Margin Config', endpoint: '/api/rates/margin-config', platform: 'both' },
-  ]},
-  { title: 'Trade & Booking', modules: [
-    { name: 'Trade List', endpoint: '/api/trades', platform: 'both' },
-    { name: 'Place Order (Market)', endpoint: '/api/trades/book', platform: 'both' },
-    { name: 'Place Order (Limit)', endpoint: '/api/trades/limit', platform: 'both' },
-    { name: 'Pending Orders', endpoint: '/api/trades/pending', platform: 'both' },
-    { name: 'Trade Close', endpoint: '/api/trades/close', platform: 'both' },
-    { name: 'Trade Modify', endpoint: '/api/trades/modify', platform: 'flutter' },
-    { name: 'Bulk Close', endpoint: '/api/trades/bulk-close', platform: 'ionic' },
-    { name: 'P&L Summary', endpoint: '/api/trades/pnl', platform: 'both' },
-  ]},
-  { title: 'Client Management', modules: [
-    { name: 'Client List', endpoint: '/api/clients', platform: 'both' },
-    { name: 'Client Profile', endpoint: '/api/clients/profile', platform: 'both' },
-    { name: 'Client Ledger', endpoint: '/api/clients/ledger', platform: 'both' },
-    { name: 'Margin Status', endpoint: '/api/clients/margin', platform: 'both' },
-    { name: 'Client Limits', endpoint: '/api/clients/limits', platform: 'both' },
-    { name: 'Ban/Unban', endpoint: '/api/clients/ban', platform: 'ionic' },
-  ]},
-  { title: 'Reports & Analytics', modules: [
-    { name: 'Daily Report', endpoint: '/api/reports/daily', platform: 'both' },
-    { name: 'Trade Report', endpoint: '/api/reports/trades', platform: 'both' },
-    { name: 'Closing Report', endpoint: '/api/reports/closing', platform: 'both' },
-    { name: 'Sauda Report', endpoint: '/api/reports/sauda', platform: 'ionic' },
-    { name: 'Broker Brokerage', endpoint: '/api/reports/brokerage', platform: 'both' },
-    { name: 'Profit/Loss Report', endpoint: '/api/reports/pnl', platform: 'both' },
-    { name: 'Bill Generate', endpoint: '/api/reports/bill', platform: 'ionic' },
-  ]},
-  { title: 'Notifications & Comms', modules: [
-    { name: 'Push Notification', endpoint: '/api/notifications/test', platform: 'both' },
-    { name: 'FCM Token', endpoint: '/api/notifications/fcm', platform: 'flutter' },
-    { name: 'SMS OTP', endpoint: '/api/notifications/sms', platform: 'both' },
-    { name: 'WhatsApp Alert', endpoint: '/api/notifications/whatsapp', platform: 'ionic' },
-  ]},
-  { title: 'Admin & Settings', modules: [
-    { name: 'Admin Panel', endpoint: '/admin', platform: 'ionic' },
-    { name: 'Market Hours', endpoint: '/api/settings/market-hours', platform: 'both' },
-    { name: 'Symbol Config', endpoint: '/api/settings/symbols', platform: 'both' },
-    { name: 'Brokerage Config', endpoint: '/api/settings/brokerage', platform: 'both' },
-    { name: 'Banner Manage', endpoint: '/api/settings/banners', platform: 'flutter' },
-    { name: 'App Version Check', endpoint: '/api/settings/version', platform: 'flutter' },
-  ]},
-  { title: 'Mobile API (Legacy)', modules: [
-    { name: 'Mobile GetRates', endpoint: '/mobileapi/getrates', platform: 'ionic' },
-    { name: 'Mobile BookRate', endpoint: '/mobileapi/bookrate', platform: 'ionic' },
-    { name: 'Mobile GetReport', endpoint: '/mobileapi/getreport', platform: 'ionic' },
-    { name: 'Mobile GetLedger', endpoint: '/mobileapi/getledger', platform: 'ionic' },
-  ]},
-  { title: 'TDS/TCS Calculator', modules: [
-    { name: 'TDS Calculate', endpoint: '/api/calculator/tds', platform: 'flutter' },
-    { name: 'TCS Calculate', endpoint: '/api/calculator/tcs', platform: 'flutter' },
-    { name: 'Weight Purity Calc', endpoint: '/api/calculator/weight', platform: 'flutter' },
-  ]},
-];
+interface ModuleInfo {
+  id: string; name: string; icon: string; description: string;
+  category: string; stepCount: number; criticalCount: number; highCount: number;
+}
 
-const allModules = MODULE_GROUPS.flatMap(g => g.modules);
+interface StepResult {
+  step: number; name: string; description: string;
+  status: 'passed' | 'failed'; statusCode: number | null;
+  latencyMs: number; error: string | null; severity: string;
+  securityIssue: string | null; schemaValid: boolean | null;
+  schemaErrors?: string[];
+}
 
-/* ── Styles ── */
-const platformBadge = (p: string): React.CSSProperties => ({
+interface ModuleRunResult {
+  runId: number; module: string; moduleName: string; icon: string;
+  durationMs: number; total: number; passed: number; failed: number;
+  passRate: number; criticalFails: number;
+  securityIssues: { step: string; issue: string; error: string }[];
+  steps: StepResult[];
+}
+
+interface Target { id: number; name: string; baseUrl: string; }
+
+const card: React.CSSProperties = { borderRadius: '14px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', padding: '20px', transition: 'all 200ms' };
+const sevBadge = (s: string): React.CSSProperties => ({
   padding: '2px 8px', borderRadius: '4px', fontSize: '9px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
-  color: p === 'ionic' ? '#F59E0B' : p === 'flutter' ? '#3B82F6' : '#10B981',
-  backgroundColor: p === 'ionic' ? '#F59E0B12' : p === 'flutter' ? '#3B82F612' : '#10B98112',
-  border: `1px solid ${p === 'ionic' ? '#F59E0B25' : p === 'flutter' ? '#3B82F625' : '#10B98125'}`,
+  color: s === 'critical' ? '#EF4444' : s === 'high' ? '#F59E0B' : s === 'medium' ? '#3B82F6' : '#6B7280',
+  backgroundColor: s === 'critical' ? '#EF444412' : s === 'high' ? '#F59E0B12' : s === 'medium' ? '#3B82F612' : '#6B728012',
+  border: `1px solid ${s === 'critical' ? '#EF444425' : s === 'high' ? '#F59E0B25' : s === 'medium' ? '#3B82F625' : '#6B728025'}`,
 });
 
-const inputStyle: React.CSSProperties = { padding: '9px 14px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-primary))', fontSize: '13px', fontFamily: "'JetBrains Mono', monospace", outline: 'none', width: '100%' };
-
-/* ── Component ── */
 export default function ModuleTestPage() {
-  const [baseUrl, setBaseUrl] = useState('');
-  const [results, setResults] = useState<Record<string, ModuleResult>>({});
-  const [running, setRunning] = useState(false);
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
-  const [filter, setFilter] = useState<'all' | 'ionic' | 'flutter'>('all');
+  useAutoLoadToken();
+  const [modules, setModules] = useState<ModuleInfo[]>([]);
+  const [targets, setTargets] = useState<Target[]>([]);
+  const [selectedTarget, setSelectedTarget] = useState<number>(0);
+  const [running, setRunning] = useState<string | null>(null);
+  const [result, setResult] = useState<ModuleRunResult | null>(null);
+  const [history, setHistory] = useState<ModuleRunResult[]>([]);
+  const [expandedSteps, setExpandedSteps] = useState<Record<number, boolean>>({});
+  const token = typeof window !== 'undefined' ? localStorage.getItem('cortexo_token') || '' : '';
+  const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } as Record<string, string>;
 
-  const getResult = (m: ModuleEntry): ModuleResult => results[m.endpoint] || { ...m, status: 'pending' };
+  const load = useCallback(async () => {
+    try {
+      const [modRes, tgtRes] = await Promise.all([
+        fetch(`${API}/testing/module-definitions`, { headers }),
+        fetch(`${API}/testing/targets`, { headers }),
+      ]);
+      const modJson = await modRes.json();
+      const tgtJson = await tgtRes.json();
+      setModules(modJson.data || []);
+      const tgts = Array.isArray(tgtJson) ? tgtJson : tgtJson.data || [];
+      setTargets(tgts);
+      if (tgts.length > 0 && !selectedTarget) setSelectedTarget(tgts[0].id);
+    } catch { /* silently fail */ }
+  }, []);
 
-  const runAll = async () => {
-    if (!baseUrl) return;
-    setRunning(true);
-    const filtered = allModules.filter(m => filter === 'all' || m.platform === filter || m.platform === 'both');
-    const newResults: Record<string, ModuleResult> = {};
-    filtered.forEach(m => { newResults[m.endpoint] = { ...m, status: 'running' }; });
-    setResults({ ...newResults });
+  useEffect(() => { load(); }, [load]);
 
-    for (const m of filtered) {
-      const url = baseUrl.replace(/\/+$/, '') + m.endpoint;
-      try {
-        const start = Date.now();
-        const res = await fetch(url, { method: 'GET', mode: 'no-cors', signal: AbortSignal.timeout(10000) });
-        newResults[m.endpoint] = { ...m, status: 'pass', latency: Date.now() - start, statusCode: res.status || 200 };
-      } catch (err: any) {
-        newResults[m.endpoint] = { ...m, status: 'fail', error: err.message || 'Timeout' };
+  const runModule = async (moduleId: string) => {
+    if (!selectedTarget) return;
+    setRunning(moduleId);
+    setResult(null);
+    try {
+      const res = await fetch(`${API}/testing/run-module`, {
+        method: 'POST', headers,
+        body: JSON.stringify({ targetId: selectedTarget, moduleId }),
+      });
+      const json = await res.json();
+      if (json.data) {
+        setResult(json.data);
+        setHistory(prev => [json.data, ...prev].slice(0, 10));
       }
-      setResults({ ...newResults });
+    } catch (err) {
+      console.error('Module test failed:', err);
     }
-    setRunning(false);
+    setRunning(null);
   };
 
-  const pass = Object.values(results).filter(r => r.status === 'pass').length;
-  const fail = Object.values(results).filter(r => r.status === 'fail').length;
-  const total = allModules.filter(m => filter === 'all' || m.platform === filter || m.platform === 'both').length;
-
-  const statusIcon = (s: string) =>
-    s === 'pass' ? <CheckCircle style={{ width: '15px', height: '15px', color: '#10B981' }} /> :
-    s === 'fail' ? <XCircle style={{ width: '15px', height: '15px', color: '#EF4444' }} /> :
-    s === 'running' ? <Loader2 style={{ width: '15px', height: '15px', color: 'rgb(var(--primary))', animation: 'spin 1s linear infinite' }} /> :
-    <Clock style={{ width: '15px', height: '15px', color: 'rgb(var(--text-muted))' }} />;
-
-  const toggleGroup = (title: string) => setCollapsed(prev => ({ ...prev, [title]: !prev[title] }));
+  const toggleStep = (i: number) => setExpandedSteps(prev => ({ ...prev, [i]: !prev[i] }));
 
   return (
     <div style={{ maxWidth: '100%' }}>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Boxes style={{ width: '22px', height: '22px', color: 'rgb(var(--primary))' }} /> Module Test
+          <Boxes style={{ width: '22px', height: '22px', color: 'rgb(var(--primary))' }} /> Module Testing
         </h1>
         <p style={{ fontSize: '13px', color: 'rgb(var(--text-secondary))', margin: 0 }}>
-          Test all WinBull API modules — Ionic (legacy) + Flutter (new)
+          Test specific business modules — Customer Registration, Login, Trading, and more
         </p>
       </div>
 
-      {/* Controls */}
-      <div style={{ padding: '18px 20px', borderRadius: '14px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', marginBottom: '16px' }}>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'end', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: '240px' }}>
-            <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, color: 'rgb(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>Base URL</label>
-            <input value={baseUrl} onChange={e => setBaseUrl(e.target.value)} placeholder="https://vijaybullion.com" style={inputStyle} />
-          </div>
-
-          {/* Platform filter */}
-          <div style={{ display: 'flex', gap: '4px' }}>
-            {(['all', 'ionic', 'flutter'] as const).map(f => (
-              <button key={f} onClick={() => setFilter(f)} style={{
-                padding: '9px 14px', borderRadius: '10px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: 'all 150ms',
-                border: filter === f ? 'none' : '1px solid rgb(var(--border))',
-                backgroundColor: filter === f ? (f === 'ionic' ? '#F59E0B' : f === 'flutter' ? '#3B82F6' : 'rgb(var(--primary))') : 'transparent',
-                color: filter === f ? '#fff' : 'rgb(var(--text-secondary))',
-              }}>
-                {f === 'all' ? `All (${allModules.length})` : f === 'ionic' ? '📱 Ionic' : '🦋 Flutter'}
-              </button>
-            ))}
-          </div>
-
-          <button onClick={runAll} disabled={running || !baseUrl} style={{
-            display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 22px', borderRadius: '10px', border: 'none',
-            background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))', color: '#fff', fontSize: '12px', fontWeight: 600,
-            cursor: baseUrl ? 'pointer' : 'not-allowed', opacity: baseUrl ? 1 : 0.5,
+      {/* Target Selector */}
+      <div style={{ ...card, marginBottom: '20px', padding: '16px 20px' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <label style={{ fontSize: '10px', fontWeight: 700, color: 'rgb(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>TARGET</label>
+          <select value={selectedTarget} onChange={e => setSelectedTarget(Number(e.target.value))} style={{
+            padding: '8px 14px', borderRadius: '10px', border: '1px solid rgb(var(--border))',
+            backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-primary))',
+            fontSize: '13px', fontFamily: "'JetBrains Mono', monospace", outline: 'none', flex: 1, minWidth: '200px',
           }}>
-            {running ? <Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} /> : <Play style={{ width: '14px', height: '14px' }} />}
-            {running ? 'Testing...' : `Run All (${total})`}
-          </button>
+            {targets.map(t => <option key={t.id} value={t.id}>{t.name} — {t.baseUrl}</option>)}
+          </select>
+          {targets.length === 0 && (
+            <span style={{ fontSize: '12px', color: '#EF4444' }}>⚠ No targets configured. Add one in the Testing Hub first.</span>
+          )}
         </div>
-
-        {/* Summary bar */}
-        {(pass > 0 || fail > 0) && (
-          <div style={{ display: 'flex', gap: '20px', marginTop: '14px', paddingTop: '12px', borderTop: '1px solid rgba(var(--border), 0.3)' }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#10B981' }}>✓ {pass} passed</span>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: fail > 0 ? '#EF4444' : 'rgb(var(--text-muted))' }}>✗ {fail} failed</span>
-            <span style={{ fontSize: '12px', color: 'rgb(var(--text-muted))' }}>{total - pass - fail} pending</span>
-            {total > 0 && <span style={{ marginLeft: 'auto', fontSize: '12px', fontWeight: 700, color: pass === total ? '#10B981' : '#F59E0B' }}>{Math.round((pass / total) * 100)}% coverage</span>}
-          </div>
-        )}
       </div>
 
-      {/* Module Groups */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {MODULE_GROUPS.map(group => {
-          const groupModules = group.modules.filter(m => filter === 'all' || m.platform === filter || m.platform === 'both');
-          if (groupModules.length === 0) return null;
-          const isCollapsed = collapsed[group.title];
-          const gPass = groupModules.filter(m => getResult(m).status === 'pass').length;
-          const gFail = groupModules.filter(m => getResult(m).status === 'fail').length;
-
+      {/* Module Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '14px', marginBottom: '24px' }}>
+        {modules.map(m => {
+          const isRunning = running === m.id;
           return (
-            <div key={group.title} style={{ borderRadius: '12px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', overflow: 'hidden' }}>
-              {/* Group Header */}
-              <button onClick={() => toggleGroup(group.title)} style={{
-                display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '12px 16px', border: 'none',
-                backgroundColor: 'transparent', cursor: 'pointer', color: 'rgb(var(--text-primary))',
-              }}>
-                {isCollapsed ? <ChevronRight style={{ width: '14px', height: '14px', color: 'rgb(var(--text-muted))' }} /> : <ChevronDown style={{ width: '14px', height: '14px', color: 'rgb(var(--text-muted))' }} />}
-                <span style={{ fontSize: '13px', fontWeight: 700 }}>{group.title}</span>
-                <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', fontWeight: 500 }}>({groupModules.length} modules)</span>
-                <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
-                  {gPass > 0 && <span style={{ fontSize: '11px', fontWeight: 600, color: '#10B981' }}>✓{gPass}</span>}
-                  {gFail > 0 && <span style={{ fontSize: '11px', fontWeight: 600, color: '#EF4444' }}>✗{gFail}</span>}
+            <div key={m.id} style={{
+              ...card, cursor: selectedTarget ? 'pointer' : 'not-allowed',
+              opacity: selectedTarget ? 1 : 0.5,
+              borderColor: isRunning ? 'rgb(var(--primary))' : undefined,
+              boxShadow: isRunning ? '0 0 0 2px rgba(var(--primary), 0.15)' : undefined,
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                <div>
+                  <div style={{ fontSize: '20px', marginBottom: '6px' }}>{m.icon}</div>
+                  <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>{m.name}</h3>
                 </div>
-              </button>
-
-              {/* Module Rows */}
-              {!isCollapsed && groupModules.map((m, i) => {
-                const r = getResult(m);
-                return (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px', borderTop: '1px solid rgba(var(--border), 0.2)' }}>
-                    {statusIcon(r.status)}
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-primary))', width: '180px', flexShrink: 0 }}>{m.name}</span>
-                    <span style={platformBadge(m.platform)}>{m.platform}</span>
-                    <code style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', fontFamily: "'JetBrains Mono', monospace", flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.endpoint}</code>
-                    {r.latency !== undefined && <span style={{ fontSize: '11px', fontWeight: 700, color: r.latency < 200 ? '#10B981' : r.latency < 500 ? '#F59E0B' : '#EF4444' }}>{r.latency}ms</span>}
-                    {r.statusCode && <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', backgroundColor: '#10B98112', color: '#10B981', fontWeight: 700 }}>{r.statusCode}</span>}
-                    {r.error && <span style={{ fontSize: '10px', color: '#EF4444', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.error}</span>}
-                  </div>
-                );
-              })}
+                <button onClick={() => runModule(m.id)} disabled={isRunning || !selectedTarget}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '10px', border: 'none',
+                    background: isRunning ? 'rgb(var(--surface-hover))' : 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))',
+                    color: '#fff', fontSize: '11px', fontWeight: 600, cursor: selectedTarget ? 'pointer' : 'not-allowed',
+                  }}>
+                  {isRunning ? <Loader2 style={{ width: '13px', height: '13px', animation: 'spin 1s linear infinite' }} /> : <Play style={{ width: '13px', height: '13px' }} />}
+                  {isRunning ? 'Running...' : 'Run'}
+                </button>
+              </div>
+              <p style={{ fontSize: '12px', color: 'rgb(var(--text-secondary))', margin: '0 0 12px', lineHeight: '1.5' }}>{m.description}</p>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>📋 {m.stepCount} steps</span>
+                {m.criticalCount > 0 && <span style={{ fontSize: '11px', color: '#EF4444', fontWeight: 600 }}>🔴 {m.criticalCount} critical</span>}
+                {m.highCount > 0 && <span style={{ fontSize: '11px', color: '#F59E0B', fontWeight: 600 }}>🟡 {m.highCount} high</span>}
+                <span style={sevBadge(m.category)}>{m.category}</span>
+              </div>
             </div>
           );
         })}
       </div>
+
+      {/* Results */}
+      {result && (
+        <div style={{ ...card, marginBottom: '24px', borderColor: result.failed > 0 ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)' }}>
+          {/* Summary */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+            <div>
+              <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '22px' }}>{result.icon}</span> {result.moduleName} — Results
+              </h2>
+              <p style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', margin: 0 }}>
+                Run #{result.runId} • {(result.durationMs / 1000).toFixed(1)}s total
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '28px', fontWeight: 800, color: result.passRate >= 80 ? '#10B981' : result.passRate >= 50 ? '#F59E0B' : '#EF4444' }}>{result.passRate}%</div>
+                <div style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>PASS RATE</div>
+              </div>
+              <div style={{ width: '1px', height: '40px', backgroundColor: 'rgb(var(--border))' }} />
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '20px', fontWeight: 700, color: '#10B981' }}>{result.passed}</div>
+                  <div style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>PASSED</div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '20px', fontWeight: 700, color: result.failed > 0 ? '#EF4444' : 'rgb(var(--text-muted))' }}>{result.failed}</div>
+                  <div style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>FAILED</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Security Issues Alert */}
+          {result.securityIssues.length > 0 && (
+            <div style={{
+              padding: '14px 18px', borderRadius: '10px', marginBottom: '16px',
+              backgroundColor: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <ShieldAlert style={{ width: '16px', height: '16px', color: '#EF4444' }} />
+                <span style={{ fontSize: '13px', fontWeight: 700, color: '#EF4444' }}>Security Issues Found ({result.securityIssues.length})</span>
+              </div>
+              {result.securityIssues.map((si, i) => (
+                <div key={i} style={{ fontSize: '12px', color: 'rgb(var(--text-secondary))', padding: '4px 0', borderTop: i > 0 ? '1px solid rgba(239,68,68,0.1)' : 'none' }}>
+                  <strong>{si.step}</strong>: {si.issue} — {si.error}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Critical Fails Alert */}
+          {result.criticalFails > 0 && (
+            <div style={{
+              padding: '12px 16px', borderRadius: '10px', marginBottom: '16px',
+              backgroundColor: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.15)',
+              display: 'flex', alignItems: 'center', gap: '8px',
+            }}>
+              <AlertTriangle style={{ width: '15px', height: '15px', color: '#EF4444' }} />
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#EF4444' }}>
+                {result.criticalFails} critical test(s) failed — these are revenue-impacting issues
+              </span>
+            </div>
+          )}
+
+          {/* Step-by-step results */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {result.steps.map((s, i) => {
+              const isExpanded = expandedSteps[i];
+              return (
+                <div key={i} style={{
+                  borderRadius: '10px', border: '1px solid',
+                  borderColor: s.status === 'passed' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.2)',
+                  backgroundColor: s.status === 'passed' ? 'rgba(16,185,129,0.02)' : 'rgba(239,68,68,0.03)',
+                  overflow: 'hidden',
+                }}>
+                  <button onClick={() => toggleStep(i)} style={{
+                    display: 'flex', alignItems: 'center', gap: '10px', width: '100%',
+                    padding: '10px 14px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer',
+                    color: 'rgb(var(--text-primary))',
+                  }}>
+                    {isExpanded ? <ChevronDown style={{ width: '13px', height: '13px', color: 'rgb(var(--text-muted))' }} /> : <ChevronRight style={{ width: '13px', height: '13px', color: 'rgb(var(--text-muted))' }} />}
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: 'rgb(var(--text-muted))', width: '28px' }}>#{s.step}</span>
+                    {s.status === 'passed'
+                      ? <CheckCircle style={{ width: '14px', height: '14px', color: '#10B981', flexShrink: 0 }} />
+                      : <XCircle style={{ width: '14px', height: '14px', color: '#EF4444', flexShrink: 0 }} />}
+                    <span style={{ fontSize: '13px', fontWeight: 600, flex: 1, textAlign: 'left' }}>{s.name}</span>
+                    <span style={sevBadge(s.severity)}>{s.severity}</span>
+                    {s.statusCode && <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', backgroundColor: s.statusCode < 400 ? '#10B98112' : '#EF444412', color: s.statusCode < 400 ? '#10B981' : '#EF4444', fontWeight: 700 }}>{s.statusCode}</span>}
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: s.latencyMs < 200 ? '#10B981' : s.latencyMs < 500 ? '#F59E0B' : '#EF4444' }}>{s.latencyMs}ms</span>
+                    {s.securityIssue && <ShieldAlert style={{ width: '13px', height: '13px', color: '#EF4444' }} />}
+                  </button>
+                  {isExpanded && (
+                    <div style={{ padding: '0 14px 12px 52px', fontSize: '12px' }}>
+                      <p style={{ color: 'rgb(var(--text-secondary))', margin: '0 0 6px' }}>{s.description}</p>
+                      {s.error && <p style={{ color: '#EF4444', margin: '0 0 4px', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>❌ {s.error}</p>}
+                      {s.securityIssue && <p style={{ color: '#EF4444', margin: '0 0 4px' }}>🛡 Security: <strong>{s.securityIssue}</strong></p>}
+                      {s.schemaErrors && s.schemaErrors.length > 0 && (
+                        <p style={{ color: '#F59E0B', margin: '0', fontSize: '11px' }}>Schema: {s.schemaErrors.join(', ')}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Run History */}
+      {history.length > 1 && (
+        <div style={{ ...card }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 12px' }}>Recent Module Runs</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {history.slice(1).map((h, i) => (
+              <button key={i} onClick={() => setResult(h)} style={{
+                display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', borderRadius: '10px',
+                border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', cursor: 'pointer',
+                color: 'rgb(var(--text-primary))', width: '100%', textAlign: 'left',
+              }}>
+                <span style={{ fontSize: '16px' }}>{h.icon}</span>
+                <span style={{ fontSize: '13px', fontWeight: 600, flex: 1 }}>{h.moduleName}</span>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: h.passRate >= 80 ? '#10B981' : '#EF4444' }}>{h.passRate}%</span>
+                <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>{h.passed}/{h.total}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

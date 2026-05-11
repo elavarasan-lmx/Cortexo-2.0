@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Upload, Server, FileCode, CheckCircle, XCircle, Loader2, FolderSearch, RotateCcw, ChevronDown, ChevronRight } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useApiData } from '@/lib/hooks';
+import { useApiData, useAutoLoadToken } from '@/lib/hooks';
 import { useToastStore } from '@/lib/toast-store';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/v1';
@@ -59,6 +59,7 @@ const fileItem = (selected: boolean): React.CSSProperties => ({
 });
 
 export default function FilePushPage() {
+  useAutoLoadToken();
   const router = useRouter();
   const toast = useToastStore();
 

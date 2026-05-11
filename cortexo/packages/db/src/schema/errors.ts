@@ -25,7 +25,7 @@ export const errors = pgTable(
       .primaryKey()
       .defaultRandom(),
     projectId: uuid('project_id')
-      .references(() => projects.id)
+      .references(() => projects.id, { onDelete: 'cascade' })
       .notNull(),
     orgId: uuid('org_id')
       .references(() => organizations.id)
@@ -48,6 +48,7 @@ export const errors = pgTable(
     linkedDeployId: uuid('linked_deploy_id'),
     tags: jsonb('tags').$type<string[]>().default([]),
     isRegression: boolean('is_regression').default(false),
+    module: varchar('module', { length: 50 }),
     createdAt: timestamp('created_at')
       .defaultNow()
       .notNull(),
@@ -56,6 +57,7 @@ export const errors = pgTable(
     index('idx_errors_project').on(table.projectId, table.status),
     index('idx_errors_fingerprint').on(table.projectId, table.fingerprint),
     index('idx_errors_project_time').on(table.projectId, table.lastSeenAt),
+    index('idx_errors_module').on(table.module, table.status),
   ],
 );
 
@@ -71,7 +73,7 @@ export const errorEvents = pgTable(
       .references(() => errors.id)
       .notNull(),
     projectId: uuid('project_id')
-      .references(() => projects.id)
+      .references(() => projects.id, { onDelete: 'cascade' })
       .notNull(),
     stackTrace: text('stack_trace'),
     context: jsonb('context').$type<Record<string, unknown>>().default({}),
@@ -118,7 +120,7 @@ export const rootCauses = pgTable(
       .references(() => errors.id)
       .notNull(),
     projectId: uuid('project_id')
-      .references(() => projects.id)
+      .references(() => projects.id, { onDelete: 'cascade' })
       .notNull(),
     orgId: uuid('org_id')
       .references(() => organizations.id),

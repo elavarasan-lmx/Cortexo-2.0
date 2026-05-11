@@ -1,6 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { ClipboardCheck, Check, Circle, ChevronDown, ChevronRight, AlertTriangle, Smartphone, Globe } from 'lucide-react';
+import { useAutoLoadToken } from '@/lib/hooks';
 
 interface CheckItem { id: string; label: string; desc: string; priority: 'high'|'medium'|'low'; platform: 'ionic'|'flutter'|'both'; }
 interface CheckGroup { title: string; items: CheckItem[]; }
@@ -59,6 +60,7 @@ const platStyle = (p: string): React.CSSProperties => ({
 });
 
 export default function ChecklistPage() {
+  useAutoLoadToken();
   const [checked, setChecked] = useState<Record<string,boolean>>({});
   const [collapsed, setCollapsed] = useState<Record<string,boolean>>({});
 

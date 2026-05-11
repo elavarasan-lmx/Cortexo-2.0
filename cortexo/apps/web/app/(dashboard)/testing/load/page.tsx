@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useCallback } from 'react';
 import { Zap, Play, CheckCircle, Clock, Users, AlertTriangle, BarChart3, Loader2, TrendingUp } from 'lucide-react';
+import { useAutoLoadToken } from '@/lib/hooks';
 
 interface Scenario { id: string; name: string; endpoint: string; method: string; desc: string; users: number; dur: number; platform: string; }
 interface Result { status: 'idle'|'running'|'done'; total: number; success: number; avg: number; p95: number; rps: number; errs: number; progress: number; }
@@ -20,6 +21,7 @@ const pbadge = (p:string): React.CSSProperties => ({ padding:'2px 7px', borderRa
   color: p==='ionic'?'#F59E0B':p==='flutter'?'#3B82F6':'#10B981', backgroundColor: p==='ionic'?'#F59E0B12':p==='flutter'?'#3B82F612':'#10B98112', border:`1px solid ${p==='ionic'?'#F59E0B25':p==='flutter'?'#3B82F625':'#10B98125'}` });
 
 export default function LoadTestPage() {
+  useAutoLoadToken();
   const [baseUrl, setBaseUrl] = useState('');
   const [results, setResults] = useState<Record<string,Result>>({});
   const [runId, setRunId] = useState<string|null>(null);

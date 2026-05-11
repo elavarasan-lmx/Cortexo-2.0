@@ -25,7 +25,7 @@ export const pipelines = pgTable(
       .primaryKey()
       .defaultRandom(),
     projectId: uuid('project_id')
-      .references(() => projects.id)
+      .references(() => projects.id, { onDelete: 'cascade' })
       .notNull(),
     orgId: uuid('org_id')
       .references(() => organizations.id)
@@ -71,7 +71,7 @@ export const pipelineRuns = pgTable(
       .references(() => pipelines.id)
       .notNull(),
     projectId: uuid('project_id')
-      .references(() => projects.id)
+      .references(() => projects.id, { onDelete: 'cascade' })
       .notNull(),
     orgId: uuid('org_id')
       .references(() => organizations.id)
@@ -149,7 +149,7 @@ export const deployments = pgTable(
       .primaryKey()
       .defaultRandom(),
     projectId: uuid('project_id')
-      .references(() => projects.id)
+      .references(() => projects.id, { onDelete: 'cascade' })
       .notNull(),
     orgId: uuid('org_id')
       .references(() => organizations.id)

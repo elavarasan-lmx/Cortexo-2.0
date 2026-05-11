@@ -363,7 +363,7 @@ export default function ProjectsPage() {
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>⏱ 3 days ago · v1.1</span>
+                  <span style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>⏱ {(() => { const d = project.updatedAt ? new Date(project.updatedAt) : project.createdAt ? new Date(project.createdAt) : null; if (!d) return '—'; const s = Math.floor((Date.now() - d.getTime()) / 1000); if (s < 60) return 'just now'; if (s < 3600) return `${Math.floor(s / 60)}m ago`; if (s < 86400) return `${Math.floor(s / 3600)}h ago`; return `${Math.floor(s / 86400)}d ago`; })()}</span>
                   {s.adminUser && <span style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>👤 {String(s.adminUser)}</span>}
                 </div>
               </div>
