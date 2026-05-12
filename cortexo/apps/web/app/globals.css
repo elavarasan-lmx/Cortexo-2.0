@@ -1098,6 +1098,9 @@ nextjs-portal {
 .cx-flex-between{ display: flex; align-items: center; justify-content: space-between; }
 .cx-flex-start  { display: flex; align-items: flex-start; }
 .cx-items-center{ align-items: center; }
+.cx-items-start { align-items: flex-start; }
+.cx-items-end   { align-items: flex-end; }
+
 .cx-gap-4  { gap: 4px; }
 .cx-gap-6  { gap: 6px; }
 .cx-gap-8  { gap: 8px; }
@@ -1107,6 +1110,8 @@ nextjs-portal {
 .cx-gap-16 { gap: 16px; }
 .cx-gap-20 { gap: 20px; }
 .cx-gap-24 { gap: 24px; }
+.cx-gap-28 { gap: 28px; }
+
 
 /* ── Padding ── */
 .cx-p-4  { padding: 4px; }
@@ -1178,6 +1183,38 @@ nextjs-portal {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: rgb(var(--text-muted));
+}
+
+/* ── Form Inputs ── */
+.cx-input {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 13px;
+  border-radius: 10px;
+  border: 1px solid rgb(var(--border));
+  background-color: rgb(var(--surface-hover));
+  color: rgb(var(--text-primary));
+  outline: none;
+  transition: border-color 200ms;
+  box-sizing: border-box;
+}
+.cx-input:focus { border-color: rgb(var(--primary)); }
+.cx-input-icon-left { padding-left: 40px; }
+.cx-input-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* ── Skeleton loader ── */
+.cx-skeleton {
+  background-color: rgb(var(--surface-hover));
+  animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
 }
 
 /* ── Card ── */

@@ -181,37 +181,37 @@ export default function TestingHubPage() {
 
       {/* ── Testing Modes ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px', marginBottom: '20px' }}>
-        <Link href="/testing/browser" style={{
-          display: 'flex', alignItems: 'center', gap: '14px', padding: '16px 20px', borderRadius: '14px',
+        <Link href="/testing/browser" className="cx-flex cx-items-center cx-gap-14" style={{
+          padding: '16px 20px', borderRadius: '14px',
           border: '1px solid rgba(139,92,246,0.25)', backgroundColor: 'rgba(139,92,246,0.06)',
           textDecoration: 'none', transition: 'all 200ms',
         }}>
           <span style={{ fontSize: '28px' }}>🌐</span>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>Browser Testing</div>
-            <div style={{ fontSize: '11px', color: 'rgb(var(--text-secondary))' }}>Real Chrome automation — fills forms, submits, screenshots</div>
+            <div className="cx-fw-700 cx-text-primary" style={{ fontSize: '14px' }}>Browser Testing</div>
+            <div className="cx-text-secondary" style={{ fontSize: '11px' }}>Real Chrome automation — fills forms, submits, screenshots</div>
           </div>
           <ChevronRight style={{ width: '16px', height: '16px', color: '#8B5CF6' }} />
         </Link>
-        <Link href="/testing/module" style={{
-          display: 'flex', alignItems: 'center', gap: '14px', padding: '16px 20px', borderRadius: '14px',
+        <Link href="/testing/module" className="cx-flex cx-items-center cx-gap-14" style={{
+          padding: '16px 20px', borderRadius: '14px',
           border: '1px solid rgba(16,185,129,0.25)', backgroundColor: 'rgba(16,185,129,0.06)',
           textDecoration: 'none', transition: 'all 200ms',
         }}>
           <span style={{ fontSize: '28px' }}>🧪</span>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>Module Testing</div>
-            <div style={{ fontSize: '11px', color: 'rgb(var(--text-secondary))' }}>Business flow test suites — Registration, Login, Trading</div>
+            <div className="cx-fw-700 cx-text-primary" style={{ fontSize: '14px' }}>Module Testing</div>
+            <div className="cx-text-secondary" style={{ fontSize: '11px' }}>Business flow test suites — Registration, Login, Trading</div>
           </div>
           <ChevronRight style={{ width: '16px', height: '16px', color: '#10B981' }} />
         </Link>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '4px', marginBottom: '20px', borderBottom: '1px solid rgb(var(--border))', paddingBottom: '0' }}>
+      <div className="cx-flex cx-gap-4" style={{ marginBottom: '20px', borderBottom: '1px solid rgb(var(--border))' }}>
         {(['targets', 'cases', 'runs'] as const).map(t => (
-          <button key={t} onClick={() => setTab(t)} style={{
-            padding: '10px 20px', fontSize: '13px', fontWeight: 600,
+          <button key={t} onClick={() => setTab(t)} className="cx-fw-600" style={{
+            padding: '10px 20px', fontSize: '13px',
             border: 'none', backgroundColor: 'transparent', cursor: 'pointer',
             color: tab === t ? 'rgb(var(--primary))' : 'rgb(var(--text-muted))',
             borderBottom: tab === t ? '2px solid rgb(var(--primary))' : '2px solid transparent',
@@ -333,27 +333,25 @@ export default function TestingHubPage() {
                   {filteredCases.map((tc: any, i: number) => {
                     const catColor = CATEGORY_COLORS[tc.category] || '#94A3B8';
                     return (
-                      <div key={tc.id} style={{
-                        display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 16px',
+                      <div key={tc.id} className="cx-flex cx-items-center cx-gap-12" style={{
+                        padding: '10px 16px',
                         borderBottom: i < filteredCases.length - 1 ? '1px solid rgb(var(--border))' : 'none',
                         fontSize: '13px',
                       }}>
-                        <span style={{
-                          fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px',
+                        <span className="cx-fw-700" style={{
+                          fontSize: '9px', padding: '2px 6px', borderRadius: '4px',
                           backgroundColor: `${catColor}15`, color: catColor, textTransform: 'uppercase',
                           minWidth: '60px', textAlign: 'center',
                         }}>{tc.category}</span>
-                        <span style={{
-                          fontSize: '10px', fontWeight: 700, padding: '1px 5px', borderRadius: '3px',
+                        <span className="cx-fw-700" style={{
+                          fontSize: '10px', padding: '1px 5px', borderRadius: '3px',
                           backgroundColor: tc.method === 'POST' ? 'rgba(245,158,11,0.12)' : 'rgba(59,130,246,0.12)',
                           color: tc.method === 'POST' ? '#F59E0B' : '#3B82F6',
                         }}>{tc.method}</span>
-                        <span style={{ flex: 1, fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', color: 'rgb(var(--text-primary))' }}>
+                        <span className="cx-mono cx-text-primary" style={{ flex: 1, fontSize: '12px' }}>
                           {tc.endpoint}
                         </span>
-                        <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>
-                          {tc.priority}
-                        </span>
+                        <span className="cx-text-muted" style={{ fontSize: '11px' }}>{tc.priority}</span>
                       </div>
                     );
                   })}
@@ -377,18 +375,19 @@ export default function TestingHubPage() {
                     const passRate = r.total > 0 ? Math.round((r.passed / r.total) * 100) : 0;
                     const isGood = r.failed === 0;
                     return (
-                      <Link key={r.id} href={r.runType === 'full' ? `/testing/levels/${r.id}` : `/testing/runs/${r.id}`} style={{
-                        display: 'flex', alignItems: 'center', gap: '16px', padding: '14px 18px',
-                        borderBottom: i < runs.length - 1 ? '1px solid rgb(var(--border))' : 'none',
-                        textDecoration: 'none', transition: 'background 150ms',
-                      }}
+                      <Link key={r.id} href={r.runType === 'full' ? `/testing/levels/${r.id}` : `/testing/runs/${r.id}`}
+                        className="cx-flex cx-items-center cx-gap-16"
+                        style={{
+                          padding: '14px 18px',
+                          borderBottom: i < runs.length - 1 ? '1px solid rgb(var(--border))' : 'none',
+                          textDecoration: 'none', transition: 'background 150ms',
+                        }}
                         onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))'; }}
                         onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                       >
-                        <div style={{
+                        <div className="cx-flex-center" style={{
                           width: '36px', height: '36px', borderRadius: '8px', flexShrink: 0,
                           background: isGood ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}>
                           {isGood
                             ? <CheckCircle style={{ width: '18px', height: '18px', color: '#10B981' }} />
@@ -397,41 +396,36 @@ export default function TestingHubPage() {
                         </div>
 
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: '14px', fontWeight: 600, color: 'rgb(var(--text-primary))', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div className="cx-flex cx-items-center cx-gap-8 cx-fw-600 cx-text-primary" style={{ fontSize: '14px' }}>
                             {r.targetName || 'Unknown'}
                             {r.runType === 'full' && (
-                              <span style={{
-                                fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px',
+                              <span className="cx-fw-700" style={{
+                                fontSize: '9px', padding: '2px 6px', borderRadius: '4px',
                                 background: 'linear-gradient(135deg, #7C3AED, #EC4899, #F59E0B)',
                                 color: '#fff', textTransform: 'uppercase', letterSpacing: '0.5px',
                               }}>L1+L2+L3</span>
                             )}
                           </div>
-                          <div style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', marginTop: '2px' }}>
+                          <div className="cx-text-muted" style={{ fontSize: '11px', marginTop: '2px' }}>
                             Run #{r.id} · {timeAgo(r.createdAt)}
                           </div>
                         </div>
 
                         {/* Results bar */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <div style={{ display: 'flex', gap: '8px', fontSize: '12px', fontWeight: 600 }}>
+                        <div className="cx-flex cx-items-center cx-gap-12">
+                          <div className="cx-flex cx-gap-8 cx-fw-600" style={{ fontSize: '12px' }}>
                             <span style={{ color: '#10B981' }}>✓ {r.passed}</span>
                             <span style={{ color: '#EF4444' }}>✗ {r.failed}</span>
                           </div>
-                          <div style={{
-                            width: '80px', height: '6px', borderRadius: '3px',
-                            backgroundColor: 'rgb(var(--border))', overflow: 'hidden',
-                          }}>
+                          <div style={{ width: '80px', height: '6px', borderRadius: '3px', backgroundColor: 'rgb(var(--border))', overflow: 'hidden' }}>
                             <div style={{
                               width: `${passRate}%`, height: '100%', borderRadius: '3px',
                               backgroundColor: isGood ? '#10B981' : (passRate > 50 ? '#F59E0B' : '#EF4444'),
                               transition: 'width 300ms',
                             }} />
                           </div>
-                          <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', minWidth: '50px' }}>
-                            {r.durationMs}ms
-                          </span>
-                          <ChevronRight style={{ width: '14px', height: '14px', color: 'rgb(var(--text-muted))' }} />
+                          <span className="cx-text-muted" style={{ fontSize: '11px', minWidth: '50px' }}>{r.durationMs}ms</span>
+                          <ChevronRight className="cx-text-muted" style={{ width: '14px', height: '14px' }} />
                         </div>
                       </Link>
                     );
@@ -445,8 +439,8 @@ export default function TestingHubPage() {
 
       {/* ──── Add Target Modal ──── */}
       {showAdd && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={() => setShowAdd(false)}>
-          <div onClick={e => e.stopPropagation()} className="cx-r-16 cx-border" style={{ width: '440px', padding: '28px', backgroundColor: 'rgb(var(--card))', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
+        <div className="cx-modal-overlay" onClick={() => setShowAdd(false)}>
+          <div onClick={e => e.stopPropagation()} className="cx-modal cx-r-16 cx-border" style={{ maxWidth: '440px', padding: '28px' }}>
             <h2 className="cx-flex cx-items-center cx-gap-8 cx-fw-700 cx-text-primary" style={{ fontSize: '18px', margin: '0 0 20px' }}>
               <Globe style={{ width: '18px', height: '18px' }} className="cx-text-accent" />
               Add Test Target
@@ -455,15 +449,15 @@ export default function TestingHubPage() {
             <div className="cx-flex-col cx-gap-12">
               <div>
                 <label className="cx-label" style={{ marginBottom: '4px', display: 'block' }}>Client Name</label>
-                <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. KVT Jewellers" className="cx-search-input" style={{ padding: '10px 14px', boxSizing: 'border-box' }} />
+                <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. KVT Jewellers" className="cx-input" />
               </div>
               <div>
                 <label className="cx-label" style={{ marginBottom: '4px', display: 'block' }}>Base URL</label>
-                <input value={newUrl} onChange={e => setNewUrl(e.target.value)} placeholder="https://kvtjewellers.com" className="cx-search-input" style={{ padding: '10px 14px', boxSizing: 'border-box' }} />
+                <input value={newUrl} onChange={e => setNewUrl(e.target.value)} placeholder="https://kvtjewellers.com" className="cx-input" />
               </div>
               <div>
                 <label className="cx-label" style={{ marginBottom: '4px', display: 'block' }}>Environment</label>
-                <select value={newEnv} onChange={e => setNewEnv(e.target.value)} className="cx-search-input" style={{ padding: '10px 14px', boxSizing: 'border-box' }}>
+                <select value={newEnv} onChange={e => setNewEnv(e.target.value)} className="cx-input">
                   <option value="staging">Staging</option>
                   <option value="production">Production</option>
                   <option value="development">Development</option>

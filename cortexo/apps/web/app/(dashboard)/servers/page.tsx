@@ -126,9 +126,6 @@ export default function ServersPage() {
     return acc;
   }, {});
 
-  const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box' as const, padding: '10px 14px', fontSize: '13px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-primary))', outline: 'none', fontFamily: "'JetBrains Mono', monospace" };
-  const labelStyle: React.CSSProperties = { display: 'block', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.04em', color: 'rgb(var(--text-muted))', marginBottom: '6px' };
-
   return (
     <div>
       <div className="cx-flex-between" style={{ alignItems: 'flex-start', gap: '16px', marginBottom: '24px' }}>
@@ -151,27 +148,26 @@ export default function ServersPage() {
 
       {/* Add Server Modal */}
       {showForm && (
-        <div onClick={() => setShowForm(false)} style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
-          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: '520px', borderRadius: '16px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', boxShadow: '0 24px 48px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
+        <div onClick={() => setShowForm(false)} className="cx-modal-overlay">
+          <div onClick={e => e.stopPropagation()} className="cx-modal" style={{ maxWidth: '520px' }}>
             {/* Header */}
-            <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid rgb(var(--border))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, rgba(var(--primary),0.15), rgba(var(--agent),0.1))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Server style={{ width: '18px', height: '18px', color: 'rgb(var(--primary))' }} />
+            <div className="cx-modal-header">
+              <div className="cx-flex cx-items-center cx-gap-10">
+                <div className="cx-flex-center cx-r-10" style={{ width: '36px', height: '36px', background: 'linear-gradient(135deg, rgba(var(--primary),0.15), rgba(var(--agent),0.1))' }}>
+                  <Server style={{ width: '18px', height: '18px' }} className="cx-text-accent" />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>Add New Server</h3>
-                  <p style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', margin: 0 }}>Register a server for monitoring</p>
+                  <h3 className="cx-fw-700 cx-text-primary" style={{ fontSize: '16px', margin: 0 }}>Add New Server</h3>
+                  <p className="cx-text-muted" style={{ fontSize: '12px', margin: 0 }}>Register a server for monitoring</p>
                 </div>
               </div>
-              <button onClick={() => setShowForm(false)} style={{ width: '32px', height: '32px', borderRadius: '8px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: 'rgb(var(--text-muted))', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+              <button onClick={() => setShowForm(false)} className="cx-icon-btn" style={{ fontSize: '18px' }}>✕</button>
             </div>
             {/* Body */}
             <div style={{ padding: '20px 24px' }}>
               {(() => {
                 const chipStyle: React.CSSProperties = { padding: '3px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 500, border: '1px solid rgba(var(--primary), 0.25)', backgroundColor: 'rgba(var(--primary), 0.06)', color: 'rgb(var(--primary))', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 150ms' };
                 const chipRow: React.CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px' };
-                // Compute suggestions
                 const existingIps = allServers.map((s: any) => s.privateIp).filter(Boolean);
                 const usedNums = existingIps.map((ip: string) => { const m = ip.match(/10\.0\.1\.(\d+)/); return m ? parseInt(m[1]) : 0; }).filter(Boolean);
                 const nextNum = usedNums.length > 0 ? Math.max(...usedNums) + 1 : 41;
@@ -183,28 +179,28 @@ export default function ServersPage() {
                 const allSshHints = [...new Set([...existingSshKeys, ...sshHints])].slice(0, 4);
 
                 return (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div className="cx-flex-col" style={{ gap: '14px' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                       <div>
-                        <label style={labelStyle}>Server Name *</label>
-                        <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Production Web 1" style={inputStyle} autoFocus />
+                        <label className="cx-label">Server Name *</label>
+                        <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Production Web 1" className="cx-input cx-mono" autoFocus />
                         <div style={chipRow}>
                           {nameHints.map(h => <button key={h} type="button" onClick={() => setForm(f => ({ ...f, name: h }))} style={chipStyle} onMouseEnter={e => { (e.target as HTMLElement).style.backgroundColor = 'rgba(var(--primary), 0.15)'; }} onMouseLeave={e => { (e.target as HTMLElement).style.backgroundColor = 'rgba(var(--primary), 0.06)'; }}>{h}</button>)}
                         </div>
                       </div>
                       <div>
-                        <label style={labelStyle}>Private IP *</label>
-                        <input value={form.privateIp} onChange={e => setForm(f => ({ ...f, privateIp: e.target.value }))} placeholder="e.g. 10.0.1.50" style={inputStyle} />
+                        <label className="cx-label">Private IP *</label>
+                        <input value={form.privateIp} onChange={e => setForm(f => ({ ...f, privateIp: e.target.value }))} placeholder="e.g. 10.0.1.50" className="cx-input cx-mono" />
                         <div style={chipRow}>
                           {suggestedIps.map(ip => <button key={ip} type="button" onClick={() => setForm(f => ({ ...f, privateIp: ip }))} style={chipStyle} onMouseEnter={e => { (e.target as HTMLElement).style.backgroundColor = 'rgba(var(--primary), 0.15)'; }} onMouseLeave={e => { (e.target as HTMLElement).style.backgroundColor = 'rgba(var(--primary), 0.06)'; }}>{ip}</button>)}
                         </div>
                       </div>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                      <div><label style={labelStyle}>Public Address</label><input value={form.publicAddress} onChange={e => setForm(f => ({ ...f, publicAddress: e.target.value }))} placeholder="e.g. ec2-xx.compute.amazonaws.com" style={inputStyle} /></div>
+                      <div><label className="cx-label">Public Address</label><input value={form.publicAddress} onChange={e => setForm(f => ({ ...f, publicAddress: e.target.value }))} placeholder="e.g. ec2-xx.compute.amazonaws.com" className="cx-input cx-mono" /></div>
                       <div>
-                        <label style={labelStyle}>SSH Key Path</label>
-                        <input value={form.sshKey} onChange={e => setForm(f => ({ ...f, sshKey: e.target.value }))} placeholder="e.g. ~/.ssh/id_rsa" style={inputStyle} />
+                        <label className="cx-label">SSH Key Path</label>
+                        <input value={form.sshKey} onChange={e => setForm(f => ({ ...f, sshKey: e.target.value }))} placeholder="e.g. ~/.ssh/id_rsa" className="cx-input cx-mono" />
                         <div style={chipRow}>
                           {allSshHints.map(h => <button key={h} type="button" onClick={() => setForm(f => ({ ...f, sshKey: h }))} style={chipStyle} onMouseEnter={e => { (e.target as HTMLElement).style.backgroundColor = 'rgba(var(--primary), 0.15)'; }} onMouseLeave={e => { (e.target as HTMLElement).style.backgroundColor = 'rgba(var(--primary), 0.06)'; }}>{h}</button>)}
                         </div>
@@ -215,10 +211,10 @@ export default function ServersPage() {
               })()}
             </div>
             {/* Footer */}
-            <div style={{ padding: '16px 24px', borderTop: '1px solid rgb(var(--border))', display: 'flex', gap: '8px', justifyContent: 'flex-end', backgroundColor: 'rgba(var(--surface-hover), 0.5)' }}>
-              <button onClick={() => setShowForm(false)} style={{ padding: '10px 20px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', border: '1px solid rgb(var(--border))', cursor: 'pointer', background: 'transparent' }}>Cancel</button>
-              <button onClick={addServer} disabled={!form.name || saving} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 24px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, color: '#fff', border: 'none', cursor: !form.name ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))', opacity: !form.name ? 0.5 : 1, boxShadow: '0 4px 12px rgba(var(--primary), 0.3)' }}>
-                {saving ? <Loader2 style={{ width: 14, height: 14, animation: 'spin 1s linear infinite' }} /> : <Plus style={{ width: 14, height: 14 }} />} {saving ? 'Adding...' : 'Add Server'}
+            <div className="cx-modal-footer">
+              <button onClick={() => setShowForm(false)} className="cx-btn-secondary cx-fw-600" style={{ padding: '10px 20px', fontSize: '13px' }}>Cancel</button>
+              <button onClick={addServer} disabled={!form.name || saving} className="cx-btn-primary cx-flex cx-items-center cx-gap-6" style={{ padding: '10px 24px', fontSize: '13px', opacity: !form.name ? 0.5 : 1, cursor: !form.name ? 'not-allowed' : 'pointer' }}>
+                {saving ? <Loader2 className="cx-spin" style={{ width: 14, height: 14 }} /> : <Plus style={{ width: 14, height: 14 }} />} {saving ? 'Adding...' : 'Add Server'}
               </button>
             </div>
           </div>
@@ -316,12 +312,12 @@ export default function ServersPage() {
             <div style={{ padding: '20px 24px' }}>
               <div className="cx-flex-col" style={{ gap: '14px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div><label style={labelStyle}>Server Name *</label><input value={editTarget.name} onChange={e => setEditTarget((p: any) => ({ ...p, name: e.target.value }))} style={inputStyle} autoFocus /></div>
-                  <div><label style={labelStyle}>Private IP *</label><input value={editTarget.privateIp} onChange={e => setEditTarget((p: any) => ({ ...p, privateIp: e.target.value }))} style={inputStyle} /></div>
+                  <div><label className="cx-label">Server Name *</label><input value={editTarget.name} onChange={e => setEditTarget((p: any) => ({ ...p, name: e.target.value }))} className="cx-input cx-mono" autoFocus /></div>
+                  <div><label className="cx-label">Private IP *</label><input value={editTarget.privateIp} onChange={e => setEditTarget((p: any) => ({ ...p, privateIp: e.target.value }))} className="cx-input cx-mono" /></div>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div><label style={labelStyle}>Public Address</label><input value={editTarget.publicAddress} onChange={e => setEditTarget((p: any) => ({ ...p, publicAddress: e.target.value }))} style={inputStyle} /></div>
-                  <div><label style={labelStyle}>SSH Key Path</label><input value={editTarget.sshKey} onChange={e => setEditTarget((p: any) => ({ ...p, sshKey: e.target.value }))} style={inputStyle} /></div>
+                  <div><label className="cx-label">Public Address</label><input value={editTarget.publicAddress} onChange={e => setEditTarget((p: any) => ({ ...p, publicAddress: e.target.value }))} className="cx-input cx-mono" /></div>
+                  <div><label className="cx-label">SSH Key Path</label><input value={editTarget.sshKey} onChange={e => setEditTarget((p: any) => ({ ...p, sshKey: e.target.value }))} className="cx-input cx-mono" /></div>
                 </div>
               </div>
             </div>
