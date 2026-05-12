@@ -90,7 +90,7 @@ const REGISTRATION_FLOW: TestFlow = {
     {
       name: 'Fill Registration Form',
       fn: async (page, _, ctx) => {
-        const testData = {
+        const defaults = {
           cus_name: 'Cortexo QA Bot',
           cus_email: `cortexo.qa.${Date.now()}@test.invalid`,
           cus_mobile: `90${Math.floor(10000000 + Math.random() * 89999999)}`,
@@ -100,6 +100,18 @@ const REGISTRATION_FLOW: TestFlow = {
           cus_address: '123 Test Street, QA Nagar, Chennai 600001',
           cus_whatsapp: '',
           cus_gstno: '33AABCU9603R1ZP',
+        };
+        // Merge custom data over defaults (user-provided values win)
+        const custom = ctx.customData || {};
+        const testData = {
+          ...defaults,
+          ...(custom.cus_name ? { cus_name: custom.cus_name } : {}),
+          ...(custom.cus_email ? { cus_email: custom.cus_email } : {}),
+          ...(custom.cus_mobile ? { cus_mobile: custom.cus_mobile } : {}),
+          ...(custom.cus_company_name ? { cus_company_name: custom.cus_company_name } : {}),
+          ...(custom.cus_login_password ? { cus_login_password: custom.cus_login_password, retype_password: custom.cus_login_password } : {}),
+          ...(custom.cus_address ? { cus_address: custom.cus_address } : {}),
+          ...(custom.cus_gstno ? { cus_gstno: custom.cus_gstno } : {}),
         };
         // Fill whatsapp same as mobile
         testData.cus_whatsapp = testData.cus_mobile;
@@ -413,7 +425,7 @@ export const BROWSER_TEST_FLOWS: TestFlow[] = [REGISTRATION_FLOW, LOGIN_FLOW, HO
  *  RUNNER — Executes a test flow in a real browser
  * ═══════════════════════════════════════════════════════════════ */
 
-export async function runBrowserTest(flowId: string, baseUrl: string): Promise<BrowserTestResult> {
+export async function runBrowserTest(flowId: string, baseUrl: string, customData?: Record<string, any>): Promise<BrowserTestResult> {
   const flow = BROWSER_TEST_FLOWS.find(f => f.id === flowId);
   if (!flow) throw new Error(`Flow "${flowId}" not found`);
 
@@ -434,7 +446,8 @@ export async function runBrowserTest(flowId: string, baseUrl: string): Promise<B
     await page.setViewport({ width: 1280, height: 900 });
     await page.setUserAgent('Cortexo-QA-Bot/1.0 (Automated Testing)');
 
-    const ctx: Record<string, any> = {};
+    // Inject custom data into context so steps can use it
+    const ctx: Record<string, any> = { customData: customData || {} };
 
     for (let i = 0; i < flow.steps.length; i++) {
       const step = flow.steps[i];
@@ -474,9 +487,28 @@ export async function runBrowserTest(flowId: string, baseUrl: string): Promise<B
   };
 }
 
+/** Field definitions for each flow — tells the UI what custom data fields to render */
+const FLOW_FIELDS: Record<string, Array<{ key: string; label: string; type: string; placeholder: string }>> = {
+  browser_registration: [
+    { key: 'cus_name', label: 'Customer Name', type: 'text', placeholder: 'Cortexo QA Bot' },
+    { key: 'cus_email', label: 'Email', type: 'email', placeholder: 'auto-generated@test.invalid' },
+    { key: 'cus_mobile', label: 'Mobile', type: 'tel', placeholder: 'Auto-generated 10 digit' },
+    { key: 'cus_company_name', label: 'Company Name', type: 'text', placeholder: 'Cortexo Test Corp Pvt Ltd' },
+    { key: 'cus_login_password', label: 'Password', type: 'password', placeholder: 'CortexoTest@2026' },
+    { key: 'cus_address', label: 'Address', type: 'text', placeholder: '123 Test Street, QA Nagar, Chennai 600001' },
+    { key: 'cus_gstno', label: 'GST Number', type: 'text', placeholder: '33AABCU9603R1ZP' },
+  ],
+  browser_login: [
+    { key: 'username', label: 'Username / Mobile', type: 'text', placeholder: 'invalid_cortexo_999 (intentionally wrong)' },
+    { key: 'password', label: 'Password', type: 'password', placeholder: 'wrong_pass (intentionally wrong)' },
+  ],
+  browser_homepage: [],
+};
+
 export function getAvailableFlows() {
   return BROWSER_TEST_FLOWS.map(f => ({
     id: f.id, name: f.name, icon: f.icon,
     description: f.description, stepCount: f.steps.length,
+    fields: FLOW_FIELDS[f.id] || [],
   }));
 }

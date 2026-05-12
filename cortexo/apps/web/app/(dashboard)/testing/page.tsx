@@ -114,38 +114,28 @@ export default function TestingHubPage() {
     return acc;
   }, {} as Record<string, number>);
 
-  const inputStyle: React.CSSProperties = {
-    padding: '10px 14px', fontSize: '13px', borderRadius: '10px',
-    border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))',
-    color: 'rgb(var(--text-primary))', outline: 'none', width: '100%', boxSizing: 'border-box',
-  };
-
-  const btnStyle = (color: string): React.CSSProperties => ({
-    display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 18px',
-    borderRadius: '10px', border: 'none', fontSize: '13px', fontWeight: 600,
-    cursor: 'pointer', color: '#fff', backgroundColor: color,
-    transition: 'opacity 200ms',
-  });
+  // inputStyle replaced by cx-search-input class
+  // btnStyle replaced by inline bg-color only (cx-btn-primary sets the rest)
 
   return (
     <div>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '24px' }}>
+      <div className="cx-page-header" style={{ marginBottom: '24px' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <FlaskConical style={{ width: '24px', height: '24px', color: 'rgb(var(--primary))' }} />
+          <h1 className="cx-flex cx-items-center cx-gap-10 cx-page-title">
+            <FlaskConical style={{ width: '24px', height: '24px' }} className="cx-text-accent" />
             Testing Hub
           </h1>
-          <p style={{ fontSize: '14px', color: 'rgb(var(--text-secondary))', marginTop: '4px' }}>
+          <p className="cx-page-subtitle">
             {targets.length} target{targets.length !== 1 ? 's' : ''} · {cases.length} test cases · {runs.length} runs
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button onClick={handleScan} disabled={scanning} style={btnStyle('#8B5CF6')}>
-            {scanning ? <Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} /> : <FolderSearch style={{ width: '14px', height: '14px' }} />}
+        <div className="cx-flex cx-gap-8">
+          <button onClick={handleScan} disabled={scanning} className="cx-btn-primary" style={{ backgroundColor: '#8B5CF6' }}>
+            {scanning ? <Loader2 className="cx-spinner" style={{ width: '14px', height: '14px' }} /> : <FolderSearch style={{ width: '14px', height: '14px' }} />}
             {scanning ? 'Scanning...' : 'Scan Codebase'}
           </button>
-          <button onClick={() => setShowAdd(true)} style={btnStyle('#10B981')}>
+          <button onClick={() => setShowAdd(true)} className="cx-btn-primary" style={{ backgroundColor: '#10B981' }}>
             <Plus style={{ width: '14px', height: '14px' }} /> Add Client
           </button>
         </div>
@@ -153,18 +143,14 @@ export default function TestingHubPage() {
 
       {/* Scan Result Toast */}
       {scanResult && (
-        <div style={{
-          padding: '14px 18px', borderRadius: '12px', marginBottom: '16px',
-          border: '1px solid rgba(139,92,246,0.2)', backgroundColor: 'rgba(139,92,246,0.06)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div className="cx-flex-between cx-r-12" style={{ padding: '14px 18px', marginBottom: '16px', border: '1px solid rgba(139,92,246,0.2)', backgroundColor: 'rgba(139,92,246,0.06)' }}>
+          <div className="cx-flex cx-items-center cx-gap-10">
             <CheckCircle style={{ width: '16px', height: '16px', color: '#8B5CF6' }} />
-            <span style={{ fontSize: '13px', color: 'rgb(var(--text-primary))' }}>
+            <span className="cx-text-13 cx-text-primary">
               Scan complete: <strong>{scanResult.discovered}</strong> endpoints found · <strong>{scanResult.inserted}</strong> new · {scanResult.skipped} existing
             </span>
           </div>
-          <button onClick={() => setScanResult(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgb(var(--text-muted))' }}>
+          <button onClick={() => setScanResult(null)} className="cx-icon-btn cx-text-muted">
             <X style={{ width: '14px', height: '14px' }} />
           </button>
         </div>
@@ -172,29 +158,21 @@ export default function TestingHubPage() {
 
       {/* Run Result Toast */}
       {runResult && (
-        <div style={{
-          padding: '14px 18px', borderRadius: '12px', marginBottom: '16px',
-          border: `1px solid ${runResult.failed > 0 ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)'}`,
-          backgroundColor: runResult.failed > 0 ? 'rgba(239,68,68,0.06)' : 'rgba(16,185,129,0.06)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div className="cx-flex-between cx-r-12" style={{ padding: '14px 18px', marginBottom: '16px', border: `1px solid ${runResult.failed > 0 ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)'}`, backgroundColor: runResult.failed > 0 ? 'rgba(239,68,68,0.06)' : 'rgba(16,185,129,0.06)' }}>
+          <div className="cx-flex cx-items-center cx-gap-10">
             {runResult.failed > 0
               ? <AlertTriangle style={{ width: '16px', height: '16px', color: '#EF4444' }} />
               : <CheckCircle style={{ width: '16px', height: '16px', color: '#10B981' }} />
             }
-            <span style={{ fontSize: '13px', color: 'rgb(var(--text-primary))' }}>
+            <span className="cx-text-13 cx-text-primary">
               <strong>{runResult.targetName}</strong>: {runResult.passed}/{runResult.total} passed · {runResult.failed} failed · {runResult.durationMs}ms
             </span>
           </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <Link href={`/testing/runs/${runResult.runId}`} style={{
-              fontSize: '12px', fontWeight: 600, color: 'rgb(var(--primary))',
-              textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px',
-            }}>
+          <div className="cx-flex cx-gap-8 cx-items-center">
+            <Link href={`/testing/runs/${runResult.runId}`} className="cx-flex cx-items-center cx-gap-4 cx-text-12 cx-fw-600 cx-text-accent" style={{ textDecoration: 'none' }}>
               View Details <ChevronRight style={{ width: '12px', height: '12px' }} />
             </Link>
-            <button onClick={() => setRunResult(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgb(var(--text-muted))' }}>
+            <button onClick={() => setRunResult(null)} className="cx-icon-btn cx-text-muted">
               <X style={{ width: '14px', height: '14px' }} />
             </button>
           </div>
@@ -247,8 +225,8 @@ export default function TestingHubPage() {
       </div>
 
       {loading ? (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
-          <Loader2 style={{ width: '28px', height: '28px', color: 'rgb(var(--primary))', animation: 'spin 1s linear infinite' }} />
+        <div className="cx-loading" style={{ height: '200px' }}>
+          <Loader2 className="cx-spinner" style={{ width: '28px', height: '28px' }} />
         </div>
       ) : (
         <>
@@ -256,77 +234,57 @@ export default function TestingHubPage() {
           {tab === 'targets' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '14px' }}>
               {targets.length === 0 ? (
-                <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '60px 20px', color: 'rgb(var(--text-muted))' }}>
+                <div className="cx-empty cx-text-muted" style={{ gridColumn: '1/-1', padding: '60px 20px' }}>
                   <Server style={{ width: '48px', height: '48px', opacity: 0.3, marginBottom: '16px' }} />
-                  <p style={{ fontSize: '15px', fontWeight: 600 }}>No test targets configured</p>
+                  <p className="cx-fw-600" style={{ fontSize: '15px' }}>No test targets configured</p>
                   <p style={{ fontSize: '13px' }}>Add a client URL to start testing</p>
                 </div>
               ) : targets.map((t: any) => (
-                <div key={t.id} style={{
-                  padding: '20px', borderRadius: '14px', border: '1px solid rgb(var(--border))',
-                  backgroundColor: 'rgb(var(--surface))', transition: 'border-color 200ms',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div style={{
-                        width: '36px', height: '36px', borderRadius: '8px',
-                        background: 'rgba(var(--primary-rgb, 124,58,237), 0.1)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}>
-                        <Globe style={{ width: '18px', height: '18px', color: 'rgb(var(--primary))' }} />
+                <div key={t.id} className="cx-card cx-border" style={{ padding: '20px', transition: 'border-color 200ms' }}>
+                  <div className="cx-flex-between" style={{ marginBottom: '10px' }}>
+                    <div className="cx-flex cx-items-center cx-gap-10">
+                      <div className="cx-flex-center cx-r-8" style={{ width: '36px', height: '36px', background: 'rgba(var(--primary-rgb, 124,58,237), 0.1)' }}>
+                        <Globe style={{ width: '18px', height: '18px' }} className="cx-text-accent" />
                       </div>
                       <div>
-                        <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>{t.name}</h3>
+                        <h3 className="cx-fw-700 cx-text-primary" style={{ fontSize: '15px', margin: 0 }}>{t.name}</h3>
                         <span style={{
                           fontSize: '10px', fontWeight: 600, padding: '1px 6px', borderRadius: '4px',
                           backgroundColor: t.environment === 'production' ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)',
                           color: t.environment === 'production' ? '#EF4444' : '#F59E0B',
-                          textTransform: 'uppercase',
+                          textTransform: 'uppercase' as const,
                         }}>{t.environment}</span>
                       </div>
                     </div>
-                    <button onClick={() => handleDeleteTarget(t.id)} style={{
-                      background: 'none', border: 'none', cursor: 'pointer', color: 'rgb(var(--text-muted))',
-                      padding: '4px', borderRadius: '6px',
-                    }}>
+                    <button onClick={() => handleDeleteTarget(t.id)} className="cx-icon-btn cx-text-muted cx-r-6" style={{ padding: '4px' }}>
                       <Trash2 style={{ width: '14px', height: '14px' }} />
                     </button>
                   </div>
 
-                  <p style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', margin: '0 0 14px', fontFamily: "'JetBrains Mono', monospace", wordBreak: 'break-all' }}>
+                  <p className="cx-text-muted" style={{ fontSize: '12px', margin: '0 0 14px', fontFamily: "'JetBrains Mono', monospace", wordBreak: 'break-all' }}>
                     {t.baseUrl}
                   </p>
 
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div className="cx-flex cx-gap-8">
                     <button
                       onClick={() => handleRun(t.id)}
                       disabled={runningTarget === t.id || runningFull === t.id || cases.length === 0}
-                      style={{
-                        ...btnStyle('#7C3AED'), flex: 1, justifyContent: 'center',
-                        opacity: (runningTarget === t.id || cases.length === 0) ? 0.6 : 1,
-                        cursor: (runningTarget === t.id || cases.length === 0) ? 'not-allowed' : 'pointer',
-                      }}
+                      className="cx-btn-primary"
+                      style={{ backgroundColor: '#7C3AED', flex: 1, justifyContent: 'center', opacity: (runningTarget === t.id || cases.length === 0) ? 0.6 : 1, cursor: (runningTarget === t.id || cases.length === 0) ? 'not-allowed' : 'pointer' }}
                     >
                       {runningTarget === t.id
-                        ? <><Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} /> L1 Running...</>
+                        ? <><Loader2 className="cx-spinner" style={{ width: '14px', height: '14px' }} /> L1 Running...</>
                         : <><Play style={{ width: '14px', height: '14px' }} /> L1 Quick</>
                       }
                     </button>
                     <button
                       onClick={() => handleRunFull(t.id)}
                       disabled={runningFull === t.id || runningTarget === t.id || cases.length === 0}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 18px',
-                        borderRadius: '10px', border: 'none', fontSize: '13px', fontWeight: 600,
-                        cursor: (runningFull === t.id || cases.length === 0) ? 'not-allowed' : 'pointer',
-                        color: '#fff', flex: 1.5, justifyContent: 'center',
-                        background: 'linear-gradient(135deg, #7C3AED, #EC4899, #F59E0B)',
-                        opacity: (runningFull === t.id || cases.length === 0) ? 0.6 : 1,
-                        transition: 'opacity 200ms',
-                      }}
+                      className="cx-btn-primary"
+                      style={{ flex: 1.5, justifyContent: 'center', background: 'linear-gradient(135deg, #7C3AED, #EC4899, #F59E0B)', opacity: (runningFull === t.id || cases.length === 0) ? 0.6 : 1, cursor: (runningFull === t.id || cases.length === 0) ? 'not-allowed' : 'pointer' }}
                     >
                       {runningFull === t.id
-                        ? <><Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} /> Full Suite Running...</>
+                        ? <><Loader2 className="cx-spinner" style={{ width: '14px', height: '14px' }} /> Full Suite Running...</>
                         : <><Zap style={{ width: '14px', height: '14px' }} /> Full Suite (L1+L2+L3)</>
                       }
                     </button>
@@ -365,13 +323,13 @@ export default function TestingHubPage() {
 
               {/* Case list */}
               {filteredCases.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '60px 20px', color: 'rgb(var(--text-muted))' }}>
+                <div className="cx-empty cx-text-muted" style={{ padding: '60px 20px' }}>
                   <FolderSearch style={{ width: '48px', height: '48px', opacity: 0.3, marginBottom: '16px' }} />
-                  <p style={{ fontSize: '15px', fontWeight: 600 }}>No test cases yet</p>
+                  <p className="cx-fw-600" style={{ fontSize: '15px' }}>No test cases yet</p>
                   <p style={{ fontSize: '13px' }}>Click "Scan Codebase" to auto-discover endpoints</p>
                 </div>
               ) : (
-                <div style={{ borderRadius: '14px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', overflow: 'hidden' }}>
+                <div className="cx-table-wrap">
                   {filteredCases.map((tc: any, i: number) => {
                     const catColor = CATEGORY_COLORS[tc.category] || '#94A3B8';
                     return (
@@ -408,13 +366,13 @@ export default function TestingHubPage() {
           {tab === 'runs' && (
             <div>
               {runs.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '60px 20px', color: 'rgb(var(--text-muted))' }}>
+                <div className="cx-empty cx-text-muted" style={{ padding: '60px 20px' }}>
                   <Play style={{ width: '48px', height: '48px', opacity: 0.3, marginBottom: '16px' }} />
-                  <p style={{ fontSize: '15px', fontWeight: 600 }}>No test runs yet</p>
+                  <p className="cx-fw-600" style={{ fontSize: '15px' }}>No test runs yet</p>
                   <p style={{ fontSize: '13px' }}>Run tests on a target to see results</p>
                 </div>
               ) : (
-                <div style={{ borderRadius: '14px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', overflow: 'hidden' }}>
+                <div className="cx-table-wrap">
                   {runs.map((r: any, i: number) => {
                     const passRate = r.total > 0 ? Math.round((r.passed / r.total) * 100) : 0;
                     const isGood = r.failed === 0;
@@ -487,33 +445,25 @@ export default function TestingHubPage() {
 
       {/* ──── Add Target Modal ──── */}
       {showAdd && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 100,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
-        }} onClick={() => setShowAdd(false)}>
-          <div onClick={e => e.stopPropagation()} style={{
-            width: '440px', padding: '28px', borderRadius: '16px',
-            backgroundColor: 'rgb(var(--card))', border: '1px solid rgb(var(--border))',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
-          }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Globe style={{ width: '18px', height: '18px', color: 'rgb(var(--primary))' }} />
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={() => setShowAdd(false)}>
+          <div onClick={e => e.stopPropagation()} className="cx-r-16 cx-border" style={{ width: '440px', padding: '28px', backgroundColor: 'rgb(var(--card))', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
+            <h2 className="cx-flex cx-items-center cx-gap-8 cx-fw-700 cx-text-primary" style={{ fontSize: '18px', margin: '0 0 20px' }}>
+              <Globe style={{ width: '18px', height: '18px' }} className="cx-text-accent" />
               Add Test Target
             </h2>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div className="cx-flex-col cx-gap-12">
               <div>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgb(var(--text-muted))', marginBottom: '4px', display: 'block' }}>Client Name</label>
-                <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. KVT Jewellers" style={inputStyle} />
+                <label className="cx-label" style={{ marginBottom: '4px', display: 'block' }}>Client Name</label>
+                <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. KVT Jewellers" className="cx-search-input" style={{ padding: '10px 14px', boxSizing: 'border-box' }} />
               </div>
               <div>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgb(var(--text-muted))', marginBottom: '4px', display: 'block' }}>Base URL</label>
-                <input value={newUrl} onChange={e => setNewUrl(e.target.value)} placeholder="https://kvtjewellers.com" style={inputStyle} />
+                <label className="cx-label" style={{ marginBottom: '4px', display: 'block' }}>Base URL</label>
+                <input value={newUrl} onChange={e => setNewUrl(e.target.value)} placeholder="https://kvtjewellers.com" className="cx-search-input" style={{ padding: '10px 14px', boxSizing: 'border-box' }} />
               </div>
               <div>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgb(var(--text-muted))', marginBottom: '4px', display: 'block' }}>Environment</label>
-                <select value={newEnv} onChange={e => setNewEnv(e.target.value)} style={inputStyle}>
+                <label className="cx-label" style={{ marginBottom: '4px', display: 'block' }}>Environment</label>
+                <select value={newEnv} onChange={e => setNewEnv(e.target.value)} className="cx-search-input" style={{ padding: '10px 14px', boxSizing: 'border-box' }}>
                   <option value="staging">Staging</option>
                   <option value="production">Production</option>
                   <option value="development">Development</option>
@@ -521,13 +471,9 @@ export default function TestingHubPage() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '10px', marginTop: '20px', justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowAdd(false)} style={{
-                padding: '10px 18px', borderRadius: '10px', border: '1px solid rgb(var(--border))',
-                backgroundColor: 'transparent', fontSize: '13px', fontWeight: 600,
-                color: 'rgb(var(--text-secondary))', cursor: 'pointer',
-              }}>Cancel</button>
-              <button onClick={handleAddTarget} style={btnStyle('#10B981')}>
+            <div className="cx-flex cx-gap-10" style={{ marginTop: '20px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowAdd(false)} className="cx-btn-secondary" style={{ padding: '10px 18px' }}>Cancel</button>
+              <button onClick={handleAddTarget} className="cx-btn-primary" style={{ backgroundColor: '#10B981' }}>
                 <Plus style={{ width: '14px', height: '14px' }} /> Add Target
               </button>
             </div>

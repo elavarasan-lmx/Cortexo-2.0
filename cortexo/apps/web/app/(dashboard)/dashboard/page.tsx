@@ -4,15 +4,17 @@ import {
   FolderGit2, Rocket, Server, Bug, Activity, Shield, ArrowRight, Zap, TrendingUp
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useApiData, useAutoLoadToken } from '@/lib/hooks';
+import { useCortexoQuery, useAutoLoadToken } from '@/lib/hooks';
+
 import { useState, useEffect, useMemo } from 'react';
 
 export default function DashboardPage() {
   useAutoLoadToken();
-  const { data: projects } = useApiData(() => api.getProjects());
-  const { data: deployments } = useApiData(() => api.getDeployments());
-  const { data: errors } = useApiData(() => api.getErrors());
-  const { data: servers } = useApiData(() => api.getServers());
+  const { data: projects }    = useCortexoQuery(['projects'],    () => api.getProjects());
+  const { data: deployments } = useCortexoQuery(['deployments'],  () => api.getDeployments());
+  const { data: errors }      = useCortexoQuery(['errors'],       () => api.getErrors());
+  const { data: servers }     = useCortexoQuery(['servers'],      () => api.getServers());
+
 
   const [userName, setUserName] = useState('Engineer');
   useEffect(() => {
@@ -84,13 +86,13 @@ export default function DashboardPage() {
   }, [chartData]);
 
   return (
-    <div style={{ maxWidth: '100%', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="cx-flex-col cx-gap-24">
       {/* Welcome Header */}
       <div>
-        <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>
+        <h1 className="cx-fw-700 cx-text-primary" style={{ fontSize: '24px', margin: 0 }}>
           Welcome back, {userName} 👋
         </h1>
-        <p style={{ fontSize: '14px', color: 'rgb(var(--text-secondary))', marginTop: '4px' }}>
+        <p className="cx-text-secondary" style={{ fontSize: '14px', marginTop: '4px' }}>
           Here's what's happening across your infrastructure today.
         </p>
       </div>
@@ -106,14 +108,13 @@ export default function DashboardPage() {
       {/* Main Layout: Chart & Recent Activity */}
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
         {/* Chart Area */}
-        <div style={{ backgroundColor: 'rgb(var(--surface))', borderRadius: '14px', border: '1px solid rgb(var(--border))', padding: '24px', position: 'relative' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: 0 }}>Deployment Activity (7 Days)</h2>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#10B981', backgroundColor: 'rgba(16,185,129,0.1)', padding: '4px 10px', borderRadius: '12px' }}>
+        <div className="cx-card cx-border" style={{ padding: '24px', position: 'relative' }}>
+          <div className="cx-flex-between" style={{ marginBottom: '24px' }}>
+            <h2 className="cx-fw-600 cx-text-primary" style={{ fontSize: '16px', margin: 0 }}>Deployment Activity (7 Days)</h2>
+            <span className="cx-fw-600" style={{ fontSize: '12px', color: '#10B981', backgroundColor: 'rgba(16,185,129,0.1)', padding: '4px 10px', borderRadius: '12px' }}>
               {chartData.counts.reduce((a, b) => a + b, 0)} deploys
             </span>
           </div>
-          {/* Chart computed from real deployment timestamps */}
           <div style={{ height: '240px', width: '100%', position: 'relative' }}>
             <svg viewBox="0 0 800 240" style={{ width: '100%', height: '100%', overflow: 'visible' }} preserveAspectRatio="none">
               <defs>
@@ -128,11 +129,11 @@ export default function DashboardPage() {
                 <circle key={i} cx={dot.x} cy={dot.y} r="4" fill="#8B5CF6" />
               ))}
             </svg>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', color: 'rgb(var(--text-muted))', fontSize: '11px', fontWeight: 500, textTransform: 'uppercase' }}>
+            <div className="cx-flex-between cx-text-muted" style={{ marginTop: '16px', fontSize: '11px', fontWeight: 500, textTransform: 'uppercase' }}>
               {chartData.labels.map((label, i) => (
-                <span key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                <span key={i} className="cx-flex-col cx-flex-center" style={{ gap: '2px' }}>
                   {label}
-                  <span style={{ color: 'rgb(var(--text-primary))', fontWeight: 600, fontSize: '10px' }}>{chartData.counts[i]}</span>
+                  <span className="cx-fw-600 cx-text-primary" style={{ fontSize: '10px' }}>{chartData.counts[i]}</span>
                 </span>
               ))}
             </div>
@@ -140,17 +141,17 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent Activity List */}
-        <div style={{ backgroundColor: 'rgb(var(--surface))', borderRadius: '14px', border: '1px solid rgb(var(--border))', padding: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: 0 }}>Recent Activity</h2>
-            <a href="/audit-log" style={{ fontSize: '12px', fontWeight: 600, color: 'rgb(var(--primary))', textDecoration: 'none' }}>View All →</a>
+        <div className="cx-card cx-border" style={{ padding: '24px' }}>
+          <div className="cx-flex-between" style={{ marginBottom: '24px' }}>
+            <h2 className="cx-fw-600 cx-text-primary" style={{ fontSize: '16px', margin: 0 }}>Recent Activity</h2>
+            <a href="/audit-log" className="cx-fw-600 cx-text-accent" style={{ fontSize: '12px', textDecoration: 'none' }}>View All →</a>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="cx-flex-col cx-gap-20">
             {(deployments || []).slice(0, 5).map((d: any, i: number) => (
               <ActivityRow key={d.id || i} iconColor={d.status === 'success' ? '#10B981' : d.status === 'failed' ? '#EF4444' : '#3B82F6'} title={`Deploy #${d.id?.toString().substring(0, 6)} → ${d.environment || 'prod'}`} time={d.createdAt ? new Date(d.createdAt).toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }) : '—'} />
             ))}
             {(deployments || []).length === 0 && (
-              <span style={{ fontSize: '13px', color: 'rgb(var(--text-muted))' }}>No recent activity</span>
+              <span className="cx-text-13 cx-text-muted">No recent activity</span>
             )}
           </div>
         </div>
@@ -158,10 +159,9 @@ export default function DashboardPage() {
 
       {/* Bottom Layout: Quick Actions & Server Health */}
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
-        
         {/* Quick Actions */}
-        <div style={{ backgroundColor: 'rgb(var(--surface))', borderRadius: '14px', border: '1px solid rgb(var(--border))', padding: '24px' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: '0 0 24px 0' }}>Quick Actions</h2>
+        <div className="cx-card cx-border" style={{ padding: '24px' }}>
+          <h2 className="cx-fw-600 cx-text-primary" style={{ fontSize: '16px', margin: '0 0 24px 0' }}>Quick Actions</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
             <QuickActionBtn title="New Deploy" icon={Rocket} bgColor="#7C3AED" href="/deployments" />
             <QuickActionBtn title="Add Project" icon={FolderGit2} bgColor="#3B82F6" href="/projects" />
@@ -171,18 +171,17 @@ export default function DashboardPage() {
         </div>
 
         {/* Server Health */}
-        <div style={{ backgroundColor: 'rgb(var(--surface))', borderRadius: '14px', border: '1px solid rgb(var(--border))', padding: '24px' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: '0 0 24px 0' }}>Server Health</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="cx-card cx-border" style={{ padding: '24px' }}>
+          <h2 className="cx-fw-600 cx-text-primary" style={{ fontSize: '16px', margin: '0 0 24px 0' }}>Server Health</h2>
+          <div className="cx-flex-col cx-gap-16">
             {(servers || []).slice(0, 7).map((s: any, i: number) => (
               <ServerHealthRow key={s.id || i} name={s.name} ip={s.privateIp} color={s.status === 'active' ? '#10B981' : '#EF4444'} status={s.status === 'active' ? 'Online' : 'Offline'} />
             ))}
             {(servers || []).length === 0 && (
-              <span style={{ fontSize: '13px', color: 'rgb(var(--text-muted))' }}>No servers configured</span>
+              <span className="cx-text-13 cx-text-muted">No servers configured</span>
             )}
           </div>
         </div>
-
       </div>
     </div>
   );
@@ -190,17 +189,17 @@ export default function DashboardPage() {
 
 function StatCard({ title, value, trend, color, icon: Icon, bg }: { title: string; value: string; trend: string; color: string; icon: any; bg: string }) {
   return (
-    <div style={{ backgroundColor: 'rgb(var(--surface))', borderRadius: '14px', border: '1px solid rgb(var(--border))', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', position: 'relative', overflow: 'hidden' }}>
+    <div className="cx-border" style={{ backgroundColor: 'rgb(var(--surface))', borderRadius: '14px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', backgroundColor: color }} />
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))' }}>{title}</span>
-        <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="cx-flex-between">
+        <span className="cx-fw-600 cx-text-secondary" style={{ fontSize: '13px' }}>{title}</span>
+        <div className="cx-flex-center cx-r-10" style={{ width: '36px', height: '36px', backgroundColor: bg }}>
           <Icon style={{ width: '18px', height: '18px', color }} />
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <span style={{ fontSize: '32px', fontWeight: 700, color: 'rgb(var(--text-primary))', lineHeight: 1 }}>{value}</span>
-        <span style={{ fontSize: '12px', fontWeight: 600, color: 'rgb(var(--text-muted))', backgroundColor: 'rgba(var(--text-muted), 0.08)', padding: '4px 8px', borderRadius: '12px' }}>{trend}</span>
+      <div className="cx-flex cx-items-center cx-gap-12">
+        <span className="cx-fw-700 cx-text-primary" style={{ fontSize: '32px', lineHeight: 1 }}>{value}</span>
+        <span className="cx-fw-600 cx-text-muted" style={{ fontSize: '12px', backgroundColor: 'rgba(var(--text-muted), 0.08)', padding: '4px 8px', borderRadius: '12px' }}>{trend}</span>
       </div>
     </div>
   );
@@ -208,36 +207,36 @@ function StatCard({ title, value, trend, color, icon: Icon, bg }: { title: strin
 
 function ActivityRow({ iconColor, title, time }: { iconColor: string; title: string; time: string }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <div className="cx-flex-between">
+      <div className="cx-flex cx-items-center cx-gap-12">
         <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: iconColor }} />
-        <span style={{ fontSize: '14px', fontWeight: 500, color: 'rgb(var(--text-primary))' }}>{title}</span>
+        <span className="cx-text-primary" style={{ fontSize: '14px', fontWeight: 500 }}>{title}</span>
       </div>
-      <span style={{ fontSize: '12px', color: 'rgb(var(--text-muted))' }}>{time}</span>
+      <span className="cx-text-12 cx-text-muted">{time}</span>
     </div>
   );
 }
 
 function QuickActionBtn({ title, icon: Icon, bgColor, href }: { title: string; icon: any; bgColor: string; href: string }) {
   return (
-    <a href={href} style={{ backgroundColor: bgColor, borderRadius: '12px', padding: '24px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', textDecoration: 'none', color: '#fff', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
+    <a href={href} className="cx-flex-col cx-flex-center cx-r-12" style={{ backgroundColor: bgColor, padding: '24px 16px', gap: '12px', textDecoration: 'none', color: '#fff', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
       <Icon style={{ width: '24px', height: '24px' }} />
-      <span style={{ fontSize: '14px', fontWeight: 600 }}>{title}</span>
+      <span className="cx-fw-600" style={{ fontSize: '14px' }}>{title}</span>
     </a>
   );
 }
 
 function ServerHealthRow({ name, ip, color, status }: { name: string; ip?: string; color: string; status: string }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <div className="cx-flex-between">
+      <div className="cx-flex cx-items-center cx-gap-12">
         <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: color }} />
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={{ fontSize: '14px', fontWeight: 500, color: 'rgb(var(--text-primary))' }}>{name}</span>
-          {ip && <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', fontFamily: "'JetBrains Mono', monospace" }}>{ip}</span>}
+        <div className="cx-flex-col">
+          <span className="cx-text-primary" style={{ fontSize: '14px', fontWeight: 500 }}>{name}</span>
+          {ip && <span className="cx-text-muted cx-mono" style={{ fontSize: '11px' }}>{ip}</span>}
         </div>
       </div>
-      <span style={{ fontSize: '12px', fontWeight: 600, color, fontFamily: "'JetBrains Mono', monospace" }}>{status}</span>
+      <span className="cx-fw-600 cx-mono" style={{ fontSize: '12px', color }}>{status}</span>
     </div>
   );
 }

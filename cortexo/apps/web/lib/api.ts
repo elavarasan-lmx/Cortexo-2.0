@@ -229,6 +229,172 @@ export interface AuthResponse {
   user: AuthUser;
 }
 
+export interface ErrorModuleStat {
+  module: string;
+  count: number;
+  open: number;
+  resolved: number;
+}
+
+export interface MountChange {
+  path: string;
+  type: 'added' | 'modified' | 'deleted';
+  size?: number;
+  modifiedAt?: string;
+}
+
+export interface MenuItem {
+  id: number;
+  label: string;
+  href: string;
+  emoji: string;
+  sectionTitle: string;
+  sectionColor: string;
+  sortOrder?: number;
+  visible?: boolean;
+}
+
+export interface TestTarget {
+  id: number;
+  name: string;
+  baseUrl: string;
+  environment?: string;
+  createdAt?: string;
+}
+
+export interface TestCase {
+  id: number;
+  title: string;
+  category?: string;
+  level?: string;
+  method?: string;
+  endpoint?: string;
+  payload?: Record<string, unknown>;
+  expectedStatus?: number;
+  createdAt?: string;
+}
+
+export interface TestRun {
+  id: number;
+  targetId: number;
+  status: string;
+  totalCases: number;
+  passed: number;
+  failed: number;
+  skipped: number;
+  durationMs?: number;
+  createdAt: string;
+  completedAt?: string;
+}
+
+export interface TestRunDetail extends TestRun {
+  results?: TestCaseResult[];
+  levels?: Record<string, { passed: number; failed: number; total: number }>;
+}
+
+export interface TestCaseResult {
+  id: number;
+  testCaseId: number;
+  runId: number;
+  status: 'pass' | 'fail' | 'skip';
+  durationMs?: number;
+  error?: string;
+  response?: Record<string, unknown>;
+}
+
+export interface TestBug {
+  id: number;
+  runId: number;
+  testCaseId?: number;
+  title: string;
+  severity: string;
+  status: string;
+  description?: string;
+  createdAt: string;
+}
+
+export interface TestScanResult {
+  scanned: number;
+  discovered: number;
+  cases: TestCase[];
+}
+
+export interface TestExportResult {
+  exported: number;
+  format: string;
+  url?: string;
+}
+
+export interface KnowledgeHistoryEntry {
+  id: string;
+  question: string;
+  answer?: string;
+  provider?: string;
+  createdAt: string;
+}
+
+export interface KnowledgeProvider {
+  id: string;
+  name: string;
+  available: boolean;
+}
+
+export interface KnowledgeAnswer {
+  answer: string;
+  provider?: string;
+  sources?: string[];
+  confidence?: number;
+}
+
+export interface DevopsDoc {
+  id: string | number;
+  title: string;
+  content?: string;
+  category?: string;
+  tags?: string[];
+  tool?: string;
+  icon?: string;
+  color?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface DevopsTool {
+  id: string;
+  name: string;
+  icon?: string;
+  color?: string;
+  description?: string;
+  docsCount?: number;
+}
+
+export interface CustomDoc {
+  id: number;
+  title: string;
+  content: string;
+  category?: string;
+  tags?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Checklist {
+  id: number;
+  title: string;
+  status: 'pending' | 'in_progress' | 'done';
+  items?: ChecklistItem[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ChecklistItem {
+  id?: number;
+  label: string;
+  done: boolean;
+  order?: number;
+}
+
+
 // ─── API Client ─────────────────────────────────────────────────────────────
 
 class ApiClient {
@@ -344,7 +510,7 @@ class ApiClient {
     return this.request<TrackedError[]>('GET', `/errors${qs}`);
   }
   getError(id: string)                               { return this.request<TrackedError>('GET', `/errors/${id}`); }
-  getErrorModuleStats()                              { return this.request<any>('GET', '/errors/module-stats'); }
+  getErrorModuleStats()                              { return this.request<ErrorModuleStat[]>('GET', '/errors/module-stats'); }
   updateError(id: string, data: { status?: string; assignedTo?: string }) { return this.request<{ success: boolean }>('PATCH', `/errors/${id}`, data); }
 
   // ─── Root Causes ──────────────────────────────────────────────────────────
@@ -400,7 +566,7 @@ class ApiClient {
   browseServerMount(id: number, path: string = '.')  { return this.request<{ entries: { name: string; type: string; size: number }[] }>('POST', `/server-mounts/${id}/browse`, { path }); }
   readServerFile(id: number, filePath: string)       { return this.request<{ content: string; encoding: string }>('POST', `/server-mounts/${id}/read-file`, { filePath }); }
   toggleMountReadOnly(id: number, readOnly: boolean) { return this.request<{ readOnly: boolean; remounted: boolean }>('PUT', `/server-mounts/${id}/toggle-readonly`, { readOnly }); }
-  scanMountChanges(id: number, minutes = 30)          { return this.request<{ mountName: string; totalChanges: number; changes: any[] }>('POST', `/server-mounts/${id}/scan-changes`, { minutes }); }
+  scanMountChanges(id: number, minutes = 30)          { return this.request<{ mountName: string; totalChanges: number; changes: MountChange[] }>('POST', `/server-mounts/${id}/scan-changes`, { minutes }); }
 
   // ─── Log Viewer ───────────────────────────────────────────────────────────
   getLogSources()                                    { return this.request<LogSource[]>('GET', '/logs/sources'); }
@@ -445,8 +611,8 @@ class ApiClient {
 
   // ─── Menu Items (DB-driven sidebar) ──────────────────────────────────────
   getMenuItems()                                     { return this.request<{ sections: { title: string; color: string; items: { label: string; href: string; emoji: string }[] }[] }>('GET', '/menu-items'); }
-  getMenuItemsAll()                                  { return this.request<{ items: any[] }>('GET', '/menu-items/all'); }
-  createMenuItem(data: { label: string; href: string; emoji: string; sectionTitle: string; sectionColor: string; sortOrder?: number; visible?: boolean }) { return this.request<{ success: boolean; item: any }>('POST', '/menu-items', data); }
+  getMenuItemsAll()                                  { return this.request<{ items: MenuItem[] }>('GET', '/menu-items/all'); }
+  createMenuItem(data: { label: string; href: string; emoji: string; sectionTitle: string; sectionColor: string; sortOrder?: number; visible?: boolean }) { return this.request<{ success: boolean; item: MenuItem }>('POST', '/menu-items', data); }
   updateMenuItem(id: number, data: Record<string, unknown>) { return this.request<{ success: boolean }>('PUT', `/menu-items/${id}`, data); }
   deleteMenuItem(id: number)                         { return this.request<{ success: boolean }>('DELETE', `/menu-items/${id}`); }
   seedMenuItems()                                    { return this.request<{ success: boolean; count?: number }>('POST', '/menu-items/seed'); }
@@ -476,31 +642,31 @@ class ApiClient {
   getUserAuditLogs(userId: string, page?: number)    { return this.request<AuditLog[]>('GET', `/audit/user/${userId}${page ? `?page=${page}` : ''}`); }
 
   // ─── Testing Module ───────────────────────────────────────────────────────
-  getTestTargets()                                   { return this.request<any[]>('GET', '/testing/targets'); }
+  getTestTargets()                                   { return this.request<TestTarget[]>('GET', '/testing/targets'); }
   createTestTarget(data: { name: string; baseUrl: string; environment?: string }) {
-    return this.request<any>('POST', '/testing/targets', data);
+    return this.request<TestTarget>('POST', '/testing/targets', data);
   }
-  deleteTestTarget(id: number)                       { return this.request<any>('DELETE', `/testing/targets/${id}`); }
-  scanProject(data?: { projectPath?: string })       { return this.request<any>('POST', '/testing/scan', data || {}); }
+  deleteTestTarget(id: number)                       { return this.request<{ success: boolean }>('DELETE', `/testing/targets/${id}`); }
+  scanProject(data?: { projectPath?: string })       { return this.request<TestScanResult>('POST', '/testing/scan', data || {}); }
   getTestCases(category?: string) {
     const qs = category ? `?category=${category}` : '';
-    return this.request<any[]>('GET', `/testing/cases${qs}`);
+    return this.request<TestCase[]>('GET', `/testing/cases${qs}`);
   }
-  deleteTestCase(id: number)                         { return this.request<any>('DELETE', `/testing/cases/${id}`); }
-  clearTestCases()                                   { return this.request<any>('DELETE', '/testing/cases'); }
-  runTests(targetId: number)                         { return this.request<any>('POST', '/testing/run', { targetId }); }
-  runFullTests(targetId: number, levels?: string[])  { return this.request<any>('POST', '/testing/run-full', { targetId, levels: levels || ['L1','L2','L3'] }); }
-  getTestRuns()                                      { return this.request<any[]>('GET', '/testing/runs'); }
-  getTestRun(id: number)                             { return this.request<any>('GET', `/testing/runs/${id}`); }
-  getTestBugs(runId: number)                         { return this.request<any>('GET', `/testing/bugs/${runId}`); }
-  getTestLevels(runId: number)                       { return this.request<any>('GET', `/testing/runs/${runId}/levels`); }
-  getTestModules()                                   { return this.request<any[]>('GET', '/testing/modules'); }
-  getTestModuleResults(runId: number)                 { return this.request<any[]>('GET', `/testing/modules/${runId}`); }
+  deleteTestCase(id: number)                         { return this.request<{ success: boolean }>('DELETE', `/testing/cases/${id}`); }
+  clearTestCases()                                   { return this.request<{ success: boolean }>('DELETE', '/testing/cases'); }
+  runTests(targetId: number)                         { return this.request<TestRun>('POST', '/testing/run', { targetId }); }
+  runFullTests(targetId: number, levels?: string[])  { return this.request<TestRun>('POST', '/testing/run-full', { targetId, levels: levels || ['L1','L2','L3'] }); }
+  getTestRuns()                                      { return this.request<TestRun[]>('GET', '/testing/runs'); }
+  getTestRun(id: number)                             { return this.request<TestRunDetail>('GET', `/testing/runs/${id}`); }
+  getTestBugs(runId: number)                         { return this.request<TestBug[]>('GET', `/testing/bugs/${runId}`); }
+  getTestLevels(runId: number)                       { return this.request<Record<string, { passed: number; failed: number; total: number }>>('GET', `/testing/runs/${runId}/levels`); }
+  getTestModules()                                   { return this.request<{ module: string; total: number; passed: number; failed: number }[]>('GET', '/testing/modules'); }
+  getTestModuleResults(runId: number)                 { return this.request<{ module: string; total: number; passed: number; failed: number }[]>('GET', `/testing/modules/${runId}`); }
   exportTestBugs(runId: number, severity?: string) {
     const qs = severity ? `?severity=${severity}` : '';
-    return this.request<any>('POST', `/testing/bugs/${runId}/export${qs}`);
+    return this.request<TestExportResult>('POST', `/testing/bugs/${runId}/export${qs}`);
   }
-  getExportedTestBugs()                              { return this.request<any>('GET', '/testing/bugs/exported'); }
+  getExportedTestBugs()                              { return this.request<TestBug[]>('GET', '/testing/bugs/exported'); }
 
   // ─── Auth ─────────────────────────────────────────────────────────────────
   async register(data: { name: string; email: string; password: string; orgName?: string }) {
@@ -630,9 +796,9 @@ class ApiClient {
   createKnowledgeDoc(data: Record<string, unknown>)  { return this.request<Record<string, unknown>>('POST', '/knowledge/docs', data); }
   updateKnowledgeDoc(id: string, data: Record<string, unknown>) { return this.request<Record<string, unknown>>('PUT', `/knowledge/docs/${id}`, data); }
   deleteKnowledgeDoc(id: string)                     { return this.request<{ success: boolean }>('DELETE', `/knowledge/docs/${id}`); }
-  getKnowledgeHistory()                              { return this.request<any>('GET', '/knowledge/history'); }
-  getKnowledgeProviders()                            { return this.request<any>('GET', '/knowledge/providers'); }
-  askKnowledge(data: { question: string; provider?: string }) { return this.request<any>('POST', '/knowledge/ask', data); }
+  getKnowledgeHistory()                              { return this.request<KnowledgeHistoryEntry[]>('GET', '/knowledge/history'); }
+  getKnowledgeProviders()                            { return this.request<KnowledgeProvider[]>('GET', '/knowledge/providers'); }
+  askKnowledge(data: { question: string; provider?: string }) { return this.request<KnowledgeAnswer>('POST', '/knowledge/ask', data); }
   submitKnowledgeFeedback(id: string, data: Record<string, unknown>) {
     return this.request<{ success: boolean }>('POST', `/knowledge/feedback/${id}`, data);
   }
@@ -640,21 +806,21 @@ class ApiClient {
   // ─── DevOps Docs ──────────────────────────────────────────────────────────
   getDevopsDocs(params?: Record<string, string>) {
     const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    return this.request<any[]>('GET', `/devops-docs${qs}`);
+    return this.request<DevopsDoc[]>('GET', `/devops-docs${qs}`);
   }
-  getDevopsDoc(id: string)                         { return this.request<any>('GET', `/devops-docs/${id}`); }
-  getDevopsTools()                                  { return this.request<any>('GET', '/devops-docs/tools'); }
-  searchDevopsDocs(q: string)                       { return this.request<any>('GET', `/devops-docs/search?q=${encodeURIComponent(q)}`); }
+  getDevopsDoc(id: string)                         { return this.request<DevopsDoc>('GET', `/devops-docs/${id}`); }
+  getDevopsTools()                                  { return this.request<DevopsTool[]>('GET', '/devops-docs/tools'); }
+  searchDevopsDocs(q: string)                       { return this.request<DevopsDoc[]>('GET', `/devops-docs/search?q=${encodeURIComponent(q)}`); }
   // Custom docs CRUD
-  getCustomDocs()                                   { return this.request<any>('GET', '/devops-docs/custom'); }
-  createCustomDoc(data: any)                        { return this.request<any>('POST', '/devops-docs/custom', data); }
-  updateCustomDoc(id: number, data: any)            { return this.request<any>('PUT', `/devops-docs/custom/${id}`, data); }
-  deleteCustomDoc(id: number)                       { return this.request<any>('DELETE', `/devops-docs/custom/${id}`); }
+  getCustomDocs()                                   { return this.request<CustomDoc[]>('GET', '/devops-docs/custom'); }
+  createCustomDoc(data: Omit<CustomDoc, 'id' | 'createdAt' | 'updatedAt'>) { return this.request<CustomDoc>('POST', '/devops-docs/custom', data); }
+  updateCustomDoc(id: number, data: Partial<CustomDoc>) { return this.request<CustomDoc>('PUT', `/devops-docs/custom/${id}`, data); }
+  deleteCustomDoc(id: number)                       { return this.request<{ success: boolean }>('DELETE', `/devops-docs/custom/${id}`); }
   // Deployment checklists
-  getChecklists(status?: string)                    { return this.request<any>('GET', `/devops-docs/checklists${status ? `?status=${status}` : ''}`); }
-  createChecklist(data: any)                        { return this.request<any>('POST', '/devops-docs/checklists', data); }
-  updateChecklist(id: number, data: any)            { return this.request<any>('PUT', `/devops-docs/checklists/${id}`, data); }
-  deleteChecklist(id: number)                       { return this.request<any>('DELETE', `/devops-docs/checklists/${id}`); }
+  getChecklists(status?: string)                    { return this.request<Checklist[]>('GET', `/devops-docs/checklists${status ? `?status=${status}` : ''}`); }
+  createChecklist(data: Omit<Checklist, 'id' | 'createdAt' | 'updatedAt'>) { return this.request<Checklist>('POST', '/devops-docs/checklists', data); }
+  updateChecklist(id: number, data: Partial<Checklist>) { return this.request<Checklist>('PUT', `/devops-docs/checklists/${id}`, data); }
+  deleteChecklist(id: number)                       { return this.request<{ success: boolean }>('DELETE', `/devops-docs/checklists/${id}`); }
 
   // ─── Notification Preferences ───────────────────────────────────────────────
   getNotificationPrefs()                              { return this.request<Record<string, unknown>[]>('GET', '/notifications/preferences'); }

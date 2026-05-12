@@ -3,15 +3,19 @@
 import { useState, useRef, useEffect } from 'react';
 import { BookOpen, Search, MessageSquare, Send, Book, FileText, Settings, Bot, User, Loader2, Plus, Edit2, Trash2, X, ChevronDown } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useApiData, useAutoLoadToken, timeAgo } from '@/lib/hooks';
+import { useCortexoQuery, useAutoLoadToken, timeAgo } from '@/lib/hooks';
+
 
 export default function KnowledgeBasePage() {
   useAutoLoadToken();
   const [activeTab, setActiveTab] = useState<'qa' | 'docs'>('qa');
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Docs Tab Data
-  const { data: docs, loading: docsLoading, refetch: refetchDocs } = useApiData(() => api.getKnowledgeDocs({ q: searchQuery }), [searchQuery]);
+  const { data: docs, isLoading: docsLoading, refetch: refetchDocs } = useCortexoQuery(
+    ['knowledge-docs', searchQuery],
+    () => api.getKnowledgeDocs({ q: searchQuery }),
+  );
+
 
   // Doc CRUD state
   const [showDocModal, setShowDocModal] = useState(false);
@@ -19,15 +23,21 @@ export default function KnowledgeBasePage() {
   const [editingDocId, setEditingDocId] = useState<string | null>(null);
   const [savingDoc, setSavingDoc] = useState(false);
 
-  // Q&A Tab Data
-  const { data: history, loading: historyLoading, refetch: refetchHistory } = useApiData(() => api.getKnowledgeHistory());
+  const { data: history, isLoading: historyLoading, refetch: refetchHistory } = useCortexoQuery(
+    ['knowledge-history'],
+    () => api.getKnowledgeHistory(),
+  );
+
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
   const [isAsking, setIsAsking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // AI Provider selector
-  const { data: providersData } = useApiData(() => api.getKnowledgeProviders()) as { data: any };
+  const { data: providersData } = useCortexoQuery<any>(
+    ['knowledge-providers'],
+    () => api.getKnowledgeProviders(),
+  );
+
   const [selectedProvider, setSelectedProvider] = useState<string>('');
 
   // Sync history with messages initially

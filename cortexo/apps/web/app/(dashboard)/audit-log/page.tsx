@@ -88,17 +88,17 @@ export default function AuditLogPage() {
   return (
     <div>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '24px' }}>
+      <div className="cx-page-header" style={{ marginBottom: '24px' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Activity style={{ width: '24px', height: '24px', color: 'rgb(var(--primary))' }} />
+          <h1 className="cx-flex cx-items-center cx-gap-10 cx-page-title">
+            <Activity style={{ width: '24px', height: '24px' }} className="cx-text-accent" />
             Audit Log
           </h1>
-          <p style={{ fontSize: '14px', color: 'rgb(var(--text-secondary))', marginTop: '4px' }}>
+          <p className="cx-page-subtitle">
             {total} events tracked · complete activity trail
           </p>
         </div>
-        <button onClick={() => { fetchLogs(); fetchStats(); }} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', cursor: 'pointer' }}>
+        <button onClick={() => { fetchLogs(); fetchStats(); }} className="cx-btn-secondary" style={{ gap: '6px', padding: '10px 16px' }}>
           <RefreshCw style={{ width: '14px', height: '14px' }} /> Refresh
         </button>
       </div>
@@ -106,62 +106,59 @@ export default function AuditLogPage() {
       {/* Stats Cards */}
       {stats && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '20px' }}>
-          <div style={{ padding: '16px 20px', borderRadius: '12px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))' }}>
-            <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'rgb(var(--text-muted))', marginBottom: '6px' }}>Last 24h</div>
-            <div style={{ fontSize: '28px', fontWeight: 800, color: 'rgb(var(--primary))' }}>{stats.last24h || 0}</div>
+          <div className="cx-card-sm cx-border" style={{ padding: '16px 20px' }}>
+            <div className="cx-label" style={{ marginBottom: '6px' }}>Last 24h</div>
+            <div className="cx-fw-800 cx-text-28 cx-text-accent">{stats.last24h || 0}</div>
           </div>
-          <div style={{ padding: '16px 20px', borderRadius: '12px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))' }}>
-            <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'rgb(var(--text-muted))', marginBottom: '6px' }}>Total Events</div>
-            <div style={{ fontSize: '28px', fontWeight: 800, color: 'rgb(var(--text-primary))' }}>{total}</div>
+          <div className="cx-card-sm cx-border" style={{ padding: '16px 20px' }}>
+            <div className="cx-label" style={{ marginBottom: '6px' }}>Total Events</div>
+            <div className="cx-fw-800 cx-text-28 cx-text-primary">{total}</div>
           </div>
           {stats.topUsers?.slice(0, 2).map((u: any) => (
-            <div key={u.userName} style={{ padding: '16px 20px', borderRadius: '12px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))' }}>
-              <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'rgb(var(--text-muted))', marginBottom: '6px' }}>{u.userName}</div>
-              <div style={{ fontSize: '28px', fontWeight: 800, color: 'rgb(var(--text-primary))' }}>{u.count}</div>
+            <div key={u.userName} className="cx-card-sm cx-border" style={{ padding: '16px 20px' }}>
+              <div className="cx-label" style={{ marginBottom: '6px' }}>{u.userName}</div>
+              <div className="cx-fw-800 cx-text-28 cx-text-primary">{u.count}</div>
             </div>
           ))}
         </div>
       )}
 
       {/* Filters */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ position: 'relative', flex: '1 1 240px' }}>
-          <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '14px', height: '14px', color: 'rgb(var(--text-muted))' }} />
+      <div className="cx-flex cx-gap-10" style={{ marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <div className="cx-search-wrap" style={{ flex: '1 1 240px' }}>
+          <Search className="cx-search-icon" />
           <input
             value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
             placeholder="Search descriptions..."
-            style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px 10px 36px', fontSize: '13px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-primary))', outline: 'none' }}
+            className="cx-search-input" style={{ boxSizing: 'border-box' }}
           />
         </div>
         <select value={actionFilter} onChange={e => { setActionFilter(e.target.value); setPage(1); }}
-          style={{ padding: '10px 14px', fontSize: '13px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-primary))', outline: 'none', cursor: 'pointer', minWidth: '140px' }}>
+          className="cx-search-input" style={{ padding: '10px 14px', minWidth: '140px', flex: 'none' }}>
           <option value="">All Actions</option>
           {uniqueActions.map(a => <option key={a} value={a}>{a.replace(/_/g, ' ')}</option>)}
         </select>
         <select value={resourceFilter} onChange={e => { setResourceFilter(e.target.value); setPage(1); }}
-          style={{ padding: '10px 14px', fontSize: '13px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-primary))', outline: 'none', cursor: 'pointer', minWidth: '140px' }}>
+          className="cx-search-input" style={{ padding: '10px 14px', minWidth: '140px', flex: 'none' }}>
           <option value="">All Resources</option>
           {uniqueResources.map(r => <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>)}
         </select>
 
         {/* Date Range */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Calendar style={{ width: '14px', height: '14px', color: 'rgb(var(--text-muted))', flexShrink: 0 }} />
-          <input
-            type="date" value={dateFrom}
-            onChange={e => { setDateFrom(e.target.value); setPage(1); }}
-            style={{ padding: '9px 10px', fontSize: '12px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-primary))', outline: 'none', cursor: 'pointer' }}
+        <div className="cx-flex cx-items-center cx-gap-6">
+          <Calendar style={{ width: '14px', height: '14px', flexShrink: 0 }} className="cx-text-muted" />
+          <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1); }}
+            className="cx-search-input" style={{ padding: '9px 10px', fontSize: '12px', width: 'auto' }}
           />
-          <span style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', fontWeight: 600 }}>→</span>
-          <input
-            type="date" value={dateTo}
-            onChange={e => { setDateTo(e.target.value); setPage(1); }}
-            style={{ padding: '9px 10px', fontSize: '12px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-primary))', outline: 'none', cursor: 'pointer' }}
+          <span className="cx-text-12 cx-text-muted cx-fw-600">&rarr;</span>
+          <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(1); }}
+            className="cx-search-input" style={{ padding: '9px 10px', fontSize: '12px', width: 'auto' }}
           />
           {(dateFrom || dateTo) && (
             <button onClick={() => { setDateFrom(''); setDateTo(''); setPage(1); }}
               title="Clear dates"
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: '6px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-muted))', cursor: 'pointer', flexShrink: 0 }}>
+              className="cx-flex-center cx-r-6 cx-surface-hover cx-border cx-text-muted cx-transition-fast"
+              style={{ width: '28px', height: '28px', cursor: 'pointer' }}>
               <X style={{ width: '12px', height: '12px' }} />
             </button>
           )}
@@ -170,17 +167,17 @@ export default function AuditLogPage() {
 
       {/* Log List */}
       {loading ? (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
-          <Loader2 style={{ width: '28px', height: '28px', color: 'rgb(var(--primary))', animation: 'spin 1s linear infinite' }} />
+        <div className="cx-loading" style={{ height: '200px' }}>
+          <Loader2 className="cx-spinner" style={{ width: '28px', height: '28px' }} />
         </div>
       ) : logs.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'rgb(var(--text-muted))' }}>
+        <div className="cx-empty cx-text-muted" style={{ padding: '60px 20px' }}>
           <Activity style={{ width: '48px', height: '48px', opacity: 0.3, marginBottom: '16px' }} />
-          <p style={{ fontSize: '15px', fontWeight: 600 }}>No audit logs found</p>
+          <p className="cx-fw-600" style={{ fontSize: '15px' }}>No audit logs found</p>
           <p style={{ fontSize: '13px' }}>Activity will appear here as you use Cortexo</p>
         </div>
       ) : (
-        <div style={{ borderRadius: '14px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', overflow: 'hidden' }}>
+        <div className="cx-table-wrap">
           {logs.map((log: any, i: number) => {
             const IconComp = ACTION_ICONS[log.action] || Terminal;
             const color = ACTION_COLORS[log.action] || '#94A3B8';
@@ -265,16 +262,14 @@ export default function AuditLogPage() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginTop: '20px' }}>
+        <div className="cx-flex-center cx-gap-12" style={{ marginTop: '20px' }}>
           <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}
-            style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '8px 14px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', fontSize: '12px', fontWeight: 600, color: 'rgb(var(--text-secondary))', cursor: page <= 1 ? 'not-allowed' : 'pointer', opacity: page <= 1 ? 0.4 : 1 }}>
+            className="cx-btn-secondary cx-gap-4 cx-text-12 cx-fw-600" style={{ padding: '8px 14px', opacity: page <= 1 ? 0.4 : 1, cursor: page <= 1 ? 'not-allowed' : 'pointer' }}>
             <ChevronLeft style={{ width: '14px', height: '14px' }} /> Prev
           </button>
-          <span style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', fontWeight: 600 }}>
-            Page {page} of {totalPages}
-          </span>
+          <span className="cx-text-12 cx-text-muted cx-fw-600">Page {page} of {totalPages}</span>
           <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}
-            style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '8px 14px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', fontSize: '12px', fontWeight: 600, color: 'rgb(var(--text-secondary))', cursor: page >= totalPages ? 'not-allowed' : 'pointer', opacity: page >= totalPages ? 0.4 : 1 }}>
+            className="cx-btn-secondary cx-gap-4 cx-text-12 cx-fw-600" style={{ padding: '8px 14px', opacity: page >= totalPages ? 0.4 : 1, cursor: page >= totalPages ? 'not-allowed' : 'pointer' }}>
             Next <ChevronRight style={{ width: '14px', height: '14px' }} />
           </button>
         </div>

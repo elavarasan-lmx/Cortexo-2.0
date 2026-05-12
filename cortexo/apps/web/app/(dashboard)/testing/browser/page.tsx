@@ -3,13 +3,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Globe, Play, CheckCircle, XCircle, Loader2, Camera, Eye,
-  ChevronDown, ChevronRight, Users, ShieldAlert, Monitor
+  ChevronDown, ChevronRight, Users, ShieldAlert, Monitor,
+  Bug, ExternalLink, CheckCheck, Settings2, RotateCcw
 } from 'lucide-react';
 import { useAutoLoadToken } from '@/lib/hooks';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/v1';
 
-interface FlowInfo { id: string; name: string; icon: string; description: string; stepCount: number; }
+interface FlowField { key: string; label: string; type: string; placeholder: string; }
+interface FlowInfo { id: string; name: string; icon: string; description: string; stepCount: number; fields?: FlowField[]; }
 interface Target { id: number; name: string; baseUrl: string; }
 
 interface StepResult {
@@ -40,6 +42,10 @@ export default function BrowserTestPage() {
   const [previewImg, setPreviewImg] = useState<string | null>(null);
   const [multiMode, setMultiMode] = useState(false);
   const [multiResults, setMultiResults] = useState<any>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportResult, setExportResult] = useState<{ created: number; updated: number; message: string; projectName?: string } | null>(null);
+  const [customData, setCustomData] = useState<Record<string, string>>({});
+  const [showDataForm, setShowDataForm] = useState<string | null>(null); // flowId or null
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('cortexo_token') || '' : '';
   const headers: Record<string, string> = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
@@ -63,11 +69,13 @@ export default function BrowserTestPage() {
 
   const runSingle = async (flowId: string) => {
     if (!selectedTarget) return;
-    setRunning(flowId); setResult(null); setMultiResults(null);
+    setRunning(flowId); setResult(null); setMultiResults(null); setExportResult(null);
+    // Filter out empty values from customData
+    const filtered = Object.fromEntries(Object.entries(customData).filter(([, v]) => v.trim() !== ''));
     try {
       const res = await fetch(`${API}/browser-tests/run`, {
         method: 'POST', headers,
-        body: JSON.stringify({ flowId, targetId: selectedTarget }),
+        body: JSON.stringify({ flowId, targetId: selectedTarget, customData: Object.keys(filtered).length > 0 ? filtered : undefined }),
       });
       const json = await res.json();
       if (json.data) setResult(json.data);
@@ -76,11 +84,12 @@ export default function BrowserTestPage() {
   };
 
   const runAllClients = async (flowId: string) => {
-    setRunning(flowId); setResult(null); setMultiResults(null);
+    setRunning(flowId); setResult(null); setMultiResults(null); setExportResult(null);
+    const filtered = Object.fromEntries(Object.entries(customData).filter(([, v]) => v.trim() !== ''));
     try {
       const res = await fetch(`${API}/browser-tests/run-multi`, {
         method: 'POST', headers,
-        body: JSON.stringify({ flowId, targetIds: [] }), // empty = all
+        body: JSON.stringify({ flowId, targetIds: [], customData: Object.keys(filtered).length > 0 ? filtered : undefined }),
       });
       const json = await res.json();
       if (json.data) setMultiResults(json.data);
@@ -90,6 +99,26 @@ export default function BrowserTestPage() {
 
   const toggleStep = (i: number) => setExpandedSteps(prev => ({ ...prev, [i]: !prev[i] }));
   const screenshotUrl = (f: string) => `${API}/browser-tests/screenshot/${f}`;
+
+  const exportBugs = async () => {
+    if (!result || result.failed === 0) return;
+    setExporting(true); setExportResult(null);
+    try {
+      const res = await fetch(`${API}/browser-tests/export-bugs`, {
+        method: 'POST', headers,
+        body: JSON.stringify({ runId: result.runId, result }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setExportResult({ created: json.exported.created, updated: json.exported.updated, message: json.message, projectName: json.project?.name });
+      } else {
+        setExportResult({ created: 0, updated: 0, message: json.error || 'Export failed' });
+      }
+    } catch (err) {
+      setExportResult({ created: 0, updated: 0, message: 'Network error during export' });
+    }
+    setExporting(false);
+  };
 
   const passRate = result ? Math.round((result.passed / result.total) * 100) : 0;
 
@@ -133,40 +162,117 @@ export default function BrowserTestPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '14px', marginBottom: '24px' }}>
         {flows.map(f => {
           const isRunning = running === f.id;
+          const isDataOpen = showDataForm === f.id;
+          const hasFields = f.fields && f.fields.length > 0;
+          const hasCustomValues = hasFields && f.fields!.some(fld => customData[fld.key]?.trim());
           return (
             <div key={f.id} style={{
-              ...card, cursor: selectedTarget ? 'pointer' : 'not-allowed',
+              ...card, cursor: selectedTarget ? 'default' : 'not-allowed',
               opacity: selectedTarget ? 1 : 0.5,
-              borderColor: isRunning ? 'rgb(var(--primary))' : undefined,
-              boxShadow: isRunning ? '0 0 0 2px rgba(var(--primary), 0.15)' : undefined,
+              borderColor: isRunning ? 'rgb(var(--primary))' : isDataOpen ? '#8B5CF6' : undefined,
+              boxShadow: isRunning ? '0 0 0 2px rgba(var(--primary), 0.15)' : isDataOpen ? '0 0 0 2px rgba(139,92,246,0.15)' : undefined,
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                 <div>
                   <div style={{ fontSize: '24px', marginBottom: '6px' }}>{f.icon}</div>
                   <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>{f.name}</h3>
                 </div>
-                <button
-                  onClick={() => multiMode ? runAllClients(f.id) : runSingle(f.id)}
-                  disabled={isRunning || (!multiMode && !selectedTarget)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 18px', borderRadius: '10px', border: 'none',
-                    background: isRunning ? 'rgb(var(--surface-hover))'
-                      : multiMode ? 'linear-gradient(135deg, #8B5CF6, #6D28D9)'
-                        : 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))',
-                    color: '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer',
-                  }}>
-                  {isRunning
-                    ? <Loader2 style={{ width: '13px', height: '13px', animation: 'spin 1s linear infinite' }} />
-                    : <Play style={{ width: '13px', height: '13px' }} />}
-                  {isRunning ? 'Running...' : multiMode ? 'Run All Clients' : 'Run Test'}
-                </button>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {hasFields && (
+                    <button
+                      onClick={() => setShowDataForm(isDataOpen ? null : f.id)}
+                      title="Custom test data"
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        width: '34px', height: '34px', borderRadius: '10px', border: '1px solid',
+                        borderColor: isDataOpen ? '#8B5CF6' : hasCustomValues ? '#F59E0B' : 'rgb(var(--border))',
+                        backgroundColor: isDataOpen ? 'rgba(139,92,246,0.1)' : hasCustomValues ? 'rgba(245,158,11,0.08)' : 'transparent',
+                        color: isDataOpen ? '#8B5CF6' : hasCustomValues ? '#F59E0B' : 'rgb(var(--text-muted))',
+                        cursor: 'pointer', transition: 'all 200ms',
+                      }}
+                    >
+                      <Settings2 style={{ width: '14px', height: '14px' }} />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => multiMode ? runAllClients(f.id) : runSingle(f.id)}
+                    disabled={isRunning || (!multiMode && !selectedTarget)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 18px', borderRadius: '10px', border: 'none',
+                      background: isRunning ? 'rgb(var(--surface-hover))'
+                        : multiMode ? 'linear-gradient(135deg, #8B5CF6, #6D28D9)'
+                          : 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))',
+                      color: '#fff', fontSize: '11px', fontWeight: 600, cursor: 'pointer',
+                    }}>
+                    {isRunning
+                      ? <Loader2 style={{ width: '13px', height: '13px', animation: 'spin 1s linear infinite' }} />
+                      : <Play style={{ width: '13px', height: '13px' }} />}
+                    {isRunning ? 'Running...' : multiMode ? 'Run All Clients' : 'Run Test'}
+                  </button>
+                </div>
               </div>
               <p style={{ fontSize: '12px', color: 'rgb(var(--text-secondary))', margin: '0 0 10px', lineHeight: '1.5' }}>{f.description}</p>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>📋 {f.stepCount} steps</span>
                 <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>🌐 Real Browser</span>
                 <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>📸 Screenshots</span>
+                {hasCustomValues && <span style={{ fontSize: '11px', color: '#F59E0B', fontWeight: 600 }}>⚡ Custom Data</span>}
               </div>
+
+              {/* Custom Data Form — Collapsible */}
+              {isDataOpen && hasFields && (
+                <div style={{
+                  marginTop: '14px', paddingTop: '14px',
+                  borderTop: '1px solid rgb(var(--border))',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#8B5CF6', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      ⚡ Custom Test Data
+                    </span>
+                    <button
+                      onClick={() => {
+                        const cleared = { ...customData };
+                        f.fields!.forEach(fld => { delete cleared[fld.key]; });
+                        setCustomData(cleared);
+                      }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '6px',
+                        border: '1px solid rgb(var(--border))', backgroundColor: 'transparent',
+                        color: 'rgb(var(--text-muted))', fontSize: '10px', cursor: 'pointer',
+                      }}
+                    >
+                      <RotateCcw style={{ width: '10px', height: '10px' }} /> Reset
+                    </button>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px' }}>
+                    {f.fields!.map(field => (
+                      <div key={field.key}>
+                        <label style={{ fontSize: '10px', fontWeight: 600, color: 'rgb(var(--text-muted))', display: 'block', marginBottom: '4px' }}>
+                          {field.label}
+                        </label>
+                        <input
+                          type={field.type === 'password' ? 'text' : field.type}
+                          value={customData[field.key] || ''}
+                          onChange={e => setCustomData(prev => ({ ...prev, [field.key]: e.target.value }))}
+                          placeholder={field.placeholder}
+                          style={{
+                            width: '100%', padding: '7px 10px', borderRadius: '8px', fontSize: '12px',
+                            border: '1px solid', boxSizing: 'border-box',
+                            borderColor: customData[field.key]?.trim() ? '#8B5CF6' : 'rgb(var(--border))',
+                            backgroundColor: customData[field.key]?.trim() ? 'rgba(139,92,246,0.04)' : 'rgb(var(--surface-hover))',
+                            color: 'rgb(var(--text-primary))',
+                            fontFamily: "'JetBrains Mono', monospace",
+                            outline: 'none', transition: 'all 150ms',
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <p style={{ fontSize: '10px', color: 'rgb(var(--text-muted))', margin: '8px 0 0', lineHeight: '1.5' }}>
+                    💡 Leave fields empty to use auto-generated defaults. Only filled values override the test data.
+                  </p>
+                </div>
+              )}
             </div>
           );
         })}
@@ -194,8 +300,59 @@ export default function BrowserTestPage() {
                 <div style={{ textAlign: 'center' }}><div style={{ fontSize: '20px', fontWeight: 700, color: '#10B981' }}>{result.passed}</div><div style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>PASSED</div></div>
                 <div style={{ textAlign: 'center' }}><div style={{ fontSize: '20px', fontWeight: 700, color: result.failed > 0 ? '#EF4444' : 'rgb(var(--text-muted))' }}>{result.failed}</div><div style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>FAILED</div></div>
               </div>
+              {result.failed > 0 && (
+                <div style={{ width: '1px', height: '40px', backgroundColor: 'rgb(var(--border))' }} />
+              )}
+              {result.failed > 0 && (
+                <button
+                  onClick={exportBugs}
+                  disabled={exporting}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '12px', border: 'none',
+                    background: exporting ? 'rgb(var(--surface-hover))' : 'linear-gradient(135deg, #EF4444, #DC2626)',
+                    color: '#fff', fontSize: '12px', fontWeight: 700, cursor: exporting ? 'wait' : 'pointer',
+                    boxShadow: exporting ? 'none' : '0 4px 12px rgba(239,68,68,0.3)',
+                    transition: 'all 200ms',
+                  }}
+                >
+                  {exporting
+                    ? <Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} />
+                    : <Bug style={{ width: '14px', height: '14px' }} />}
+                  {exporting ? 'Exporting...' : `Export ${result.failed} Bug${result.failed > 1 ? 's' : ''} to Tracker`}
+                </button>
+              )}
             </div>
           </div>
+
+          {/* Export Result Banner */}
+          {exportResult && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '10px', marginBottom: '16px',
+              backgroundColor: exportResult.created > 0 || exportResult.updated > 0 ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)',
+              border: `1px solid ${exportResult.created > 0 || exportResult.updated > 0 ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}`,
+            }}>
+              {exportResult.created > 0 || exportResult.updated > 0
+                ? <CheckCheck style={{ width: '16px', height: '16px', color: '#10B981', flexShrink: 0 }} />
+                : <XCircle style={{ width: '16px', height: '16px', color: '#EF4444', flexShrink: 0 }} />}
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-primary))' }}>{exportResult.message}</div>
+                {exportResult.projectName && (
+                  <div style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', marginTop: '2px' }}>
+                    Project: {exportResult.projectName}
+                  </div>
+                )}
+              </div>
+              {(exportResult.created > 0 || exportResult.updated > 0) && (
+                <a href="/bug-tracker" style={{
+                  display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 14px', borderRadius: '8px',
+                  fontSize: '11px', fontWeight: 600, textDecoration: 'none',
+                  backgroundColor: 'rgba(16,185,129,0.15)', color: '#10B981',
+                }}>
+                  <ExternalLink style={{ width: '11px', height: '11px' }} /> View in Bug Tracker
+                </a>
+              )}
+            </div>
+          )}
 
           {/* Steps */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>

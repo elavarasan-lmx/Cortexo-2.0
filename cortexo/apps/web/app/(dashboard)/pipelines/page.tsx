@@ -8,7 +8,8 @@ import {
   Activity, Cpu, Edit3, Trash2, Power, List, Upload,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useApiData, useAutoLoadToken, useProjectLookup, parseJsonField, resolveProjectName, timeAgo } from '@/lib/hooks';
+import { useCortexoQuery, useAutoLoadToken, useProjectLookup, parseJsonField, resolveProjectName, timeAgo } from '@/lib/hooks';
+
 import { useModal } from '@/components/modal-provider';
 import { useToastStore } from '@/lib/toast-store';
 
@@ -167,9 +168,11 @@ export default function PipelinesPage() {
   useAutoLoadToken();
   const router = useRouter();
   const { lookup } = useProjectLookup();
-  const { data: pipelines, loading, error, refetch } = useApiData(
+  const { data: pipelines, isLoading: loading, isError: error, refetch } = useCortexoQuery(
+    ['pipelines'],
     () => api.getPipelines(),
   );
+
   const [runningIds, setRunningIds] = useState<Set<string>>(new Set());
 
   const handleRun = async (pipeline: any) => {

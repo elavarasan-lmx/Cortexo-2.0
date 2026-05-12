@@ -1059,6 +1059,646 @@ npx ionic cordova build android`,
     ],
   },
 
+  // ─── Flutter iOS App Publishing (Internal Runbook) ────────────────────
+  {
+    id: 'flutter-ios-publish',
+    tool: 'Flutter',
+    icon: 'flutter',
+    color: '#027DFD',
+    category: 'Mobile App',
+    title: 'iOS App Publishing (Flutter) — New App',
+    description: 'Complete end-to-end guide for publishing a brand new Flutter iOS app — Apple Developer enrollment, certificates, provisioning profiles, Xcode config, build, App Store Connect submission, TestFlight, and review.',
+    commands: [
+      { cmd: 'flutter doctor -v', desc: 'Verify Flutter + Xcode + CocoaPods setup' },
+      { cmd: 'flutter clean', desc: 'Clean build artifacts (always do before release)' },
+      { cmd: 'flutter pub get', desc: 'Install/update all Dart dependencies' },
+      { cmd: 'cd ios && pod install --repo-update', desc: 'Install/update CocoaPods dependencies' },
+      { cmd: 'cd ios && pod deintegrate && pod install', desc: 'Full CocoaPods reinstall (when stuck)' },
+      { cmd: 'flutter build ios --release', desc: 'Build release IPA (requires signing)' },
+      { cmd: 'flutter build ipa --release', desc: 'Build IPA + generate App Store archive' },
+      { cmd: 'flutter build ipa --release --export-method=app-store', desc: 'Build IPA for App Store distribution' },
+      { cmd: 'flutter build ipa --release --obfuscate --split-debug-info=build/symbols', desc: 'Build with code obfuscation (recommended)' },
+      { cmd: 'open ios/Runner.xcworkspace', desc: 'Open Xcode workspace (NOT .xcodeproj!)' },
+      { cmd: 'xcrun altool --upload-app -f build/ios/ipa/*.ipa -t ios -u "email" -p "app-specific-password"', desc: 'Upload IPA via command line (legacy)' },
+      { cmd: 'xcrun notarytool submit build/ios/ipa/*.ipa --apple-id "email" --team-id "TEAM_ID"', desc: 'Submit for notarization (Xcode 14+)' },
+      { cmd: 'open build/ios/archive/Runner.xcarchive', desc: 'Open archive in Xcode Organizer' },
+      { cmd: 'security find-identity -v -p codesigning', desc: 'List available signing certificates' },
+      { cmd: 'flutter devices', desc: 'List connected devices (check iOS device)' },
+      { cmd: 'flutter run --release -d <device_id>', desc: 'Test release build on physical device' },
+    ],
+    configSnippets: [
+      {
+        title: 'Step 1: Apple Developer Account Setup',
+        lang: 'text',
+        code: `═══════════════════════════════════════════════════════════════════
+  APPLE DEVELOPER PROGRAM ENROLLMENT (One-Time Setup)
+═══════════════════════════════════════════════════════════════════
+
+1. GO TO: https://developer.apple.com/programs/
+2. Click "Enroll" → Sign in with Apple ID
+3. Choose account type:
+   - Individual ($99/year) → Personal apps
+   - Organization ($99/year) → Company apps (needs D-U-N-S number)
+
+4. For ORGANIZATION enrollment:
+   - Need D-U-N-S Number (free from Dun & Bradstreet)
+   - Apply at: https://developer.apple.com/enroll/duns-lookup/
+   - Takes 5-7 business days to process
+   - Need legal entity name, address, phone number
+
+5. After enrollment approved (24-48 hours):
+   - Access Apple Developer Portal: https://developer.apple.com/account
+   - Access App Store Connect: https://appstoreconnect.apple.com
+   - Note your TEAM ID (shown in Membership tab)
+
+IMPORTANT: You MUST have a Mac with Xcode to build iOS apps.
+           There is NO way around this requirement.`,
+      },
+      {
+        title: 'Step 2: Create App ID (Bundle Identifier)',
+        lang: 'text',
+        code: `═══════════════════════════════════════════════════════════════════
+  REGISTER APP ID IN APPLE DEVELOPER PORTAL
+═══════════════════════════════════════════════════════════════════
+
+1. Go to: https://developer.apple.com/account/resources/identifiers/list
+
+2. Click "+" → Select "App IDs" → Continue
+
+3. Select type: "App" → Continue
+
+4. Fill in:
+   - Description: "My App Name"
+   - Bundle ID: Choose "Explicit"
+   - Bundle ID value: com.companyname.appname
+     Example: com.winbull.trustbullion
+
+5. Enable Capabilities (check what your app needs):
+   ☐ Push Notifications (for Firebase/OneSignal)
+   ☐ Associated Domains (for deep links)
+   ☐ Sign In with Apple (if using Apple login)
+   ☐ Background Modes (for background tasks)
+   ☐ Access WiFi Information
+   ☐ App Groups (for widget/extensions)
+
+6. Click "Continue" → "Register"
+
+IMPORTANT: Bundle ID must EXACTLY match what's in:
+  - ios/Runner.xcodeproj → PRODUCT_BUNDLE_IDENTIFIER
+  - Flutter pubspec.yaml won't have this — it's Xcode-only`,
+      },
+      {
+        title: 'Step 3: Create Certificates & Provisioning Profiles',
+        lang: 'text',
+        code: `═══════════════════════════════════════════════════════════════════
+  CERTIFICATES (Signing Identity)
+═══════════════════════════════════════════════════════════════════
+
+--- Option A: Automatic Signing (RECOMMENDED for beginners) ---
+
+1. Open Xcode → Runner.xcworkspace
+2. Select Runner target → Signing & Capabilities tab
+3. Check "Automatically manage signing"
+4. Select your Team from dropdown
+5. Xcode will auto-create certificates + profiles
+   ✅ Done! Skip to Step 4.
+
+--- Option B: Manual Signing (for CI/CD or team setups) ---
+
+1. CREATE CERTIFICATE SIGNING REQUEST (CSR):
+   - Open "Keychain Access" on Mac
+   - Menu: Keychain Access → Certificate Assistant →
+     "Request a Certificate From a Certificate Authority"
+   - Email: Your Apple ID email
+   - Common Name: Your name or company
+   - CA Email: Leave blank
+   - Request is: "Saved to disk"
+   - Save the .certSigningRequest file
+
+2. CREATE DISTRIBUTION CERTIFICATE:
+   - Go to: https://developer.apple.com/account/resources/certificates/list
+   - Click "+" → Select "Apple Distribution" → Continue
+   - Upload the CSR file from step 1
+   - Download the .cer file
+   - Double-click .cer to install in Keychain Access
+
+3. CREATE PROVISIONING PROFILE:
+   - Go to: https://developer.apple.com/account/resources/profiles/list
+   - Click "+" → Select "App Store Connect" (under Distribution)
+   - Select your App ID (from Step 2)
+   - Select your Distribution Certificate
+   - Name it: "AppName App Store Profile"
+   - Download and double-click to install
+
+═══════════════════════════════════════════════════════════════════
+  PUSH NOTIFICATION CERTIFICATE (If app uses notifications)
+═══════════════════════════════════════════════════════════════════
+
+1. Go to: https://developer.apple.com/account/resources/certificates/list
+2. Click "+" → Select "Apple Push Notification service SSL"
+3. Choose your App ID
+4. Upload CSR → Download .cer → Install in Keychain
+5. Export as .p12 from Keychain (for Firebase/OneSignal)`,
+      },
+      {
+        title: 'Step 4: Configure Flutter iOS Project (Xcode)',
+        lang: 'bash',
+        code: `# ═══════════════════════════════════════════════════════════
+# XCODE PROJECT CONFIGURATION
+# ═══════════════════════════════════════════════════════════
+
+# 1. Open the project in Xcode (ALWAYS use .xcworkspace!)
+open ios/Runner.xcworkspace
+
+# In Xcode, select "Runner" in the left sidebar, then:
+
+# ── General Tab ──────────────────────────────────────────
+# Display Name:        Your App Name (shown under icon)
+# Bundle Identifier:   com.companyname.appname (must match App ID)
+# Version:             1.0.0 (user-facing version)
+# Build:               1 (increment each upload to App Store Connect)
+# Deployment Target:   iOS 13.0 or higher (check your min requirement)
+
+# ── Signing & Capabilities Tab ───────────────────────────
+# Team:                Select your Apple Developer team
+# Bundle Identifier:   com.companyname.appname
+# Provisioning Profile: Automatic or select manually
+# Signing Certificate: Apple Distribution
+
+# ── Build Settings Tab ───────────────────────────────────
+# Search "PRODUCT_BUNDLE_IDENTIFIER"
+# Ensure it matches across Debug, Release, Profile schemes
+# Search "DEVELOPMENT_TEAM" → Set your Team ID
+
+# ── Info.plist (Required Privacy Descriptions) ───────────
+# Add these in ios/Runner/Info.plist for permissions:
+# NSCameraUsageDescription         → "App needs camera for..."
+# NSPhotoLibraryUsageDescription   → "App needs photos for..."
+# NSLocationWhenInUseUsageDescription → "App needs location..."
+# NSMicrophoneUsageDescription     → "App needs microphone..."`,
+      },
+      {
+        title: 'Step 4b: Info.plist Configuration',
+        lang: 'xml',
+        code: `<?xml version="1.0" encoding="UTF-8"?>
+<!-- File: ios/Runner/Info.plist -->
+<!-- Add these keys INSIDE the existing <dict> block -->
+
+<!-- App Transport Security (if using HTTP APIs) -->
+<key>NSAppTransportSecurity</key>
+<dict>
+    <key>NSAllowsArbitraryLoads</key>
+    <true/>
+    <!-- OR for specific domains only (recommended): -->
+    <key>NSExceptionDomains</key>
+    <dict>
+        <key>yourdomain.com</key>
+        <dict>
+            <key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
+            <true/>
+        </dict>
+    </dict>
+</dict>
+
+<!-- Camera -->
+<key>NSCameraUsageDescription</key>
+<string>This app requires camera access to capture photos</string>
+
+<!-- Photo Library -->
+<key>NSPhotoLibraryUsageDescription</key>
+<string>This app requires photo library access to select images</string>
+
+<!-- Location -->
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>This app requires location access for nearby services</string>
+
+<!-- Notifications (if using push notifications) -->
+<key>UIBackgroundModes</key>
+<array>
+    <string>fetch</string>
+    <string>remote-notification</string>
+</array>
+
+<!-- App Display Name -->
+<key>CFBundleDisplayName</key>
+<string>Your App Name</string>
+
+<!-- Supported Orientations -->
+<key>UISupportedInterfaceOrientations</key>
+<array>
+    <string>UIInterfaceOrientationPortrait</string>
+</array>`,
+      },
+      {
+        title: 'Step 5: Build & Archive',
+        lang: 'bash',
+        code: `# ═══════════════════════════════════════════════════════════
+# BUILD FLUTTER IPA FOR APP STORE
+# ═══════════════════════════════════════════════════════════
+
+# 1. CLEAN EVERYTHING (always start fresh for release)
+flutter clean
+flutter pub get
+cd ios && pod install --repo-update && cd ..
+
+# 2. BUILD IPA (generates App Store ready archive)
+flutter build ipa --release \\
+  --export-method=app-store \\
+  --obfuscate \\
+  --split-debug-info=build/symbols
+
+# Output: build/ios/ipa/YourApp.ipa
+# Archive: build/ios/archive/Runner.xcarchive
+
+# ─── OR: Build via Xcode (Manual Method) ─────────────────
+# 1. Open Xcode: open ios/Runner.xcworkspace
+# 2. Select "Any iOS Device (arm64)" as build target
+# 3. Menu: Product → Scheme → Release
+# 4. Menu: Product → Archive
+# 5. Xcode Organizer opens → Click "Distribute App"
+# 6. Select "App Store Connect" → Upload
+
+# ─── Upload IPA via Transporter App ──────────────────────
+# 1. Download "Transporter" from Mac App Store (free Apple app)
+# 2. Sign in with your Apple ID
+# 3. Drag & drop the .ipa file
+# 4. Click "Deliver"
+# This is the EASIEST way to upload!
+
+# ─── OR: Upload via xcrun (Command Line) ─────────────────
+xcrun altool --upload-app \\
+  -f build/ios/ipa/YourApp.ipa \\
+  -t ios \\
+  -u "your@email.com" \\
+  -p "xxxx-xxxx-xxxx-xxxx"  # App-specific password from appleid.apple.com
+
+# Generate app-specific password:
+# 1. Go to: https://appleid.apple.com/account/manage
+# 2. Security → App-Specific Passwords → Generate
+# 3. Label it "Transporter" or "xcrun"
+# 4. Copy the generated password`,
+      },
+      {
+        title: 'Step 6: App Store Connect — Create App Listing',
+        lang: 'text',
+        code: `═══════════════════════════════════════════════════════════════════
+  APP STORE CONNECT SETUP
+═══════════════════════════════════════════════════════════════════
+
+1. Go to: https://appstoreconnect.apple.com
+2. Click "My Apps" → "+" → "New App"
+
+3. Fill in New App form:
+   - Platform: iOS
+   - Name: Your App Name (unique on App Store, 30 char max)
+   - Primary Language: English (or your language)
+   - Bundle ID: Select from dropdown (created in Step 2)
+   - SKU: Unique identifier (e.g., com.company.app.2024)
+   - User Access: Full Access (or Limited)
+
+4. APP INFORMATION TAB:
+   - Subtitle (optional, 30 chars)
+   - Category: Choose primary + secondary
+   - Content Rights: "Does not contain third-party content"
+   - Age Rating: Fill the questionnaire
+
+5. PRICING AND AVAILABILITY:
+   - Price: Free (or select price tier)
+   - Availability: Select countries
+
+6. APP PRIVACY:
+   - Privacy Policy URL (REQUIRED — host on your website)
+   - Data collection practices (answer the questionnaire)
+
+═══════════════════════════════════════════════════════════════════
+  PREPARE FOR SUBMISSION (Version page)
+═══════════════════════════════════════════════════════════════════
+
+SCREENSHOTS (REQUIRED — these specific sizes):
+┌─────────────────────────┬──────────────┬─────────────┐
+│ Device                  │ Size (px)    │ Required?   │
+├─────────────────────────┼──────────────┼─────────────┤
+│ iPhone 6.7" (15 Pro Max)│ 1290 × 2796  │ YES         │
+│ iPhone 6.5" (11 Pro Max)│ 1284 × 2778  │ YES         │
+│ iPhone 5.5" (8 Plus)    │ 1242 × 2208  │ YES         │
+│ iPad Pro 12.9" (6th)    │ 2048 × 2732  │ If iPad app │
+│ iPad Pro 12.9" (2nd)    │ 2048 × 2732  │ If iPad app │
+└─────────────────────────┴──────────────┴─────────────┘
+
+Provide 3-10 screenshots per device size.
+TIP: Use tools like "Screenshots Pro" or Figma templates.
+
+OTHER REQUIRED FIELDS:
+- Promotional Text (optional, 170 chars, can change anytime)
+- Description (up to 4000 chars, changed only on new version)
+- Keywords (100 chars, comma-separated for ASO)
+- Support URL (your website/support page)
+- Marketing URL (optional)
+- App Icon: 1024x1024px PNG (no alpha/transparency!)
+- Build: Select the uploaded build (appears after processing)`,
+      },
+      {
+        title: 'Step 7: TestFlight & Submission',
+        lang: 'text',
+        code: `═══════════════════════════════════════════════════════════════════
+  TESTFLIGHT (Beta Testing)
+═══════════════════════════════════════════════════════════════════
+
+1. After uploading IPA, wait 15-30 minutes for processing
+2. Go to App Store Connect → TestFlight tab
+3. The build appears → Click it
+4. Fill "Export Compliance" → Select "No" if no encryption
+   (or "Yes, uses standard encryption" for HTTPS)
+5. Manage Compliance shows ✅
+
+INTERNAL TESTING (up to 100 Apple Developer team members):
+- Go to "Internal Testing" → Create group
+- Add testers by Apple ID email
+- Select the build → Start Testing
+- Testers get TestFlight notification
+
+EXTERNAL TESTING (up to 10,000 testers):
+- Create "External Testing" group
+- Add testers or share public link
+- Requires BETA APP REVIEW (24-48 hours)
+- Share link: Apps → TestFlight → Public Link
+
+═══════════════════════════════════════════════════════════════════
+  SUBMIT FOR APP REVIEW
+═══════════════════════════════════════════════════════════════════
+
+1. Go to "App Store" tab → Version page
+2. Ensure ALL fields are filled:
+   ✅ Screenshots (all required sizes)
+   ✅ Description, Keywords, Support URL
+   ✅ App Icon (1024x1024)
+   ✅ Privacy Policy URL
+   ✅ Age Rating completed
+   ✅ Build selected
+   ✅ Pricing set
+   ✅ App Privacy questionnaire done
+
+3. Review Contact Information:
+   - Name, email, phone (Apple may call during review)
+
+4. App Review Notes (IMPORTANT for first submission):
+   - Provide test account if app requires login
+   - Explain any non-obvious features
+   - Note if using background location, etc.
+
+5. Click "Submit for Review"
+
+REVIEW TIMELINE:
+- First submission: 24-48 hours (can take up to 7 days)
+- Updates: Usually 24 hours
+- Expedited review: https://developer.apple.com/contact/app-store/
+
+AFTER APPROVAL:
+- Choose release method: Manual or Automatic
+- Manual: You click "Release This Version" when ready
+- Automatic: Goes live immediately after approval`,
+      },
+      {
+        title: 'Step 8: App Icon & Launch Screen Setup',
+        lang: 'bash',
+        code: `# ═══════════════════════════════════════════════════════════
+# APP ICON SETUP
+# ═══════════════════════════════════════════════════════════
+
+# Option A: flutter_launcher_icons package (RECOMMENDED)
+# 1. Add to pubspec.yaml:
+#   dev_dependencies:
+#     flutter_launcher_icons: "^0.14.2"
+#
+#   flutter_launcher_icons:
+#     ios: true
+#     image_path: "assets/icon/app_icon.png"
+#     remove_alpha_ios: true   # IMPORTANT: iOS rejects icons with transparency!
+
+# 2. Run:
+flutter pub get
+dart run flutter_launcher_icons
+
+# Option B: Manual (via Xcode)
+# 1. Open ios/Runner/Assets.xcassets/AppIcon.appiconset/
+# 2. Replace all icon sizes manually
+# 3. Or use: https://appicon.co to generate all sizes
+
+# ═══════════════════════════════════════════════════════════
+# LAUNCH SCREEN (Splash Screen)
+# ═══════════════════════════════════════════════════════════
+
+# The iOS launch screen is configured in:
+# ios/Runner/Base.lproj/LaunchScreen.storyboard
+
+# Option A: flutter_native_splash package
+# 1. Add to pubspec.yaml:
+#   dev_dependencies:
+#     flutter_native_splash: "^2.4.3"
+#
+#   flutter_native_splash:
+#     color: "#FFFFFF"
+#     image: assets/splash/logo.png
+#     ios: true
+
+# 2. Run:
+dart run flutter_native_splash:create
+
+# Option B: Edit LaunchScreen.storyboard in Xcode
+# 1. Open ios/Runner.xcworkspace
+# 2. Find LaunchScreen.storyboard in Runner folder
+# 3. Edit visually in Interface Builder`,
+      },
+      {
+        title: 'Common Xcode Errors & Fixes',
+        lang: 'bash',
+        code: `# ═══════════════════════════════════════════════════════════
+# TROUBLESHOOTING GUIDE
+# ═══════════════════════════════════════════════════════════
+
+# ERROR: "No signing certificate found"
+# FIX: Xcode → Preferences → Accounts → Download Manual Profiles
+#      Or enable "Automatically manage signing"
+
+# ERROR: "Provisioning profile doesn't match bundle identifier"
+# FIX: Ensure bundle ID in Xcode matches App ID on developer portal
+open ios/Runner.xcworkspace
+# Check: Runner → Signing & Capabilities → Bundle Identifier
+
+# ERROR: "Module 'xxx' not found" (CocoaPods issue)
+cd ios
+pod deintegrate
+pod cache clean --all
+rm -rf Pods Podfile.lock
+pod install --repo-update
+cd ..
+flutter clean
+flutter build ios
+
+# ERROR: "The iOS deployment target is set to X.X"
+# FIX: Update Podfile minimum iOS version:
+# platform :ios, '13.0'
+# Then: cd ios && pod install
+
+# ERROR: "arm64 architecture" (Apple Silicon M1/M2)
+# FIX: Add to Podfile post_install:
+# post_install do |installer|
+#   installer.pods_project.targets.each do |target|
+#     target.build_configurations.each do |config|
+#       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+#     end
+#   end
+# end
+
+# ERROR: "App Store icon must not contain alpha channel"
+# FIX: Remove transparency from 1024x1024 icon
+# Use: convert icon.png -background white -flatten icon_no_alpha.png
+# Or set remove_alpha_ios: true in flutter_launcher_icons
+
+# ERROR: "ITMS-90717: Invalid App Store Icon"
+# FIX: Icon must be exactly 1024x1024, PNG, no rounded corners,
+#      no transparency, no layers
+
+# ERROR: "Missing Compliance" in App Store Connect
+# FIX: Go to TestFlight → Select build → Export Compliance
+#      Most apps: "No" for custom encryption (HTTPS is standard)
+
+# ERROR: "Binary Rejected — Guideline X.X"
+# Check: https://developer.apple.com/app-store/review/guidelines/
+# Common reasons:
+#   - 2.1: App crashes or has bugs
+#   - 2.3: Incomplete or placeholder content
+#   - 4.0: Missing privacy purpose strings in Info.plist
+#   - 5.1.1: Missing privacy policy
+#   - 5.1.2: Data collection not declared correctly`,
+      },
+      {
+        title: 'Podfile Configuration (Reference)',
+        lang: 'ruby',
+        code: `# File: ios/Podfile
+platform :ios, '13.0'
+
+# CocoaPods analytics
+ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+
+project 'Runner', {
+  'Debug' => :debug,
+  'Profile' => :release,
+  'Release' => :release,
+}
+
+def flutter_root
+  generated_xcode_build_settings_path = File.expand_path(
+    File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__
+  )
+  unless File.exist?(generated_xcode_build_settings_path)
+    raise "Missing Generated.xcconfig"
+  end
+  File.foreach(generated_xcode_build_settings_path) do |line|
+    matches = line.match(/FLUTTER_ROOT\\=(.*)/)
+    return matches[1].strip if matches
+  end
+  raise "FLUTTER_ROOT not found"
+end
+
+require File.expand_path(
+  File.join('packages', 'flutter_tools', 'bin', 'podhelper'),
+  flutter_root
+)
+
+target 'Runner' do
+  use_frameworks!
+  use_modular_headers!
+
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+
+  # Add any extra pods here:
+  # pod 'FirebaseMessaging'
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+      # Fix Xcode 15+ issues:
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
+        '$(inherited)',
+        'PERMISSION_CAMERA=1',
+        'PERMISSION_PHOTOS=1',
+      ]
+    end
+  end
+end`,
+      },
+      {
+        title: 'Pre-Release Checklist',
+        lang: 'text',
+        code: `═══════════════════════════════════════════════════════════════════
+  FLUTTER iOS RELEASE CHECKLIST
+═══════════════════════════════════════════════════════════════════
+
+PRE-BUILD:
+  □ All API URLs switched to PRODUCTION (no staging/localhost)
+  □ Debug logs and print statements removed or disabled
+  □ App version updated in pubspec.yaml (version: X.Y.Z+buildNumber)
+  □ Bundle ID matches Apple Developer App ID
+  □ App icon ready (1024x1024, no transparency)
+  □ Launch screen configured
+  □ Info.plist has all required privacy strings
+  □ Minimum iOS deployment target set (13.0+)
+  □ Test on PHYSICAL iPhone (simulator ≠ real device)
+
+BUILD:
+  □ flutter clean
+  □ flutter pub get
+  □ cd ios && pod install --repo-update
+  □ flutter build ipa --release
+  □ Archive builds successfully with no errors
+
+UPLOAD:
+  □ IPA uploaded via Transporter or xcrun
+  □ Build appears in App Store Connect (15-30 min wait)
+  □ Export Compliance answered (TestFlight)
+  □ Internal TestFlight test passed
+
+APP STORE CONNECT:
+  □ Screenshots uploaded (all required sizes)
+  □ App description, keywords, and support URL filled
+  □ Privacy Policy URL provided
+  □ Age rating questionnaire completed
+  □ App Privacy section filled
+  □ Pricing and availability configured
+  □ Build selected for submission
+  □ Review notes + test credentials provided (if login required)
+  □ Submit for Review
+
+POST-APPROVAL:
+  □ Release to App Store (manual or automatic)
+  □ Verify app appears in App Store search
+  □ Download and test from App Store
+  □ Monitor Crash Reports in Xcode Organizer
+  □ Announce release to team/client`,
+      },
+    ],
+    tips: [
+      'ALWAYS open .xcworkspace (NOT .xcodeproj) — CocoaPods dependencies are only in the workspace',
+      'iOS apps REQUIRE a Mac with Xcode — there are no workarounds for this',
+      'Increment the build number (pubspec.yaml version: 1.0.0+BUILD) for every App Store Connect upload',
+      'App Store icon must be 1024x1024 PNG with NO transparency and NO rounded corners',
+      'Generate app-specific passwords at appleid.apple.com for xcrun/Transporter uploads',
+      'Use Transporter app (free on Mac App Store) for the easiest IPA upload experience',
+      'First App Store review takes 24-48 hours; expedited review available at developer.apple.com/contact',
+      'Always test on a physical iPhone before submitting — simulator does not catch all issues',
+      'If CocoaPods errors persist: pod deintegrate, delete Pods folder, Podfile.lock, then pod install --repo-update',
+      'Firebase/Push Notifications need APNs key (.p8) uploaded to Firebase Console → Project Settings → Cloud Messaging',
+      'Privacy strings (NSCameraUsageDescription etc.) in Info.plist are MANDATORY — missing ones = instant rejection',
+      'For HTTPS-only APIs, you can remove NSAppTransportSecurity from Info.plist entirely',
+      'Keep your Distribution Certificate and Provisioning Profile backed up — losing them is painful',
+      'Use flutter build ipa (not flutter build ios) for App Store archives — it generates the proper .ipa file',
+    ],
+  },
+
   // ─── Dev Environment Setup (Internal Runbook) ────────────────────────
   {
     id: 'dev-environment-setup',

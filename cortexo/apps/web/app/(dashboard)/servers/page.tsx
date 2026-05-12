@@ -7,7 +7,8 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
-import { useApiData, useAutoLoadToken } from '@/lib/hooks';
+import { useCortexoQuery, useAutoLoadToken } from '@/lib/hooks';
+
 import { useToastStore } from '@/lib/toast-store';
 
 
@@ -17,22 +18,23 @@ function MetricBar({ label, value, max, unit, color }: { label: string; value: n
   const barColor = pct > 85 ? '#EF4444' : pct > 70 ? '#F59E0B' : color;
   return (
     <div style={{ marginBottom: '8px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-        <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>{label}</span>
-        <span style={{ fontSize: '11px', fontWeight: 600, color: barColor }}>{pct}%</span>
+      <div className="cx-flex-between" style={{ marginBottom: '3px' }}>
+        <span className="cx-text-muted" style={{ fontSize: '11px' }}>{label}</span>
+        <span className="cx-fw-600" style={{ fontSize: '11px', color: barColor }}>{pct}%</span>
       </div>
       <div style={{ height: '5px', borderRadius: '3px', backgroundColor: 'rgba(var(--border), 0.8)', overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${pct}%`, borderRadius: '3px', background: `linear-gradient(90deg, ${barColor}99, ${barColor})`, transition: 'width 600ms ease' }} />
       </div>
-      <span style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>{value}{unit} / {max}{unit}</span>
+      <span className="cx-text-muted" style={{ fontSize: '10px' }}>{value}{unit} / {max}{unit}</span>
     </div>
   );
 }
 
 export default function ServersPage() {
   useAutoLoadToken();
-  const { data: servers, loading, error, refetch } = useApiData(() => api.getServers());
-  const { data: resources, refetch: refetchResources } = useApiData(() => api.getServerResourcesLatest());
+  const { data: servers, isLoading: loading, isError: error, refetch } = useCortexoQuery(['servers'], () => api.getServers());
+  const { data: resources, refetch: refetchResources } = useCortexoQuery(['server-resources-latest'], () => api.getServerResourcesLatest());
+
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [collecting, setCollecting] = useState(false);
@@ -110,8 +112,8 @@ export default function ServersPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '256px' }}>
-        <Loader2 style={{ width: '32px', height: '32px', color: 'rgb(var(--primary))', animation: 'spin 1s linear infinite' }} />
+      <div className="cx-flex-center" style={{ height: '256px' }}>
+        <Loader2 className="cx-spin cx-text-accent" style={{ width: '32px', height: '32px' }} />
       </div>
     );
   }
@@ -129,20 +131,19 @@ export default function ServersPage() {
 
   return (
     <div>
-
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '24px' }}>
+      <div className="cx-flex-between" style={{ alignItems: 'flex-start', gap: '16px', marginBottom: '24px' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>Servers</h1>
-          <p style={{ fontSize: '14px', color: 'rgb(var(--text-secondary))', marginTop: '4px' }}>{allServers.length} servers · resource monitoring & fleet management</p>
+          <h1 className="cx-fw-700 cx-text-primary cx-page-title" style={{ margin: 0 }}>Servers</h1>
+          <p className="cx-text-secondary" style={{ fontSize: '14px', marginTop: '4px' }}>{allServers.length} servers · resource monitoring & fleet management</p>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <Link href="/servers/mounts" style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', fontSize: '13px', fontWeight: 500, color: 'rgb(var(--text-secondary))', cursor: 'pointer', textDecoration: 'none' }}>
+        <div className="cx-flex cx-gap-8">
+          <Link href="/servers/mounts" className="cx-flex cx-items-center cx-gap-6 cx-btn-secondary cx-text-secondary" style={{ padding: '10px 16px', fontSize: '13px', fontWeight: 500, textDecoration: 'none' }}>
             <FolderSync style={{ width: '14px', height: '14px' }} /> SSHFS Mounts
           </Link>
-          <button onClick={collectLiveMetrics} disabled={collecting} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', cursor: collecting ? 'wait' : 'pointer', opacity: collecting ? 0.7 : 1 }}>
-            {collecting ? <Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} /> : <RefreshCw style={{ width: '14px', height: '14px' }} />} {collecting ? 'Scanning...' : 'Refresh'}
+          <button onClick={collectLiveMetrics} disabled={collecting} className="cx-flex cx-items-center cx-gap-6 cx-btn-secondary cx-fw-600 cx-text-secondary" style={{ padding: '10px 16px', fontSize: '13px', cursor: collecting ? 'wait' : 'pointer', opacity: collecting ? 0.7 : 1 }}>
+            {collecting ? <Loader2 className="cx-spin" style={{ width: '14px', height: '14px' }} /> : <RefreshCw style={{ width: '14px', height: '14px' }} />} {collecting ? 'Scanning...' : 'Refresh'}
           </button>
-          <button onClick={() => setShowForm(!showForm)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '12px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#fff', background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))', boxShadow: '0 4px 12px rgba(var(--primary), 0.3)' }}>
+          <button onClick={() => setShowForm(!showForm)} className="cx-btn-primary cx-flex cx-items-center cx-gap-8" style={{ padding: '10px 20px' }}>
             <Plus style={{ width: '16px', height: '16px' }} /> Add Server
           </button>
         </div>
@@ -238,17 +239,17 @@ export default function ServersPage() {
             >
               <div style={{ height: '3px', backgroundColor: accentColor, position: 'absolute', top: 0, left: 0, right: 0 }} />
 
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '18px 18px 12px', borderBottom: '1px solid rgb(var(--border))' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                  <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: `linear-gradient(135deg, ${accentColor}20, ${accentColor}08)`, border: `1px solid ${accentColor}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div className="cx-flex-between" style={{ alignItems: 'flex-start', padding: '18px 18px 12px', borderBottom: '1px solid rgb(var(--border))' }}>
+                <div className="cx-flex cx-gap-12" style={{ alignItems: 'flex-start' }}>
+                  <div className="cx-flex-center cx-r-10" style={{ width: '42px', height: '42px', background: `linear-gradient(135deg, ${accentColor}20, ${accentColor}08)`, border: `1px solid ${accentColor}30` }}>
                     <Server style={{ width: '20px', height: '20px', color: accentColor }} />
                   </div>
                   <div>
-                    <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>{srv.name}</h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-                      <span style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', fontFamily: "'JetBrains Mono', monospace" }}>{srv.privateIp}</span>
+                    <h3 className="cx-fw-700 cx-text-primary" style={{ fontSize: '15px', margin: 0 }}>{srv.name}</h3>
+                    <div className="cx-flex cx-items-center cx-gap-6" style={{ marginTop: '4px' }}>
+                      <span className="cx-text-muted cx-mono" style={{ fontSize: '12px' }}>{srv.privateIp}</span>
                       {testResults[srv.id] ? (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '1px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 600,
+                        <span className="cx-flex cx-items-center cx-gap-3 cx-fw-600" style={{ padding: '1px 6px', borderRadius: '4px', fontSize: '10px',
                           backgroundColor: testResults[srv.id].success ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
                           color: testResults[srv.id].success ? '#10B981' : '#EF4444',
                         }}>
@@ -256,20 +257,20 @@ export default function ServersPage() {
                           {testResults[srv.id].success ? `${testResults[srv.id].latencyMs}ms` : 'offline'}
                         </span>
                       ) : (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '1px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 500, backgroundColor: 'rgba(var(--border), 0.3)', color: 'rgb(var(--text-muted))' }}>
+                        <span className="cx-flex cx-items-center cx-gap-3 cx-text-muted" style={{ padding: '1px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 500, backgroundColor: 'rgba(var(--border), 0.3)' }}>
                           untested
                         </span>
                       )}
                     </div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  <button title="Test SSH" onClick={() => testConnection(srv)} disabled={testingIds.has(srv.id)} style={{ padding: '6px', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: testingIds.has(srv.id) ? 'wait' : 'pointer', color: 'rgb(var(--text-muted))' }}
+                <div className="cx-flex cx-gap-4">
+                  <button title="Test SSH" onClick={() => testConnection(srv)} disabled={testingIds.has(srv.id)} className="cx-icon-btn" style={{ cursor: testingIds.has(srv.id) ? 'wait' : 'pointer' }}
                     onMouseEnter={e => { e.currentTarget.style.color = 'rgb(var(--primary))'; }}
                     onMouseLeave={e => { e.currentTarget.style.color = 'rgb(var(--text-muted))'; }}
-                  >{testingIds.has(srv.id) ? <Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} /> : <Plug style={{ width: '14px', height: '14px' }} />}</button>
-                  <button title="Edit" onClick={() => openEdit(srv)} style={{ padding: '6px', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: 'rgb(var(--text-muted))' }}><Edit3 style={{ width: '14px', height: '14px' }} /></button>
-                  <button title="Delete" onClick={() => setDeleteTarget({ id: srv.id, name: srv.name })} style={{ padding: '6px', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: 'rgb(var(--text-muted))' }}
+                  >{testingIds.has(srv.id) ? <Loader2 className="cx-spin" style={{ width: '14px', height: '14px' }} /> : <Plug style={{ width: '14px', height: '14px' }} />}</button>
+                  <button title="Edit" onClick={() => openEdit(srv)} className="cx-icon-btn"><Edit3 style={{ width: '14px', height: '14px' }} /></button>
+                  <button title="Delete" onClick={() => setDeleteTarget({ id: srv.id, name: srv.name })} className="cx-icon-btn"
                     onMouseEnter={e => { e.currentTarget.style.color = '#EF4444'; }}
                     onMouseLeave={e => { e.currentTarget.style.color = 'rgb(var(--text-muted))'; }}
                   ><Trash2 style={{ width: '14px', height: '14px' }} /></button>
@@ -281,13 +282,13 @@ export default function ServersPage() {
                   <MetricBar label="CPU" value={cpuPct} max={100} unit="%" color="#818CF8" />
                   <MetricBar label="RAM" value={res.ramUsedMb} max={res.ramTotalMb} unit="MB" color="#10B981" />
                   <MetricBar label="Disk" value={parseFloat(res.diskUsedGb)} max={parseFloat(res.diskTotalGb)} unit="GB" color="#F59E0B" />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', fontSize: '10px', color: 'rgb(var(--text-muted))' }}>
+                  <div className="cx-flex-between cx-text-muted" style={{ marginTop: '8px', fontSize: '10px' }}>
                     <span>Load: {res.loadAvg}</span>
                     <span>Uptime: {Math.round(res.uptimeHours / 24)}d</span>
                   </div>
                 </div>
               ) : (
-                <div style={{ padding: '20px 18px', textAlign: 'center', color: 'rgb(var(--text-muted))', fontSize: '12px' }}>
+                <div className="cx-text-muted" style={{ padding: '20px 18px', textAlign: 'center', fontSize: '12px' }}>
                   No metrics available
                 </div>
               )}
@@ -298,22 +299,22 @@ export default function ServersPage() {
 
       {/* Edit Server Modal */}
       {editTarget && (
-        <div onClick={() => setEditTarget(null)} style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
-          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: '520px', borderRadius: '16px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', boxShadow: '0 24px 48px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
-            <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid rgb(var(--border))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, rgba(var(--primary),0.15), rgba(var(--agent),0.1))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Edit3 style={{ width: '18px', height: '18px', color: 'rgb(var(--primary))' }} />
+        <div onClick={() => setEditTarget(null)} className="cx-modal-overlay">
+          <div onClick={e => e.stopPropagation()} className="cx-modal">
+            <div className="cx-modal-header">
+              <div className="cx-flex cx-items-center cx-gap-10">
+                <div className="cx-flex-center cx-r-10" style={{ width: '36px', height: '36px', background: 'linear-gradient(135deg, rgba(var(--primary),0.15), rgba(var(--agent),0.1))' }}>
+                  <Edit3 style={{ width: '18px', height: '18px' }} className="cx-text-accent" />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>Edit Server</h3>
-                  <p style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', margin: 0 }}>Update server details</p>
+                  <h3 className="cx-fw-700 cx-text-primary" style={{ fontSize: '16px', margin: 0 }}>Edit Server</h3>
+                  <p className="cx-text-muted" style={{ fontSize: '12px', margin: 0 }}>Update server details</p>
                 </div>
               </div>
-              <button onClick={() => setEditTarget(null)} style={{ width: '32px', height: '32px', borderRadius: '8px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', color: 'rgb(var(--text-muted))', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+              <button onClick={() => setEditTarget(null)} className="cx-icon-btn" style={{ fontSize: '18px' }}>✕</button>
             </div>
             <div style={{ padding: '20px 24px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div className="cx-flex-col" style={{ gap: '14px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div><label style={labelStyle}>Server Name *</label><input value={editTarget.name} onChange={e => setEditTarget((p: any) => ({ ...p, name: e.target.value }))} style={inputStyle} autoFocus /></div>
                   <div><label style={labelStyle}>Private IP *</label><input value={editTarget.privateIp} onChange={e => setEditTarget((p: any) => ({ ...p, privateIp: e.target.value }))} style={inputStyle} /></div>
@@ -324,10 +325,10 @@ export default function ServersPage() {
                 </div>
               </div>
             </div>
-            <div style={{ padding: '16px 24px', borderTop: '1px solid rgb(var(--border))', display: 'flex', gap: '8px', justifyContent: 'flex-end', backgroundColor: 'rgba(var(--surface-hover), 0.5)' }}>
-              <button onClick={() => setEditTarget(null)} style={{ padding: '10px 20px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', border: '1px solid rgb(var(--border))', cursor: 'pointer', background: 'transparent' }}>Cancel</button>
-              <button onClick={saveEdit} disabled={!editTarget.name || saving} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 24px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, color: '#fff', border: 'none', cursor: !editTarget.name ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))', opacity: !editTarget.name ? 0.5 : 1, boxShadow: '0 4px 12px rgba(var(--primary), 0.3)' }}>
-                {saving ? <Loader2 style={{ width: 14, height: 14, animation: 'spin 1s linear infinite' }} /> : <Edit3 style={{ width: 14, height: 14 }} />} {saving ? 'Saving...' : 'Save Changes'}
+            <div className="cx-modal-footer">
+              <button onClick={() => setEditTarget(null)} className="cx-btn-secondary cx-fw-600" style={{ padding: '10px 20px', fontSize: '13px' }}>Cancel</button>
+              <button onClick={saveEdit} disabled={!editTarget.name || saving} className="cx-btn-primary cx-flex cx-items-center cx-gap-6" style={{ padding: '10px 24px', fontSize: '13px', opacity: !editTarget.name ? 0.5 : 1, cursor: !editTarget.name ? 'not-allowed' : 'pointer' }}>
+                {saving ? <Loader2 className="cx-spin" style={{ width: 14, height: 14 }} /> : <Edit3 style={{ width: 14, height: 14 }} />} {saving ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </div>
@@ -336,20 +337,20 @@ export default function ServersPage() {
 
       {/* Delete Confirmation Modal */}
       {deleteTarget && (
-        <div onClick={() => setDeleteTarget(null)} style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
-          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: '400px', borderRadius: '16px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', boxShadow: '0 24px 48px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
+        <div onClick={() => setDeleteTarget(null)} className="cx-modal-overlay">
+          <div onClick={e => e.stopPropagation()} className="cx-modal" style={{ maxWidth: '400px' }}>
             <div style={{ padding: '24px', textAlign: 'center' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <div className="cx-flex-center cx-r-12" style={{ width: '48px', height: '48px', backgroundColor: 'rgba(239,68,68,0.1)', margin: '0 auto 16px' }}>
                 <Trash2 style={{ width: '22px', height: '22px', color: '#EF4444' }} />
               </div>
-              <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 8px' }}>Delete Server</h3>
-              <p style={{ fontSize: '13px', color: 'rgb(var(--text-muted))', margin: 0, lineHeight: 1.5 }}>
-                Are you sure you want to delete <strong style={{ color: 'rgb(var(--text-primary))' }}>{deleteTarget.name}</strong>? This action cannot be undone.
+              <h3 className="cx-fw-700 cx-text-primary" style={{ fontSize: '16px', margin: '0 0 8px' }}>Delete Server</h3>
+              <p className="cx-text-muted" style={{ fontSize: '13px', margin: 0, lineHeight: 1.5 }}>
+                Are you sure you want to delete <strong className="cx-text-primary">{deleteTarget.name}</strong>? This action cannot be undone.
               </p>
             </div>
-            <div style={{ padding: '16px 24px', borderTop: '1px solid rgb(var(--border))', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-              <button onClick={() => setDeleteTarget(null)} style={{ padding: '10px 20px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', border: '1px solid rgb(var(--border))', cursor: 'pointer', background: 'transparent' }}>Cancel</button>
-              <button onClick={deleteServer} style={{ padding: '10px 20px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, color: '#fff', border: 'none', cursor: 'pointer', backgroundColor: '#EF4444', boxShadow: '0 4px 12px rgba(239,68,68,0.3)' }}>Delete</button>
+            <div className="cx-modal-footer">
+              <button onClick={() => setDeleteTarget(null)} className="cx-btn-secondary cx-fw-600" style={{ padding: '10px 20px', fontSize: '13px' }}>Cancel</button>
+              <button onClick={deleteServer} className="cx-fw-600" style={{ padding: '10px 20px', borderRadius: '10px', fontSize: '13px', color: '#fff', border: 'none', cursor: 'pointer', backgroundColor: '#EF4444', boxShadow: '0 4px 12px rgba(239,68,68,0.3)' }}>Delete</button>
             </div>
           </div>
         </div>

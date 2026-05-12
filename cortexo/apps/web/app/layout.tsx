@@ -3,7 +3,9 @@ import { Inter, JetBrains_Mono } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/components/auth-provider';
 import { ModalProvider } from '@/components/modal-provider';
+import { QueryProvider } from '@/components/query-provider';
 import './globals.css';
+
 
 const inter = Inter({
   subsets: ['latin'],
@@ -53,7 +55,9 @@ export default function RootLayout({
       <body className="min-h-screen font-sans antialiased">
         <AuthProvider>
           <ThemeProvider>
-            <ModalProvider>{children}</ModalProvider>
+            <QueryProvider>
+              <ModalProvider>{children}</ModalProvider>
+            </QueryProvider>
           </ThemeProvider>
         </AuthProvider>
       </body>

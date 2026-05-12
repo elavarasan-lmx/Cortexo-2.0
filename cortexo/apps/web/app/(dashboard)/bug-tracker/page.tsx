@@ -8,7 +8,8 @@ import {
   Zap, Boxes,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useApiData, useAutoLoadToken, timeAgo } from '@/lib/hooks';
+import { useCortexoQuery, useAutoLoadToken, timeAgo } from '@/lib/hooks';
+
 
 const MODULE_META: Record<string, { icon: string; label: string; color: string }> = {
   registration:    { icon: '👤', label: 'Registration',    color: '#8B5CF6' },
@@ -55,10 +56,11 @@ export default function BugTrackerPage() {
   const [selectedBugId, setSelectedBugId] = useState<string | null>(null);
   const [moduleStats, setModuleStats] = useState<any[]>([]);
 
-  const { data: errorsData, loading, refetch } = useApiData(
+  const { data: errorsData, isLoading: loading, refetch } = useCortexoQuery(
+    ['errors', moduleFilter],
     () => api.getErrors(moduleFilter ? { module: moduleFilter } : undefined),
-    { default: [] as any[], deps: [moduleFilter] }
   );
+
 
   useEffect(() => {
     api.getErrorModuleStats().then((res: any) => {
@@ -93,34 +95,34 @@ export default function BugTrackerPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '256px' }}>
-        <Loader2 style={{ width: '32px', height: '32px', color: 'rgb(var(--primary))', animation: 'spin 1s linear infinite' }} />
+      <div className="cx-loading">
+        <Loader2 className="cx-spinner" />
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: '1400px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="cx-max-1400 cx-flex-col cx-gap-24">
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+      <div className="cx-page-header">
         <div>
-          <h1 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '24px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 4px' }}>
-            <Bug style={{ width: '24px', height: '24px', color: 'rgb(var(--text-muted))' }} />
+          <h1 className="cx-flex cx-gap-8 cx-items-center cx-page-title">
+            <Bug style={{ width: '24px', height: '24px' }} className="cx-text-muted" />
             Bug Tracker
           </h1>
-          <p style={{ margin: 0, fontSize: '14px', color: 'rgb(var(--text-muted))' }}>
+          <p className="cx-page-subtitle">
             {moduleFilter ? `${MODULE_META[moduleFilter]?.icon} ${MODULE_META[moduleFilter]?.label} bugs` : 'All modules'} · {totalBugs} bugs
           </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ position: 'relative' }}>
-            <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: 'rgb(var(--text-muted))' }} />
+        <div className="cx-flex cx-gap-12 cx-items-center">
+          <div className="cx-search-wrap">
+            <Search className="cx-search-icon" />
             <input type="text" placeholder="Search bugs..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-              style={{ padding: '10px 16px 10px 36px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', color: 'rgb(var(--text-primary))', fontSize: '14px', width: '250px', outline: 'none' }}
+              className="cx-search-input" style={{ width: '250px' }}
             />
           </div>
-          <button style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', borderRadius: '8px', backgroundColor: '#EF4444', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}>
+          <button className="cx-btn-primary" style={{ backgroundColor: '#EF4444' }}>
             <Plus style={{ width: '16px', height: '16px' }} /> Report Bug
           </button>
         </div>
@@ -170,20 +172,20 @@ export default function BugTrackerPage() {
       </div>
 
       {/* Stat Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+      <div className="cx-stats-4">
         {[
           { label: 'Total Bugs', count: totalBugs, icon: Bug, color: '#EF4444' },
           { label: 'Critical', count: criticalCount, icon: AlertOctagon, color: '#F59E0B' },
           { label: 'Open', count: openCount, icon: CircleDashed, color: '#3B82F6' },
           { label: 'Resolved', count: resolvedCount, icon: CheckCircle2, color: '#22C55E' },
         ].map(s => (
-          <div key={s.label} style={{ borderRadius: '12px', backgroundColor: 'rgb(var(--surface))', padding: '20px', border: '1px solid rgb(var(--border))', display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: `${s.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div key={s.label} className="cx-stat">
+            <div className="cx-stat__icon" style={{ backgroundColor: `${s.color}18` }}>
               <s.icon style={{ width: '24px', height: '24px', color: s.color }} />
             </div>
             <div>
-              <p style={{ margin: 0, fontSize: '13px', fontWeight: 500, color: 'rgb(var(--text-muted))' }}>{s.label}</p>
-              <p style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>{s.count}</p>
+              <p className="cx-stat__label">{s.label}</p>
+              <p className="cx-stat__value">{s.count}</p>
             </div>
           </div>
         ))}
@@ -223,16 +225,16 @@ export default function BugTrackerPage() {
 
       {/* Table */}
       <div style={{ display: 'grid', gridTemplateColumns: selectedBug ? '1fr 450px' : '1fr', gap: '24px', alignItems: 'start' }}>
-        <div style={{ borderRadius: '12px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        <div className="cx-table-wrap">
+          <table className="cx-table">
             <thead>
-              <tr style={{ borderBottom: '1px solid rgb(var(--border))', backgroundColor: 'rgba(var(--text-muted), 0.05)' }}>
-                <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))' }}>ID</th>
-                <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))' }}>Error</th>
-                <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))' }}>Module</th>
-                <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))' }}>Severity</th>
-                <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))' }}>Status</th>
-                <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))' }}>Last Seen</th>
+              <tr>
+                <th>ID</th>
+                <th>Error</th>
+                <th>Module</th>
+                <th>Severity</th>
+                <th>Status</th>
+                <th>Last Seen</th>
               </tr>
             </thead>
             <tbody>
@@ -280,17 +282,17 @@ export default function BugTrackerPage() {
                 );
               }) : (
                 <tr><td colSpan={6} style={{ padding: '48px', textAlign: 'center' }}>
-                  <Bug style={{ width: '24px', height: '24px', color: 'rgb(var(--text-muted))', margin: '0 auto 12px' }} />
-                  <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'rgb(var(--text-primary))' }}>No bugs found</p>
-                  <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'rgb(var(--text-secondary))' }}>
+                  <Bug style={{ width: '24px', height: '24px', margin: '0 auto 12px' }} className="cx-text-muted" />
+                  <p className="cx-fw-600 cx-text-primary" style={{ margin: 0, fontSize: '14px' }}>No bugs found</p>
+                  <p className="cx-text-secondary" style={{ margin: '4px 0 0', fontSize: '13px' }}>
                     {searchQuery ? 'Try a different search term.' : moduleFilter ? 'This module has no bugs! 🎉' : 'All systems running clean! 🎉'}
                   </p>
                 </td></tr>
               )}
             </tbody>
           </table>
-          <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgb(var(--border))' }}>
-            <span style={{ fontSize: '13px', color: 'rgb(var(--text-muted))' }}>Showing {filteredBugs.length} bugs{moduleFilter ? ` in ${MODULE_META[moduleFilter]?.label}` : ''}</span>
+          <div className="cx-table-footer cx-text-muted cx-text-13">
+            <span>Showing {filteredBugs.length} bugs{moduleFilter ? ` in ${MODULE_META[moduleFilter]?.label}` : ''}</span>
           </div>
         </div>
 

@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAutoLoadToken } from '@/lib/hooks';
+import { useModal } from '@/components/modal-provider';
+
 import {
   GitBranch, Database, Plus, Edit3, Trash2, Loader2,
   CheckCircle, XCircle, X, Server, MoreVertical, Copy, Search,
@@ -125,10 +127,10 @@ function SourceModal({ item, onClose, onSave }: { item: SourceProfile | null; on
                 </div>
                 
                 {dropdownOpen && (
-                  <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, backgroundColor: '#1e2532', border: '1px solid rgba(var(--border), 0.5)', borderRadius: '10px', zIndex: 60, boxShadow: '0 12px 40px rgba(0,0,0,0.5)', overflow: 'hidden' }}>
+                  <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', borderRadius: '10px', zIndex: 60, boxShadow: '0 12px 40px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
                     <div style={{ padding: '8px', borderBottom: '1px solid rgba(var(--border), 0.3)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Search style={{ width: '14px', height: '14px', color: 'rgb(var(--text-muted))', marginLeft: '4px' }} />
-                      <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search repos..." style={{ flex: 1, background: 'transparent', border: 'none', color: '#fff', fontSize: '13px', outline: 'none' }} />
+                      <input autoFocus value={search} onChange={e => setSearch(e.target.value)} placeholder="Search repos..." style={{ flex: 1, background: 'transparent', border: 'none', color: 'rgb(var(--text-primary))', fontSize: '13px', outline: 'none' }} />
                     </div>
                     <div style={{ maxHeight: '240px', overflowY: 'auto', padding: '4px' }}>
                       {loadingRepos ? (
@@ -138,10 +140,10 @@ function SourceModal({ item, onClose, onSave }: { item: SourceProfile | null; on
                       ) : repos.filter(r => r.name.toLowerCase().includes(search.toLowerCase())).map(r => {
                         const url = `git@github.com:${r.name}.git`;
                         return (
-                          <div key={r.id} onClick={() => { u('repoUrl', url); if (!f.name) u('name', r.name); if(r.defaultBranch) u('branch', r.defaultBranch); setDropdownOpen(false); }} style={{ padding: '10px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                          <div key={r.id} onClick={() => { u('repoUrl', url); if (!f.name) u('name', r.name); if(r.defaultBranch) u('branch', r.defaultBranch); setDropdownOpen(false); }} style={{ padding: '10px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(var(--primary), 0.08)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                               <GitBranch style={{ width: '14px', height: '14px', color: 'rgb(var(--text-muted))' }} />
-                              <span style={{ fontSize: '13px', color: '#e2e8f0', fontWeight: 500 }}>{r.name}</span>
+                              <span style={{ fontSize: '13px', color: 'rgb(var(--text-primary))', fontWeight: 500 }}>{r.name}</span>
                             </div>
                             {r.private && <span style={{ fontSize: '9px', fontWeight: 700, color: '#F59E0B', backgroundColor: 'rgba(245,158,11,0.1)', padding: '2px 6px', borderRadius: '4px' }}>PRIVATE</span>}
                           </div>
@@ -169,16 +171,16 @@ function SourceModal({ item, onClose, onSave }: { item: SourceProfile | null; on
               )}
               
               {branchDropdownOpen && mode === 'github' && (
-                <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, backgroundColor: '#1e2532', border: '1px solid rgba(var(--border), 0.5)', borderRadius: '10px', zIndex: 60, boxShadow: '0 12px 40px rgba(0,0,0,0.5)', overflow: 'hidden' }}>
+                <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', borderRadius: '10px', zIndex: 60, boxShadow: '0 12px 40px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
                   <div style={{ maxHeight: '200px', overflowY: 'auto', padding: '4px' }}>
                     {loadingBranches ? (
                       <div style={{ padding: '20px', textAlign: 'center', color: 'rgb(var(--text-muted))', fontSize: '12px' }}><Loader2 style={{ animation: 'spin 1s linear infinite', width: '16px', height: '16px', margin: '0 auto 8px' }}/> Fetching branches...</div>
                     ) : branches.length === 0 ? (
                       <div style={{ padding: '20px', textAlign: 'center', color: 'rgb(var(--text-muted))', fontSize: '12px' }}>No branches found.</div>
                     ) : branches.map(b => (
-                      <div key={b} onClick={() => { u('branch', b); setBranchDropdownOpen(false); }} style={{ padding: '10px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                      <div key={b} onClick={() => { u('branch', b); setBranchDropdownOpen(false); }} style={{ padding: '10px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(var(--primary), 0.08)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
                         <GitBranch style={{ width: '14px', height: '14px', color: 'rgb(var(--text-muted))', marginRight: '10px' }} />
-                        <span style={{ fontSize: '13px', color: '#e2e8f0', fontWeight: 500 }}>{b}</span>
+                        <span style={{ fontSize: '13px', color: 'rgb(var(--text-primary))', fontWeight: 500 }}>{b}</span>
                       </div>
                     ))}
                   </div>
@@ -240,33 +242,10 @@ function DbModal({ item, onClose, onSave }: { item: DbProfile | null; onClose: (
   );
 }
 
-/* ── Delete Confirm Modal ── */
-function DeleteConfirmModal({ item, onClose, onConfirm }: { item: { id: string, name: string, type: 'source'|'db' }; onClose: () => void; onConfirm: () => Promise<void> }) {
-  const [deleting, setDeleting] = useState(false);
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.65)' }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{ width: '380px', borderRadius: '16px', padding: '24px', backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', borderTop: '3px solid #EF4444', boxShadow: '0 24px 48px rgba(0,0,0,0.4)', textAlign: 'center' }}>
-        <div style={{ width: '48px', height: '48px', borderRadius: '24px', backgroundColor: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-          <Trash2 style={{ width: '24px', height: '24px', color: '#EF4444' }} />
-        </div>
-        <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 8px 0' }}>Delete Profile?</h2>
-        <p style={{ fontSize: '13px', color: 'rgb(var(--text-secondary))', margin: '0 0 24px 0', lineHeight: 1.5 }}>
-          Are you sure you want to delete <strong>{item.name}</strong>? This action cannot be undone.
-        </p>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '10px', borderRadius: '9px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-primary))' }}>Cancel</button>
-          <button onClick={async () => { setDeleting(true); await onConfirm(); setDeleting(false); onClose(); }} disabled={deleting} style={{ flex: 1, padding: '10px', borderRadius: '9px', border: 'none', backgroundColor: '#EF4444', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: deleting ? 0.7 : 1 }}>
-            {deleting && <Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} />}
-            {deleting ? 'Deleting...' : 'Yes, Delete'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function ProfilesPage() {
   useAutoLoadToken();
+  const { confirm } = useModal();
   const [sources, setSources] = useState<SourceProfile[]>([]);
   const [dbs, setDbs] = useState<DbProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -315,24 +294,26 @@ export default function ProfilesPage() {
     load();
   };
 
-  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string, name: string, type: 'source'|'db' } | null>(null);
 
-  const handleConfirmDelete = async () => {
-    if (!deleteConfirm) return;
+  const doDelete = async (id: string, name: string, type: 'source' | 'db') => {
+    const ok = await confirm({
+      title: 'Delete Profile',
+      message: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      variant: 'danger',
+    });
+    if (!ok) return;
     try {
-      const endpoint = deleteConfirm.type === 'source' ? 'source-profiles' : 'db-profiles';
+      const endpoint = type === 'source' ? 'source-profiles' : 'db-profiles';
       const token = localStorage.getItem('cortexo_token');
-      const deleteHeaders: Record<string, string> = {};
-      if (token) deleteHeaders['Authorization'] = `Bearer ${token}`;
-      const res = await fetch(`${API}/${endpoint}/${deleteConfirm.id}`, { 
-        method: 'DELETE', 
-        headers: deleteHeaders
-      });
+      const h: Record<string, string> = {};
+      if (token) h['Authorization'] = `Bearer ${token}`;
+      const res = await fetch(`${API}/${endpoint}/${id}`, { method: 'DELETE', headers: h });
       if (!res.ok) throw new Error('Failed to delete');
-      showToast(`${deleteConfirm.name} deleted`);
+      showToast(`${name} deleted`);
       load();
     } catch {
-      showToast(`Error deleting ${deleteConfirm.name}`, false);
+      showToast(`Error deleting ${name}`, false);
     }
   };
 
@@ -342,9 +323,9 @@ export default function ProfilesPage() {
     setOpenMenuId(openMenuId === id ? null : id);
   };
 
-  const card: React.CSSProperties = { borderRadius: '16px', backgroundColor: '#1A1A2E', borderTop: '1px solid #222233', borderRight: '1px solid #222233', borderBottom: '1px solid #222233', borderLeft: '1px solid #222233', overflow: 'visible', transition: 'all 300ms cubic-bezier(0.4,0,0.2,1)', position: 'relative' };
-  
-  const KebabMenu = ({ id, onEdit, onDelete }: { id: string, onEdit: () => void, onDelete: () => void }) => (
+  const card: React.CSSProperties = { borderRadius: '16px', backgroundColor: 'rgb(var(--card))', border: '1px solid rgb(var(--border))', overflow: 'visible', transition: 'all 300ms cubic-bezier(0.4,0,0.2,1)', position: 'relative' };
+
+  const KebabMenu = ({ id, onEdit, onDelete }: { id: string; onEdit: () => void; onDelete: () => void }) => (
     <div style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 10 }}>
       <button onClick={(e) => toggleMenu(id, e)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'rgb(var(--text-muted))', padding: '4px', borderRadius: '4px' }}>
         <MoreVertical style={{ width: '16px', height: '16px' }} />
@@ -367,7 +348,6 @@ export default function ProfilesPage() {
       )}
       {srcModal.open && <SourceModal item={srcModal.item} onClose={() => setSrcModal({ open: false, item: null })} onSave={saveSrc} />}
       {dbModal.open && <DbModal item={dbModal.item} onClose={() => setDbModal({ open: false, item: null })} onSave={saveDb} />}
-      {deleteConfirm && <DeleteConfirmModal item={deleteConfirm} onClose={() => setDeleteConfirm(null)} onConfirm={handleConfirmDelete} />}
 
       {loading ? (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0' }}>
@@ -404,28 +384,28 @@ export default function ProfilesPage() {
                   <div key={s.id} style={{ ...card, borderLeft: '3px solid #818CF8', boxShadow: '0 4px 20px rgba(129,140,248,0.1)' }}
                     onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 8px 32px rgba(129,140,248,0.18)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
                     onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 4px 20px rgba(129,140,248,0.1)'; e.currentTarget.style.transform = 'none'; }}>
-                    <KebabMenu id={s.id} onEdit={() => setSrcModal({ open: true, item: s })} onDelete={() => setDeleteConfirm({ id: s.id, name: s.name, type: 'source' })} />
+                    <KebabMenu id={s.id} onEdit={() => setSrcModal({ open: true, item: s })} onDelete={() => doDelete(s.id, s.name, 'source')} />
                     <div style={{ padding: '16px 18px 0 18px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <div style={{ width: '36px', height: '36px', borderRadius: '9px', backgroundColor: 'rgba(129,140,248,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                           <GitBranch style={{ width: '16px', height: '16px', color: '#818CF8' }} />
                         </div>
                         <div style={{ flex: 1, paddingRight: '24px' }}>
-                          <div style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>{s.name}</div>
-                          <div style={{ fontSize: '11px', color: '#6B6B80' }}>{s.authType === 'ssh' ? 'SSH' : 'Token'} • {s.branch || 'main'}</div>
+                          <div style={{ fontSize: '14px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>{s.name}</div>
+                          <div style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>{s.authType === 'ssh' ? 'SSH' : 'Token'} • {s.branch || 'main'}</div>
                         </div>
                       </div>
                       
                     </div>
                     <div style={{ padding: '12px 18px 16px 18px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '7px', backgroundColor: 'rgba(255,255,255,0.03)' }}>
-                        <div style={{ fontSize: '11px', fontFamily: "'Geist Mono', 'JetBrains Mono', monospace", color: '#C4C4D4', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>{s.repoUrl}</div>
-                        <button onClick={() => { navigator.clipboard.writeText(s.repoUrl); showToast('URL copied to clipboard'); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', padding: '2px', color: '#6B6B80' }} title="Copy URL">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '7px', backgroundColor: 'rgb(var(--surface-hover))' }}>
+                        <div style={{ fontSize: '11px', fontFamily: "'Geist Mono', 'JetBrains Mono', monospace", color: 'rgb(var(--text-secondary))', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>{s.repoUrl}</div>
+                        <button onClick={() => { navigator.clipboard.writeText(s.repoUrl); showToast('URL copied to clipboard'); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', padding: '2px', color: 'rgb(var(--text-muted))' }} title="Copy URL">
                           <Copy style={{ width: '13px', height: '13px' }} />
                         </button>
                       </div>
                       
-                      {s.notes && <div style={{ fontSize: '11px', color: '#6B6B80', marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '8px' }}>{s.notes}</div>}
+                      {s.notes && <div style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', marginTop: '12px', borderTop: '1px solid rgb(var(--border))', paddingTop: '8px' }}>{s.notes}</div>}
                     </div>
                   </div>
                 ))}
@@ -462,45 +442,45 @@ export default function ProfilesPage() {
                   <div key={d.id} style={{ ...card, borderLeft: '3px solid #EC4899', boxShadow: '0 4px 20px rgba(236,72,153,0.1)' }}
                     onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 8px 32px rgba(236,72,153,0.18)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
                     onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 4px 20px rgba(236,72,153,0.1)'; e.currentTarget.style.transform = 'none'; }}>
-                    <KebabMenu id={d.id} onEdit={() => setDbModal({ open: true, item: d })} onDelete={() => setDeleteConfirm({ id: d.id, name: d.name, type: 'db' })} />
+                    <KebabMenu id={d.id} onEdit={() => setDbModal({ open: true, item: d })} onDelete={() => doDelete(d.id, d.name, 'db')} />
                     <div style={{ padding: '16px 18px 0 18px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <div style={{ width: '36px', height: '36px', borderRadius: '9px', backgroundColor: 'rgba(236,72,153,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                           <Server style={{ width: '16px', height: '16px', color: '#EC4899' }} />
                         </div>
                         <div style={{ flex: 1, paddingRight: '24px' }}>
-                          <div style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>{d.name}</div>
-                          <div style={{ fontSize: '11px', color: '#6B6B80' }}>MySQL • Port {d.port || 3306}</div>
+                          <div style={{ fontSize: '14px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>{d.name}</div>
+                          <div style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>MySQL • Port {d.port || 3306}</div>
                         </div>
                       </div>
                       
                     </div>
                     <div style={{ padding: '0 18px 16px 18px' }}>
-                      <div style={{ fontSize: '12px', color: '#C4C4D4', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 10px', borderRadius: '7px', backgroundColor: 'rgba(255,255,255,0.03)' }}>
-                          <span style={{ color: '#6B6B80', fontWeight: 600, fontSize: '11px', fontFamily: "'Geist Mono', 'JetBrains Mono', monospace" }}>HOST</span>
-                          <span style={{ fontFamily: "'Geist Mono', 'JetBrains Mono', monospace", fontSize: '11px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>{d.host}</span>
+                      <div style={{ fontSize: '12px', color: 'rgb(var(--text-secondary))', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 10px', borderRadius: '7px', backgroundColor: 'rgb(var(--surface-hover))' }}>
+                           <span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, fontSize: '11px', fontFamily: "'Geist Mono', 'JetBrains Mono', monospace" }}>HOST</span>
+                           <span style={{ fontFamily: "'Geist Mono', 'JetBrains Mono', monospace", fontSize: '11px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', flex: 1 }}>{d.host}</span>
                         </div>
                         
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 10px', borderRadius: '7px', backgroundColor: 'rgba(255,255,255,0.03)', overflow: 'hidden' }}>
-                             <span style={{ color: '#6B6B80', fontWeight: 600, fontSize: '11px', fontFamily: "'Geist Mono', 'JetBrains Mono', monospace" }}>USR</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 10px', borderRadius: '7px', backgroundColor: 'rgb(var(--surface-hover))', overflow: 'hidden' }}>
+                             <span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, fontSize: '11px', fontFamily: "'Geist Mono', 'JetBrains Mono', monospace" }}>USR</span>
                              <span style={{ fontFamily: "'Geist Mono', 'JetBrains Mono', monospace", fontSize: '11px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{d.username}</span>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 10px', borderRadius: '7px', backgroundColor: 'rgba(255,255,255,0.03)', overflow: 'hidden' }}>
-                             <span style={{ color: '#6B6B80', fontWeight: 600, fontSize: '11px', fontFamily: "'Geist Mono', 'JetBrains Mono', monospace" }}>PWD</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 10px', borderRadius: '7px', backgroundColor: 'rgb(var(--surface-hover))', overflow: 'hidden' }}>
+                             <span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, fontSize: '11px', fontFamily: "'Geist Mono', 'JetBrains Mono', monospace" }}>PWD</span>
                              <span style={{ fontSize: '11px' }}>••••••••</span>
                           </div>
                         </div>
                         {d.databaseName && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 10px', borderRadius: '7px', backgroundColor: 'rgba(255,255,255,0.03)', overflow: 'hidden' }}>
-                             <span style={{ color: '#6B6B80', fontWeight: 600, fontSize: '11px', fontFamily: "'Geist Mono', 'JetBrains Mono', monospace" }}>DB</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 10px', borderRadius: '7px', backgroundColor: 'rgb(var(--surface-hover))', overflow: 'hidden' }}>
+                             <span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, fontSize: '11px', fontFamily: "'Geist Mono', 'JetBrains Mono', monospace" }}>DB</span>
                              <span style={{ fontFamily: "'Geist Mono', 'JetBrains Mono', monospace", fontSize: '11px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{d.databaseName}</span>
                           </div>
                         )}
                       </div>
                       
-                      {d.notes && <div style={{ fontSize: '11px', color: '#6B6B80', marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '8px' }}>{d.notes}</div>}
+                      {d.notes && <div style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', marginTop: '12px', borderTop: '1px solid rgb(var(--border))', paddingTop: '8px' }}>{d.notes}</div>}
                     </div>
                   </div>
                 ))}

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { useSession, signOut } from 'next-auth/react';
 import { api } from '@/lib/api';
 import { useSidebarStore } from '@/lib/sidebar-store';
 import { timeAgo } from '@/lib/hooks';
@@ -18,6 +19,7 @@ import { timeAgo } from '@/lib/hooks';
  */
 export function Topbar({ isMobile = false }: { isMobile?: boolean }) {
   const { theme, setTheme } = useTheme();
+  const { data: session } = useSession();
   const [mounted, setMounted] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -26,6 +28,12 @@ export function Topbar({ isMobile = false }: { isMobile?: boolean }) {
   const menuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const toggleMobile = useSidebarStore((s) => s.toggleMobile);
+
+  // Derive display values from session
+  const userName = session?.user?.name || 'User';
+  const userEmail = session?.user?.email || '';
+  const userInitial = userName.charAt(0).toUpperCase();
+  const userRole = (session?.user as any)?.role || 'Admin';
 
   useEffect(() => setMounted(true), []);
 
@@ -352,7 +360,7 @@ export function Topbar({ isMobile = false }: { isMobile?: boolean }) {
               color: '#FFFFFF',
               fontFamily: 'Inter, system-ui, sans-serif',
             }}>
-              J
+              {userInitial}
             </span>
           </button>
 
@@ -391,12 +399,12 @@ export function Topbar({ isMobile = false }: { isMobile?: boolean }) {
                   color: '#fff',
                   flexShrink: 0,
                 }}>
-                  J
+                  {userInitial}
                 </div>
                 <div style={{ minWidth: 0 }}>
-                  <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-primary))' }}>Jerry</p>
+                  <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-primary))' }}>{userName}</p>
                   <p style={{ margin: '1px 0 0', fontSize: '11px', color: 'rgb(var(--text-secondary))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    admin@cortexo.io
+                    {userEmail}
                   </p>
                   <span style={{
                     display: 'inline-block',
@@ -409,7 +417,7 @@ export function Topbar({ isMobile = false }: { isMobile?: boolean }) {
                     backgroundColor: '#EDE9FE',
                     color: '#7C3AED',
                   }}>
-                    Admin
+                    {userRole}
                   </span>
                 </div>
               </div>
@@ -453,6 +461,7 @@ export function Topbar({ isMobile = false }: { isMobile?: boolean }) {
               {/* Sign out */}
               <div style={{ padding: '6px', borderTop: '1px solid rgb(var(--border))' }}>
                 <button
+                  onClick={() => signOut({ callbackUrl: '/login' })}
                   style={{
                     display: 'flex',
                     alignItems: 'center',

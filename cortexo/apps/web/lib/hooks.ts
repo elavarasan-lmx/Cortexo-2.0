@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { api } from './api';
+
 
 /**
  * Generic hook for fetching API data with loading/error states.
@@ -48,12 +50,49 @@ export function useApiData<T>(
   return { data, total, loading, error, refetch: fetch };
 }
 
+// ─── TanStack Query ──────────────────────────────────────────────────────────
+
+export { useQueryClient };
+
+/**
+ * `useCortexoQuery` — typed wrapper over TanStack `useQuery`.
+ *
+ * - Automatically calls `api.loadToken()` as part of the queryFn.
+ * - Expects fetchers that return `{ data: T }` (same shape as the API client).
+ * - Returns `{ data, isLoading, isError, error, refetch }` from TanStack.
+ *
+ * Usage:
+ * ```ts
+ * const { data: projects, isLoading } = useCortexoQuery(
+ *   ['projects'],
+ *   () => api.getProjects(),
+ * );
+ * ```
+ */
+export function useCortexoQuery<T>(
+  key: readonly unknown[],
+  fetcher: () => Promise<{ data: T; total?: number }>,
+  options?: Omit<UseQueryOptions<T, Error, T, readonly unknown[]>, 'queryKey' | 'queryFn'>,
+) {
+  return useQuery<T, Error, T, readonly unknown[]>({
+    queryKey: key,
+    queryFn: async () => {
+      api.loadToken();
+      const res = await fetcher();
+      return res.data;
+    },
+    ...options,
+  });
+}
+
+
 /**
  * Hook: loads projects and returns a lookup map (id → project).
  * Use this in pages that need to resolve projectId to project names.
+ * Uses the shared 'projects' cache key so data is reused across pages.
  */
 export function useProjectLookup() {
-  const { data: projects } = useApiData(() => api.getProjects());
+  const { data: projects } = useCortexoQuery(['projects'], () => api.getProjects());
   const lookup = useMemo(() => {
     const map = new Map<string, { name: string; repoUrl?: string }>();
     (projects || []).forEach((p: any) => {

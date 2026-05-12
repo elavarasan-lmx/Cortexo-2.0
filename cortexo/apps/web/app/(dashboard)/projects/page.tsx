@@ -11,7 +11,8 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { Project } from '@/lib/api';
-import { useApiData, useAutoLoadToken } from '@/lib/hooks';
+import { useCortexoQuery, useAutoLoadToken, useQueryClient } from '@/lib/hooks';
+
 import { useToastStore } from '@/lib/toast-store';
 
 function parseSettings(p: Project) {
@@ -31,7 +32,9 @@ type Filters = {
 export default function ProjectsPage() {
   useAutoLoadToken();
   const router = useRouter();
-  const { data: projects, loading, refetch } = useApiData(() => api.getProjects());
+  const queryClient = useQueryClient();
+  const { data: projects, isLoading: loading, refetch } = useCortexoQuery(['projects'], () => api.getProjects());
+
 
   const [search, setSearch] = useState('');
   const [deleteProject, setDeleteProject] = useState<Project | null>(null);
@@ -90,10 +93,11 @@ export default function ProjectsPage() {
   };
 
   if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '256px' }}>
-      <Loader2 style={{ width: '32px', height: '32px', color: 'rgb(var(--primary))', animation: 'spin 1s linear infinite' }} />
+    <div className="cx-loading">
+      <Loader2 className="cx-spinner" />
     </div>
   );
+
 
   const clearFilters = () => setFilters({ productType: null, serverId: null, repoProvider: null });
 
@@ -116,10 +120,10 @@ export default function ProjectsPage() {
   return (
     <div>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '20px' }}>
+      <div className="cx-page-header" style={{ marginBottom: '20px' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 800, color: 'rgb(var(--text-primary))', margin: 0 }}>Projects</h1>
-          <p style={{ fontSize: '14px', color: 'rgb(var(--text-muted))', marginTop: '4px' }}>
+          <h1 className="cx-page-title cx-fw-800">Projects</h1>
+          <p className="cx-page-subtitle cx-text-muted" style={{ marginTop: '4px' }}>
             {allProjects.length} {allProjects.length === 1 ? 'project' : 'projects'} · {allProjects.filter(p => { const st = parseSettings(p); return st.productType === 'trade'; }).length} trade · {allProjects.filter(p => { const st = parseSettings(p); return st.productType === 'lite'; }).length} lite
           </p>
         </div>
@@ -157,8 +161,8 @@ export default function ProjectsPage() {
                 overflow: 'hidden', animation: 'fadeInDown 150ms ease',
               }}>
                 {/* Dropdown Header */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid rgb(var(--border))' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>Filters</span>
+                <div className="cx-flex-between cx-p-16" style={{ borderBottom: '1px solid rgb(var(--border))' }}>
+                  <span className="cx-text-13 cx-fw-700 cx-text-primary">Filters</span>
                   {activeFilterCount > 0 && (
                     <button onClick={clearFilters} style={{ fontSize: '11px', fontWeight: 600, color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px', borderRadius: '4px' }}>
                       Clear all
@@ -167,9 +171,9 @@ export default function ProjectsPage() {
                 </div>
 
                 {/* Product Type */}
-                <div style={{ padding: '14px 16px', borderBottom: '1px solid rgb(var(--border))' }}>
-                  <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgb(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>Product Type</div>
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                <div className="cx-p-16" style={{ borderBottom: '1px solid rgb(var(--border))' }}>
+                  <div className="cx-label" style={{ marginBottom: '8px' }}>Product Type</div>
+                  <div className="cx-flex cx-gap-6" style={{ flexWrap: 'wrap' }}>
                     <button onClick={() => toggleFilter('productType', 'trade')} style={chipStyle(filters.productType === 'trade', '#F59E0B')}>
                       Trade
                     </button>
@@ -181,9 +185,9 @@ export default function ProjectsPage() {
 
                 {/* Server */}
                 {filterOptions.servers.length > 0 && (
-                  <div style={{ padding: '14px 16px', borderBottom: '1px solid rgb(var(--border))' }}>
-                    <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgb(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>Server</div>
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  <div className="cx-p-16" style={{ borderBottom: '1px solid rgb(var(--border))' }}>
+                    <div className="cx-label" style={{ marginBottom: '8px' }}>Server</div>
+                    <div className="cx-flex cx-gap-6" style={{ flexWrap: 'wrap' }}>
                       {filterOptions.servers.map(sid => (
                         <button key={sid} onClick={() => toggleFilter('serverId', sid)} style={chipStyle(filters.serverId === sid, '#8B5CF6')}>
                           Server {sid}
@@ -195,9 +199,9 @@ export default function ProjectsPage() {
 
                 {/* Repo Provider */}
                 {filterOptions.repos.length > 0 && (
-                  <div style={{ padding: '14px 16px' }}>
-                    <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgb(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>Repository</div>
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  <div className="cx-p-16">
+                    <div className="cx-label" style={{ marginBottom: '8px' }}>Repository</div>
+                    <div className="cx-flex cx-gap-6" style={{ flexWrap: 'wrap' }}>
                       {filterOptions.repos.map(rp => (
                         <button key={rp} onClick={() => toggleFilter('repoProvider', rp)} style={chipStyle(filters.repoProvider === rp, '#3B82F6')}>
                           {rp === 'github' ? 'GitHub' : rp}
@@ -208,8 +212,8 @@ export default function ProjectsPage() {
                 )}
 
                 {/* Footer with result count */}
-                <div style={{ padding: '10px 16px', borderTop: '1px solid rgb(var(--border))', backgroundColor: 'rgba(var(--primary), 0.03)' }}>
-                  <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>{filtered.length} of {allProjects.length} projects</span>
+                <div className="cx-p-16 cx-border-t" style={{ backgroundColor: 'rgba(var(--primary), 0.03)' }}>
+                  <span className="cx-text-11 cx-text-muted">{filtered.length} of {allProjects.length} projects</span>
                 </div>
               </div>
             )}
@@ -247,17 +251,17 @@ export default function ProjectsPage() {
       )}
 
       {/* Stat Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '20px' }}>
+      <div className="cx-stats-3" style={{ marginBottom: '20px' }}>
         {[
           { icon: '📂', value: allProjects.length, label: 'Total Projects', color: '#7C3AED' },
           { icon: '📈', value: allProjects.filter(p => parseSettings(p).productType === 'trade').length, label: 'Trade', color: '#F59E0B' },
           { icon: '📊', value: allProjects.filter(p => parseSettings(p).productType === 'lite').length, label: 'Lite', color: '#10B981' },
         ].map((stat, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px', borderRadius: '10px', backgroundColor: 'rgb(var(--card))', border: '1px solid rgb(var(--border))' }}>
+          <div key={i} className="cx-flex cx-items-center cx-gap-12 cx-r-10 cx-surface cx-border" style={{ padding: '14px 20px' }}>
             <span style={{ fontSize: '22px' }}>{stat.icon}</span>
             <div>
-              <div style={{ fontSize: '22px', fontWeight: 800, color: stat.color }}>{stat.value}</div>
-              <div style={{ fontSize: '11px', fontWeight: 600, color: 'rgb(var(--text-muted))' }}>{stat.label}</div>
+              <div className="cx-fw-800" style={{ fontSize: '22px', color: stat.color }}>{stat.value}</div>
+              <div className="cx-text-11 cx-fw-600 cx-text-muted">{stat.label}</div>
             </div>
           </div>
         ))}
@@ -265,13 +269,13 @@ export default function ProjectsPage() {
 
       {/* Search bar */}
       {allProjects.length > 0 && (
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '16px' }}>
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', borderRadius: '10px', backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))' }}>
-            <Search style={{ width: '14px', height: '14px', color: 'rgb(var(--text-muted))', flexShrink: 0 }} />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search projects, domains, slugs…" style={{ flex: 1, border: 'none', outline: 'none', backgroundColor: 'transparent', fontSize: '13px', color: 'rgb(var(--text-primary))' }} />
-            {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgb(var(--text-muted))', padding: '2px' }}><X style={{ width: '12px', height: '12px' }} /></button>}
+        <div className="cx-flex cx-gap-10 cx-items-center" style={{ marginBottom: '16px' }}>
+          <div className="cx-flex cx-items-center cx-gap-8 cx-r-10 cx-surface cx-border" style={{ flex: 1, padding: '8px 14px' }}>
+            <Search style={{ width: '14px', height: '14px', flexShrink: 0 }} className="cx-text-muted" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search projects, domains, slugs…" className="cx-text-primary cx-text-13" style={{ flex: 1, border: 'none', outline: 'none', backgroundColor: 'transparent' }} />
+            {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px' }} className="cx-text-muted"><X style={{ width: '12px', height: '12px' }} /></button>}
           </div>
-          <span style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', whiteSpace: 'nowrap' }}>{filtered.length} of {allProjects.length}</span>
+          <span className="cx-text-12 cx-text-muted" style={{ whiteSpace: 'nowrap' }}>{filtered.length} of {allProjects.length}</span>
         </div>
       )}
 
@@ -374,15 +378,15 @@ export default function ProjectsPage() {
 
       {/* Empty state */}
       {allProjects.length === 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', borderRadius: '16px', border: '1px dashed rgb(var(--border))', padding: '80px 32px', textAlign: 'center' }}>
-          <div style={{ width: '64px', height: '64px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, rgba(var(--primary),0.12), rgba(var(--agent),0.06))' }}>
-            <FolderGit2 style={{ width: '28px', height: '28px', color: 'rgb(var(--primary))', opacity: 0.8 }} />
+        <div className="cx-empty">
+          <div className="cx-empty__icon-wrap">
+            <FolderGit2 style={{ width: '28px', height: '28px', opacity: 0.8 }} className="cx-text-accent" />
           </div>
           <div>
-            <p style={{ fontSize: '15px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: '0 0 4px' }}>No projects yet</p>
-            <p style={{ fontSize: '13px', color: 'rgb(var(--text-muted))', margin: 0 }}>Create your first client project to get started.</p>
+            <p className="cx-empty__title">No projects yet</p>
+            <p className="cx-empty__desc">Create your first client project to get started.</p>
           </div>
-          <Link href="/projects/new" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 24px', borderRadius: '12px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#fff', background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))', textDecoration: 'none' }}>
+          <Link href="/projects/new" className="cx-btn-primary" style={{ textDecoration: 'none' }}>
             <Plus style={{ width: '16px', height: '16px' }} /> New Project
           </Link>
         </div>
@@ -400,21 +404,21 @@ export default function ProjectsPage() {
       {/* Delete Confirmation */}
       {deleteProject && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} onClick={e => e.target === e.currentTarget && setDeleteProject(null)}>
-          <div style={{ width: '420px', borderRadius: '16px', backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', overflow: 'hidden', boxShadow: '0 24px 48px rgba(0,0,0,0.3)' }}>
-            <div style={{ padding: '20px', borderBottom: '1px solid rgb(var(--border))' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="cx-r-16 cx-surface cx-border" style={{ width: '420px', overflow: 'hidden', boxShadow: '0 24px 48px rgba(0,0,0,0.3)' }}>
+            <div className="cx-p-20 cx-border-b">
+              <div className="cx-flex cx-gap-10 cx-items-center">
+                <div className="cx-flex-center cx-r-10" style={{ width: '36px', height: '36px', backgroundColor: 'rgba(239,68,68,0.1)' }}>
                   <Trash2 style={{ width: '18px', height: '18px', color: '#EF4444' }} />
                 </div>
-                <span style={{ fontSize: '16px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>Delete Project</span>
+                <span className="cx-text-16 cx-fw-700 cx-text-primary">Delete Project</span>
               </div>
             </div>
-            <div style={{ padding: '20px' }}>
-              <p style={{ fontSize: '13px', color: 'rgb(var(--text-secondary))', margin: '0 0 16px', lineHeight: 1.5 }}>
-                Are you sure you want to delete <strong style={{ color: 'rgb(var(--text-primary))' }}>{deleteProject.name}</strong>? This action cannot be undone.
+            <div className="cx-p-20">
+              <p className="cx-text-13 cx-text-secondary" style={{ margin: '0 0 16px', lineHeight: 1.5 }}>
+                Are you sure you want to delete <strong className="cx-text-primary">{deleteProject.name}</strong>? This action cannot be undone.
               </p>
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                <button onClick={() => setDeleteProject(null)} style={{ padding: '9px 18px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', color: 'rgb(var(--text-secondary))', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>Cancel</button>
+              <div className="cx-flex cx-gap-8" style={{ justifyContent: 'flex-end' }}>
+                <button onClick={() => setDeleteProject(null)} className="cx-btn-secondary" style={{ padding: '9px 18px' }}>Cancel</button>
                 <button onClick={() => handleDelete(deleteProject)} disabled={deleting} style={{ padding: '9px 18px', borderRadius: '8px', border: 'none', backgroundColor: '#EF4444', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: deleting ? 'wait' : 'pointer', opacity: deleting ? 0.7 : 1 }}>
                   {deleting ? 'Deleting…' : 'Delete'}
                 </button>

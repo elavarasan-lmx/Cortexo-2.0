@@ -8,6 +8,39 @@ import { getDb } from './db';
 import { users } from '@cortexo/db/schema';
 import { authConfig } from './auth.config';
 
+// ─── UNSAFE_DEV_AUTH guard (web / NextAuth side) ──────────────────────────────
+// The API (apps/api/src/index.ts) has a matching check that calls process.exit(1)
+// in production. This side prints a loud banner so the Next.js console also shows
+// the warning — both processes need to scream so no one misses it.
+if (process.env.UNSAFE_DEV_AUTH === 'true') {
+  if (process.env.NODE_ENV === 'production') {
+    // In production on the web side we can't easily abort startup,
+    // but we make it impossible to miss in logs / crash reporters.
+    console.error(`
+╔══════════════════════════════════════════════════════════════╗
+║  🚨 FATAL: UNSAFE_DEV_AUTH=true in PRODUCTION! (web)        ║
+║  This bypasses password verification in NextAuth.            ║
+║  Remove UNSAFE_DEV_AUTH from your production .env NOW.       ║
+╚══════════════════════════════════════════════════════════════╝
+`);
+    // Force a hard crash — do not silently continue in prod.
+    throw new Error(
+      'UNSAFE_DEV_AUTH=true is not allowed in production. ' +
+      'Remove it from your environment variables.',
+    );
+  } else {
+    console.warn(`
+╔══════════════════════════════════════════════════════════════╗
+║  ⚠️  WARNING: UNSAFE_DEV_AUTH=true (web / NextAuth)         ║
+║  Password verification is SKIPPED — dev only!               ║
+║  Any valid email in the DB will log in without a password.  ║
+║  Never set this in staging or production.                    ║
+╚══════════════════════════════════════════════════════════════╝
+`);
+  }
+}
+
+
 /**
  * Verify a password against a scrypt hash (format: "salt:hash").
  * Falls back to bcrypt comparison for legacy hashes starting with "$2".

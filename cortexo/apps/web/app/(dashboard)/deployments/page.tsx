@@ -7,11 +7,13 @@ import {
   Calendar,
 } from 'lucide-react';
 import DeployForm, { type DeployFormInitialData } from '@/components/deploy-form';
-import ConfirmModal from '@/components/confirm-modal';
+import { useModal } from '@/components/modal-provider';
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
-import { useApiData, useAutoLoadToken, useProjectLookup, resolveProjectName, timeAgo, formatDuration } from '@/lib/hooks';
+import { useCortexoQuery, useAutoLoadToken, useProjectLookup, resolveProjectName, timeAgo, formatDuration } from '@/lib/hooks';
+
 import { useToastStore } from '@/lib/toast-store';
+
 
 
 /* ─── Status config ─── */
@@ -78,6 +80,7 @@ function DeployLogViewer({ deployId }: { deployId: string }) {
 export default function DeploymentsPage() {
   useAutoLoadToken();
   const toast = useToastStore();
+  const { confirm } = useModal();
 
   const [filter, setFilter] = useState<string>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -88,9 +91,9 @@ export default function DeploymentsPage() {
   const [editForm, setEditForm] = useState({ environment: '', branch: '', commitMessage: '', status: '' });
   const [editSaving, setEditSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [dateRange, setDateRange] = useState(7);
   const [showDateDropdown, setShowDateDropdown] = useState(false);
+
 
 
 
@@ -168,9 +171,11 @@ export default function DeploymentsPage() {
     setEditSaving(false);
   };
   const { lookup } = useProjectLookup();
-  const { data: deployments, loading, refetch } = useApiData(
+  const { data: deployments, isLoading: loading, refetch } = useCortexoQuery(
+    ['deployments'],
     () => api.getDeployments(),
   );
+
 
   /* ─── Auto-refresh when deploys are running ─── */
   useEffect(() => {
@@ -496,7 +501,17 @@ export default function DeploymentsPage() {
                         </button>
                       )}
                       
-                      <button onClick={() => setDeleteTarget({ id: deploy.id, name: `#${deploy.id.toString().substring(0, 6)} (${projectName})` })} title="Delete" style={{
+                      <button onClick={async () => {
+                        const ok = await confirm({
+                          title: 'Delete Deployment',
+                          message: `Are you sure you want to delete deployment "${`#${deploy.id.toString().substring(0, 6)} (${projectName})`}"? This action cannot be undone.`,
+                          confirmText: 'Delete',
+                          variant: 'danger',
+                        });
+                        if (!ok) return;
+                        try { await api.deleteDeployment(deploy.id); refetch(); toast.success('Deleted', 'Deployment record removed.'); }
+                        catch (err: unknown) { toast.error('Delete Failed', err instanceof Error ? err.message : 'Could not delete deployment.'); }
+                      }} title="Delete" style={{
                         padding: '4px 8px', borderRadius: '6px', backgroundColor: 'rgba(239, 68, 68, 0.08)', border: 'none', cursor: 'pointer',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EF4444', transition: 'background-color 150ms'
                       }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)'}>
@@ -528,20 +543,6 @@ export default function DeploymentsPage() {
 
       {/* Modals */}
       {showDeploy && <DeployForm onClose={() => { setShowDeploy(false); setEditInitialData(undefined); }} onSuccess={() => { setShowDeploy(false); setEditInitialData(undefined); refetch(); toast.success('Deployment Started', 'Your deployment has been triggered.'); }} initialData={editInitialData} />}
-
-      {deleteTarget && (
-        <ConfirmModal
-          title="Delete Deployment"
-          message={`Are you sure you want to delete the deployment for "${deleteTarget.name}"? This action cannot be undone.`}
-          confirmLabel="Delete"
-          variant="danger"
-          onCancel={() => setDeleteTarget(null)}
-          onConfirm={async () => {
-            try { await api.deleteDeployment(deleteTarget.id); refetch(); toast.success('Deleted', 'Deployment record removed.'); } catch (err: unknown) { toast.error('Delete Failed', err instanceof Error ? err.message : 'Could not delete deployment.'); }
-            setDeleteTarget(null);
-          }}
-        />
-      )}
     </div>
   );
 }

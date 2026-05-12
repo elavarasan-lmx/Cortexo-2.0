@@ -6,6 +6,10 @@ import { inp, lbl, ta, g2, g3, STEPS, Toggle, octalToRwx } from './deploy/shared
 import type { FolderEntry, DeployFormInitialData } from './deploy/shared';
 import DeployTerminal from './deploy/deploy-terminal';
 import StepReview from './deploy/step-review';
+import StepProject from './deploy/step-project';
+import StepNginx from './deploy/step-nginx';
+import StepDatabase from './deploy/step-database';
+import StepPm2 from './deploy/step-pm2';
 import { useModal } from './modal-provider';
 import { useToastStore } from '@/lib/toast-store';
 
@@ -140,7 +144,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
         if (d.dbPort !== undefined) setDbPort(d.dbPort);
         if (d.dbName !== undefined) setDbName(d.dbName);
         if (d.dbUser !== undefined) setDbUser(d.dbUser);
-        if (d.dbPass !== undefined) setDbPass(d.dbPass);
+        // dbPass is intentionally NOT restored from localStorage (security)
         if (d.dbMigrate !== undefined) setDbMigrate(d.dbMigrate);
         if (d.dbMigrateCmd !== undefined) setDbMigrateCmd(d.dbMigrateCmd);
         if (d.dbImportSql !== undefined) setDbImportSql(d.dbImportSql);
@@ -166,7 +170,9 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
         step, selectedProject, branch, environment, serverId, remotePath,
         nginxDomain, nginxPort, nginxRoot, phpVer, socketPort, rateSocketPort, wsPort, sslCert, sslKey, enableAdmin, enableMobileApi, enableLaravel, laravelPath, nginxExtra, nginxAutoGen,
         crons: [], permUser, permGroup, permFile, permDir, permWritable, permRecursive, folders,
-        dbHost, dbPort, dbName, dbUser, dbPass, dbMigrate, dbMigrateCmd, dbImportSql, dbSqlPath,
+        dbHost, dbPort, dbName, dbUser,
+        // dbPass intentionally excluded — never persist credentials to localStorage
+        dbMigrate, dbMigrateCmd, dbImportSql, dbSqlPath,
         pm2Name, pm2Script, pm2Interpreter, pm2Instances, pm2Restart, pm2Args,
         preDeployCmd, postDeployCmd, healthCheckUrl, notifyOnComplete, truncateLogs
       }));
@@ -175,7 +181,7 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
     step, selectedProject, branch, environment, serverId, remotePath,
     nginxDomain, nginxPort, nginxRoot, phpVer, socketPort, rateSocketPort, wsPort, sslCert, sslKey, enableAdmin, enableMobileApi, enableLaravel, laravelPath, nginxExtra, nginxAutoGen,
     permUser, permGroup, permFile, permDir, permWritable, permRecursive, folders,
-    dbHost, dbPort, dbName, dbUser, dbPass, dbMigrate, dbMigrateCmd, dbImportSql, dbSqlPath,
+    dbHost, dbPort, dbName, dbUser, dbMigrate, dbMigrateCmd, dbImportSql, dbSqlPath,
     pm2Name, pm2Script, pm2Interpreter, pm2Instances, pm2Restart, pm2Args,
     preDeployCmd, postDeployCmd, healthCheckUrl, notifyOnComplete, truncateLogs, isClient
   ]);
@@ -467,12 +473,18 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
       try{
         const res = await api.getDeploymentLogs(deployId);
         const d = (res as any)?.data || res;
-        if(!cancelled){
-          setDeployLogs(d.logs||[]);
-          setIsRunning(d.isRunning !== false);
-          if(d.result){ setDeployResult(d.result); setIsRunning(false); }
+        // Guard: discard results if component has unmounted or effect was re-run
+        if(cancelled) return;
+        setDeployLogs(d.logs||[]);
+        setIsRunning(d.isRunning !== false);
+        if(d.result){
+          setDeployResult(d.result);
+          setIsRunning(false);
+          clearInterval(iv); // Stop polling once we have a final result
         }
-      }catch{}
+      }catch{
+        if(!cancelled) setIsRunning(false);
+      }
     };
     poll();
     const iv = setInterval(poll, 1000);
@@ -595,314 +607,46 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
         {/* Body */}
         <div style={{flex:1,overflowY:'auto',padding:'16px 28px 24px',display:'flex',flexDirection:'column',gap:'14px'}}>
 
-          {step===0&&(<>
-            <div><label style={lbl}>Project</label>
-              <select value={selectedProject} onChange={e=>handleProjectChange(e.target.value)} style={{...inp,fontFamily:'inherit'}}><option value="">Select a project...</option>{projects.map((p:any)=><option key={p.id} value={p.id}>{p.name}</option>)}</select>
-            </div>
-            {resolving&&<div style={{display:'flex',alignItems:'center',gap:'8px',fontSize:'12px',color:'rgb(var(--text-muted))'}}><Loader2 style={{width:'14px',height:'14px',animation:'spin 1s linear infinite'}}/>Resolving...</div>}
-            {resolved&&(
-              <div style={{padding:'12px 14px',borderRadius:'10px',backgroundColor:'rgba(16,185,129,0.08)',border:'1px solid rgba(16,185,129,0.2)',fontSize:'12px',color:'#10B981',display:'flex',alignItems:'center',gap:'8px'}}>
-                <Server style={{width:'14px',height:'14px',flexShrink:0}}/><strong>{resolved.projectName}</strong> → {resolved.matchedServerName||'No server'} ({resolved.matchedServerIp||'—'})
-              </div>
-            )}
-            {sourceTemplateInfo && (
-              <div style={{padding:'14px 16px',borderRadius:'12px',backgroundColor:'rgba(99,102,241,0.06)',border:'1px solid rgba(99,102,241,0.15)'}}>
-                <label style={{...lbl,color:'#818CF8',margin:'0 0 10px',display:'flex',alignItems:'center',gap:'6px'}}><Copy style={{width:'12px',height:'12px'}}/> SOURCE TEMPLATE <span style={{fontWeight:400,fontSize:'10px',color:'rgb(var(--text-muted))',textTransform:'none'}}>Same for all clients</span></label>
-                <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:'8px',fontSize:'12px'}}>
-                    <span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'40px'}}>Name</span>
-                    <span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',fontWeight:600}}>{sourceTemplateInfo.name}</span>
-                  </div>
-                  <div style={{padding:'8px 12px',borderRadius:'8px',backgroundColor:'rgba(99,102,241,0.08)',fontSize:'11px',color:'rgb(var(--text-muted))',fontFamily:"'JetBrains Mono',monospace",display:'flex',flexDirection:'column',gap:'4px'}}>
-                    <div style={{display:'flex',alignItems:'center',gap:'6px'}}><GitBranch style={{width:'11px',height:'11px',color:'#818CF8',flexShrink:0}}/><span style={{color:'#818CF8',fontWeight:600}}>{sourceTemplateInfo.branch}</span></div>
-                    <div style={{wordBreak:'break-all',lineHeight:1.5,paddingLeft:'17px'}}>{sourceTemplateInfo.repoUrl}</div>
-                  </div>
-                </div>
-              </div>
-            )}
+          {step===0&&(
+            <StepProject
+              projects={projects} serverList={serverList}
+              selectedProject={selectedProject} onProjectChange={handleProjectChange}
+              resolving={resolving} resolved={resolved}
+              branch={branch} environment={environment}
+              serverId={serverId} remotePath={remotePath}
+              healthCheckUrl={healthCheckUrl}
+              sourceTemplateInfo={sourceTemplateInfo}
+              clientGitInfo={clientGitInfo}
+            />
+          )}
 
-            {/* Client Git — read-only info from project */}
-            {clientGitInfo && (
-              <div style={{padding:'14px 16px',borderRadius:'12px',backgroundColor:'rgba(16,185,129,0.05)',border:'1px solid rgba(16,185,129,0.15)'}}>
-                <label style={{...lbl,color:'#10B981',margin:'0 0 10px',display:'flex',alignItems:'center',gap:'6px'}}><FolderPlus style={{width:'12px',height:'12px'}}/> CLIENT GIT <span style={{fontWeight:400,fontSize:'10px',color:'rgb(var(--text-muted))',textTransform:'none'}}>From project settings</span></label>
-                <div style={{display:'flex',flexDirection:'column',gap:'6px'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:'8px',fontSize:'12px'}}>
-                    <span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'40px'}}>Name</span>
-                    <span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',fontWeight:600}}>{clientGitInfo.name}</span>
-                  </div>
-                  <div style={{padding:'8px 12px',borderRadius:'8px',backgroundColor:'rgba(16,185,129,0.08)',fontSize:'11px',color:'rgb(var(--text-muted))',fontFamily:"'JetBrains Mono',monospace",display:'flex',flexDirection:'column',gap:'4px'}}>
-                    <div style={{display:'flex',alignItems:'center',gap:'6px'}}><GitBranch style={{width:'11px',height:'11px',color:'#10B981',flexShrink:0}}/><span style={{color:'#10B981',fontWeight:600}}>{clientGitInfo.branch}</span></div>
-                    <div style={{wordBreak:'break-all',lineHeight:1.5,paddingLeft:'17px'}}>{clientGitInfo.repoUrl}</div>
-                    {clientGitInfo.templatePath && <div style={{paddingLeft:'17px',color:'rgb(var(--text-primary))',fontWeight:500}}>{clientGitInfo.templatePath}</div>}
-                  </div>
-                </div>
-              </div>
-            )}
-            {!clientGitInfo && !resolving && selectedProject && (
-              <div style={{padding:'12px 16px',borderRadius:'12px',backgroundColor:'rgba(239,68,68,0.06)',border:'1px solid rgba(239,68,68,0.15)',fontSize:'11px',color:'#EF4444',fontWeight:600}}>
-                ⚠️ No Client Git found for this project. Add repository info in project settings.
-              </div>
-            )}
+          {step===1&&(
+            <StepNginx
+              nginxDomain={nginxDomain} nginxPort={nginxPort} nginxRoot={nginxRoot}
+              socketPort={socketPort} rateSocketPort={rateSocketPort} wsPort={wsPort}
+              sslCert={sslCert} sslKey={sslKey}
+            />
+          )}
 
-            {/* Deploy Info — read-only from project settings */}
-            <div style={{padding:'14px 16px',borderRadius:'12px',backgroundColor:'rgba(251,191,36,0.04)',border:'1px solid rgba(251,191,36,0.12)'}}>
-              <label style={{...lbl,color:'#FBBF24',margin:'0 0 10px',display:'block'}}>⚙️ DEPLOY CONFIG <span style={{fontWeight:400,fontSize:'10px',color:'rgb(var(--text-muted))',textTransform:'none'}}>Auto-resolved from project</span></label>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px 16px',fontSize:'12px'}}>
-                <div style={{display:'flex',alignItems:'center',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'70px'}}>Branch</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',fontWeight:600}}>{branch || '—'}</span></div>
-                <div style={{display:'flex',alignItems:'center',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'70px'}}>Env</span><span style={{color:'#FBBF24',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',fontWeight:600,textTransform:'capitalize'}}>{environment}</span></div>
-                <div style={{display:'flex',alignItems:'center',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'70px'}}>Server</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px'}}>{serverList.find((s:any)=>s.id===serverId)?.name || '—'} {serverId ? `(${serverList.find((s:any)=>s.id===serverId)?.privateIp || ''})` : ''}</span></div>
-                <div style={{display:'flex',alignItems:'center',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'70px'}}>Health</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',wordBreak:'break-all'}}>{healthCheckUrl || '—'}</span></div>
-              </div>
-              <div style={{marginTop:'8px',display:'flex',alignItems:'center',gap:'6px',fontSize:'12px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'70px'}}>Path</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',wordBreak:'break-all'}}>{remotePath || '—'}</span></div>
-            </div>
+          {step===2&&(
+            <StepDatabase
+              sourceDbInfo={sourceDbInfo}
+              dbHost={dbHost} dbPort={dbPort} dbName={dbName}
+              dbUser={dbUser} dbPass={dbPass}
+            />
+          )}
 
-            {/* Log Cleanup Preview — always active */}
-            <div style={{marginTop:'4px'}}>
-              <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'#F59E0B',margin:'0 0 6px',display:'flex',alignItems:'center',gap:'6px'}}>
-                ⚡ Log Cleanup <span style={{fontSize:'9px',fontWeight:500,color:'rgb(var(--text-muted))',textTransform:'none',letterSpacing:0}}>— auto-executed on every deploy</span>
-              </p>
-              <pre style={{margin:0,padding:'12px 14px',borderRadius:'8px',backgroundColor:'rgba(0,0,0,0.2)',border:'1px solid rgba(245,158,11,0.12)',fontSize:'10px',fontFamily:"'JetBrains Mono',monospace",color:'rgb(var(--text-muted))',overflowX:'auto',whiteSpace:'pre-wrap',lineHeight:1.6,maxHeight:'180px',overflow:'auto'}}>
-{`> ${remotePath || '<path>'}/lmxtrade/winbullliteapi/storage/logs/lumen.log
-find ${remotePath || '<path>'}/application/logs -name 'log-*.php' -exec truncate -s 0 {} +
-find ${remotePath || '<path>'}/admin/application/logs -name 'log-*.php' -exec truncate -s 0 {} +
-rm -rf ${remotePath || '<path>'}/lmxtrade/winbullliteapi/storage/framework/{cache,sessions,views}/*
-pm2 flush ${(remotePath || '').split('/').pop() || '<slug>'}-ws
-pm2 flush ${(remotePath || '').split('/').pop() || '<slug>'}-socketio`}
-              </pre>
-            </div>
-          </>)}
-
-          {step===1&&(<>
-            {/* Nginx Config — read-only from project settings */}
-            <div style={{padding:'14px 16px',borderRadius:'12px',backgroundColor:'rgba(59,130,246,0.04)',border:'1px solid rgba(59,130,246,0.12)'}}>
-              <label style={{...lbl,color:'#3B82F6',margin:'0 0 10px',display:'block'}}>🌐 NGINX CONFIG <span style={{fontWeight:400,fontSize:'10px',color:'rgb(var(--text-muted))',textTransform:'none'}}>Auto-resolved from project</span></label>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px 16px',fontSize:'12px'}}>
-                <div style={{display:'flex',alignItems:'center',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'70px'}}>Domain</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',fontWeight:600,wordBreak:'break-all'}}>{nginxDomain || '—'}</span></div>
-                <div style={{display:'flex',alignItems:'center',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'70px'}}>Port</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px'}}>{nginxPort || '80'}</span></div>
-              </div>
-              <div style={{marginTop:'8px',display:'flex',alignItems:'center',gap:'6px',fontSize:'12px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'70px'}}>Root</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',wordBreak:'break-all'}}>{nginxRoot || '—'}</span></div>
-            </div>
-
-            {/* Socket Proxies — read-only */}
-            <div style={{padding:'14px 16px',borderRadius:'12px',backgroundColor:'rgba(16,185,129,0.04)',border:'1px solid rgba(16,185,129,0.12)'}}>
-              <label style={{...lbl,color:'#10B981',margin:'0 0 10px',display:'block'}}>🔌 SOCKET PROXIES <span style={{fontWeight:400,fontSize:'10px',color:'rgb(var(--text-muted))',textTransform:'none'}}>Port mapping</span></label>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'8px',fontSize:'12px'}}>
-                <div style={{display:'flex',flexDirection:'column',gap:'2px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase'}}>Socket</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',fontWeight:600}}>{socketPort || '—'}</span></div>
-                <div style={{display:'flex',flexDirection:'column',gap:'2px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase'}}>Rate</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',fontWeight:600}}>{rateSocketPort || '—'}</span></div>
-                <div style={{display:'flex',flexDirection:'column',gap:'2px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase'}}>WS</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',fontWeight:600}}>{wsPort || '—'}</span></div>
-              </div>
-            </div>
-
-            {/* SSL — read-only */}
-            {(sslCert || sslKey) && (
-              <div style={{padding:'14px 16px',borderRadius:'12px',backgroundColor:'rgba(251,191,36,0.04)',border:'1px solid rgba(251,191,36,0.12)'}}>
-                <label style={{...lbl,color:'#FBBF24',margin:'0 0 10px',display:'block'}}>🔒 SSL</label>
-                <div style={{display:'flex',flexDirection:'column',gap:'4px',fontSize:'12px'}}>
-                  <div style={{display:'flex',alignItems:'center',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'40px'}}>Cert</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',wordBreak:'break-all'}}>{sslCert || '—'}</span></div>
-                  <div style={{display:'flex',alignItems:'center',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'40px'}}>Key</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',wordBreak:'break-all'}}>{sslKey || '—'}</span></div>
-                </div>
-              </div>
-            )}
-
-            {/* Nginx Config Preview */}
-            {(nginxDomain || nginxRoot) && (
-              <div>
-                <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'#A855F7',margin:'0 0 6px',display:'flex',alignItems:'center',gap:'6px'}}>
-                  ⚡ Nginx Config Preview
-                  <span style={{fontSize:'9px',fontWeight:500,color:'rgb(var(--text-muted))',textTransform:'none',letterSpacing:0}}>— auto-generated on deploy</span>
-                </p>
-                <pre style={{margin:0,padding:'12px 14px',borderRadius:'8px',backgroundColor:'rgba(0,0,0,0.2)',border:'1px solid rgba(168,85,247,0.15)',fontSize:'10px',fontFamily:"'JetBrains Mono',monospace",color:'rgb(var(--text-muted))',overflowX:'auto',whiteSpace:'pre-wrap',lineHeight:1.6,maxHeight:'250px',overflow:'auto'}}>
-{`server {
-    listen ${nginxPort || '80'};
-    server_name ${nginxDomain || '<domain>'};
-
-    root ${nginxRoot || '<document-root>'};
-    index index.php index.html;
-${socketPort ? `
-    location /socket.io/ {
-        proxy_pass http://localhost:${socketPort};
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_read_timeout 86400;
-    }
-` : ''}${rateSocketPort ? `
-    location /ratesocket/ {
-        proxy_pass http://localhost:${rateSocketPort};
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_read_timeout 86400;
-    }
-` : ''}${wsPort ? `
-    location /ws {
-        proxy_pass http://127.0.0.1:${wsPort};
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_read_timeout 86400;
-    }
-` : ''}
-    location /admin/ { try_files $uri $uri/ /admin/index.php?$query_string; }
-    location / { try_files $uri $uri/ /index.php?$query_string; }
-    location /mobileapi/ { try_files $uri $uri/ /mobileapi/index.php?$query_string; }
-    location /lmxtrade/winbullliteapi/ { try_files $uri $uri/ /lmxtrade/winbullliteapi/index.php?$query_string; }
-    location ~ /\\.ht { deny all; }
-}`}
-                </pre>
-              </div>
-            )}
-          </>)}
-
-          {step===2&&(<>
-            {/* Source DB — read-only info from Base Templates */}
-            {sourceDbInfo && (
-              <div style={{padding:'14px 16px',borderRadius:'10px',backgroundColor:'rgba(168,85,247,0.06)',border:'1px solid rgba(168,85,247,0.15)'}}>
-                <label style={{...lbl,color:'#A855F7',margin:'0 0 10px'}}>📦 SOURCE DB <span style={{fontWeight:400,fontSize:'10px',color:'rgb(var(--text-muted))',textTransform:'none'}}>Template database (clone from here)</span></label>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'6px 16px',fontSize:'12px'}}>
-                  <div style={{display:'flex',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'40px'}}>Name</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px'}}>{sourceDbInfo.name}</span></div>
-                  <div style={{display:'flex',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'40px'}}>DB</span><span style={{color:'#A855F7',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',fontWeight:600}}>{sourceDbInfo.databaseName || '—'}</span></div>
-                  <div style={{display:'flex',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'40px'}}>Host</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',wordBreak:'break-all'}}>{sourceDbInfo.host}</span></div>
-                  <div style={{display:'flex',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'40px'}}>User</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px'}}>{sourceDbInfo.username} • Port {sourceDbInfo.port}</span></div>
-                </div>
-              </div>
-            )}
-
-            {/* Client DB — read-only from project settings */}
-            <div style={{padding:'14px 16px',borderRadius:'12px',backgroundColor:'rgba(34,211,238,0.04)',border:'1px solid rgba(34,211,238,0.12)'}}>
-              <label style={{...lbl,color:'#22D3EE',margin:'0 0 10px',display:'block'}}>🗄️ CLIENT DB <span style={{fontWeight:400,fontSize:'10px',color:'rgb(var(--text-muted))',textTransform:'none'}}>Auto-resolved from project</span></label>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px 16px',fontSize:'12px'}}>
-                <div style={{display:'flex',alignItems:'center',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'60px'}}>Host</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px'}}>{dbHost || '—'}</span></div>
-                <div style={{display:'flex',alignItems:'center',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'60px'}}>Port</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px'}}>{dbPort || '3306'}</span></div>
-                <div style={{display:'flex',alignItems:'center',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'60px'}}>DB Name</span><span style={{color:'#22D3EE',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px',fontWeight:600}}>{dbName || '—'}</span></div>
-                <div style={{display:'flex',alignItems:'center',gap:'6px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'60px'}}>User</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px'}}>{dbUser || '—'}</span></div>
-              </div>
-              <div style={{marginTop:'8px',display:'flex',alignItems:'center',gap:'6px',fontSize:'12px'}}><span style={{color:'rgb(var(--text-muted))',fontWeight:600,fontSize:'10px',textTransform:'uppercase',minWidth:'60px'}}>Pass</span><span style={{color:'rgb(var(--text-primary))',fontFamily:"'JetBrains Mono',monospace",fontSize:'11px'}}>{dbPass ? '••••••••' : '—'}</span></div>
-            </div>
-
-            {/* Live Database Setup Preview */}
-            {dbName && (
-              <div style={{marginTop:'8px'}}>
-                <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'#EC4899',margin:'0 0 6px',display:'flex',alignItems:'center',gap:'6px'}}>
-                  ⚡ Database Setup Preview
-                  <span style={{fontSize:'9px',fontWeight:500,color:'rgb(var(--text-muted))',textTransform:'none',letterSpacing:0}}>— 3-phase pipeline executed on deploy</span>
-                </p>
-                <pre style={{margin:0,padding:'12px 14px',borderRadius:'8px',backgroundColor:'rgba(0,0,0,0.2)',border:'1px solid rgba(236,72,153,0.2)',fontSize:'11px',fontFamily:"'JetBrains Mono',monospace",color:'rgb(var(--text-primary))',overflowX:'auto',whiteSpace:'pre-wrap',lineHeight:1.7,maxHeight:'400px',overflow:'auto'}}>
-{`-- ========================
--- Phase 1: Create Client Database
--- ========================
-CREATE DATABASE IF NOT EXISTS \`${dbName}\`
-  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- ========================
--- Phase 2: Clone from Source DB
--- ========================
--- mysqldump -h ${sourceDbInfo?.host || '<source_host>'} -u ${sourceDbInfo?.username || '<source_user>'} ${sourceDbInfo?.databaseName || '<source_db>'} | mysql -h ${dbHost || '<client_host>'} -u ${dbUser || '<client_user>'} ${dbName}
-
--- ========================
--- Phase 3: Truncate & Configure
--- ========================
-USE ${dbName};
-SET FOREIGN_KEY_CHECKS = 0;
-
-TRUNCATE ci_usersessions;
-TRUNCATE ci_sessions;
-TRUNCATE dt_admin_log;
-TRUNCATE dt_adminsessions;
-TRUNCATE dt_cus_commodity;
-TRUNCATE dt_booking;
-TRUNCATE dt_booking_tracking;
-TRUNCATE dt_transaction;
-TRUNCATE dt_marginmanagement;
-TRUNCATE dt_customerdelivery;
-TRUNCATE dt_customer_deliveryinvoice;
-TRUNCATE dt_customergroupitems;
-TRUNCATE dt_customer;
-TRUNCATE dt_customergroup;
-TRUNCATE dt_historicaldata;
-TRUNCATE dt_historical_avg;
-TRUNCATE dt_ratealert;
-TRUNCATE dt_hedge_log;
-TRUNCATE dt_usersessions;
-TRUNCATE dt_user_device;
-TRUNCATE dt_quotation;
-TRUNCATE dt_fundtransfer;
-TRUNCATE dt_knockoff;
-TRUNCATE dt_unfix;
-TRUNCATE dt_coverupmcx;
-TRUNCATE order_logs;
-TRUNCATE dt_popup;
-TRUNCATE dt_marqueetext;
-TRUNCATE dt_news;
-TRUNCATE dt_admininfo;
-TRUNCATE dt_com_master;
-TRUNCATE dt_appevents;
-TRUNCATE dt_appvideos;
-TRUNCATE dt_advertisements;
-TRUNCATE dt_gallery;
-TRUNCATE dt_events;
-
-SET FOREIGN_KEY_CHECKS = 1;
-
--- ========================
--- UPDATE (client config)
--- ========================
-UPDATE dt_generalsettings SET
-  admin_company_name = '${dbName}',
-  admin_mail = '', admin_mail_server = '', admin_mail_password = '',
-  admin_mob1 = '', admin_mob2 = '', admin_mob3 = '',
-  admin_mob4 = '', admin_mob5 = '',
-  is_admin_mob1 = 0, is_admin_mob2 = 0, is_admin_mob3 = 0,
-  is_admin_mob4 = 0, is_admin_mob5 = 0,
-  invoice_comp_name = '', address = '', city = '',
-  state = '', pincode = 0, mobile = '', email = '',
-  gst_no = '', pan_no = '',
-  website_logo = 'logo.png', admin_logo = NULL,
-  website_favicon = 'favicon.ico'
-WHERE genid = 1;
-
-UPDATE dt_admin_user SET
-  admin_user_name = 'bullion',
-  admin_user_password = MD5('<password>')
-WHERE admin_user_id = 3;
-
-UPDATE dt_email_settings SET
-  email_content = REPLACE(email_content, 'LOGIMAX Bullion', '${dbName}'),
-  email_signature = REPLACE(email_signature, 'LOGIMAX Bullion', '${dbName}');
-
-UPDATE dt_sms_settings SET
-  sms_footer = REPLACE(sms_footer, 'LOGIMAX BULLION', '${dbName.toUpperCase()}');
-
-UPDATE dt_whatsapp_settings SET
-  whatsapp_footer = REPLACE(whatsapp_footer, 'Logimax', '${dbName}');`}
-                </pre>
-              </div>
-            )}
-          </>)}
-
-          {step===3&&(<>
-
-
-            {/* Live PM2 Preview */}
-            <div style={{marginTop:'8px'}}>
-              <p style={{fontSize:'11px',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'#8B5CF6',margin:'0 0 6px',display:'flex',alignItems:'center',gap:'6px'}}>
-                ⚡ PM2 Commands Preview
-                <span style={{fontSize:'9px',fontWeight:500,color:'rgb(var(--text-muted))',textTransform:'none',letterSpacing:0}}>— auto-generated from project slug</span>
-              </p>
-              <pre style={{margin:0,padding:'12px 14px',borderRadius:'8px',backgroundColor:'rgba(0,0,0,0.2)',border:'1px solid rgba(139,92,246,0.2)',fontSize:'11px',fontFamily:"'JetBrains Mono',monospace",color:'rgb(var(--text-primary))',overflowX:'auto',whiteSpace:'pre-wrap',lineHeight:1.7}}>
-{`# Native WebSocket — Rate file watcher (port ${wsPort || '?'})
-pm2 start ${remotePath || '/var/www/html/<slug>'}/client/${(remotePath || '').split('/').pop() || '<slug>'}-ws.js --name "${(remotePath || '').split('/').pop() || '<slug>'}-ws"
-
-# Socket.IO — Redis pub/sub events (port ${socketPort || '?'})
-pm2 start ${remotePath || '/var/www/html/<slug>'}/lmxtrade/${(remotePath || '').split('/').pop() || '<slug>'}winlitesocket.js --name "${(remotePath || '').split('/').pop() || '<slug>'}-socketio"
-
-pm2 save`}
-              </pre>
-            </div>
-          </>)}
+          {step===3&&(
+            <StepPm2
+              remotePath={remotePath} wsPort={wsPort} socketPort={socketPort}
+              pm2Name={pm2Name} pm2Script={pm2Script} pm2Interpreter={pm2Interpreter}
+              pm2Instances={pm2Instances} pm2Args={pm2Args}
+            />
+          )}
 
           {step===4&&(
             <StepReview
+
               selectedProject={selectedProject} projects={projects} branch={branch}
               environment={environment} serverId={serverId} serverList={serverList}
               remotePath={remotePath} healthCheckUrl={healthCheckUrl}

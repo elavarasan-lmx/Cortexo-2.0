@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 import { useSidebarStore, SIDEBAR_WIDTH, SIDEBAR_COLLAPSED_WIDTH } from '@/lib/sidebar-store';
 import { useSidebarFeatures } from '@/lib/sidebar-features';
 import { NAVIGATION } from '@/lib/nav-config';
@@ -323,6 +324,7 @@ export function Sidebar({ isMobile = false }: { isMobile?: boolean }) {
               margin: '4px 12px 8px',
             }} />
             <button
+              onClick={() => signOut({ callbackUrl: '/login' })}
               style={{
                 display: 'flex',
                 alignItems: 'center',

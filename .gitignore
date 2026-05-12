@@ -48,3 +48,4 @@ redis_data/
 # Agent memory (local dev artifacts)
 .agent/memory/sessions/
 .agent/context/history/
+Project/Web
