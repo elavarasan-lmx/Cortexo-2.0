@@ -26,7 +26,7 @@
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_PATH="$SCRIPT_DIR"
 ENV_NAME=$(basename "$REPO_PATH")   # vijaybullion_staging / vijaybullion
-CLIENT_NAME="winbull"
+# CLIENT_NAME removed — unused variable (was: "winbull")
 
 # Winbull GitHub repo
 GITHUB_REPO="Logimax-Technologies/WTWeb-VijayBullion"
@@ -129,7 +129,7 @@ export GIT_CONFIG_KEY_0=safe.directory
 export GIT_CONFIG_VALUE_0="$REPO_PATH"
 
 # ── SSH for GitHub ───────────────────────────────────────────────────────────
-export GIT_SSH_COMMAND="ssh -i $SSH_KEY -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes"
+export GIT_SSH_COMMAND="ssh -i \"$SSH_KEY\" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes"
 
 # ── Resolve branch ───────────────────────────────────────────────────────────
 if [ -z "$1" ]; then
@@ -157,8 +157,9 @@ log "🌐 Source      : $ssh_ip"
 log "⏰ Time        : $timestamp"
 log "🔑 SSH Key     : $SSH_KEY (exists: $([ -f "$SSH_KEY" ] && echo 'yes' || echo 'NO'))"
 
-# ── Capture before-commit hash ───────────────────────────────────────────────
+# ── Capture before-commit hash (used for rollback + socket diff) ─────────────
 before_commit=$(git rev-parse --short HEAD 2>/dev/null || echo "initial")
+rollback_commit="$before_commit"
 
 # ── Interactive safety check ─────────────────────────────────────────────────
 if [ "$is_interactive" = true ]; then
@@ -222,6 +223,17 @@ if [ $reset_status -ne 0 ]; then
 fi
 log "🔄 Reset OK: $reset_output"
 
+# Rollback function — call on critical failures after this point
+rollback() {
+    local reason="$1"
+    log "🔙 ROLLBACK triggered: $reason"
+    if [ "$rollback_commit" != "initial" ]; then
+        git reset --hard "$rollback_commit" 2>/dev/null && log "🔙 Rolled back to $rollback_commit" || log "⚠️  Rollback also failed — manual intervention required"
+    else
+        log "⚠️  No rollback point available (initial commit)"
+    fi
+}
+
 # ── Clean untracked (preserve logs and uploads) ───────────────────────────────
 git clean -fd -q \
     -e "logs/" \
@@ -246,7 +258,10 @@ if [ "$SKIP_MIGRATIONS" != "true" ] && [ -f "./scripts/run-migrations.sh" ]; the
     migrate_exit=$?
     if   [ $migrate_exit -eq 0 ]; then log "✅ Migrations applied"
     elif [ $migrate_exit -eq 2 ]; then log "ℹ️  No pending migrations"
-    else                               log "⚠️  Migration script failed (exit: $migrate_exit)"
+    else
+        log "⚠️  Migration script failed (exit: $migrate_exit)"
+        rollback "DB migration failure"
+        exit 1
     fi
 else
     log "⏭️  Migrations skipped (no script or SKIP_MIGRATIONS=true)"
@@ -265,15 +280,20 @@ log "🧹 CI3 cache cleared ($cache_cleared cache dir(s))"
 # ── Fix permissions ───────────────────────────────────────────────────────────
 if [ "$(whoami)" != "www-data" ]; then
     log "🔒 Fixing ownership → www-data:www-data..."
-    chown -R www-data:www-data "$REPO_PATH" 2>/dev/null || true
-    find "$REPO_PATH" -type d -exec chmod 2775 {} \; 2>/dev/null || true
-    find "$REPO_PATH" -type f -exec chmod 664 {} \; 2>/dev/null || true
+    if ! chown -R www-data:www-data "$REPO_PATH" 2>/dev/null; then
+        log "⚠️  chown failed — run as root or add to sudoers: 'www-data ALL=(ALL) NOPASSWD: /bin/chown'"
+    fi
+    # Use chmod -R (faster than two find sweeps), then fix .sh files
+    chmod -R 775 "$REPO_PATH" 2>/dev/null || true
     find "$REPO_PATH" -name "*.sh" -exec chmod 775 {} \; 2>/dev/null || true
     log "✅ Permissions fixed"
 fi
 
 # ── Restart socket server if socket files changed ────────────────────────────
-socket_changes=$(git diff --name-only "$before_commit" "$after_commit" -- client/ 2>/dev/null | grep -i socket | head -1)
+socket_changes=""
+if [ "$before_commit" != "initial" ] && [ "$before_commit" != "$after_commit" ]; then
+    socket_changes=$(git diff --name-only "$before_commit" "$after_commit" -- client/ 2>/dev/null | grep -i socket | head -1)
+fi
 if [ -n "$socket_changes" ]; then
     log "🔌 Socket file changed: $socket_changes"
     if command -v pm2 &>/dev/null; then
