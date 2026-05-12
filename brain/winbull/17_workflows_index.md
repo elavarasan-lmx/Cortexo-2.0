@@ -33,14 +33,15 @@
 |---|---|---|
 | `/bug-intake` | `workflows/bug-intake.md` | Classify a new bug → severity, track, category |
 | `/fix-bug` | `workflows/fix-bug.md` | Fix one bug — with Confidence Gate, Ripple Check, Approval Gate |
-| `/learn-improve` | `workflows/learn-improve.md` | Post-fix: update patterns, log postmortem, capture velocity |
+| `/learn-and-improve` | `workflows/learn-and-improve.md` | Post-fix: anti-patterns, postmortem capture, velocity, DIAGNOSTIC_PLAYBOOK update |
 | `/verify-fix` | `workflows/verify-fix.md` | Post-fix checklist before marking as applied |
 
 ## Reporting & Health
 
 | Slash Command | File | Purpose |
 |---|---|---|
-| `/system-health` | `workflows/system-health.md` | Cross-module risk heatmap — where is the real risk right now? |
+| `/system-health` | `workflows/system-health.md` | Cross-module risk heatmap — module risk scores, systemic patterns, quick wins |
+| `/overall-bug-dashboard` | `workflows/overall-bug-dashboard.md` | Full project bug dashboard — sprint progress, velocity, open P0s, security status |
 
 ## Git & Deploy
 
@@ -53,7 +54,8 @@
 ## Execution Order (Recommended)
 
 ```
-/build-module-brain → /audit-module → /bug-intake → /fix-bug → /learn-improve → /git-push
-                                                                          ↑
+/build-module-brain → /audit-module → /bug-intake → /fix-bug → /learn-and-improve → /git-push
+                                                                             ↑
 /build-system-brain (after 3+ modules) → /system-health (weekly)
+                                       → /overall-bug-dashboard (weekly/sprint review)
 ```
