@@ -49,6 +49,7 @@
 | Slash Command | File | Purpose |
 |---|---|---|
 | `/git-push` | `workflows/git-push.md` | Commit and push after a fix (one commit per bug) |
+| `/deploy` | `workflows/deploy.md` | Deploy to live server via `winbull_deploy.sh` (lock + fetch + reset + cache-clear + socket-restart) |
 
 ---
 
