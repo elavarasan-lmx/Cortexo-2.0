@@ -13,11 +13,18 @@
 | `/end-session` | `workflows/end-session.md` | Capture progress, update session memory, wrap up |
 | `/status` | `workflows/status.md` | Quick dashboard — open bugs, what's in progress, what's next |
 
+## Brain Building (Prerequisites Before Audit)
+
+| Slash Command | File | Purpose |
+|---|---|---|
+| `/build-module-brain` | `workflows/build-module-brain.md` | Build 9-doc knowledge base for a module (REQUIRED before /audit-module) |
+| `/build-system-brain` | `workflows/build-system-brain.md` | Cross-module brain: shared tables, DANGER_ZONES, DIAGNOSTIC_PLAYBOOK |
+
 ## Audit & Discovery
 
 | Slash Command | File | Purpose |
 |---|---|---|
-| `/audit-module` | `workflows/audit-module.md` | 6-round deep audit on a single module |
+| `/audit-module` | `workflows/audit-module.md` | 6-round deep audit on a single module (needs /build-module-brain first) |
 | `/scan-cross-module` | `workflows/scan-cross-module.md` | After fixing a bug, scan ALL other modules for same pattern |
 
 ## Bug Lifecycle
@@ -29,8 +36,24 @@
 | `/learn-improve` | `workflows/learn-improve.md` | Post-fix: update patterns, log postmortem, capture velocity |
 | `/verify-fix` | `workflows/verify-fix.md` | Post-fix checklist before marking as applied |
 
+## Reporting & Health
+
+| Slash Command | File | Purpose |
+|---|---|---|
+| `/system-health` | `workflows/system-health.md` | Cross-module risk heatmap — where is the real risk right now? |
+
 ## Git & Deploy
 
 | Slash Command | File | Purpose |
 |---|---|---|
 | `/git-push` | `workflows/git-push.md` | Commit and push after a fix (one commit per bug) |
+
+---
+
+## Execution Order (Recommended)
+
+```
+/build-module-brain → /audit-module → /bug-intake → /fix-bug → /learn-improve → /git-push
+                                                                          ↑
+/build-system-brain (after 3+ modules) → /system-health (weekly)
+```
