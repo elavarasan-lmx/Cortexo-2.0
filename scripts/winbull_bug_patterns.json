@@ -1,0 +1,121 @@
+{
+    "patterns": [
+        {
+            "id": "SEC-001", "name": "SQL Injection via raw POST",
+            "severity": "CRITICAL", "priority": "P0", "category": "Security",
+            "description": "Raw $_POST values interpolated into SQL without escaping",
+            "regex": "\\$_POST\\[.*\\].*(?:where|select|insert|update|delete)",
+            "regex_flags": "i",
+            "fix_ref": "SYS-001"
+        },
+        {
+            "id": "SEC-002", "name": "OTP bypass via loose comparison (SYS-008)",
+            "severity": "CRITICAL", "priority": "P0", "category": "Security",
+            "description": "OTP check using == instead of === — type juggling bypass",
+            "regex": "\\$.*otp.*==\\s|==\\s*\\$.*otp",
+            "regex_flags": "i",
+            "fix_ref": "SYS-008"
+        },
+        {
+            "id": "SEC-003", "name": "No auth on destructive operation",
+            "severity": "CRITICAL", "priority": "P0", "category": "Security",
+            "description": "Destructive functions without role/session check",
+            "regex": "function\\s+(clear_database|db_backup|truncate_table|reset_data)",
+            "regex_flags": "i",
+            "fix_ref": "SYS-003"
+        },
+        {
+            "id": "SEC-004", "name": "Direct $_POST usage",
+            "severity": "MEDIUM", "priority": "P2", "category": "Security",
+            "description": "$_POST used instead of $this->input->post() — no XSS filtering",
+            "regex": "\\$_POST\\[",
+            "fix_ref": "SYS-001"
+        },
+        {
+            "id": "TXN-001", "name": "trans_commit on failure branch",
+            "severity": "HIGH", "priority": "P1", "category": "Transaction",
+            "description": "trans_commit() inside error/failure branch — should be trans_rollback()",
+            "regex": "trans_commit",
+            "fix_ref": "SYS-002"
+        },
+        {
+            "id": "TXN-002", "name": "trans_complete() wrong usage",
+            "severity": "HIGH", "priority": "P1", "category": "Transaction",
+            "description": "CI3 trans_complete() auto-commits regardless of errors",
+            "regex": "trans_complete\\(\\)",
+            "fix_ref": "SYS-002"
+        },
+        {
+            "id": "CANCEL-001", "name": "Cancel function (BR-CX001 — verify reversal)",
+            "severity": "CRITICAL", "priority": "P0", "category": "Business",
+            "description": "cancel_ functions must reverse ALL tables from save — verify manually",
+            "regex": "function\\s+cancel_",
+            "context_check": "Manual: verify all save() tables are reversed",
+            "fix_ref": "BR-CX001"
+        },
+        {
+            "id": "PRINT-001", "name": "Print/invoice function (BR-PR001 — verify formula)",
+            "severity": "HIGH", "priority": "P1", "category": "Business",
+            "description": "Print/invoice functions may use different formula than save — verify parity",
+            "regex": "function\\s+(print_|get.*print|invoice_|receipt_)",
+            "context_check": "Manual: compare formula in print vs save",
+            "fix_ref": "BR-PR001"
+        },
+        {
+            "id": "FILE-001", "name": "file_put_contents without json_encode",
+            "severity": "CRITICAL", "priority": "P0", "category": "Logic",
+            "description": "Writes PHP Array literal to file instead of json_encode — breaks all consumers",
+            "regex": "file_put_contents.*\\.txt",
+            "context_check": "Check if json_encode() wraps the variable",
+            "fix_ref": "SYS-004"
+        },
+        {
+            "id": "DEAD-001", "name": "Date-suffixed dead method",
+            "severity": "MEDIUM", "priority": "P2", "category": "Maintenance",
+            "description": "Legacy method copy with date suffix (e.g., get_booking_30_08_2025)",
+            "regex": "function\\s+\\w+_\\d{2}_\\d{2}_\\d{4}\\s*\\(",
+            "fix_ref": "ARCH-001"
+        },
+        {
+            "id": "DEAD-002", "name": "Commented-out function body",
+            "severity": "LOW", "priority": "P3", "category": "Maintenance",
+            "description": "Large commented-out code blocks (debug residue, backup code)",
+            "regex": "/\\*\\s*function",
+            "fix_ref": "ARCH-001"
+        },
+        {
+            "id": "LOOP-001", "name": "Variable used outside foreach",
+            "severity": "HIGH", "priority": "P1", "category": "Logic",
+            "description": "Loop variable referenced after foreach — only references last iteration",
+            "regex": "foreach.*as.*\\$([a-z_]+)\\)",
+            "context_check": "Manual: check if $var is used after closing brace",
+            "fix_ref": "SYS-004"
+        },
+        {
+            "id": "AUTH-001", "name": "Missing session gate in constructor",
+            "severity": "HIGH", "priority": "P1", "category": "Security",
+            "description": "Controller __construct() has no session/redirect-to-login check",
+            "regex": "function\\s+__construct",
+            "context_check": "Check for redirect() or session check inside __construct",
+            "fix_ref": "SYS-003"
+        },
+        {
+            "id": "RATE-001", "name": "Hardcoded rate/price value",
+            "severity": "MEDIUM", "priority": "P2", "category": "Business",
+            "description": "Gold/silver rate hardcoded instead of reading from rate table",
+            "regex": "(?:gold_rate|silver_rate|rate_value)\\s*=\\s*[0-9]+",
+            "regex_flags": "i",
+            "fix_ref": "BIZ-001"
+        }
+    ],
+    "metadata": {
+        "version": "1.0",
+        "platform": "Winbull Bullion — CodeIgniter 3",
+        "created": "2026-05-12",
+        "total_patterns": 14,
+        "p0_count": 5,
+        "p1_count": 5,
+        "p2_count": 3,
+        "p3_count": 1
+    }
+}

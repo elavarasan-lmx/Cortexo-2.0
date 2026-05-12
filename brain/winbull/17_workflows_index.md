@@ -24,6 +24,7 @@
 
 | Slash Command | File | Purpose |
 |---|---|---|
+| `/fingerprint-scan` | `workflows/fingerprint-scan.md` | **Auto-scan entire codebase** for 14 known bug patterns → P0–P3 hit list |
 | `/audit-module` | `workflows/audit-module.md` | 6-round deep audit on a single module (needs /build-module-brain first) |
 | `/scan-cross-module` | `workflows/scan-cross-module.md` | After fixing a bug, scan ALL other modules for same pattern |
 
