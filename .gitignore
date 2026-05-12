@@ -49,3 +49,8 @@ redis_data/
 .agent/memory/sessions/
 .agent/context/history/
 Project/Web
+
+# Cortexo test artifacts (browser test screenshots — never commit)
+cortexo/.screenshots/
+cortexo/.recordings/
+cortexo/.test-results/
