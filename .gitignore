@@ -48,7 +48,8 @@ redis_data/
 # Agent memory (local dev artifacts)
 .agent/memory/sessions/
 .agent/context/history/
-Project/Web
+# Server mounts via SSHFS — NEVER scan these (causes git add to hang)
+Project/
 
 # Cortexo test artifacts (browser test screenshots — never commit)
 cortexo/.screenshots/
