@@ -1608,3 +1608,19 @@ nextjs-portal {
 
 /* ── Spin Animation Utility ───────────────────────────────────────── */
 .cx-spin { animation: spin 1s linear infinite; }
+
+/* ── Dropdown Utilities ───────────────────────────────────────────── */
+.cx-dropdown {
+  position: absolute; right: 0; top: 100%; margin-top: 4px; z-index: 50;
+  background-color: rgb(var(--surface));
+  border: 1px solid rgb(var(--border));
+  border-radius: 10px;
+  padding: 4px; min-width: 150px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+.cx-dropdown-item {
+  display: block; width: 100%; text-align: left;
+  padding: 8px 12px; border-radius: 6px;
+  border: none; cursor: pointer; font-size: 12px;
+  transition: all 100ms;
+}

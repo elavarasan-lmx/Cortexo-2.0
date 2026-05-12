@@ -105,13 +105,8 @@ function DropdownMenu({ pipeline, onRefetch }: { pipeline: any; onRefetch: () =>
     <div ref={ref} style={{ position: 'relative' }}>
       <button
         onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
-        style={{
-          width: '32px', height: '32px', borderRadius: '8px', border: 'none',
-          cursor: 'pointer', backgroundColor: open ? 'rgb(var(--surface-hover))' : 'transparent',
-          color: 'rgb(var(--text-muted))',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transition: 'background-color 150ms',
-        }}
+        className="cx-icon-btn"
+        style={{ width: '32px', height: '32px', backgroundColor: open ? 'rgb(var(--surface-hover))' : 'transparent' }}
         onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))'; }}
         onMouseLeave={e => { if (!open) e.currentTarget.style.backgroundColor = 'transparent'; }}
       >
@@ -119,31 +114,20 @@ function DropdownMenu({ pipeline, onRefetch }: { pipeline: any; onRefetch: () =>
       </button>
 
       {open && (
-        <div style={{
-          position: 'absolute', right: 0, top: '100%', marginTop: '4px',
-          width: '180px', borderRadius: '10px', overflow: 'hidden',
-          backgroundColor: 'rgb(var(--surface))',
-          border: '1px solid rgb(var(--border))',
-          boxShadow: '0 8px 24px -4px rgba(0,0,0,0.2)',
-          zIndex: 50, padding: '4px',
-        }}>
-          <button style={menuItem}
-            onClick={handleEdit}
+        <div className="cx-dropdown" style={{ width: '180px' }}>
+          <button style={menuItem} onClick={handleEdit}
             onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))'; }}
             onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
           >
             <Edit3 style={{ width: '13px', height: '13px' }} /> Edit Pipeline
           </button>
-          <button style={menuItem}
-            onClick={handleViewRuns}
+          <button style={menuItem} onClick={handleViewRuns}
             onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))'; }}
             onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
           >
             <List style={{ width: '13px', height: '13px' }} /> View Runs
           </button>
-          <button style={menuItem}
-            onClick={handleToggleActive}
-            disabled={toggling}
+          <button style={menuItem} onClick={handleToggleActive} disabled={toggling}
             onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))'; }}
             onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
           >
@@ -151,8 +135,7 @@ function DropdownMenu({ pipeline, onRefetch }: { pipeline: any; onRefetch: () =>
             {pipeline.isActive ? 'Deactivate' : 'Activate'}
           </button>
           <div style={{ height: '1px', backgroundColor: 'rgb(var(--border))', margin: '4px 0' }} />
-          <button style={{ ...menuItem, color: '#EF4444' }}
-            onClick={handleDelete}
+          <button style={{ ...menuItem, color: '#EF4444' }} onClick={handleDelete}
             onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.08)'; }}
             onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
           >
@@ -193,8 +176,8 @@ export default function PipelinesPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '256px' }}>
-        <Loader2 style={{ width: '32px', height: '32px', color: 'rgb(var(--primary))', animation: 'spin 1s linear infinite' }} />
+      <div className="cx-flex-center" style={{ height: '256px' }}>
+        <Loader2 className="cx-spin cx-text-accent" style={{ width: '32px', height: '32px' }} />
       </div>
     );
   }
@@ -207,41 +190,21 @@ export default function PipelinesPage() {
   return (
     <div>
       {/* --- Header --- */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '28px' }}>
+      <div className="cx-flex-between" style={{ alignItems: 'flex-start', gap: '16px', marginBottom: '28px' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>Pipelines</h1>
-          <p style={{ fontSize: '14px', color: 'rgb(var(--text-secondary))', marginTop: '4px' }}>
+          <h1 className="cx-fw-700 cx-text-primary cx-page-title" style={{ margin: 0 }}>Pipelines</h1>
+          <p className="cx-text-secondary" style={{ fontSize: '14px', marginTop: '4px' }}>
             {allPipelines.length} configured · {activePipelines} active
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button style={{
-            display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0,
-            padding: '10px 20px', borderRadius: '12px', cursor: 'pointer',
-            fontSize: '13px', fontWeight: 600, color: 'rgb(var(--foreground))',
-            background: 'rgba(var(--surface), 0.8)',
-            border: '1px solid rgba(var(--border), 0.2)',
-            transition: 'all 150ms',
-          }}
+        <div className="cx-flex cx-gap-10">
+          <button className="cx-btn-secondary cx-flex cx-items-center cx-gap-8 cx-fw-600" style={{ padding: '10px 20px', fontSize: '13px' }}
             onClick={() => router.push('/pipelines/push')}>
             <Upload style={{ width: '16px', height: '16px' }} /> File Push
           </button>
-          <button style={{
-            display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0,
-            padding: '10px 20px', borderRadius: '12px', border: 'none', cursor: 'pointer',
-            fontSize: '13px', fontWeight: 600, color: '#fff',
-            background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))',
-            boxShadow: '0 4px 12px rgba(var(--primary), 0.3)',
-            transition: 'all 150ms',
-          }}
-            onMouseEnter={e => {
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(var(--primary), 0.45)';
-              e.currentTarget.style.transform = 'translateY(-1px)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(var(--primary), 0.3)';
-              e.currentTarget.style.transform = 'none';
-            }}
+          <button className="cx-btn-primary cx-flex cx-items-center cx-gap-8" style={{ padding: '10px 20px', fontSize: '13px' }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'none'; }}
             onClick={() => router.push('/pipelines/editor')}>
             <Plus style={{ width: '16px', height: '16px' }} /> New Pipeline
           </button>
@@ -250,33 +213,24 @@ export default function PipelinesPage() {
 
       {/* --- Summary bar --- */}
       {allPipelines.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '24px' }}>
+        <div className="cx-stats-3" style={{ marginBottom: '24px' }}>
           {[
-            { label: 'Active Pipelines',  value: activePipelines,  total: allPipelines.length, color: '#10B981',  icon: Activity },
-            { label: 'Currently Running', value: runningPipelines,  total: null, color: '#3B82F6',  icon: Cpu },
-            { label: 'Failed Last Run',   value: failedPipelines,   total: null, color: '#EF4444',  icon: XCircle },
+            { label: 'Active Pipelines',  value: activePipelines,  total: allPipelines.length, color: '#10B981', icon: Activity },
+            { label: 'Currently Running', value: runningPipelines,  total: null, color: '#3B82F6', icon: Cpu },
+            { label: 'Failed Last Run',   value: failedPipelines,   total: null, color: '#EF4444', icon: XCircle },
           ].map(s => (
-            <div key={s.label} style={{
-              borderRadius: '12px',
-              border: '1px solid rgb(var(--border))',
+            <div key={s.label} className="cx-flex cx-items-center cx-gap-14" style={{
+              borderRadius: '12px', border: '1px solid rgb(var(--border))',
               borderTop: `3px solid ${s.color}`,
-              backgroundColor: 'rgb(var(--surface))',
-              padding: '14px 18px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '14px',
+              backgroundColor: 'rgb(var(--surface))', padding: '14px 18px',
             }}>
-              <div style={{
-                width: '36px', height: '36px', borderRadius: '10px', flexShrink: 0,
-                backgroundColor: `${s.color}15`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
+              <div className="cx-flex-center cx-r-10" style={{ width: '36px', height: '36px', flexShrink: 0, backgroundColor: `${s.color}15` }}>
                 <s.icon style={{ width: '16px', height: '16px', color: s.color }} />
               </div>
               <div>
-                <p style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgb(var(--text-muted))', margin: '0 0 3px' }}>{s.label}</p>
-                <p style={{ fontSize: '22px', fontWeight: 700, color: s.color, margin: 0, lineHeight: 1 }}>
-                  {s.value}{s.total !== null ? <span style={{ fontSize: '13px', color: 'rgb(var(--text-muted))', fontWeight: 500 }}>/{s.total}</span> : ''}
+                <p className="cx-fw-600 cx-text-muted" style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 3px' }}>{s.label}</p>
+                <p className="cx-fw-700" style={{ fontSize: '22px', color: s.color, margin: 0, lineHeight: 1 }}>
+                  {s.value}{s.total !== null ? <span className="cx-fw-500 cx-text-muted" style={{ fontSize: '13px' }}>/{s.total}</span> : ''}
                 </p>
               </div>
             </div>
@@ -285,7 +239,7 @@ export default function PipelinesPage() {
       )}
 
       {/* --- Pipeline cards --- */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div className="cx-flex-col cx-gap-12">
         {allPipelines.map((pipeline: any) => {
           const stages = parseJsonField<any[]>(pipeline.stages, []);
           const projectName = resolveProjectName(pipeline.projectId, lookup);
@@ -297,51 +251,35 @@ export default function PipelinesPage() {
             <div
               key={pipeline.id}
               style={{
-                borderRadius: '14px',
-                border: '1px solid rgb(var(--border))',
+                borderRadius: '14px', border: '1px solid rgb(var(--border))',
                 borderLeft: `4px solid ${accentColor}`,
-                backgroundColor: 'rgb(var(--surface))',
-                transition: 'box-shadow 200ms, transform 200ms',
+                backgroundColor: 'rgb(var(--surface))', transition: 'box-shadow 200ms, transform 200ms',
               }}
-              onMouseEnter={e => {
-                e.currentTarget.style.boxShadow = '0 8px 24px -4px rgba(0,0,0,0.12)';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.boxShadow = 'none';
-                e.currentTarget.style.transform = 'none';
-              }}
+              onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 8px 24px -4px rgba(0,0,0,0.12)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}
             >
               <div style={{ padding: '16px 20px' }}>
-                {/* Top row: icon + name + status + actions */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                {/* Top row */}
+                <div className="cx-flex cx-items-center cx-gap-14">
                   {/* Icon */}
-                  <div style={{
-                    width: '42px', height: '42px', flexShrink: 0, borderRadius: '10px',
-                    backgroundColor: pipeline.isActive ? 'rgba(var(--primary),0.1)' : 'rgba(107,114,128,0.1)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
+                  <div className="cx-flex-center" style={{ width: '42px', height: '42px', flexShrink: 0, borderRadius: '10px', backgroundColor: pipeline.isActive ? 'rgba(var(--primary),0.1)' : 'rgba(107,114,128,0.1)' }}>
                     <Zap style={{ width: '20px', height: '20px', color: pipeline.isActive ? 'rgb(var(--primary))' : '#6B7280' }} />
                   </div>
 
                   {/* Name + project */}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                      <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>
-                        {pipeline.name}
-                      </h3>
-                      <span style={{
-                        padding: '2px 8px', borderRadius: '20px', fontSize: '10px', fontWeight: 700,
-                        textTransform: 'uppercase',
+                    <div className="cx-flex cx-items-center cx-gap-8" style={{ flexWrap: 'wrap' }}>
+                      <h3 className="cx-fw-700 cx-text-primary" style={{ fontSize: '15px', margin: 0 }}>{pipeline.name}</h3>
+                      <span className="cx-fw-700" style={{
+                        padding: '2px 8px', borderRadius: '20px', fontSize: '10px', textTransform: 'uppercase',
                         backgroundColor: pipeline.isActive ? 'rgba(16,185,129,0.12)' : 'rgba(107,114,128,0.12)',
                         color: pipeline.isActive ? '#10B981' : '#6B7280',
                       }}>
                         {pipeline.isActive ? 'Active' : 'Inactive'}
                       </span>
                       {lastStatus && (
-                        <span style={{
-                          display: 'flex', alignItems: 'center', gap: '4px',
-                          padding: '2px 8px', borderRadius: '20px', fontSize: '10px', fontWeight: 600,
+                        <span className="cx-flex cx-items-center cx-gap-4 cx-fw-600" style={{
+                          display: 'inline-flex', padding: '2px 8px', borderRadius: '20px', fontSize: '10px',
                           backgroundColor: lastStatus.bg, color: lastStatus.color,
                         }}>
                           <lastStatus.icon style={{ width: '10px', height: '10px' }} />
@@ -349,33 +287,24 @@ export default function PipelinesPage() {
                         </span>
                       )}
                     </div>
-                    <p style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', margin: '3px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p className="cx-text-muted" style={{ fontSize: '12px', margin: '3px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {pipeline.description || 'No description'}
-                      <span style={{ marginLeft: '8px', color: 'rgb(var(--primary))', fontWeight: 500 }}>
-                        · {projectName}
-                      </span>
+                      <span className="cx-fw-500 cx-text-accent" style={{ marginLeft: '8px' }}>· {projectName}</span>
                     </p>
                   </div>
 
                   {/* Actions */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                  <div className="cx-flex cx-items-center cx-gap-8" style={{ flexShrink: 0 }}>
                     <button
                       onClick={() => handleRun(pipeline)}
                       disabled={isTriggering}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '6px',
-                        padding: '7px 14px', borderRadius: '8px', border: 'none', cursor: isTriggering ? 'not-allowed' : 'pointer',
-                        fontSize: '12px', fontWeight: 600, color: '#fff',
-                        background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))',
-                        boxShadow: '0 2px 6px rgba(var(--primary), 0.25)',
-                        transition: 'all 150ms',
-                        opacity: isTriggering ? 0.7 : 1,
-                      }}
-                      onMouseEnter={e => { if (!isTriggering) { e.currentTarget.style.boxShadow = '0 4px 12px rgba(var(--primary), 0.4)'; e.currentTarget.style.transform = 'translateY(-1px)'; } }}
-                      onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 6px rgba(var(--primary), 0.25)'; e.currentTarget.style.transform = 'none'; }}
+                      className="cx-btn-primary cx-flex cx-items-center cx-gap-6"
+                      style={{ padding: '7px 14px', fontSize: '12px', opacity: isTriggering ? 0.7 : 1, cursor: isTriggering ? 'not-allowed' : 'pointer' }}
+                      onMouseEnter={e => { if (!isTriggering) e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.transform = 'none'; }}
                     >
                       {isTriggering
-                        ? <Loader2 style={{ width: '12px', height: '12px', animation: 'spin 1s linear infinite' }} />
+                        ? <Loader2 className="cx-spin" style={{ width: '12px', height: '12px' }} />
                         : <Play style={{ width: '12px', height: '12px' }} />}
                       {isTriggering ? 'Starting...' : 'Run'}
                     </button>
@@ -385,21 +314,19 @@ export default function PipelinesPage() {
 
                 {/* --- Stage flow --- */}
                 {stages.length > 0 && (
-                  <div style={{ marginTop: '14px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  <div className="cx-flex cx-items-center cx-gap-6" style={{ marginTop: '14px', flexWrap: 'wrap' }}>
                     {stages.map((stage: any, i: number) => {
                       const sc = stageColors[i % stageColors.length];
                       return (
-                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{
-                            padding: '4px 12px', borderRadius: '8px',
-                            fontSize: '12px', fontWeight: 600,
-                            backgroundColor: sc.bg, color: sc.color,
-                            border: `1px solid ${sc.color}25`,
+                        <div key={i} className="cx-flex cx-items-center cx-gap-6">
+                          <span className="cx-fw-600" style={{
+                            padding: '4px 12px', borderRadius: '8px', fontSize: '12px',
+                            backgroundColor: sc.bg, color: sc.color, border: `1px solid ${sc.color}25`,
                           }}>
                             {stage.name}
                           </span>
                           {i < stages.length - 1 && (
-                            <span style={{ fontSize: '14px', color: 'rgb(var(--text-muted))', fontWeight: 300 }}>{'\u2192'}</span>
+                            <span className="cx-fw-300 cx-text-muted" style={{ fontSize: '14px' }}>{'\u2192'}</span>
                           )}
                         </div>
                       );
@@ -408,21 +335,19 @@ export default function PipelinesPage() {
                 )}
 
                 {/* --- Meta footer --- */}
-                <div style={{
+                <div className="cx-flex cx-items-center cx-gap-16 cx-text-muted" style={{
                   marginTop: '12px', paddingTop: '10px',
-                  borderTop: '1px solid rgba(var(--border), 0.6)',
-                  display: 'flex', alignItems: 'center', gap: '16px',
-                  fontSize: '11px', color: 'rgb(var(--text-muted))',
+                  borderTop: '1px solid rgba(var(--border), 0.6)', fontSize: '11px',
                 }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span className="cx-flex cx-items-center cx-gap-5">
                     <Timer style={{ width: '11px', height: '11px' }} />
-                    Last run: <strong style={{ color: 'rgb(var(--text-secondary))' }}>{timeAgo(pipeline.lastRunAt)}</strong>
+                    Last run: <strong className="cx-text-secondary">{timeAgo(pipeline.lastRunAt)}</strong>
                   </span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span className="cx-flex cx-items-center cx-gap-5">
                     <GitBranch style={{ width: '11px', height: '11px' }} />
-                    Updated: <strong style={{ color: 'rgb(var(--text-secondary))' }}>{timeAgo(pipeline.updatedAt)}</strong>
+                    Updated: <strong className="cx-text-secondary">{timeAgo(pipeline.updatedAt)}</strong>
                   </span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span className="cx-flex cx-items-center cx-gap-5">
                     <Activity style={{ width: '11px', height: '11px' }} />
                     {stages.length} stage{stages.length !== 1 ? 's' : ''}
                   </span>
@@ -435,33 +360,27 @@ export default function PipelinesPage() {
 
       {/* --- Empty state --- */}
       {allPipelines.length === 0 && (
-        <div style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        <div className="cx-flex-col cx-flex-center" style={{
           gap: '16px', borderRadius: '16px', border: '1px dashed rgb(var(--border))',
           padding: '80px 32px', textAlign: 'center',
         }}>
-          <div style={{
+          <div className="cx-flex-center" style={{
             width: '64px', height: '64px', borderRadius: '16px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'linear-gradient(135deg, rgba(var(--primary),0.12), rgba(var(--agent),0.06))',
           }}>
-            <Zap style={{ width: '28px', height: '28px', color: 'rgb(var(--primary))', opacity: 0.8 }} />
+            <Zap className="cx-text-accent" style={{ width: '28px', height: '28px', opacity: 0.8 }} />
           </div>
           <div>
-            <p style={{ fontSize: '15px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: '0 0 4px' }}>No pipelines configured</p>
-            <p style={{ fontSize: '13px', color: 'rgb(var(--text-muted))', margin: 0 }}>
+            <p className="cx-fw-600 cx-text-primary" style={{ fontSize: '15px', margin: '0 0 4px' }}>No pipelines configured</p>
+            <p className="cx-text-muted" style={{ fontSize: '13px', margin: 0 }}>
               Create a pipeline to automate your build, test, and deploy workflow.
             </p>
           </div>
           <button
             onClick={() => router.push('/pipelines/editor')}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
-              padding: '10px 24px', borderRadius: '12px', border: 'none', cursor: 'pointer',
-              fontSize: '13px', fontWeight: 600, color: '#fff',
-              background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))',
-              boxShadow: '0 4px 12px rgba(var(--primary), 0.3)',
-            }}>
+            className="cx-btn-primary cx-flex cx-items-center cx-gap-8"
+            style={{ padding: '10px 24px', fontSize: '13px' }}
+          >
             <Plus style={{ width: '16px', height: '16px' }} /> New Pipeline
           </button>
         </div>

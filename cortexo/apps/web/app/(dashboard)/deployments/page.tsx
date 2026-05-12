@@ -55,8 +55,8 @@ function DeployLogViewer({ deployId }: { deployId: string }) {
     }).catch(() => setLoading(false));
   }, [deployId]);
 
-  if (loading) return <div style={{ padding: '12px', color: 'rgb(var(--text-muted))', fontSize: '12px' }}>Loading logs...</div>;
-  if (!logs.length) return <div style={{ padding: '12px', color: 'rgb(var(--text-muted))', fontSize: '12px' }}>No logs available</div>;
+  if (loading) return <div className="cx-text-muted" style={{ padding: '12px', fontSize: '12px' }}>Loading logs...</div>;
+  if (!logs.length) return <div className="cx-text-muted" style={{ padding: '12px', fontSize: '12px' }}>No logs available</div>;
 
   return (
     <div style={{
@@ -188,8 +188,8 @@ export default function DeploymentsPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '256px' }}>
-        <Loader2 style={{ width: '32px', height: '32px', color: 'rgb(var(--primary))', animation: 'spin 1s linear infinite' }} />
+      <div className="cx-flex-center" style={{ height: '256px' }}>
+        <Loader2 className="cx-spin cx-text-accent" style={{ width: '32px', height: '32px' }} />
       </div>
     );
   }
@@ -239,33 +239,17 @@ export default function DeploymentsPage() {
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
       {/* ─── Header ─── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'rgb(var(--text-primary))', fontFamily: 'Inter, sans-serif', margin: 0 }}>
-            Deployments
-          </h1>
-          <div style={{ 
-            display: 'flex', alignItems: 'center', gap: '6px', 
-            padding: '6px 12px', borderRadius: '12px', 
-            backgroundColor: 'rgba(22, 163, 74, 0.1)', border: '1px solid rgba(22, 163, 74, 0.2)' 
-          }}>
-            <span style={{ fontSize: '11px', fontWeight: 500, color: '#16A34A', fontFamily: 'Inter, sans-serif' }}>
-              🟢 Live • Updated 5s ago
-            </span>
+      <div className="cx-flex-between" style={{ marginBottom: '24px' }}>
+        <div className="cx-flex cx-items-center cx-gap-16">
+          <h1 className="cx-fw-700 cx-text-primary cx-page-title" style={{ margin: 0 }}>Deployments</h1>
+          <div className="cx-flex cx-items-center cx-gap-6" style={{ padding: '6px 12px', borderRadius: '12px', backgroundColor: 'rgba(22, 163, 74, 0.1)', border: '1px solid rgba(22, 163, 74, 0.2)' }}>
+            <span className="cx-fw-500" style={{ fontSize: '11px', color: '#16A34A' }}>🟢 Live • Updated 5s ago</span>
           </div>
         </div>
         <button
           onClick={() => setShowDeploy(true)}
-          style={{
-            display: 'flex', alignItems: 'center', gap: '8px',
-            padding: '12px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer',
-            fontSize: '14px', fontWeight: 600, color: '#fff',
-            backgroundColor: 'rgb(var(--primary))',
-            fontFamily: 'Inter, sans-serif',
-            transition: 'background-color 150ms',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(var(--primary), 0.8)'; }}
-          onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgb(var(--primary))'; }}
+          className="cx-btn-primary cx-flex cx-items-center cx-gap-8"
+          style={{ padding: '12px 20px', fontSize: '14px' }}
         >
           + New Deploy
         </button>
@@ -273,99 +257,64 @@ export default function DeploymentsPage() {
 
       {/* ─── Sub-page Tabs ─── */}
 
-      {/* ─── Stat Cards (PWDUz) ─── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
-        <div style={{ borderRadius: '12px', backgroundColor: 'rgb(var(--surface))', padding: '18px', border: '1px solid rgb(var(--border))', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <p style={{ margin: 0, fontSize: '12px', fontWeight: 500, color: 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>Total Deploys</p>
-          <p style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: 'rgb(var(--text-primary))', fontFamily: 'Inter, sans-serif' }}>{totalDeploys}</p>
-          <p style={{ margin: 0, fontSize: '11px', fontWeight: 500, color: 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>All time</p>
+      {/* ─── Stat Cards ─── */}
+      <div className="cx-stats-4" style={{ marginBottom: '24px' }}>
+        <div className="cx-card cx-border cx-flex-col" style={{ padding: '18px', gap: '6px' }}>
+          <p className="cx-fw-500 cx-text-muted" style={{ margin: 0, fontSize: '12px' }}>Total Deploys</p>
+          <p className="cx-fw-700 cx-text-primary" style={{ margin: 0, fontSize: '28px' }}>{totalDeploys}</p>
+          <p className="cx-fw-500 cx-text-muted" style={{ margin: 0, fontSize: '11px' }}>All time</p>
         </div>
-        
-        <div style={{ borderRadius: '12px', backgroundColor: 'rgb(var(--surface))', padding: '18px', border: '1px solid rgb(var(--border))', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <p style={{ margin: 0, fontSize: '12px', fontWeight: 500, color: 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>Success Rate</p>
-          <p style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: '#16A34A', fontFamily: 'Inter, sans-serif' }}>{successRate}%</p>
-          <p style={{ margin: 0, fontSize: '11px', fontWeight: 500, color: successDeploys > 0 ? '#16A34A' : 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>{successDeploys} of {totalDeploys}</p>
+        <div className="cx-card cx-border cx-flex-col" style={{ padding: '18px', gap: '6px' }}>
+          <p className="cx-fw-500 cx-text-muted" style={{ margin: 0, fontSize: '12px' }}>Success Rate</p>
+          <p className="cx-fw-700" style={{ margin: 0, fontSize: '28px', color: '#16A34A' }}>{successRate}%</p>
+          <p className="cx-fw-500" style={{ margin: 0, fontSize: '11px', color: successDeploys > 0 ? '#16A34A' : 'rgb(var(--text-muted))' }}>{successDeploys} of {totalDeploys}</p>
         </div>
-        
-        <div style={{ borderRadius: '12px', backgroundColor: 'rgb(var(--surface))', padding: '18px', border: '1px solid rgb(var(--border))', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <p style={{ margin: 0, fontSize: '12px', fontWeight: 500, color: 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>Avg Duration</p>
-          <p style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: 'rgb(var(--text-primary))', fontFamily: 'Inter, sans-serif' }}>{avgDurationMs ? formatDuration(avgDurationMs) : '0s'}</p>
-          <p style={{ margin: 0, fontSize: '11px', fontWeight: 500, color: 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>Across successful deploys</p>
+        <div className="cx-card cx-border cx-flex-col" style={{ padding: '18px', gap: '6px' }}>
+          <p className="cx-fw-500 cx-text-muted" style={{ margin: 0, fontSize: '12px' }}>Avg Duration</p>
+          <p className="cx-fw-700 cx-text-primary" style={{ margin: 0, fontSize: '28px' }}>{avgDurationMs ? formatDuration(avgDurationMs) : '0s'}</p>
+          <p className="cx-fw-500 cx-text-muted" style={{ margin: 0, fontSize: '11px' }}>Across successful deploys</p>
         </div>
-        
-        <div style={{ borderRadius: '12px', backgroundColor: 'rgb(var(--surface))', padding: '18px', border: '1px solid rgb(var(--border))', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <p style={{ margin: 0, fontSize: '12px', fontWeight: 500, color: 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>Failed Today</p>
-          <p style={{ margin: 0, fontSize: '28px', fontWeight: 700, color: '#EF4444', fontFamily: 'Inter, sans-serif' }}>{failedToday}</p>
-          <p style={{ margin: 0, fontSize: '11px', fontWeight: 500, color: failedToday > 0 ? '#EF4444' : 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>{failedToday > 0 ? 'Needs attention' : 'All clear'}</p>
+        <div className="cx-card cx-border cx-flex-col" style={{ padding: '18px', gap: '6px' }}>
+          <p className="cx-fw-500 cx-text-muted" style={{ margin: 0, fontSize: '12px' }}>Failed Today</p>
+          <p className="cx-fw-700" style={{ margin: 0, fontSize: '28px', color: '#EF4444' }}>{failedToday}</p>
+          <p className="cx-fw-500" style={{ margin: 0, fontSize: '11px', color: failedToday > 0 ? '#EF4444' : 'rgb(var(--text-muted))' }}>{failedToday > 0 ? 'Needs attention' : 'All clear'}</p>
         </div>
       </div>
 
-      {/* ─── Filter Row (ME7lC) ─── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button onClick={() => setFilter('all')} style={{
-            padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-            fontSize: '13px', fontWeight: filter === 'all' ? 600 : 500,
-            backgroundColor: filter === 'all' ? 'rgb(var(--primary))' : 'rgba(var(--text-muted), 0.1)',
-            color: filter === 'all' ? '#FFFFFF' : 'rgb(var(--text-muted))',
-            transition: 'all 150ms',
-          }}>
-            All ({dateFiltered.length})
-          </button>
-          
-          <button onClick={() => setFilter('success')} style={{
-            padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-            fontSize: '13px', fontWeight: filter === 'success' ? 600 : 500,
-            backgroundColor: filter === 'success' ? 'rgba(22, 163, 74, 0.2)' : 'rgba(var(--text-muted), 0.1)',
-            color: filter === 'success' ? '#16A34A' : 'rgb(var(--text-muted))',
-            transition: 'all 150ms',
-          }}>
-            ✅ Success ({dateFiltered.filter((d: any) => d.status === 'success').length})
-          </button>
-          
-          <button onClick={() => setFilter('deploying')} style={{
-            padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-            fontSize: '13px', fontWeight: filter === 'deploying' ? 600 : 500,
-            backgroundColor: filter === 'deploying' ? 'rgba(217, 119, 6, 0.2)' : 'rgba(var(--text-muted), 0.1)',
-            color: filter === 'deploying' ? '#D97706' : 'rgb(var(--text-muted))',
-            transition: 'all 150ms',
-          }}>
-            ⟳ Building ({dateFiltered.filter((d: any) => d.status === 'deploying' || d.status === 'running').length})
-          </button>
-          
-          <button onClick={() => setFilter('failed')} style={{
-            padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
-            fontSize: '13px', fontWeight: filter === 'failed' ? 600 : 500,
-            backgroundColor: filter === 'failed' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(var(--text-muted), 0.1)',
-            color: filter === 'failed' ? '#EF4444' : 'rgb(var(--text-muted))',
-            transition: 'all 150ms',
-          }}>
-            ✗ Failed ({dateFiltered.filter((d: any) => d.status === 'failed').length})
-          </button>
+      {/* ─── Filter Row ─── */}
+      <div className="cx-flex-between" style={{ marginBottom: '16px' }}>
+        <div className="cx-flex cx-items-center cx-gap-12">
+          {[
+            { key: 'all', label: `All (${dateFiltered.length})`, activeColor: 'rgb(var(--primary))', activeBg: 'rgb(var(--primary))' },
+            { key: 'success', label: `✅ Success (${dateFiltered.filter((d: any) => d.status === 'success').length})`, activeColor: '#16A34A', activeBg: 'rgba(22,163,74,0.2)' },
+            { key: 'deploying', label: `⟳ Building (${dateFiltered.filter((d: any) => d.status === 'deploying' || d.status === 'running').length})`, activeColor: '#D97706', activeBg: 'rgba(217,119,6,0.2)' },
+            { key: 'failed', label: `✗ Failed (${dateFiltered.filter((d: any) => d.status === 'failed').length})`, activeColor: '#EF4444', activeBg: 'rgba(239,68,68,0.2)' },
+          ].map(btn => (
+            <button key={btn.key} onClick={() => setFilter(btn.key)} style={{
+              padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+              fontSize: '13px', fontWeight: filter === btn.key ? 600 : 500, transition: 'all 150ms',
+              backgroundColor: filter === btn.key ? btn.activeBg : 'rgba(var(--text-muted), 0.1)',
+              color: filter === btn.key ? (btn.key === 'all' ? '#FFFFFF' : btn.activeColor) : 'rgb(var(--text-muted))',
+            }}>{btn.label}</button>
+          ))}
         </div>
-
         <div style={{ position: 'relative' }}>
           <button
             onClick={() => setShowDateDropdown(!showDateDropdown)}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', cursor: 'pointer' }}
+            className="cx-flex cx-items-center cx-gap-6 cx-btn-secondary"
+            style={{ padding: '8px 12px' }}
           >
-            <Calendar style={{ width: '13px', height: '13px', color: 'rgb(var(--text-muted))' }} />
-            <span style={{ fontSize: '12px', fontWeight: 500, color: 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>{dateLabel}</span>
-            <span style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>▾</span>
+            <Calendar style={{ width: '13px', height: '13px' }} className="cx-text-muted" />
+            <span className="cx-fw-500 cx-text-muted" style={{ fontSize: '12px' }}>{dateLabel}</span>
+            <span className="cx-text-muted" style={{ fontSize: '10px' }}>▾</span>
           </button>
           {showDateDropdown && (
-            <div style={{
-              position: 'absolute', right: 0, top: '100%', marginTop: '4px', zIndex: 50,
-              backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', borderRadius: '10px',
-              padding: '4px', minWidth: '150px', boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
-            }}>
+            <div className="cx-dropdown">
               {dateRanges.map(r => (
-                <button key={r.days} onClick={() => { setDateRange(r.days); setShowDateDropdown(false); }} style={{
-                  display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', borderRadius: '6px',
-                  border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: dateRange === r.days ? 600 : 400,
+                <button key={r.days} onClick={() => { setDateRange(r.days); setShowDateDropdown(false); }} className="cx-dropdown-item" style={{
+                  fontWeight: dateRange === r.days ? 600 : 400,
                   backgroundColor: dateRange === r.days ? 'rgba(var(--primary), 0.15)' : 'transparent',
                   color: dateRange === r.days ? 'rgb(var(--primary))' : 'rgb(var(--text-secondary))',
-                  fontFamily: 'Inter, sans-serif', transition: 'all 100ms',
                 }}>
                   {r.label}
                 </button>
@@ -375,20 +324,20 @@ export default function DeploymentsPage() {
         </div>
       </div>
 
-      {/* ─── Deployments Table (KODjv) ─── */}
-      <div style={{ borderRadius: '12px', backgroundColor: 'rgb(var(--surface))', overflow: 'hidden', border: '1px solid rgb(var(--border))' }}>
+      {/* ─── Deployments Table ─── */}
+      <div className="cx-card cx-border" style={{ overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
             <tr style={{ backgroundColor: 'rgba(var(--text-muted), 0.05)', borderBottom: '1px solid rgb(var(--border))' }}>
-              <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', fontFamily: 'Inter, sans-serif' }}>Deploy ID</th>
-              <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', fontFamily: 'Inter, sans-serif' }}>Project</th>
-              <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', fontFamily: 'Inter, sans-serif' }}>Branch</th>
-              <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', fontFamily: 'Inter, sans-serif' }}>Env</th>
-              <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', fontFamily: 'Inter, sans-serif' }}>Status</th>
-              <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', fontFamily: 'Inter, sans-serif' }}>Duration</th>
-              <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', fontFamily: 'Inter, sans-serif' }}>Triggered By</th>
-              <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', fontFamily: 'Inter, sans-serif' }}>Time</th>
-              <th style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-secondary))', fontFamily: 'Inter, sans-serif', textAlign: 'right' }}>Actions</th>
+              <th className="cx-fw-600 cx-text-secondary" style={{ padding: '16px', fontSize: '13px' }}>Deploy ID</th>
+              <th className="cx-fw-600 cx-text-secondary" style={{ padding: '16px', fontSize: '13px' }}>Project</th>
+              <th className="cx-fw-600 cx-text-secondary" style={{ padding: '16px', fontSize: '13px' }}>Branch</th>
+              <th className="cx-fw-600 cx-text-secondary" style={{ padding: '16px', fontSize: '13px' }}>Env</th>
+              <th className="cx-fw-600 cx-text-secondary" style={{ padding: '16px', fontSize: '13px' }}>Status</th>
+              <th className="cx-fw-600 cx-text-secondary" style={{ padding: '16px', fontSize: '13px' }}>Duration</th>
+              <th className="cx-fw-600 cx-text-secondary" style={{ padding: '16px', fontSize: '13px' }}>Triggered By</th>
+              <th className="cx-fw-600 cx-text-secondary" style={{ padding: '16px', fontSize: '13px' }}>Time</th>
+              <th className="cx-fw-600 cx-text-secondary" style={{ padding: '16px', fontSize: '13px', textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -411,96 +360,63 @@ export default function DeploymentsPage() {
                   onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                 >
                   {/* Deploy ID */}
-                  <td style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--primary))', fontFamily: 'JetBrains Mono, monospace' }}>
+                  <td className="cx-fw-600 cx-text-accent cx-mono" style={{ padding: '16px', fontSize: '13px' }}>
                     #{deploy.id.toString().substring(0, 6)}
                   </td>
-                  
                   {/* Project */}
-                  <td style={{ padding: '16px', fontSize: '13px', color: 'rgb(var(--text-primary))', fontFamily: 'Inter, sans-serif' }}>
-                    {projectName}
-                  </td>
-                  
+                  <td className="cx-text-primary" style={{ padding: '16px', fontSize: '13px' }}>{projectName}</td>
                   {/* Branch */}
-                  <td style={{ padding: '16px', fontSize: '13px', color: 'rgb(var(--text-secondary))', fontFamily: 'JetBrains Mono, monospace' }}>
-                    {deploy.branch || 'main'}
-                  </td>
-                  
+                  <td className="cx-text-secondary cx-mono" style={{ padding: '16px', fontSize: '13px' }}>{deploy.branch || 'main'}</td>
                   {/* Env */}
                   <td style={{ padding: '16px' }}>
-                    <span style={{
-                      padding: '3px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600,
-                      backgroundColor: env.bg, color: env.color, fontFamily: 'Inter, sans-serif'
-                    }}>
+                    <span className="cx-fw-600" style={{ padding: '3px 8px', borderRadius: '4px', fontSize: '11px', backgroundColor: env.bg, color: env.color }}>
                       {deploy.environment.charAt(0).toUpperCase() + deploy.environment.slice(1, 4)}
                     </span>
                   </td>
-                  
                   {/* Status */}
                   <td style={{ padding: '16px' }}>
-                    <span style={{
-                      display: 'inline-flex', alignItems: 'center', gap: '4px',
-                      padding: '6px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 600,
-                      backgroundColor: st.bg, color: st.color, fontFamily: 'Inter, sans-serif'
-                    }}>
-                      <st.icon style={{ width: '12px', height: '12px', animation: deploy.status === 'deploying' ? 'spin 1s linear infinite' : 'none' }} />
+                    <span className="cx-flex cx-items-center cx-gap-4 cx-fw-600" style={{ display: 'inline-flex', padding: '6px 10px', borderRadius: '12px', fontSize: '12px', backgroundColor: st.bg, color: st.color }}>
+                      <st.icon style={{ width: '12px', height: '12px' }} className={deploy.status === 'deploying' ? 'cx-spin' : ''} />
                       {st.label}
                     </span>
                   </td>
-                  
                   {/* Duration */}
-                  <td style={{ padding: '16px', fontSize: '13px', color: 'rgb(var(--text-secondary))', fontFamily: 'Inter, sans-serif' }}>
-                    {deploy.durationMs ? formatDuration(deploy.durationMs) : '—'}
-                  </td>
-                  
+                  <td className="cx-text-secondary" style={{ padding: '16px', fontSize: '13px' }}>{deploy.durationMs ? formatDuration(deploy.durationMs) : '—'}</td>
                   {/* Triggered By */}
                   <td style={{ padding: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <div style={{
-                        width: '20px', height: '20px', borderRadius: '10px', backgroundColor: getBadgeColor(triggerName),
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF', fontSize: '9px', fontWeight: 600, fontFamily: 'Inter, sans-serif'
-                      }}>
+                    <div className="cx-flex cx-items-center cx-gap-6">
+                      <div className="cx-flex-center cx-fw-600" style={{ width: '20px', height: '20px', borderRadius: '10px', backgroundColor: getBadgeColor(triggerName), color: '#FFF', fontSize: '9px' }}>
                         {triggerInitials}
                       </div>
-                      <span style={{ fontSize: '12px', fontWeight: 500, color: 'rgb(var(--text-primary))', fontFamily: 'Inter, sans-serif' }}>{triggerName}</span>
+                      <span className="cx-fw-500 cx-text-primary" style={{ fontSize: '12px' }}>{triggerName}</span>
                     </div>
                   </td>
-                  
                   {/* Time */}
-                  <td style={{ padding: '16px', fontSize: '13px', color: 'rgb(var(--text-muted))', fontFamily: 'Inter, sans-serif' }}>
-                    {timeAgo(deploy.createdAt)}
-                  </td>
+                  <td className="cx-text-muted" style={{ padding: '16px', fontSize: '13px' }}>{timeAgo(deploy.createdAt)}</td>
                   
                   {/* Actions */}
                   <td style={{ padding: '16px', textAlign: 'right' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
-                      <button onClick={() => startEdit(deploy)} title="View Details" style={{
-                        padding: '4px 8px', borderRadius: '6px', backgroundColor: 'rgba(var(--text-muted), 0.1)', border: 'none', cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgb(var(--text-secondary))', transition: 'background-color 150ms'
-                      }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(var(--text-muted), 0.2)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(var(--text-muted), 0.1)'}>
+                    <div className="cx-flex cx-items-center cx-gap-8" style={{ justifyContent: 'flex-end' }}>
+                      <button onClick={() => startEdit(deploy)} title="View Details" className="cx-icon-btn" style={{ padding: '4px 8px', backgroundColor: 'rgba(var(--text-muted), 0.1)', color: 'rgb(var(--text-secondary))' }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(var(--text-muted), 0.2)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(var(--text-muted), 0.1)'}>
                         <Search style={{ width: '14px', height: '14px' }} />
                       </button>
-                      
-                      <button onClick={() => setExpandedId(expandedId === deploy.id ? null : deploy.id)} title="Logs" style={{
-                        padding: '4px 8px', borderRadius: '6px', backgroundColor: 'rgba(59, 130, 246, 0.1)', border: 'none', cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3B82F6', transition: 'background-color 150ms'
-                      }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.2)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.1)'}>
+                      <button onClick={() => setExpandedId(expandedId === deploy.id ? null : deploy.id)} title="Logs" className="cx-icon-btn" style={{ padding: '4px 8px', backgroundColor: 'rgba(59,130,246,0.1)', color: '#3B82F6' }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(59,130,246,0.2)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(59,130,246,0.1)'}>
                         <TerminalIcon style={{ width: '14px', height: '14px' }} />
                       </button>
-                      
                       {deploy.status === 'failed' && (
                         <button onClick={async () => {
                           try {
                             await api.triggerDeploy({ projectId: deploy.projectId, branch: deploy.branch || 'main', environment: deploy.environment || 'production' });
                             refetch(); toast.success('Retrying', `Deployment triggered.`);
                           } catch (err: unknown) { toast.error('Retry Failed', 'Could not trigger deploy.'); }
-                        }} title="Retry" style={{
-                          padding: '4px 10px', borderRadius: '6px', backgroundColor: 'rgb(var(--primary))', border: 'none', cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF', transition: 'background-color 150ms'
-                        }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(var(--primary), 0.8)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgb(var(--primary))'}>
+                        }} title="Retry" className="cx-icon-btn" style={{ padding: '4px 10px', backgroundColor: 'rgb(var(--primary))', color: '#FFF' }}
+                          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(var(--primary), 0.8)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgb(var(--primary))'}
+                        >
                           <RotateCcw style={{ width: '14px', height: '14px' }} />
                         </button>
                       )}
-                      
                       <button onClick={async () => {
                         const ok = await confirm({
                           title: 'Delete Deployment',
@@ -511,10 +427,9 @@ export default function DeploymentsPage() {
                         if (!ok) return;
                         try { await api.deleteDeployment(deploy.id); refetch(); toast.success('Deleted', 'Deployment record removed.'); }
                         catch (err: unknown) { toast.error('Delete Failed', err instanceof Error ? err.message : 'Could not delete deployment.'); }
-                      }} title="Delete" style={{
-                        padding: '4px 8px', borderRadius: '6px', backgroundColor: 'rgba(239, 68, 68, 0.08)', border: 'none', cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EF4444', transition: 'background-color 150ms'
-                      }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)'}>
+                      }} title="Delete" className="cx-icon-btn" style={{ padding: '4px 8px', backgroundColor: 'rgba(239,68,68,0.08)', color: '#EF4444' }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.2)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.08)'}
+                      >
                         <Trash2 style={{ width: '13px', height: '13px' }} />
                       </button>
                     </div>
@@ -524,9 +439,9 @@ export default function DeploymentsPage() {
             }) : (
               <tr>
                 <td colSpan={9} style={{ padding: '40px 16px', textAlign: 'center' }}>
-                  <Rocket style={{ width: '24px', height: '24px', color: 'rgb(var(--text-muted))', margin: '0 auto 12px' }} />
-                  <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'rgb(var(--text-primary))', fontFamily: 'Inter, sans-serif' }}>No deployments found</p>
-                  <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'rgb(var(--text-secondary))', fontFamily: 'Inter, sans-serif' }}>Deploy your first project to get started.</p>
+                  <Rocket className="cx-text-muted" style={{ width: '24px', height: '24px', margin: '0 auto 12px' }} />
+                  <p className="cx-fw-600 cx-text-primary" style={{ margin: 0, fontSize: '14px' }}>No deployments found</p>
+                  <p className="cx-text-secondary" style={{ margin: '4px 0 0', fontSize: '13px' }}>Deploy your first project to get started.</p>
                 </td>
               </tr>
             )}

@@ -129,28 +129,25 @@ export default function ProjectsPage() {
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <div ref={filterRef} style={{ position: 'relative' }}>
-            <button
-              onClick={() => setShowFilter(!showFilter)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px',
-                border: activeFilterCount > 0 ? '1.5px solid rgb(var(--primary))' : '1px solid rgb(var(--border))',
-                backgroundColor: activeFilterCount > 0 ? 'rgba(var(--primary), 0.08)' : 'transparent',
-                color: activeFilterCount > 0 ? 'rgb(var(--primary))' : 'rgb(var(--text-muted))',
-                fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: 'all 150ms',
-              }}
-            >
-              <Filter style={{ width: '13px', height: '13px' }} />
-              Filter
-              {activeFilterCount > 0 && (
-                <span style={{
-                  width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'rgb(var(--primary))',
-                  color: '#fff', fontSize: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  {activeFilterCount}
-                </span>
-              )}
-              <ChevronDown style={{ width: '12px', height: '12px', transition: 'transform 200ms', transform: showFilter ? 'rotate(180deg)' : 'rotate(0deg)' }} />
-            </button>
+          <button
+            onClick={() => setShowFilter(!showFilter)}
+            className="cx-flex cx-items-center cx-gap-6 cx-fw-600"
+            style={{
+              padding: '8px 14px', borderRadius: '8px', fontSize: '12px', cursor: 'pointer', transition: 'all 150ms',
+              border: activeFilterCount > 0 ? '1.5px solid rgb(var(--primary))' : '1px solid rgb(var(--border))',
+              backgroundColor: activeFilterCount > 0 ? 'rgba(var(--primary), 0.08)' : 'transparent',
+              color: activeFilterCount > 0 ? 'rgb(var(--primary))' : 'rgb(var(--text-muted))',
+            }}
+          >
+            <Filter style={{ width: '13px', height: '13px' }} />
+            Filter
+            {activeFilterCount > 0 && (
+              <span className="cx-flex-center cx-fw-700" style={{ width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'rgb(var(--primary))', color: '#fff', fontSize: '10px' }}>
+                {activeFilterCount}
+              </span>
+            )}
+            <ChevronDown style={{ width: '12px', height: '12px', transition: 'transform 200ms', transform: showFilter ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+          </button>
 
             {/* Filter Dropdown */}
             {showFilter && (
@@ -218,7 +215,7 @@ export default function ProjectsPage() {
               </div>
             )}
           </div>
-          <Link href="/projects/new" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, padding: '10px 20px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#fff', background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))', boxShadow: '0 4px 12px rgba(var(--primary), 0.3)', textDecoration: 'none' }}>
+          <Link href="/projects/new" className="cx-btn-primary cx-flex cx-items-center cx-gap-8" style={{ textDecoration: 'none', padding: '10px 20px', fontSize: '13px' }}>
             <Plus style={{ width: '16px', height: '16px' }} /> Add Project
           </Link>
         </div>
@@ -226,27 +223,27 @@ export default function ProjectsPage() {
 
       {/* Active Filter Tags */}
       {activeFilterCount > 0 && (
-        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', fontWeight: 600 }}>Active:</span>
+        <div className="cx-flex cx-items-center cx-gap-6" style={{ marginBottom: '12px', flexWrap: 'wrap' }}>
+          <span className="cx-fw-600 cx-text-muted" style={{ fontSize: '11px' }}>Active:</span>
           {filters.productType && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, backgroundColor: filters.productType === 'trade' ? 'rgba(245,158,11,0.12)' : 'rgba(16,185,129,0.12)', color: filters.productType === 'trade' ? '#F59E0B' : '#10B981' }}>
+            <span className="cx-flex cx-items-center cx-gap-4 cx-fw-600" style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '11px', backgroundColor: filters.productType === 'trade' ? 'rgba(245,158,11,0.12)' : 'rgba(16,185,129,0.12)', color: filters.productType === 'trade' ? '#F59E0B' : '#10B981' }}>
               {filters.productType === 'trade' ? 'Trade' : 'Lite'}
-              <button onClick={() => setFilters(f => ({ ...f, productType: null }))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: 'inherit', opacity: 0.7 }}><X style={{ width: '10px', height: '10px' }} /></button>
+              <button onClick={() => setFilters(f => ({ ...f, productType: null }))} className="cx-text-inherit" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', opacity: 0.7 }}><X style={{ width: '10px', height: '10px' }} /></button>
             </span>
           )}
           {filters.serverId && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, backgroundColor: 'rgba(139,92,246,0.12)', color: '#8B5CF6' }}>
+            <span className="cx-flex cx-items-center cx-gap-4 cx-fw-600" style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '11px', backgroundColor: 'rgba(139,92,246,0.12)', color: '#8B5CF6' }}>
               Server {filters.serverId}
-              <button onClick={() => setFilters(f => ({ ...f, serverId: null }))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: 'inherit', opacity: 0.7 }}><X style={{ width: '10px', height: '10px' }} /></button>
+              <button onClick={() => setFilters(f => ({ ...f, serverId: null }))} className="cx-text-inherit" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', opacity: 0.7 }}><X style={{ width: '10px', height: '10px' }} /></button>
             </span>
           )}
           {filters.repoProvider && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, backgroundColor: 'rgba(59,130,246,0.12)', color: '#3B82F6' }}>
+            <span className="cx-flex cx-items-center cx-gap-4 cx-fw-600" style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '11px', backgroundColor: 'rgba(59,130,246,0.12)', color: '#3B82F6' }}>
               {filters.repoProvider === 'github' ? 'GitHub' : filters.repoProvider}
-              <button onClick={() => setFilters(f => ({ ...f, repoProvider: null }))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', color: 'inherit', opacity: 0.7 }}><X style={{ width: '10px', height: '10px' }} /></button>
+              <button onClick={() => setFilters(f => ({ ...f, repoProvider: null }))} className="cx-text-inherit" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', opacity: 0.7 }}><X style={{ width: '10px', height: '10px' }} /></button>
             </span>
           )}
-          <button onClick={clearFilters} style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: '2px 4px' }}>Clear all</button>
+          <button onClick={clearFilters} className="cx-text-muted" style={{ fontSize: '11px', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: '2px 4px' }}>Clear all</button>
         </div>
       )}
 
@@ -297,33 +294,31 @@ export default function ProjectsPage() {
               <div style={{ height: '3px', backgroundColor: productColor, position: 'absolute', top: 0, left: 0, right: 0 }} />
 
               {/* Card header */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '18px 18px 12px' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', minWidth: 0 }}>
-                  <div style={{ width: '42px', height: '42px', flexShrink: 0, borderRadius: '10px', background: `linear-gradient(135deg, ${productColor}20, ${productColor}08)`, border: `1px solid ${productColor}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div className="cx-flex-between" style={{ alignItems: 'flex-start', padding: '18px 18px 12px' }}>
+                <div className="cx-flex cx-items-start cx-gap-12" style={{ minWidth: 0 }}>
+                  <div className="cx-flex-center" style={{ width: '42px', height: '42px', flexShrink: 0, borderRadius: '10px', background: `linear-gradient(135deg, ${productColor}20, ${productColor}08)`, border: `1px solid ${productColor}30` }}>
                     <FolderGit2 style={{ width: '20px', height: '20px', color: productColor }} />
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{project.name}</h3>
-                      <span style={{ padding: '2px 8px', borderRadius: '20px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', whiteSpace: 'nowrap', backgroundColor: `${productColor}15`, color: productColor }}>{productLabel}</span>
+                    <div className="cx-flex cx-items-center cx-gap-8">
+                      <h3 className="cx-fw-700 cx-text-primary" style={{ fontSize: '15px', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{project.name}</h3>
+                      <span className="cx-fw-600" style={{ padding: '2px 8px', borderRadius: '20px', fontSize: '10px', textTransform: 'uppercase', whiteSpace: 'nowrap', backgroundColor: `${productColor}15`, color: productColor }}>{productLabel}</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '3px 0 0', flexWrap: 'wrap' }}>
-                      {s.clientSlug && <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', fontFamily: "'JetBrains Mono', monospace" }}>{String(s.clientSlug)}</span>}
-                      {s.domain && <span onClick={e => e.stopPropagation()}><a href={`http://www.${s.domain}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: '11px', color: 'rgb(var(--primary))', textDecoration: 'none' }}>{String(s.domain)}</a></span>}
+                    <div className="cx-flex cx-items-center cx-gap-6" style={{ margin: '3px 0 0', flexWrap: 'wrap' }}>
+                      {s.clientSlug && <span className="cx-text-muted cx-mono" style={{ fontSize: '11px' }}>{String(s.clientSlug)}</span>}
+                      {s.domain && <span onClick={e => e.stopPropagation()}><a href={`http://www.${s.domain}`} target="_blank" rel="noopener noreferrer" className="cx-text-accent" style={{ fontSize: '11px', textDecoration: 'none' }}>{String(s.domain)}</a></span>}
                     </div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                <div className="cx-flex cx-items-center cx-gap-4" style={{ flexShrink: 0 }}>
                   <button onClick={e => { e.stopPropagation(); router.push(`/projects/${project.id}`); }}
-                    title="Edit"
-                    style={{ padding: '6px', borderRadius: '8px', border: 'none', backgroundColor: 'transparent', color: 'rgb(var(--text-muted))', cursor: 'pointer', transition: 'all 150ms' }}
+                    title="Edit" className="cx-icon-btn cx-text-muted" style={{ padding: '6px' }}
                     onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(129,140,248,0.12)'; e.currentTarget.style.color = '#818CF8'; }}
                     onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'rgb(var(--text-muted))'; }}>
                     <Edit3 style={{ width: '14px', height: '14px' }} />
                   </button>
                   <button onClick={e => { e.stopPropagation(); setDeleteProject(project); }}
-                    title="Delete"
-                    style={{ padding: '6px', borderRadius: '8px', border: 'none', backgroundColor: 'transparent', color: 'rgb(var(--text-muted))', cursor: 'pointer', transition: 'all 150ms' }}
+                    title="Delete" className="cx-icon-btn cx-text-muted" style={{ padding: '6px' }}
                     onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.12)'; e.currentTarget.style.color = '#EF4444'; }}
                     onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'rgb(var(--text-muted))'; }}>
                     <Trash2 style={{ width: '14px', height: '14px' }} />
@@ -355,20 +350,20 @@ export default function ProjectsPage() {
               </div>
 
               {/* Footer */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 18px', borderTop: '1px solid rgb(var(--border))' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '6px', backgroundColor: 'rgba(var(--primary),0.08)', fontSize: '11px', fontWeight: 500, color: 'rgb(var(--primary))' }}>
+              <div className="cx-flex-between" style={{ padding: '10px 18px', borderTop: '1px solid rgb(var(--border))' }}>
+                <div className="cx-flex cx-items-center cx-gap-6">
+                  <div className="cx-flex cx-items-center cx-gap-4 cx-fw-500 cx-text-accent" style={{ padding: '3px 8px', borderRadius: '6px', backgroundColor: 'rgba(var(--primary),0.08)', fontSize: '11px' }}>
                     {project.repoProvider === 'github' ? <Github style={{ width: '11px', height: '11px' }} /> : <Globe style={{ width: '11px', height: '11px' }} />}
                     {project.repoProvider || 'github'}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 500, color: 'rgb(var(--text-muted))' }}>
+                  <div className="cx-flex cx-items-center cx-gap-4 cx-fw-500 cx-text-muted" style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '11px' }}>
                     <GitBranchIcon style={{ width: '11px', height: '11px' }} />
                     {project.defaultBranch || 'main'}
                   </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>⏱ {(() => { const d = project.updatedAt ? new Date(project.updatedAt) : project.createdAt ? new Date(project.createdAt) : null; if (!d) return '—'; const s = Math.floor((Date.now() - d.getTime()) / 1000); if (s < 60) return 'just now'; if (s < 3600) return `${Math.floor(s / 60)}m ago`; if (s < 86400) return `${Math.floor(s / 3600)}h ago`; return `${Math.floor(s / 86400)}d ago`; })()}</span>
-                  {s.adminUser && <span style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>👤 {String(s.adminUser)}</span>}
+                <div className="cx-flex cx-items-center cx-gap-8">
+                  <span className="cx-text-muted" style={{ fontSize: '10px' }}>⏱ {(() => { const d = project.updatedAt ? new Date(project.updatedAt) : project.createdAt ? new Date(project.createdAt) : null; if (!d) return '—'; const s = Math.floor((Date.now() - d.getTime()) / 1000); if (s < 60) return 'just now'; if (s < 3600) return `${Math.floor(s / 60)}m ago`; if (s < 86400) return `${Math.floor(s / 3600)}h ago`; return `${Math.floor(s / 86400)}d ago`; })()}</span>
+                  {s.adminUser && <span className="cx-text-muted" style={{ fontSize: '10px' }}>👤 {String(s.adminUser)}</span>}
                 </div>
               </div>
             </div>
@@ -394,9 +389,9 @@ export default function ProjectsPage() {
 
       {/* No results */}
       {allProjects.length > 0 && filtered.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '48px 24px', borderRadius: '14px', border: '1px dashed rgb(var(--border))' }}>
-          <Search style={{ width: '24px', height: '24px', color: 'rgb(var(--text-muted))', margin: '0 auto 10px' }} />
-          <p style={{ fontSize: '14px', color: 'rgb(var(--text-muted))', margin: 0 }}>No projects match &ldquo;{search}&rdquo;</p>
+        <div className="cx-flex-col cx-flex-center" style={{ textAlign: 'center', padding: '48px 24px', borderRadius: '14px', border: '1px dashed rgb(var(--border))' }}>
+          <Search className="cx-text-muted" style={{ width: '24px', height: '24px', margin: '0 auto 10px' }} />
+          <p className="cx-text-muted" style={{ fontSize: '14px', margin: 0 }}>No projects match &ldquo;{search}&rdquo;</p>
         </div>
       )}
 
