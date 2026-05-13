@@ -26,7 +26,7 @@ export async function authMiddleware(
   reply: FastifyReply,
 ) {
   // Skip auth for health checks, webhooks, SDK ingest, and auth endpoints
-  const publicPaths = ['/v1/health', '/v1/webhooks/', '/v1/ingest/', '/v1/auth/'];
+  const publicPaths = ['/v1/health', '/v1/webhooks/', '/v1/ingest/', '/v1/auth/', '/api/webhooks/'];
   const protectedAuthPaths = ['/v1/auth/me', '/v1/auth/profile', '/v1/auth/change-password'];
   const isProtectedAuth = protectedAuthPaths.some((p) => request.url.startsWith(p));
   const isPublic = !isProtectedAuth && publicPaths.some((p) => request.url.startsWith(p));
