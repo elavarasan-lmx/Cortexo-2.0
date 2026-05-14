@@ -130,12 +130,12 @@ export default function BugTrackerPage() {
 
       {/* ── Module Health Cards ── */}
       <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-          <Boxes style={{ width: '16px', height: '16px', color: 'rgb(var(--text-muted))' }} />
-          <span style={{ fontSize: '13px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>Module Health</span>
+        <div className="cx-flex cx-items-center cx-gap-8 cx-mb-12">
+          <Boxes className="cx-text-muted" style={{ width: '16px', height: '16px' }} />
+          <span className="cx-fw-700 cx-text-primary" style={{ fontSize: '13px' }}>Module Health</span>
           {moduleFilter && (
-            <button onClick={() => setModuleFilter(null)} style={{
-              marginLeft: '8px', padding: '3px 10px', borderRadius: '12px', border: 'none', fontSize: '11px', fontWeight: 600,
+            <button onClick={() => setModuleFilter(null)} className="cx-fw-600" style={{
+              marginLeft: '8px', padding: '3px 10px', borderRadius: '12px', border: 'none', fontSize: '11px',
               backgroundColor: MODULE_META[moduleFilter]?.color || '#666', color: '#fff', cursor: 'pointer',
             }}>
               {MODULE_META[moduleFilter]?.icon} {MODULE_META[moduleFilter]?.label} ✕
@@ -159,10 +159,10 @@ export default function BugTrackerPage() {
                   transition: 'all 150ms',
                 }}>
                 <div style={{ fontSize: '20px', marginBottom: '6px' }}>{meta.icon}</div>
-                <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgb(var(--text-primary))', marginBottom: '4px' }}>{meta.label}</div>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'baseline' }}>
-                  <span style={{ fontSize: '20px', fontWeight: 800, color: open > 0 ? meta.color : '#10B981' }}>{total}</span>
-                  {critical > 0 && <span style={{ fontSize: '10px', fontWeight: 700, color: '#EF4444' }}>🔴{critical}</span>}
+                <div className="cx-fw-700 cx-text-primary" style={{ fontSize: '12px', marginBottom: '4px' }}>{meta.label}</div>
+                <div className="cx-flex cx-items-center cx-gap-8">
+                  <span className="cx-fw-800" style={{ fontSize: '20px', color: open > 0 ? meta.color : '#10B981' }}>{total}</span>
+                  {critical > 0 && <span className="cx-fw-700" style={{ fontSize: '10px', color: '#EF4444' }}>🔴{critical}</span>}
                   {open === 0 && <span style={{ fontSize: '10px', color: '#10B981' }}>✅</span>}
                 </div>
               </button>
@@ -192,31 +192,29 @@ export default function BugTrackerPage() {
       </div>
 
       {/* Filter Row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+      <div className="cx-flex-between">
+        <div className="cx-flex cx-items-center cx-gap-8" style={{ flexWrap: 'wrap' }}>
           {[
             { key: 'all', label: `All (${totalBugs})` },
             { key: 'critical', label: `Critical (${criticalCount})` },
             { key: 'unresolved', label: `Open (${openCount})` },
             { key: 'investigating', label: `In Progress (${errors.filter((e: any) => e.status === 'investigating').length})` },
           ].map(f => (
-            <button key={f.key} onClick={() => setFilter(f.key)} style={{
+            <button key={f.key} onClick={() => setFilter(f.key)} className="cx-fw-600" style={{
               padding: '6px 16px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '13px',
-              fontWeight: filter === f.key ? 600 : 500, transition: 'all 150ms',
+              transition: 'all 150ms',
               backgroundColor: filter === f.key ? (f.key === 'critical' ? 'rgba(239,68,68,0.2)' : f.key === 'unresolved' ? 'rgba(59,130,246,0.2)' : f.key === 'investigating' ? 'rgba(99,102,241,0.2)' : 'rgb(var(--primary))') : 'rgba(var(--text-muted), 0.1)',
               color: filter === f.key ? (f.key === 'critical' ? '#EF4444' : f.key === 'unresolved' ? '#3B82F6' : f.key === 'investigating' ? '#6366F1' : '#FFF') : 'rgb(var(--text-muted))',
             }}>{f.label}</button>
           ))}
           <div style={{ width: '1px', height: '20px', backgroundColor: 'rgb(var(--border))', margin: '0 4px' }} />
-          <button onClick={() => setSourceFilter(sourceFilter === 'testing' ? 'all' : 'testing')} style={{
+          <button onClick={() => setSourceFilter(sourceFilter === 'testing' ? 'all' : 'testing')} className="cx-flex cx-items-center cx-gap-4 cx-fw-600" style={{
             padding: '5px 12px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '12px',
-            fontWeight: sourceFilter === 'testing' ? 600 : 500, display: 'flex', alignItems: 'center', gap: '4px',
             backgroundColor: sourceFilter === 'testing' ? 'rgba(124,58,237,0.2)' : 'rgba(var(--text-muted), 0.1)',
             color: sourceFilter === 'testing' ? '#7C3AED' : 'rgb(var(--text-muted))',
           }}><Zap style={{ width: '11px', height: '11px' }} /> Testing</button>
-          <button onClick={() => setSourceFilter(sourceFilter === 'manual' ? 'all' : 'manual')} style={{
+          <button onClick={() => setSourceFilter(sourceFilter === 'manual' ? 'all' : 'manual')} className="cx-fw-600" style={{
             padding: '5px 12px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '12px',
-            fontWeight: sourceFilter === 'manual' ? 600 : 500,
             backgroundColor: sourceFilter === 'manual' ? 'rgba(59,130,246,0.2)' : 'rgba(var(--text-muted), 0.1)',
             color: sourceFilter === 'manual' ? '#3B82F6' : 'rgb(var(--text-muted))',
           }}>Manual</button>
@@ -249,33 +247,33 @@ export default function BugTrackerPage() {
                     onMouseEnter={e => { if(!isSelected) e.currentTarget.style.backgroundColor = 'rgba(var(--text-muted), 0.05)'; }}
                     onMouseLeave={e => { if(!isSelected) e.currentTarget.style.backgroundColor = 'transparent'; }}
                   >
-                    <td style={{ padding: '16px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--primary))', fontFamily: 'JetBrains Mono, monospace' }}>
-                      #{bug.id.toString().substring(0, 6)}
+                    <td style={{ padding: '16px' }}>
+                      <span className="cx-fw-600 cx-text-accent cx-mono" style={{ fontSize: '13px' }}>#{bug.id.toString().substring(0, 6)}</span>
                     </td>
                     <td style={{ padding: '16px', fontSize: '13px', maxWidth: '260px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      <span style={{ fontWeight: 600, color: 'rgb(var(--text-primary))' }}>{bug.type}</span>
+                      <span className="cx-fw-600 cx-text-primary">{bug.type}</span>
                       <br />
-                      <span style={{ fontSize: '12px', color: 'rgb(var(--text-muted))' }}>{bug.message?.substring(0, 60)}{bug.message?.length > 60 ? '...' : ''}</span>
+                      <span className="cx-text-muted" style={{ fontSize: '12px' }}>{bug.message?.substring(0, 60)}{bug.message?.length > 60 ? '...' : ''}</span>
                     </td>
                     <td style={{ padding: '16px' }}>
-                      <span style={{
+                      <span className="cx-fw-600" style={{
                         display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', borderRadius: '6px',
-                        fontSize: '11px', fontWeight: 600, backgroundColor: `${mod.color}15`, color: mod.color,
+                        fontSize: '11px', backgroundColor: `${mod.color}15`, color: mod.color,
                       }}>
                         {mod.icon} {mod.label}
                       </span>
                     </td>
                     <td style={{ padding: '16px' }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, backgroundColor: pc.bg, color: pc.color, textTransform: 'capitalize' }}>
+                      <span className="cx-fw-600" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', backgroundColor: pc.bg, color: pc.color, textTransform: 'capitalize' }}>
                         <pc.icon style={{ width: '10px', height: '10px' }} /> {bug.severity}
                       </span>
                     </td>
                     <td style={{ padding: '16px' }}>
-                      <span style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, backgroundColor: sc.bg, color: sc.color }}>
+                      <span className="cx-fw-600" style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '11px', backgroundColor: sc.bg, color: sc.color }}>
                         {statusLabels[bug.status] || bug.status}
                       </span>
                     </td>
-                    <td style={{ padding: '16px', fontSize: '13px', color: 'rgb(var(--text-secondary))' }}>
+                    <td style={{ padding: '16px', fontSize: '13px' }} className="cx-text-secondary">
                       {timeAgo(bug.lastSeenAt || bug.firstSeenAt)}
                     </td>
                   </tr>
@@ -298,46 +296,46 @@ export default function BugTrackerPage() {
 
         {/* Detail Panel */}
         {selectedBug && (
-          <div style={{ borderRadius: '12px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', overflow: 'hidden', position: 'sticky', top: '24px' }}>
-            <div style={{ backgroundColor: 'rgb(var(--primary))', padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: '#FFF', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="cx-card" style={{ overflow: 'hidden', position: 'sticky', top: '24px' }}>
+            <div className="cx-flex-between" style={{ backgroundColor: 'rgb(var(--primary))', padding: '16px' }}>
+              <h2 className="cx-flex cx-items-center cx-gap-8 cx-fw-600" style={{ margin: 0, fontSize: '16px', color: '#FFF' }}>
                 <Bug style={{ width: '18px', height: '18px' }} /> #{selectedBug.id.toString().substring(0, 6)}
               </h2>
-              <span style={{ padding: '2px 8px', borderRadius: '12px', backgroundColor: 'rgba(255,255,255,0.2)', color: '#FFF', fontSize: '11px', fontWeight: 600 }}>
+              <span className="cx-fw-600" style={{ padding: '2px 8px', borderRadius: '12px', backgroundColor: 'rgba(255,255,255,0.2)', color: '#FFF', fontSize: '11px' }}>
                 {statusLabels[selectedBug.status] || selectedBug.status}
               </span>
             </div>
-            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="cx-flex-col cx-gap-16" style={{ padding: '20px' }}>
               {/* Module badge */}
-              {(() => { const m = MODULE_META[selectedBug.module] || MODULE_META.uncategorized; return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', borderRadius: '10px', backgroundColor: `${m.color}10`, border: `1px solid ${m.color}25` }}>
+              {(() => { const m = MODULE_META[selectedBug.module ?? 'uncategorized'] || MODULE_META.uncategorized; return (
+                <div className="cx-flex cx-items-center cx-gap-8" style={{ padding: '10px 14px', borderRadius: '10px', backgroundColor: `${m.color}10`, border: `1px solid ${m.color}25` }}>
                   <span style={{ fontSize: '20px' }}>{m.icon}</span>
                   <div>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: m.color }}>{m.label}</div>
-                    <div style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>Module</div>
+                    <div className="cx-fw-700" style={{ fontSize: '13px', color: m.color }}>{m.label}</div>
+                    <div className="cx-text-muted" style={{ fontSize: '11px' }}>Module</div>
                   </div>
                 </div>
               ); })()}
               <div>
-                <h3 style={{ margin: '0 0 8px', fontSize: '14px', fontWeight: 600, color: 'rgb(var(--text-primary))' }}>Error Details</h3>
-                <p style={{ margin: '0 0 4px', fontSize: '13px', fontWeight: 600, color: 'rgb(var(--text-primary))' }}>{selectedBug.type}</p>
-                <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.5, color: 'rgb(var(--text-secondary))' }}>{selectedBug.message}</p>
+                <h3 className="cx-fw-600 cx-text-primary" style={{ margin: '0 0 8px', fontSize: '14px' }}>Error Details</h3>
+                <p className="cx-fw-600 cx-text-primary" style={{ margin: '0 0 4px', fontSize: '13px' }}>{selectedBug.type}</p>
+                <p className="cx-text-secondary" style={{ margin: 0, fontSize: '13px', lineHeight: 1.5 }}>{selectedBug.message}</p>
               </div>
               <div style={{ backgroundColor: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: '8px', padding: '16px' }}>
-                <h3 style={{ margin: '0 0 12px', fontSize: '13px', fontWeight: 600, color: '#F59E0B', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <h3 className="cx-flex cx-items-center cx-gap-6 cx-fw-600" style={{ margin: '0 0 12px', fontSize: '13px', color: '#F59E0B' }}>
                   <Search style={{ width: '14px', height: '14px' }} /> Error Info
                 </h3>
                 <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '8px', fontSize: '12px' }}>
-                  <span style={{ color: 'rgb(var(--text-muted))', fontWeight: 500 }}>File:</span>
-                  <span style={{ color: 'rgb(var(--text-primary))', fontFamily: 'JetBrains Mono, monospace' }}>{selectedBug.file || '—'}{selectedBug.line ? `:${selectedBug.line}` : ''}</span>
-                  <span style={{ color: 'rgb(var(--text-muted))', fontWeight: 500 }}>Severity:</span>
-                  <span style={{ color: 'rgb(var(--text-primary))', textTransform: 'capitalize' }}>{selectedBug.severity}</span>
-                  <span style={{ color: 'rgb(var(--text-muted))', fontWeight: 500 }}>Events:</span>
-                  <span style={{ color: 'rgb(var(--text-primary))' }}>{selectedBug.eventCount || 0} occurrences</span>
-                  <span style={{ color: 'rgb(var(--text-muted))', fontWeight: 500 }}>First Seen:</span>
-                  <span style={{ color: 'rgb(var(--text-primary))' }}>{timeAgo(selectedBug.firstSeenAt)}</span>
-                  <span style={{ color: 'rgb(var(--text-muted))', fontWeight: 500 }}>Last Seen:</span>
-                  <span style={{ color: 'rgb(var(--text-primary))' }}>{timeAgo(selectedBug.lastSeenAt)}</span>
+                  <span className="cx-text-muted cx-fw-500">File:</span>
+                  <span className="cx-mono cx-text-primary">{selectedBug.file || '—'}{selectedBug.line ? `:${selectedBug.line}` : ''}</span>
+                  <span className="cx-text-muted cx-fw-500">Severity:</span>
+                  <span className="cx-text-primary" style={{ textTransform: 'capitalize' }}>{selectedBug.severity}</span>
+                  <span className="cx-text-muted cx-fw-500">Events:</span>
+                  <span className="cx-text-primary">{selectedBug.eventCount || 0} occurrences</span>
+                  <span className="cx-text-muted cx-fw-500">First Seen:</span>
+                  <span className="cx-text-primary">{timeAgo(selectedBug.firstSeenAt)}</span>
+                  <span className="cx-text-muted cx-fw-500">Last Seen:</span>
+                  <span className="cx-text-primary">{timeAgo(selectedBug.lastSeenAt)}</span>
                 </div>
               </div>
             </div>

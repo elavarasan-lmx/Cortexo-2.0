@@ -10,10 +10,6 @@ import { useSearchParams } from 'next/navigation';
 import { api, type Server } from '@/lib/api';
 import { useAutoLoadToken } from '@/lib/hooks';
 
-const card: React.CSSProperties = {
-  borderRadius: '14px', border: '1px solid rgb(var(--border))',
-  backgroundColor: 'rgb(var(--surface))', overflow: 'hidden',
-};
 
 const statusColors: Record<string, { color: string; bg: string }> = {
   online:  { color: '#10B981', bg: 'rgba(16,185,129,0.12)' },
@@ -24,7 +20,7 @@ const statusColors: Record<string, { color: string; bg: string }> = {
 function MetricBar({ label, used, total, unit, color }: { label: string; used: number; total: number; unit: string; color: string }) {
   const pct = total > 0 ? Math.round((used / total) * 100) : 0;
   return (
-    <div style={{ marginBottom: '16px' }}>
+    <div className="cx-mb-16">
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
         <span style={{ fontSize: '12px', fontWeight: 600, color: 'rgb(var(--text-primary))' }}>{label}</span>
         <span style={{ fontSize: '12px', color: 'rgb(var(--text-muted))' }}>{used} / {total} {unit} ({pct}%)</span>
@@ -90,7 +86,7 @@ export default function ServerDetailPage() {
         <Link href="/servers" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'rgb(var(--text-muted))', textDecoration: 'none', marginBottom: '16px' }}>
           <ArrowLeft style={{ width: '14px', height: '14px' }} /> Back to Servers
         </Link>
-        <div style={{ ...card, padding: '40px', textAlign: 'center' }}>
+        <div className="cx-card cx-border" style={{ padding: '40px', textAlign: 'center' }}>
           <XCircle style={{ width: '32px', height: '32px', color: '#EF4444', marginBottom: '8px' }} />
           <p style={{ fontSize: '14px', color: '#EF4444', margin: 0 }}>{error || 'Server not found'}</p>
         </div>
@@ -113,7 +109,7 @@ export default function ServerDetailPage() {
       </Link>
 
       {/* Hero */}
-      <div style={{ ...card, marginBottom: '20px', background: 'linear-gradient(135deg, rgba(249,115,22,0.05), rgba(var(--primary),0.03))' }}>
+      <div className="cx-card cx-border" style={{ marginBottom: '20px', background: 'linear-gradient(135deg, rgba(249,115,22,0.05), rgba(var(--primary),0.03))' }}>
         <div style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
           <div style={{ width: '56px', height: '56px', borderRadius: '14px', backgroundColor: 'rgba(249,115,22,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <ServerIcon style={{ width: '24px', height: '24px', color: '#F97316' }} />
@@ -128,7 +124,7 @@ export default function ServerDetailPage() {
               {s.host || s.ip}:{s.port || 22} • {s.os || s.username || 'Ubuntu'}
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div className="cx-flex cx-gap-8">
             <button onClick={handleTestSSH} disabled={testing} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '10px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', fontSize: '12px', fontWeight: 600, cursor: 'pointer', color: 'rgb(var(--text-muted))' }}>
               {testing ? <Loader2 style={{ width: '13px', height: '13px', animation: 'spin 1s linear infinite' }} /> : <Terminal style={{ width: '13px', height: '13px' }} />}
               Test SSH
@@ -141,7 +137,7 @@ export default function ServerDetailPage() {
       </div>
 
       {testResult && (
-        <div style={{ ...card, padding: '12px 20px', marginBottom: '16px', fontSize: '13px', fontWeight: 600, color: testResult.includes('✅') ? '#10B981' : '#EF4444' }}>
+        <div className="cx-card cx-border" style={{ padding: '12px 20px', marginBottom: '16px', fontSize: '13px', fontWeight: 600, color: testResult.includes('✅') ? '#10B981' : '#EF4444' }}>
           {testResult}
         </div>
       )}
@@ -154,7 +150,7 @@ export default function ServerDetailPage() {
           { icon: HardDrive, label: 'Disk', value: resources ? `${Math.round((diskUsed / (diskTotal || 1)) * 100)}%` : '—', color: '#8B5CF6', sub: resources ? `${diskUsed.toFixed(0)}/${diskTotal.toFixed(0)}GB` : '—' },
           { icon: Globe, label: 'Host', value: s.host || s.ip || '—', color: '#10B981', sub: `Port ${s.port || 22}` },
         ].map(m => (
-          <div key={m.label} style={{ ...card, padding: '16px 18px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div key={m.label} className="cx-card cx-border" style={{ padding: '16px 18px', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ width: '38px', height: '38px', borderRadius: '10px', backgroundColor: `${m.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <m.icon style={{ width: '16px', height: '16px', color: m.color }} />
             </div>
@@ -167,9 +163,9 @@ export default function ServerDetailPage() {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+      <div className="cx-grid-2">
         {/* Resource Usage */}
-        <div style={card}>
+        <div className="cx-card cx-border">
           <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(var(--border),0.15)' }}>
             <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0, color: 'rgb(var(--text-primary))' }}>Resource Usage</h3>
           </div>
@@ -187,7 +183,7 @@ export default function ServerDetailPage() {
         </div>
 
         {/* Server Info */}
-        <div style={card}>
+        <div className="cx-card cx-border">
           <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(var(--border),0.15)' }}>
             <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0, color: 'rgb(var(--text-primary))' }}>Server Details</h3>
           </div>

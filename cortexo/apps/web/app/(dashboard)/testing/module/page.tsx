@@ -29,7 +29,6 @@ interface ModuleRunResult {
 
 interface Target { id: number; name: string; baseUrl: string; }
 
-const card: React.CSSProperties = { borderRadius: '14px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', padding: '20px', transition: 'all 200ms' };
 const sevBadge = (s: string): React.CSSProperties => ({
   padding: '2px 8px', borderRadius: '4px', fontSize: '9px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
   color: s === 'critical' ? '#EF4444' : s === 'high' ? '#F59E0B' : s === 'medium' ? '#3B82F6' : '#6B7280',
@@ -101,7 +100,7 @@ export default function ModuleTestPage() {
       </div>
 
       {/* Target Selector */}
-      <div style={{ ...card, marginBottom: '20px', padding: '16px 20px' }}>
+      <div className="cx-card cx-border" style={{ marginBottom: '20px', padding: '16px 20px' }}>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           <label style={{ fontSize: '10px', fontWeight: 700, color: 'rgb(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>TARGET</label>
           <select value={selectedTarget} onChange={e => setSelectedTarget(Number(e.target.value))} style={{
@@ -122,8 +121,7 @@ export default function ModuleTestPage() {
         {modules.map(m => {
           const isRunning = running === m.id;
           return (
-            <div key={m.id} style={{
-              ...card, cursor: selectedTarget ? 'pointer' : 'not-allowed',
+            <div key={m.id} className="cx-card cx-border" style={{
               opacity: selectedTarget ? 1 : 0.5,
               borderColor: isRunning ? 'rgb(var(--primary))' : undefined,
               boxShadow: isRunning ? '0 0 0 2px rgba(var(--primary), 0.15)' : undefined,
@@ -157,7 +155,7 @@ export default function ModuleTestPage() {
 
       {/* Results */}
       {result && (
-        <div style={{ ...card, marginBottom: '24px', borderColor: result.failed > 0 ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)' }}>
+        <div className="cx-card cx-border" style={{ marginBottom: '24px', borderColor: result.failed > 0 ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)' }}>
           {/* Summary */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
             <div>
@@ -174,7 +172,7 @@ export default function ModuleTestPage() {
                 <div style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>PASS RATE</div>
               </div>
               <div style={{ width: '1px', height: '40px', backgroundColor: 'rgb(var(--border))' }} />
-              <div style={{ display: 'flex', gap: '12px' }}>
+              <div className="cx-flex cx-gap-12">
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '20px', fontWeight: 700, color: '#10B981' }}>{result.passed}</div>
                   <div style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>PASSED</div>
@@ -265,7 +263,7 @@ export default function ModuleTestPage() {
 
       {/* Run History */}
       {history.length > 1 && (
-        <div style={{ ...card }}>
+        <div className="cx-card cx-border">
           <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 12px' }}>Recent Module Runs</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {history.slice(1).map((h, i) => (

@@ -8,7 +8,6 @@ import {
 import { api } from '@/lib/api';
 import { useAutoLoadToken } from '@/lib/hooks';
 
-const card: React.CSSProperties = { backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', borderRadius: '14px', padding: '24px' };
 
 // ─── Toggle Component ───────────────────────────────────────────────
 
@@ -117,7 +116,7 @@ export default function NotificationsPage() {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div className="cx-flex-col" style={{ gap: "20px" }}>
       <div>
         <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <Bell style={{ width: '20px', height: '20px', color: 'rgb(var(--primary))' }} />
@@ -129,7 +128,7 @@ export default function NotificationsPage() {
       </div>
 
       {loading && (
-        <div style={{ ...card, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: 'rgb(var(--text-muted))', fontSize: '13px' }}>
+        <div className="cx-card cx-border" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: 'rgb(var(--text-muted))', fontSize: '13px' }}>
           Loading preferences...
         </div>
       )}
@@ -137,7 +136,7 @@ export default function NotificationsPage() {
       {!loading && categories.map((cat) => {
         const catPrefs = prefs.filter((p) => p.category === cat);
         return (
-          <div key={cat} style={card}>
+          <div key={cat} className="cx-card cx-border">
             <h3 style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgb(var(--text-muted))', margin: '0 0 16px' }}>{cat}</h3>
 
             {/* Column headers */}

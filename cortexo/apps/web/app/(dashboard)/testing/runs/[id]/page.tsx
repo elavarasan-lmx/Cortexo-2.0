@@ -54,7 +54,7 @@ export default function TestRunDetailPage() {
   if (filterStatus) filtered = filtered.filter((r: any) => r.status === filterStatus);
   if (filterCategory) filtered = filtered.filter((r: any) => r.caseCategory === filterCategory);
 
-  const categories = [...new Set((results || []).map((r: any) => r.caseCategory))].filter(Boolean).sort();
+  const categories = ([...new Set((results || []).map((r: any) => r.caseCategory as string))].filter(Boolean) as string[]).sort();
   const failedResults = (results || []).filter((r: any) => r.status === 'failed');
   const slowResults = (results || []).filter((r: any) => r.latencyMs > 2000);
 
@@ -188,7 +188,8 @@ export default function TestRunDetailPage() {
               </span>
 
               {/* Flags */}
-              {isSlow && <AlertTriangle style={{ width: '12px', height: '12px', color: '#F59E0B', flexShrink: 0 }} title="Slow (>2s)" />}
+              {isSlow && <span aria-label="Slow (>2s)" title="Slow (>2s)" style={{ display:'flex', alignItems:'center', flexShrink:0 }}><AlertTriangle style={{ width: '12px', height: '12px', color: '#F59E0B' }} /></span>}
+
               {isFailed && r.error && (
                 <span style={{ fontSize: '10px', color: '#EF4444', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.error}>
                   {r.error}

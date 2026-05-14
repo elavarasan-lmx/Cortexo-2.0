@@ -11,20 +11,6 @@ const steps = [
   { id: 3, label: 'Review & Deploy' },
 ];
 
-const card: React.CSSProperties = {
-  borderRadius: '12px', border: '1px solid rgb(var(--border))',
-  backgroundColor: 'rgb(var(--card))', overflow: 'hidden',
-};
-const labelStyle: React.CSSProperties = {
-  fontSize: '12px', fontWeight: 600, color: 'rgb(var(--text-muted))',
-  marginBottom: '6px', display: 'block', textTransform: 'uppercase',
-  letterSpacing: '0.04em',
-};
-const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '10px 14px', borderRadius: '8px',
-  border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))',
-  color: 'rgb(var(--text-primary))', fontSize: '13px', outline: 'none', boxSizing: 'border-box',
-};
 
 export default function DeployNewPage() {
   useAutoLoadToken();
@@ -72,7 +58,7 @@ export default function DeployNewPage() {
   return (
     <div style={{ maxWidth: '1080px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="cx-flex-between">
         <div>
           <h1 style={{ fontSize: '24px', fontWeight: 800, color: 'rgb(var(--text-primary))', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: '10px' }}>
             🚀 New Deployment
@@ -81,7 +67,7 @@ export default function DeployNewPage() {
             Configure and trigger a new deployment to your infrastructure.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="cx-flex cx-gap-8">
           <span style={{ fontSize: '11px', fontWeight: 600, padding: '6px 12px', borderRadius: '6px', backgroundColor: 'rgba(16,185,129,0.1)', color: '#10B981' }}>✓ Deployment</span>
           <span style={{ fontSize: '11px', fontWeight: 600, padding: '6px 12px', borderRadius: '6px', backgroundColor: 'rgba(124,58,237,0.1)', color: '#7C3AED' }}>⚡ Auto Deploy</span>
         </div>
@@ -120,30 +106,30 @@ export default function DeployNewPage() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '24px', alignItems: 'start' }}>
 
         {/* Left: Form */}
-        <div style={{ ...card, padding: '24px' }}>
+        <div className="cx-card cx-border" style={{ padding: '24px' }}>
 
           {/* Step 1: Configuration */}
           {step === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="cx-grid-2">
                 <div>
-                  <label style={labelStyle}>🗂 Project *</label>
-                  <select value={selectedProject} onChange={e => setSelectedProject(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
+                  <label className="cx-label">🗂 Project *</label>
+                  <select value={selectedProject} onChange={e => setSelectedProject(e.target.value)} className="cx-input" style={{ cursor: 'pointer' }}>
                     <option value="">Select project...</option>
                     {(projects || []).map((p: any) => (<option key={p.id} value={p.id}>{p.name || p.slug}</option>))}
                   </select>
                 </div>
                 <div>
-                  <label style={labelStyle}>🌿 Branch *</label>
-                  <select value={branch} onChange={e => setBranch(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
+                  <label className="cx-label">🌿 Branch *</label>
+                  <select value={branch} onChange={e => setBranch(e.target.value)} className="cx-input" style={{ cursor: 'pointer' }}>
                     <option>main</option><option>develop</option><option>staging</option>
                   </select>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="cx-grid-2">
                 <div>
-                  <label style={labelStyle}>🌐 Environment *</label>
-                  <div style={{ display: 'flex', gap: '6px' }}>
+                  <label className="cx-label">🌐 Environment *</label>
+                  <div className="cx-flex cx-gap-6">
                     {['Production', 'Staging', 'Development'].map(e => (
                       <button key={e} onClick={() => setEnv(e.toLowerCase())} style={{
                         flex: 1, padding: '8px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
@@ -155,35 +141,35 @@ export default function DeployNewPage() {
                   </div>
                 </div>
                 <div>
-                  <label style={labelStyle}>🖥 Server *</label>
-                  <select value={selectedServer} onChange={e => setSelectedServer(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
+                  <label className="cx-label">🖥 Server *</label>
+                  <select value={selectedServer} onChange={e => setSelectedServer(e.target.value)} className="cx-input" style={{ cursor: 'pointer' }}>
                     <option value="">Select server...</option>
                     {(servers || []).map((s: any) => (<option key={s.id} value={s.id}>{s.name || s.hostname}</option>))}
                   </select>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="cx-grid-2">
                 <div>
-                  <label style={labelStyle}>🏷 Commit / Tag</label>
-                  <input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace" }} value={commitTag} onChange={e => setCommitTag(e.target.value)} />
+                  <label className="cx-label">🏷 Commit / Tag</label>
+                  <input className="cx-input" style={{ fontFamily: "'JetBrains Mono', monospace" }} value={commitTag} onChange={e => setCommitTag(e.target.value)} />
                 </div>
                 <div>
-                  <label style={labelStyle}>📋 Deploy Strategy</label>
-                  <select style={{ ...inputStyle, cursor: 'pointer' }} value={strategy} onChange={e => setStrategy(e.target.value)}>
+                  <label className="cx-label">📋 Deploy Strategy</label>
+                  <select className="cx-input" style={{ cursor: 'pointer' }} value={strategy} onChange={e => setStrategy(e.target.value)}>
                     <option>Rolling Update</option><option>Blue/Green</option><option>Canary</option><option>Recreate</option>
                   </select>
                 </div>
               </div>
               <div>
-                <label style={labelStyle}>📝 Deploy Notes</label>
-                <textarea style={{ ...inputStyle, minHeight: '70px', resize: 'vertical', fontFamily: "'JetBrains Mono', monospace" }} placeholder="Add deployment notes or changelog..." value={notes} onChange={e => setNotes(e.target.value)} />
+                <label className="cx-label">📝 Deploy Notes</label>
+                <textarea className="cx-input" style={{ minHeight: '70px', resize: 'vertical', fontFamily: "'JetBrains Mono', monospace" }} placeholder="Add deployment notes or changelog..." value={notes} onChange={e => setNotes(e.target.value)} />
               </div>
             </div>
           )}
 
           {/* Step 2: Pre-Deploy Options */}
           {step === 2 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="cx-flex-col" style={{ gap: "16px" }}>
               <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>Pre-Deploy Options</h3>
               {[
                 { label: 'Run pre-deploy script', desc: 'Execute setup scripts before deployment', checked: preCheck, toggle: () => setPreCheck(!preCheck) },
@@ -209,7 +195,7 @@ export default function DeployNewPage() {
 
           {/* Step 3: Review & Deploy */}
           {step === 3 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="cx-flex-col" style={{ gap: "16px" }}>
               <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>Review & Deploy</h3>
               <div style={{ padding: '14px', borderRadius: '10px', backgroundColor: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <Check style={{ width: '18px', height: '18px', color: '#10B981' }} />
@@ -245,7 +231,7 @@ export default function DeployNewPage() {
         {/* Right: Deploy Summary Sidebar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', position: 'sticky', top: '20px' }}>
           {/* Summary */}
-          <div style={card}>
+          <div className="cx-card cx-border">
             <div style={{ padding: '20px', borderBottom: '1px solid rgba(var(--border),0.4)' }}>
               <h4 style={{ fontSize: '14px', fontWeight: 700, margin: 0, color: 'rgb(var(--text-primary))' }}>Deploy Summary</h4>
             </div>
@@ -265,7 +251,7 @@ export default function DeployNewPage() {
           </div>
 
           {/* Target Server */}
-          <div style={card}>
+          <div className="cx-card cx-border">
             <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(var(--border),0.4)' }}>
               <h4 style={{ fontSize: '14px', fontWeight: 700, margin: 0, color: 'rgb(var(--text-primary))' }}>Target Server</h4>
             </div>
@@ -291,7 +277,7 @@ export default function DeployNewPage() {
           </div>
 
           {/* Recent Deploys */}
-          <div style={card}>
+          <div className="cx-card cx-border">
             <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(var(--border),0.4)' }}>
               <h4 style={{ fontSize: '14px', fontWeight: 700, margin: 0, color: 'rgb(var(--text-primary))' }}>Recent Deploys</h4>
             </div>
@@ -315,7 +301,7 @@ export default function DeployNewPage() {
         <button onClick={() => step > 1 ? setStep(s => s - 1) : router.push('/deployments')} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 18px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', fontSize: '13px', fontWeight: 600, cursor: 'pointer', color: 'rgb(var(--text-primary))' }}>
           {step === 1 ? 'Cancel' : <><ArrowLeft style={{ width: '14px', height: '14px' }} /> Back</>}
         </button>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div className="cx-flex cx-gap-10">
           {step === 3 && (
             <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 18px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', fontSize: '13px', fontWeight: 600, cursor: 'pointer', color: 'rgb(var(--text-primary))' }}>
               <Save style={{ width: '14px', height: '14px' }} /> Save as Draft

@@ -40,35 +40,8 @@ const categoryMeta: Record<string, { icon: any; label: string; color: string; de
   email:   { icon: Mail,      label: 'Email/SMTP', color: '#3B82F6', description: 'SMTP credentials for sending email notifications' },
 };
 
-const card: React.CSSProperties = {
-  backgroundColor: 'rgb(var(--surface))',
-  border: '1px solid rgb(var(--border))',
-  borderRadius: '14px',
-};
 
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  boxSizing: 'border-box',
-  padding: '10px 14px',
-  fontSize: '13px',
-  borderRadius: '10px',
-  border: '1px solid rgb(var(--border))',
-  backgroundColor: 'rgb(var(--surface-hover))',
-  color: 'rgb(var(--text-primary))',
-  outline: 'none',
-  fontFamily: "'JetBrains Mono', monospace",
-  transition: 'border-color 200ms',
-};
 
-const labelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: '10px',
-  fontWeight: 700,
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-  color: 'rgb(var(--text-muted))',
-  marginBottom: '6px',
-};
 
 export default function CredentialsPage() {
   useAutoLoadToken();
@@ -144,7 +117,7 @@ export default function CredentialsPage() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div className="cx-flex-col" style={{ gap: "20px" }}>
       {/* Toast */}
       {toast && (
         <div style={{
@@ -191,15 +164,14 @@ export default function CredentialsPage() {
         const configuredCount = cat.keys.filter(k => k.configured).length;
 
         return (
-          <div key={cat.id} style={{
-            ...card,
+          <div key={cat.id} className="cx-card cx-border" style={{
             borderTop: `3px solid ${configuredCount === cat.keys.length ? '#10B981' : meta.color}`,
             overflow: 'hidden',
           }}>
             {/* Card header */}
             <div style={{ padding: '18px 20px', borderBottom: '1px solid rgb(var(--border))' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div className="cx-flex-between">
+                <div className="cx-flex cx-items-center cx-gap-12">
                   <div style={{
                     width: '40px', height: '40px', borderRadius: '10px',
                     backgroundColor: `${meta.color}15`,
@@ -208,7 +180,7 @@ export default function CredentialsPage() {
                     <Icon style={{ width: '18px', height: '18px', color: meta.color }} />
                   </div>
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="cx-flex cx-items-center cx-gap-8">
                       <span style={{ fontSize: '15px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>{meta.label}</span>
                       {configuredCount > 0 && (
                         <span style={{
@@ -232,9 +204,9 @@ export default function CredentialsPage() {
 
                 return (
                   <div key={k.key}>
-                    <label style={labelStyle}>{k.label}</label>
+                    <label className="cx-label">{k.label}</label>
                     {saved && !editing[k.key] ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div className="cx-flex cx-items-center cx-gap-8">
                         <div style={{
                           flex: 1, padding: '10px 14px', borderRadius: '10px',
                           border: '1px solid rgba(16,185,129,0.2)',
@@ -273,12 +245,12 @@ export default function CredentialsPage() {
                         </button>
                       </div>
                     ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div className="cx-flex cx-items-center cx-gap-8">
                         <div style={{ position: 'relative', flex: 1 }}>
                           <input
                             type={revealed[k.key] ? 'text' : 'password'}
                             autoFocus={!!editing[k.key]}
-                            style={inputStyle}
+                            className="cx-input"
                             placeholder={editing[k.key] ? 'Paste new token...' : `Enter ${k.label}...`}
                             value={values[k.key] || ''}
                             onChange={e => setValues(v => ({ ...v, [k.key]: e.target.value }))}

@@ -13,12 +13,6 @@ import {
 import { useModal } from '@/components/modal-provider';
 import { useToastStore } from '@/lib/toast-store';
 
-const card: React.CSSProperties = { borderRadius: '14px', backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', overflow: 'hidden' };
-const row: React.CSSProperties = { display: 'grid', gridTemplateColumns: '140px 1fr', gap: '8px', padding: '8px 0', borderBottom: '1px solid rgb(var(--border))', alignItems: 'center' };
-const rlbl: React.CSSProperties = { fontSize: '11px', fontWeight: 600, color: 'rgb(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.04em' };
-const rval: React.CSSProperties = { fontSize: '13px', color: 'rgb(var(--text-primary))', fontFamily: "'JetBrains Mono', monospace", wordBreak: 'break-all' };
-const inp: React.CSSProperties = { width: '100%', padding: '6px 10px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-primary))', fontSize: '12px', fontFamily: "'JetBrains Mono', monospace", outline: 'none', boxSizing: 'border-box' };
-const secHead: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 8px', padding: '10px 0 6px', borderBottom: '2px solid rgba(var(--primary), 0.2)' };
 const feedLabels: Record<string, string> = { '0': 'PHP Encryption', '1': 'Broadcast', '2': 'Text File', '3': 'WebSocket', '4': 'Native Socket' };
 const wsLabels: Record<string, string> = { '1': 'Socket.io', '2': 'Native WebSocket' };
 
@@ -126,22 +120,22 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
   // Helper: show value or input
   const field = (key: string, val: string, placeholder?: string) =>
-    editing ? <input style={inp} value={(form as unknown as Record<string, string>)[key] || ''} onChange={e => u(key, e.target.value)} placeholder={placeholder} />
-    : <span style={rval}>{val || '—'}</span>;
+    editing ? <input className="cx-input" value={(form as unknown as Record<string, string>)[key] || ''} onChange={e => u(key, e.target.value)} placeholder={placeholder} />
+    : <span className="cx-value">{val || '—'}</span>;
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+      <div className="cx-flex-between" style={{ marginBottom: "20px" }}>
         <button onClick={() => router.push('/projects')} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: 0, background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'rgb(var(--text-muted))' }}>
           <ArrowLeft style={{ width: '14px', height: '14px' }} /> Back to Projects
         </button>
       </div>
 
-      <div style={{ ...card, padding: '24px', marginBottom: '20px' }}>
+      <div className="cx-card cx-border" style={{ padding: '24px', marginBottom: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-              {editing ? <input style={{ ...inp, fontSize: '18px', fontWeight: 700, fontFamily: 'inherit', padding: '6px 12px' }} value={form.name} onChange={e => u('name', e.target.value)} />
+              {editing ? <input className="cx-input" style={{ fontSize: "18px", fontWeight: 700, fontFamily: "inherit", padding: "6px 12px" }} value={form.name} onChange={e => u('name', e.target.value)} />
                 : <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>{String(p.name)}</h1>}
               <span style={{ padding: '3px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, backgroundColor: `${productColor}15`, color: productColor, border: `1px solid ${productColor}30` }}>
                 {productLabel}
@@ -194,36 +188,36 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
 
         {/* Client Info */}
-        <div style={{ ...card, padding: '20px' }}>
-          <h3 style={secHead}><Globe style={{ width: '14px', height: '14px', color: 'rgb(var(--primary))' }} /> Client Info</h3>
-          <div style={row}><span style={rlbl}>Slug</span>{field('clientSlug', s.clientSlug, 'e.g. vijaybullion')}</div>
-          <div style={row}><span style={rlbl}>Product</span>
+        <div className="cx-card cx-border" style={{ padding: '20px' }}>
+          <h3 className="cx-sec-head"><Globe style={{ width: '14px', height: '14px', color: 'rgb(var(--primary))' }} /> Client Info</h3>
+          <div className="cx-row"><span className="cx-label">Slug</span>{field('clientSlug', s.clientSlug, 'e.g. vijaybullion')}</div>
+          <div className="cx-row"><span className="cx-label">Product</span>
             {editing ? (
-              <div style={{ display: 'flex', gap: '6px' }}>
+              <div className="cx-flex cx-gap-6">
                 {(['lite', 'trade'] as const).map(t => (
                   <button key={t} onClick={() => u('productType', t)} style={{ padding: '4px 14px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', border: form.productType === t ? `1.5px solid ${t === 'trade' ? '#F59E0B' : '#10B981'}` : '1px solid rgb(var(--border))', backgroundColor: form.productType === t ? `${t === 'trade' ? '#F59E0B' : '#10B981'}15` : 'transparent', color: form.productType === t ? (t === 'trade' ? '#F59E0B' : '#10B981') : 'rgb(var(--text-muted))' }}>{t === 'trade' ? 'Trade' : 'Lite'}</button>
                 ))}
               </div>
-            ) : <span style={{ ...rval, fontFamily: 'inherit', fontWeight: 600, color: productColor }}>{productLabel}</span>}
+            ) : <span className="cx-value" style={{ fontFamily: "inherit", fontWeight: 600, color: productColor }}>{productLabel}</span>}
           </div>
-          <div style={row}><span style={rlbl}>Android Ver</span>{field('androidVersion', s.androidVersion, '1.0.0')}</div>
-          <div style={row}><span style={rlbl}>iOS Ver</span>{field('iosVersion', s.iosVersion, '1.0.0')}</div>
-          <div style={row}><span style={rlbl}>Repo</span>{field('repoUrl', String(p.repoUrl || ''), 'https://github.com/...')}</div>
-          <div style={{ ...row, borderBottom: 'none' }}><span style={rlbl}>Branch</span>{field('defaultBranch', String(p.defaultBranch || 'main'), 'main')}</div>
+          <div className="cx-row"><span className="cx-label">Android Ver</span>{field('androidVersion', s.androidVersion, '1.0.0')}</div>
+          <div className="cx-row"><span className="cx-label">iOS Ver</span>{field('iosVersion', s.iosVersion, '1.0.0')}</div>
+          <div className="cx-row"><span className="cx-label">Repo</span>{field('repoUrl', String(p.repoUrl || ''), 'https://github.com/...')}</div>
+          <div className="cx-row" style={{ borderBottom: "none" }}><span className="cx-label">Branch</span>{field('defaultBranch', String(p.defaultBranch || 'main'), 'main')}</div>
         </div>
 
         {/* Domain & URLs */}
-        <div style={{ ...card, padding: '20px' }}>
-          <h3 style={secHead}><ExternalLink style={{ width: '14px', height: '14px', color: 'rgb(var(--primary))' }} /> Domain & URLs</h3>
-          <div style={row}><span style={rlbl}>Domain</span>{field('domain', s.domain, 'vijaybullion.com')}</div>
-          <div style={row}><span style={rlbl}>Web URL</span>{field('webBaseUrl', s.webBaseUrl, 'http://www.domain.com/')}</div>
-          <div style={row}><span style={rlbl}>Admin URL</span>{field('adminBaseUrl', s.adminBaseUrl, 'http://www.domain.com/admin/')}</div>
-          <div style={row}><span style={rlbl}>Mobile API</span>{field('appBaseUrl', s.appBaseUrl, 'http://www.domain.com/mobileapi/')}</div>
-          <div style={row}><span style={rlbl}>Admin User</span>{field('adminUser', s.adminUser, 'admin')}</div>
-          <div style={{ ...row, borderBottom: 'none' }}><span style={rlbl}>Admin Pass</span>
+        <div className="cx-card cx-border" style={{ padding: '20px' }}>
+          <h3 className="cx-sec-head"><ExternalLink style={{ width: '14px', height: '14px', color: 'rgb(var(--primary))' }} /> Domain & URLs</h3>
+          <div className="cx-row"><span className="cx-label">Domain</span>{field('domain', s.domain, 'vijaybullion.com')}</div>
+          <div className="cx-row"><span className="cx-label">Web URL</span>{field('webBaseUrl', s.webBaseUrl, 'http://www.domain.com/')}</div>
+          <div className="cx-row"><span className="cx-label">Admin URL</span>{field('adminBaseUrl', s.adminBaseUrl, 'http://www.domain.com/admin/')}</div>
+          <div className="cx-row"><span className="cx-label">Mobile API</span>{field('appBaseUrl', s.appBaseUrl, 'http://www.domain.com/mobileapi/')}</div>
+          <div className="cx-row"><span className="cx-label">Admin User</span>{field('adminUser', s.adminUser, 'admin')}</div>
+          <div className="cx-row" style={{ borderBottom: "none" }}><span className="cx-label">Admin Pass</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%' }}>
-              {editing ? <input type={showAdminPass ? 'text' : 'password'} style={{ ...inp, flex: 1 }} value={form.adminPassword} onChange={e => u('adminPassword', e.target.value)} placeholder="••••••••" />
-              : <span style={{ ...rval, flex: 1 }}>{s.adminPassword ? (showAdminPass ? s.adminPassword : '•'.repeat(8)) : '—'}</span>}
+              {editing ? <input type={showAdminPass ? 'text' : 'password'} className="cx-input" style={{ flex: 1 }} value={form.adminPassword} onChange={e => u('adminPassword', e.target.value)} placeholder="••••••••" />
+              : <span className="cx-value" style={{ flex: 1 }}>{s.adminPassword ? (showAdminPass ? s.adminPassword : '•'.repeat(8)) : '—'}</span>}
               {s.adminPassword && (
                 <button onClick={() => setShowAdminPass(!showAdminPass)} style={{ padding: '4px', borderRadius: '6px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', color: 'rgb(var(--text-muted))', cursor: 'pointer', display: 'flex', flexShrink: 0 }} title={showAdminPass ? 'Hide' : 'Show'}>
                   {showAdminPass ? <EyeOff style={{ width: '13px', height: '13px' }} /> : <Eye style={{ width: '13px', height: '13px' }} />}
@@ -234,16 +228,16 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         </div>
 
         {/* MySQL Database */}
-        <div style={{ ...card, padding: '20px' }}>
-          <h3 style={secHead}><Database style={{ width: '14px', height: '14px', color: '#00758F' }} /> MySQL Database</h3>
-          <div style={row}><span style={rlbl}>Host</span>{field('dbHost', s.dbHost, 'localhost')}</div>
-          <div style={row}><span style={rlbl}>Port</span>{field('dbPort', s.dbPort, '3306')}</div>
-          <div style={row}><span style={rlbl}>Database</span>{field('dbName', s.dbName, 'client_db')}</div>
-          <div style={row}><span style={rlbl}>Username</span>{field('dbUser', s.dbUser, 'root')}</div>
-          <div style={{ ...row, borderBottom: 'none' }}><span style={rlbl}>Password</span>
+        <div className="cx-card cx-border" style={{ padding: '20px' }}>
+          <h3 className="cx-sec-head"><Database style={{ width: '14px', height: '14px', color: '#00758F' }} /> MySQL Database</h3>
+          <div className="cx-row"><span className="cx-label">Host</span>{field('dbHost', s.dbHost, 'localhost')}</div>
+          <div className="cx-row"><span className="cx-label">Port</span>{field('dbPort', s.dbPort, '3306')}</div>
+          <div className="cx-row"><span className="cx-label">Database</span>{field('dbName', s.dbName, 'client_db')}</div>
+          <div className="cx-row"><span className="cx-label">Username</span>{field('dbUser', s.dbUser, 'root')}</div>
+          <div className="cx-row" style={{ borderBottom: "none" }}><span className="cx-label">Password</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%' }}>
-              {editing ? <input type={showDbPass ? 'text' : 'password'} style={{ ...inp, flex: 1 }} value={form.dbPassword} onChange={e => u('dbPassword', e.target.value)} placeholder="••••••••" />
-              : <span style={{ ...rval, flex: 1 }}>{s.dbPassword ? (showDbPass ? s.dbPassword : '•'.repeat(8)) : '—'}</span>}
+              {editing ? <input type={showDbPass ? 'text' : 'password'} className="cx-input" style={{ flex: 1 }} value={form.dbPassword} onChange={e => u('dbPassword', e.target.value)} placeholder="••••••••" />
+              : <span className="cx-value" style={{ flex: 1 }}>{s.dbPassword ? (showDbPass ? s.dbPassword : '•'.repeat(8)) : '—'}</span>}
               {s.dbPassword && (
                 <button onClick={() => setShowDbPass(!showDbPass)} style={{ padding: '4px', borderRadius: '6px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', color: 'rgb(var(--text-muted))', cursor: 'pointer', display: 'flex', flexShrink: 0 }} title={showDbPass ? 'Hide' : 'Show'}>
                   {showDbPass ? <EyeOff style={{ width: '13px', height: '13px' }} /> : <Eye style={{ width: '13px', height: '13px' }} />}
@@ -254,34 +248,34 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         </div>
 
         {/* Rate & Socket */}
-        <div style={{ ...card, padding: '20px' }}>
-          <h3 style={secHead}><Radio style={{ width: '14px', height: '14px', color: '#818CF8' }} /> Rate & Socket</h3>
+        <div className="cx-card cx-border" style={{ padding: '20px' }}>
+          <h3 className="cx-sec-head"><Radio style={{ width: '14px', height: '14px', color: '#818CF8' }} /> Rate & Socket</h3>
 
-          <div style={row}><span style={rlbl}>WS Port</span>{field('wsPort', s.wsPort, '7124')}</div>
-          <div style={row}><span style={rlbl}>Socket.io Port</span>{field('socketIoPort', s.socketIoPort, '7125')}</div>
-          <div style={row}><span style={rlbl}>Socket URL</span>{field('socketBaseUrl', s.socketBaseUrl, 'http://www.domain.com/')}</div>
-          <div style={{ ...row, borderBottom: 'none' }}><span style={rlbl}>Native WS</span>{field('nativeSocketUrl', s.nativeSocketUrl, 'ws://domain.com/ws')}</div>
+          <div className="cx-row"><span className="cx-label">WS Port</span>{field('wsPort', s.wsPort, '7124')}</div>
+          <div className="cx-row"><span className="cx-label">Socket.io Port</span>{field('socketIoPort', s.socketIoPort, '7125')}</div>
+          <div className="cx-row"><span className="cx-label">Socket URL</span>{field('socketBaseUrl', s.socketBaseUrl, 'http://www.domain.com/')}</div>
+          <div className="cx-row" style={{ borderBottom: "none" }}><span className="cx-label">Native WS</span>{field('nativeSocketUrl', s.nativeSocketUrl, 'ws://domain.com/ws')}</div>
         </div>
 
         {/* Deploy & SDK */}
-        <div style={{ ...card, padding: '20px', gridColumn: '1 / -1' }}>
-          <h3 style={secHead}><Server style={{ width: '14px', height: '14px', color: '#10B981' }} /> Deploy & SDK</h3>
+        <div className="cx-card cx-border" style={{ padding: '20px', gridColumn: '1 / -1' }}>
+          <h3 className="cx-sec-head"><Server style={{ width: '14px', height: '14px', color: '#10B981' }} /> Deploy & SDK</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '24px' }}>
             <div>
-              <div style={row}><span style={rlbl}>Environment</span>
+              <div className="cx-row"><span className="cx-label">Environment</span>
                 {editing ? (
-                  <select style={{ ...inp, cursor: 'pointer' }} value={form.environment} onChange={e => u('environment', e.target.value)}>
+                  <select className="cx-input" style={{ cursor: "pointer" }} value={form.environment} onChange={e => u('environment', e.target.value)}>
                     <option value="production">Production</option><option value="staging">Staging</option><option value="development">Development</option>
                   </select>
-                ) : <span style={{ ...rval, fontFamily: 'inherit', textTransform: 'capitalize' }}>{s.environment || '—'}</span>}
+                ) : <span className="cx-value" style={{ fontFamily: "inherit", textTransform: "capitalize" }}>{s.environment || '—'}</span>}
               </div>
-              <div style={row}><span style={rlbl}>Server</span>
-                <span style={{ ...rval, fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div className="cx-row"><span className="cx-label">Server</span>
+                <span className="cx-value cx-flex cx-items-center cx-gap-6" style={{ fontFamily: "inherit" }}>
                   <Server style={{ width: '13px', height: '13px', color: '#10B981' }} />
                   {serverName}
                 </span>
               </div>
-              <div style={{ ...row, borderBottom: 'none' }}><span style={rlbl}>Server Path</span>{field('serverPath', s.serverPath, '/var/www/html/client')}</div>
+              <div className="cx-row" style={{ borderBottom: "none" }}><span className="cx-label">Server Path</span>{field('serverPath', s.serverPath, '/var/www/html/client')}</div>
             </div>
 
           </div>

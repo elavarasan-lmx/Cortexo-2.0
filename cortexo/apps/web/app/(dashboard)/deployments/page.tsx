@@ -9,7 +9,7 @@ import {
 import DeployForm, { type DeployFormInitialData } from '@/components/deploy-form';
 import { useModal } from '@/components/modal-provider';
 import { useState, useEffect } from 'react';
-import { api } from '@/lib/api';
+import { Deployment, Project, Server, api } from '@/lib/api';
 import { useCortexoQuery, useAutoLoadToken, useProjectLookup, resolveProjectName, timeAgo, formatDuration } from '@/lib/hooks';
 
 import { useToastStore } from '@/lib/toast-store';
@@ -198,7 +198,7 @@ export default function DeploymentsPage() {
 
   // Date range filter
   const now = new Date();
-  const dateFiltered = dateRange === -1 ? allDeploys : allDeploys.filter((d: any) => {
+  const dateFiltered = dateRange === -1 ? allDeploys : allDeploys.filter((d: Deployment) => {
     const created = new Date(d.createdAt);
     if (dateRange === 0) {
       return created.getDate() === now.getDate() && created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
@@ -208,26 +208,26 @@ export default function DeploymentsPage() {
   });
 
   const searched = searchQuery.trim()
-    ? dateFiltered.filter((d: any) => {
+    ? dateFiltered.filter((d: Deployment) => {
         const q = searchQuery.toLowerCase();
         const projName = resolveProjectName(d.projectId, lookup).toLowerCase();
         return projName.includes(q) || (d.branch || '').toLowerCase().includes(q) || (d.commitMessage || '').toLowerCase().includes(q) || (d.environment || '').toLowerCase().includes(q);
       })
     : dateFiltered;
-  const filtered = filter === 'all' ? searched : searched.filter((d: any) => d.status === filter);
+  const filtered = filter === 'all' ? searched : searched.filter((d: Deployment) => d.status === filter);
 
   // Compute stats
   const totalDeploys = dateFiltered.length;
-  const successDeploys = dateFiltered.filter((d: any) => d.status === 'success').length;
+  const successDeploys = dateFiltered.filter((d: Deployment) => d.status === 'success').length;
   const successRate = totalDeploys > 0 ? ((successDeploys / totalDeploys) * 100).toFixed(1) : '0.0';
   
   // Calculate average duration for successful deployments
-  const successWithDuration = dateFiltered.filter((d: any) => d.status === 'success' && d.durationMs);
+  const successWithDuration = dateFiltered.filter((d: Deployment) => d.status === 'success' && d.durationMs);
   const avgDurationMs = successWithDuration.length > 0 
-    ? successWithDuration.reduce((acc: number, d: any) => acc + d.durationMs, 0) / successWithDuration.length 
+    ? successWithDuration.reduce((acc: number, d: Deployment) => acc + (d.durationMs ?? 0), 0) / successWithDuration.length 
     : 0;
   
-  const failedToday = dateFiltered.filter((d: any) => {
+  const failedToday = dateFiltered.filter((d: Deployment) => {
     if (d.status !== 'failed') return false;
     const date = new Date(d.createdAt);
     const today = new Date();
@@ -239,7 +239,7 @@ export default function DeploymentsPage() {
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
       {/* ─── Header ─── */}
-      <div className="cx-flex-between" style={{ marginBottom: '24px' }}>
+      <div className="cx-flex-between cx-mb-24">
         <div className="cx-flex cx-items-center cx-gap-16">
           <h1 className="cx-fw-700 cx-text-primary cx-page-title" style={{ margin: 0 }}>Deployments</h1>
           <div className="cx-flex cx-items-center cx-gap-6" style={{ padding: '6px 12px', borderRadius: '12px', backgroundColor: 'rgba(22, 163, 74, 0.1)', border: '1px solid rgba(22, 163, 74, 0.2)' }}>
@@ -258,37 +258,37 @@ export default function DeploymentsPage() {
       {/* ─── Sub-page Tabs ─── */}
 
       {/* ─── Stat Cards ─── */}
-      <div className="cx-stats-4" style={{ marginBottom: '24px' }}>
+      <div className="cx-stats-4 cx-mb-24">
         <div className="cx-card cx-border cx-flex-col" style={{ padding: '18px', gap: '6px' }}>
-          <p className="cx-fw-500 cx-text-muted" style={{ margin: 0, fontSize: '12px' }}>Total Deploys</p>
+          <p className="cx-fw-500 cx-text-muted cx-text-12" style={{ margin: 0 }}>Total Deploys</p>
           <p className="cx-fw-700 cx-text-primary" style={{ margin: 0, fontSize: '28px' }}>{totalDeploys}</p>
-          <p className="cx-fw-500 cx-text-muted" style={{ margin: 0, fontSize: '11px' }}>All time</p>
+          <p className="cx-fw-500 cx-text-muted cx-text-11" style={{ margin: 0 }}>All time</p>
         </div>
         <div className="cx-card cx-border cx-flex-col" style={{ padding: '18px', gap: '6px' }}>
-          <p className="cx-fw-500 cx-text-muted" style={{ margin: 0, fontSize: '12px' }}>Success Rate</p>
+          <p className="cx-fw-500 cx-text-muted cx-text-12" style={{ margin: 0 }}>Success Rate</p>
           <p className="cx-fw-700" style={{ margin: 0, fontSize: '28px', color: '#16A34A' }}>{successRate}%</p>
-          <p className="cx-fw-500" style={{ margin: 0, fontSize: '11px', color: successDeploys > 0 ? '#16A34A' : 'rgb(var(--text-muted))' }}>{successDeploys} of {totalDeploys}</p>
+          <p className="cx-fw-500 cx-text-11" style={{ margin: 0, color: successDeploys > 0 ? '#16A34A' : 'rgb(var(--text-muted))' }}>{successDeploys} of {totalDeploys}</p>
         </div>
         <div className="cx-card cx-border cx-flex-col" style={{ padding: '18px', gap: '6px' }}>
-          <p className="cx-fw-500 cx-text-muted" style={{ margin: 0, fontSize: '12px' }}>Avg Duration</p>
+          <p className="cx-fw-500 cx-text-muted cx-text-12" style={{ margin: 0 }}>Avg Duration</p>
           <p className="cx-fw-700 cx-text-primary" style={{ margin: 0, fontSize: '28px' }}>{avgDurationMs ? formatDuration(avgDurationMs) : '0s'}</p>
-          <p className="cx-fw-500 cx-text-muted" style={{ margin: 0, fontSize: '11px' }}>Across successful deploys</p>
+          <p className="cx-fw-500 cx-text-muted cx-text-11" style={{ margin: 0 }}>Across successful deploys</p>
         </div>
         <div className="cx-card cx-border cx-flex-col" style={{ padding: '18px', gap: '6px' }}>
-          <p className="cx-fw-500 cx-text-muted" style={{ margin: 0, fontSize: '12px' }}>Failed Today</p>
+          <p className="cx-fw-500 cx-text-muted cx-text-12" style={{ margin: 0 }}>Failed Today</p>
           <p className="cx-fw-700" style={{ margin: 0, fontSize: '28px', color: '#EF4444' }}>{failedToday}</p>
-          <p className="cx-fw-500" style={{ margin: 0, fontSize: '11px', color: failedToday > 0 ? '#EF4444' : 'rgb(var(--text-muted))' }}>{failedToday > 0 ? 'Needs attention' : 'All clear'}</p>
+          <p className="cx-fw-500 cx-text-11" style={{ margin: 0, color: failedToday > 0 ? '#EF4444' : 'rgb(var(--text-muted))' }}>{failedToday > 0 ? 'Needs attention' : 'All clear'}</p>
         </div>
       </div>
 
       {/* ─── Filter Row ─── */}
-      <div className="cx-flex-between" style={{ marginBottom: '16px' }}>
+      <div className="cx-flex-between cx-mb-16">
         <div className="cx-flex cx-items-center cx-gap-12">
           {[
             { key: 'all', label: `All (${dateFiltered.length})`, activeColor: 'rgb(var(--primary))', activeBg: 'rgb(var(--primary))' },
-            { key: 'success', label: `✅ Success (${dateFiltered.filter((d: any) => d.status === 'success').length})`, activeColor: '#16A34A', activeBg: 'rgba(22,163,74,0.2)' },
-            { key: 'deploying', label: `⟳ Building (${dateFiltered.filter((d: any) => d.status === 'deploying' || d.status === 'running').length})`, activeColor: '#D97706', activeBg: 'rgba(217,119,6,0.2)' },
-            { key: 'failed', label: `✗ Failed (${dateFiltered.filter((d: any) => d.status === 'failed').length})`, activeColor: '#EF4444', activeBg: 'rgba(239,68,68,0.2)' },
+            { key: 'success', label: `✅ Success (${dateFiltered.filter((d: Deployment) => d.status === 'success').length})`, activeColor: '#16A34A', activeBg: 'rgba(22,163,74,0.2)' },
+            { key: 'deploying', label: `⟳ Building (${dateFiltered.filter((d: Deployment) => d.status === 'deploying' || d.status === 'running').length})`, activeColor: '#D97706', activeBg: 'rgba(217,119,6,0.2)' },
+            { key: 'failed', label: `✗ Failed (${dateFiltered.filter((d: Deployment) => d.status === 'failed').length})`, activeColor: '#EF4444', activeBg: 'rgba(239,68,68,0.2)' },
           ].map(btn => (
             <button key={btn.key} onClick={() => setFilter(btn.key)} style={{
               padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
@@ -325,19 +325,19 @@ export default function DeploymentsPage() {
       </div>
 
       {/* ─── Deployments Table ─── */}
-      <div className="cx-card cx-border" style={{ overflow: 'hidden' }}>
+      <div className="cx-card cx-border cx-overflow-hidden">
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
-            <tr style={{ backgroundColor: 'rgba(var(--text-muted), 0.05)', borderBottom: '1px solid rgb(var(--border))' }}>
-              <th className="cx-fw-600 cx-text-secondary" style={{ padding: '16px', fontSize: '13px' }}>Deploy ID</th>
-              <th className="cx-fw-600 cx-text-secondary" style={{ padding: '16px', fontSize: '13px' }}>Project</th>
-              <th className="cx-fw-600 cx-text-secondary" style={{ padding: '16px', fontSize: '13px' }}>Branch</th>
-              <th className="cx-fw-600 cx-text-secondary" style={{ padding: '16px', fontSize: '13px' }}>Env</th>
-              <th className="cx-fw-600 cx-text-secondary" style={{ padding: '16px', fontSize: '13px' }}>Status</th>
-              <th className="cx-fw-600 cx-text-secondary" style={{ padding: '16px', fontSize: '13px' }}>Duration</th>
-              <th className="cx-fw-600 cx-text-secondary" style={{ padding: '16px', fontSize: '13px' }}>Triggered By</th>
-              <th className="cx-fw-600 cx-text-secondary" style={{ padding: '16px', fontSize: '13px' }}>Time</th>
-              <th className="cx-fw-600 cx-text-secondary" style={{ padding: '16px', fontSize: '13px', textAlign: 'right' }}>Actions</th>
+            <tr className="cx-table-head">
+              <th className="cx-fw-600 cx-text-secondary cx-p-16 cx-text-13">Deploy ID</th>
+              <th className="cx-fw-600 cx-text-secondary cx-p-16 cx-text-13">Project</th>
+              <th className="cx-fw-600 cx-text-secondary cx-p-16 cx-text-13">Branch</th>
+              <th className="cx-fw-600 cx-text-secondary cx-p-16 cx-text-13">Env</th>
+              <th className="cx-fw-600 cx-text-secondary cx-p-16 cx-text-13">Status</th>
+              <th className="cx-fw-600 cx-text-secondary cx-p-16 cx-text-13">Duration</th>
+              <th className="cx-fw-600 cx-text-secondary cx-p-16 cx-text-13">Triggered By</th>
+              <th className="cx-fw-600 cx-text-secondary cx-p-16 cx-text-13">Time</th>
+              <th className="cx-fw-600 cx-text-secondary cx-p-16 cx-text-13" style={{ textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -360,39 +360,39 @@ export default function DeploymentsPage() {
                   onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                 >
                   {/* Deploy ID */}
-                  <td className="cx-fw-600 cx-text-accent cx-mono" style={{ padding: '16px', fontSize: '13px' }}>
+                  <td className="cx-fw-600 cx-text-accent cx-mono cx-p-16 cx-text-13">
                     #{deploy.id.toString().substring(0, 6)}
                   </td>
                   {/* Project */}
-                  <td className="cx-text-primary" style={{ padding: '16px', fontSize: '13px' }}>{projectName}</td>
+                  <td className="cx-text-primary cx-p-16 cx-text-13">{projectName}</td>
                   {/* Branch */}
-                  <td className="cx-text-secondary cx-mono" style={{ padding: '16px', fontSize: '13px' }}>{deploy.branch || 'main'}</td>
+                  <td className="cx-text-secondary cx-mono cx-p-16 cx-text-13">{deploy.branch || 'main'}</td>
                   {/* Env */}
-                  <td style={{ padding: '16px' }}>
+                  <td className="cx-p-16">
                     <span className="cx-fw-600" style={{ padding: '3px 8px', borderRadius: '4px', fontSize: '11px', backgroundColor: env.bg, color: env.color }}>
                       {deploy.environment.charAt(0).toUpperCase() + deploy.environment.slice(1, 4)}
                     </span>
                   </td>
                   {/* Status */}
-                  <td style={{ padding: '16px' }}>
+                  <td className="cx-p-16">
                     <span className="cx-flex cx-items-center cx-gap-4 cx-fw-600" style={{ display: 'inline-flex', padding: '6px 10px', borderRadius: '12px', fontSize: '12px', backgroundColor: st.bg, color: st.color }}>
                       <st.icon style={{ width: '12px', height: '12px' }} className={deploy.status === 'deploying' ? 'cx-spin' : ''} />
                       {st.label}
                     </span>
                   </td>
                   {/* Duration */}
-                  <td className="cx-text-secondary" style={{ padding: '16px', fontSize: '13px' }}>{deploy.durationMs ? formatDuration(deploy.durationMs) : '—'}</td>
+                  <td className="cx-text-secondary cx-p-16 cx-text-13">{deploy.durationMs ? formatDuration(deploy.durationMs) : '—'}</td>
                   {/* Triggered By */}
-                  <td style={{ padding: '16px' }}>
+                  <td className="cx-p-16">
                     <div className="cx-flex cx-items-center cx-gap-6">
                       <div className="cx-flex-center cx-fw-600" style={{ width: '20px', height: '20px', borderRadius: '10px', backgroundColor: getBadgeColor(triggerName), color: '#FFF', fontSize: '9px' }}>
                         {triggerInitials}
                       </div>
-                      <span className="cx-fw-500 cx-text-primary" style={{ fontSize: '12px' }}>{triggerName}</span>
+                      <span className="cx-fw-500 cx-text-primary cx-text-12">{triggerName}</span>
                     </div>
                   </td>
                   {/* Time */}
-                  <td className="cx-text-muted" style={{ padding: '16px', fontSize: '13px' }}>{timeAgo(deploy.createdAt)}</td>
+                  <td className="cx-text-muted cx-p-16 cx-text-13">{timeAgo(deploy.createdAt)}</td>
                   
                   {/* Actions */}
                   <td style={{ padding: '16px', textAlign: 'right' }}>

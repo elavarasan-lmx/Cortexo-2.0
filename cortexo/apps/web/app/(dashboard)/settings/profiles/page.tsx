@@ -20,16 +20,6 @@ interface DbProfile {
   username: string; password?: string; databaseName?: string; notes?: string;
 }
 
-const inp: React.CSSProperties = {
-  width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: '9px',
-  border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--bg))',
-  color: 'rgb(var(--text-primary))', fontSize: '13px', outline: 'none',
-  fontFamily: "'Geist Mono', 'JetBrains Mono', monospace",
-};
-const lbl: React.CSSProperties = {
-  display: 'block', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase',
-  letterSpacing: '0.04em', color: 'rgb(var(--text-muted))', marginBottom: '5px',
-};
 
 /* ── Source Modal ── */
 function SourceModal({ item, onClose, onSave }: { item: SourceProfile | null; onClose: () => void; onSave: (d: Partial<SourceProfile>) => Promise<void> }) {
@@ -103,12 +93,12 @@ function SourceModal({ item, onClose, onSave }: { item: SourceProfile | null; on
         {/* Content Body */}
         <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           
-          <div><label style={lbl}>Profile Name</label><input style={inp} value={f.name} onChange={e => u('name', e.target.value)} placeholder="e.g. WinBull App" /></div>
+          <div><label className="cx-label">Profile Name</label><input className="cx-input cx-mono" value={f.name} onChange={e => u('name', e.target.value)} placeholder="e.g. WinBull App" /></div>
 
           {/* REPOSITORY SELECTION */}
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '5px' }}>
-              <label style={{ ...lbl, marginBottom: 0 }}>Repository</label>
+              <label className="cx-label" style={{ marginBottom: 0 }}>Repository</label>
               <div style={{ display: 'flex', gap: '12px', fontSize: '11px', fontWeight: 600 }}>
                   <span onClick={() => setMode('github')} style={{ cursor: 'pointer', color: mode === 'github' ? '#818CF8' : 'rgb(var(--text-muted))', transition: 'color 0.2s' }}>GitHub</span>
                   <span onClick={() => setMode('manual')} style={{ cursor: 'pointer', color: mode === 'manual' ? '#818CF8' : 'rgb(var(--text-muted))', transition: 'color 0.2s' }}>Manual URL</span>
@@ -116,10 +106,10 @@ function SourceModal({ item, onClose, onSave }: { item: SourceProfile | null; on
             </div>
 
             {mode === 'manual' ? (
-              <input style={inp} value={f.repoUrl} onChange={e => u('repoUrl', e.target.value)} placeholder="git@github.com:org/repo.git" />
+              <input className="cx-input cx-mono" value={f.repoUrl} onChange={e => u('repoUrl', e.target.value)} placeholder="git@github.com:org/repo.git" />
             ) : (
               <div style={{ position: 'relative' }}>
-                <div onClick={(e) => { e.stopPropagation(); setDropdownOpen(!dropdownOpen); setBranchDropdownOpen(false); }} style={{ ...inp, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', backgroundColor: 'rgba(var(--bg), 0.5)' }}>
+                <div onClick={(e) => { e.stopPropagation(); setDropdownOpen(!dropdownOpen); setBranchDropdownOpen(false); }} className="cx-input cx-mono" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', backgroundColor: 'rgba(var(--bg), 0.5)' }}>
                   <span style={{ color: f.repoUrl ? 'rgb(var(--text-primary))' : 'rgb(var(--text-muted))' }}>
                     {f.repoUrl ? repos.find(r => `git@github.com:${r.name}.git` === f.repoUrl || r.url === f.repoUrl)?.name || f.repoUrl : 'Select a repository...'}
                   </span>
@@ -141,7 +131,7 @@ function SourceModal({ item, onClose, onSave }: { item: SourceProfile | null; on
                         const url = `git@github.com:${r.name}.git`;
                         return (
                           <div key={r.id} onClick={() => { u('repoUrl', url); if (!f.name) u('name', r.name); if(r.defaultBranch) u('branch', r.defaultBranch); setDropdownOpen(false); }} style={{ padding: '10px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(var(--primary), 0.08)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div className="cx-flex cx-items-center cx-gap-10">
                               <GitBranch style={{ width: '14px', height: '14px', color: 'rgb(var(--text-muted))' }} />
                               <span style={{ fontSize: '13px', color: 'rgb(var(--text-primary))', fontWeight: 500 }}>{r.name}</span>
                             </div>
@@ -158,16 +148,16 @@ function SourceModal({ item, onClose, onSave }: { item: SourceProfile | null; on
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
             <div style={{ position: 'relative' }}>
-              <label style={lbl}>Default Branch</label>
+              <label className="cx-label">Default Branch</label>
               {mode === 'github' ? (
-                <div onClick={(e) => { e.stopPropagation(); setBranchDropdownOpen(!branchDropdownOpen); setDropdownOpen(false); }} style={{ ...inp, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: f.repoUrl ? 'pointer' : 'not-allowed', backgroundColor: 'rgba(var(--bg), 0.5)', opacity: f.repoUrl ? 1 : 0.5 }}>
+                <div onClick={(e) => { e.stopPropagation(); setBranchDropdownOpen(!branchDropdownOpen); setDropdownOpen(false); }} className="cx-input cx-mono" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: f.repoUrl ? 'pointer' : 'not-allowed', backgroundColor: 'rgba(var(--bg), 0.5)', opacity: f.repoUrl ? 1 : 0.5 }}>
                   <span style={{ color: f.branch ? 'rgb(var(--text-primary))' : 'rgb(var(--text-muted))' }}>
                     {f.branch || 'Select branch...'}
                   </span>
                   <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>{loadingBranches ? 'Loading...' : `${branches.length} branches`}</span>
                 </div>
               ) : (
-                <input style={inp} value={f.branch} onChange={e => u('branch', e.target.value)} placeholder="main" />
+                <input className="cx-input cx-mono" value={f.branch} onChange={e => u('branch', e.target.value)} placeholder="main" />
               )}
               
               {branchDropdownOpen && mode === 'github' && (
@@ -188,7 +178,7 @@ function SourceModal({ item, onClose, onSave }: { item: SourceProfile | null; on
               )}
             </div>
           </div>
-          <div><label style={lbl}>Notes (optional)</label><input style={inp} value={f.notes} onChange={e => u('notes', e.target.value)} /></div>
+          <div><label className="cx-label">Notes (optional)</label><input className="cx-input cx-mono" value={f.notes} onChange={e => u('notes', e.target.value)} /></div>
         </div>
 
         {/* Footer */}
@@ -218,19 +208,19 @@ function DbModal({ item, onClose, onSave }: { item: DbProfile | null; onClose: (
           <button onClick={onClose} style={{ width: '28px', height: '28px', borderRadius: '7px', border: 'none', cursor: 'pointer', backgroundColor: 'rgba(var(--border),0.5)', color: 'rgb(var(--text-muted))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X style={{ width: '13px', height: '13px' }} /></button>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '18px' }}>
-          <div><label style={lbl}>Profile Name</label><input style={inp} value={f.name} onChange={e => u('name', e.target.value)} placeholder="Production MySQL" /></div>
+          <div><label className="cx-label">Profile Name</label><input className="cx-input cx-mono" value={f.name} onChange={e => u('name', e.target.value)} placeholder="Production MySQL" /></div>
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
-            <div><label style={lbl}>Host</label><input style={inp} value={f.host} onChange={e => u('host', e.target.value)} placeholder="192.168.1.100" /></div>
-            <div><label style={lbl}>Port</label><input style={inp} value={f.port} onChange={e => u('port', e.target.value)} /></div>
+            <div><label className="cx-label">Host</label><input className="cx-input cx-mono" value={f.host} onChange={e => u('host', e.target.value)} placeholder="192.168.1.100" /></div>
+            <div><label className="cx-label">Port</label><input className="cx-input cx-mono" value={f.port} onChange={e => u('port', e.target.value)} /></div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <div><label style={lbl}>Username</label><input style={inp} value={f.username} onChange={e => u('username', e.target.value)} placeholder="root" /></div>
-            <div><label style={lbl}>Password</label><input type="password" style={inp} value={f.password} onChange={e => u('password', e.target.value)} /></div>
+          <div className="cx-grid-2-sm">
+            <div><label className="cx-label">Username</label><input className="cx-input cx-mono" value={f.username} onChange={e => u('username', e.target.value)} placeholder="root" /></div>
+            <div><label className="cx-label">Password</label><input type="password" className="cx-input cx-mono" value={f.password} onChange={e => u('password', e.target.value)} /></div>
           </div>
-          <div><label style={lbl}>Default Database / Schema (optional)</label><input style={inp} value={f.databaseName} onChange={e => u('databaseName', e.target.value)} placeholder="e.g. production_db" /></div>
-          <div><label style={lbl}>Notes (optional)</label><input style={inp} value={f.notes} onChange={e => u('notes', e.target.value)} /></div>
+          <div><label className="cx-label">Default Database / Schema (optional)</label><input className="cx-input cx-mono" value={f.databaseName} onChange={e => u('databaseName', e.target.value)} placeholder="e.g. production_db" /></div>
+          <div><label className="cx-label">Notes (optional)</label><input className="cx-input cx-mono" value={f.notes} onChange={e => u('notes', e.target.value)} /></div>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="cx-flex cx-gap-8">
           <button onClick={onClose} style={{ flex: 1, padding: '9px', borderRadius: '9px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '13px', color: 'rgb(var(--text-secondary))' }}>Cancel</button>
           <button onClick={async () => { setSaving(true); await onSave({ ...f, port: parseInt(f.port) || 3306 }); setSaving(false); onClose(); }} disabled={!f.name || !f.host || !f.username || saving}
             style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px', padding: '9px', borderRadius: '9px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#fff', background: 'linear-gradient(135deg, #EC4899, #BE185D)', opacity: (!f.name || !f.host || !f.username || saving) ? 0.7 : 1 }}>
@@ -323,7 +313,7 @@ export default function ProfilesPage() {
     setOpenMenuId(openMenuId === id ? null : id);
   };
 
-  const card: React.CSSProperties = { borderRadius: '16px', backgroundColor: 'rgb(var(--card))', border: '1px solid rgb(var(--border))', overflow: 'visible', transition: 'all 300ms cubic-bezier(0.4,0,0.2,1)', position: 'relative' };
+  
 
   const KebabMenu = ({ id, onEdit, onDelete }: { id: string; onEdit: () => void; onDelete: () => void }) => (
     <div style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 10 }}>
@@ -359,7 +349,7 @@ export default function ProfilesPage() {
           {/* ── Source Profiles Section ── */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', padding: '20px 24px', borderRadius: '16px', background: 'linear-gradient(135deg, rgba(129,140,248,0.125), rgba(99,102,241,0.03))', border: '1px solid rgba(129,140,248,0.15)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div className="cx-flex cx-items-center cx-gap-14">
                 <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'linear-gradient(135deg, #818CF8, #6366F1)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(129,140,248,0.3)' }}>
                   <GitBranch style={{ width: '20px', height: '20px', color: '#fff' }} />
                 </div>
@@ -374,19 +364,19 @@ export default function ProfilesPage() {
             </div>
 
             {sources.length === 0 ? (
-              <div style={{ ...card, padding: '40px', textAlign: 'center' }}>
+              <div className="cx-card cx-border" style={{ padding: '40px', textAlign: 'center' }}>
                 <GitBranch style={{ width: '32px', height: '32px', color: 'rgb(var(--text-muted))', margin: '0 auto 10px' }} />
                 <p style={{ fontSize: '13px', color: 'rgb(var(--text-muted))', margin: 0 }}>No source profiles yet — add your first Git repo</p>
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '16px' }}>
                 {sources.map(s => (
-                  <div key={s.id} style={{ ...card, borderLeft: '3px solid #818CF8', boxShadow: '0 4px 20px rgba(129,140,248,0.1)' }}
+                  <div key={s.id} className="cx-card cx-border" style={{ borderLeft: '3px solid #818CF8', boxShadow: '0 4px 20px rgba(129,140,248,0.1)' }}
                     onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 8px 32px rgba(129,140,248,0.18)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
                     onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 4px 20px rgba(129,140,248,0.1)'; e.currentTarget.style.transform = 'none'; }}>
                     <KebabMenu id={s.id} onEdit={() => setSrcModal({ open: true, item: s })} onDelete={() => doDelete(s.id, s.name, 'source')} />
                     <div style={{ padding: '16px 18px 0 18px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div className="cx-flex cx-items-center cx-gap-10">
                         <div style={{ width: '36px', height: '36px', borderRadius: '9px', backgroundColor: 'rgba(129,140,248,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                           <GitBranch style={{ width: '16px', height: '16px', color: '#818CF8' }} />
                         </div>
@@ -417,7 +407,7 @@ export default function ProfilesPage() {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', padding: '20px 24px', borderRadius: '16px', background: 'linear-gradient(135deg, rgba(236,72,153,0.08), rgba(190,24,93,0.03))', border: '1px solid rgba(236,72,153,0.15)' }}>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div className="cx-flex cx-items-center cx-gap-14">
                 <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'linear-gradient(135deg, #EC4899, #BE185D)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(236,72,153,0.3)' }}>
                   <Database style={{ width: '20px', height: '20px', color: '#fff' }} />
                 </div>
@@ -432,19 +422,19 @@ export default function ProfilesPage() {
             </div>
 
             {dbs.length === 0 ? (
-              <div style={{ ...card, padding: '40px', textAlign: 'center' }}>
+              <div className="cx-card cx-border" style={{ padding: '40px', textAlign: 'center' }}>
                 <Database style={{ width: '32px', height: '32px', color: 'rgb(var(--text-muted))', margin: '0 auto 10px' }} />
                 <p style={{ fontSize: '13px', color: 'rgb(var(--text-muted))', margin: 0 }}>No DB profiles yet — add your first MySQL server</p>
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '16px' }}>
                 {dbs.map(d => (
-                  <div key={d.id} style={{ ...card, borderLeft: '3px solid #EC4899', boxShadow: '0 4px 20px rgba(236,72,153,0.1)' }}
+                  <div key={d.id} className="cx-card cx-border" style={{ borderLeft: '3px solid #EC4899', boxShadow: '0 4px 20px rgba(236,72,153,0.1)' }}
                     onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 8px 32px rgba(236,72,153,0.18)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
                     onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 4px 20px rgba(236,72,153,0.1)'; e.currentTarget.style.transform = 'none'; }}>
                     <KebabMenu id={d.id} onEdit={() => setDbModal({ open: true, item: d })} onDelete={() => doDelete(d.id, d.name, 'db')} />
                     <div style={{ padding: '16px 18px 0 18px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div className="cx-flex cx-items-center cx-gap-10">
                         <div style={{ width: '36px', height: '36px', borderRadius: '9px', backgroundColor: 'rgba(236,72,153,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                           <Server style={{ width: '16px', height: '16px', color: '#EC4899' }} />
                         </div>

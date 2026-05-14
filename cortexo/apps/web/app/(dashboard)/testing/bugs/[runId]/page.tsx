@@ -77,13 +77,13 @@ export default function BugReportPage() {
       </Link>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="cx-flex cx-items-center cx-gap-12">
           <Bug style={{ width: '24px', height: '24px', color: '#EF4444' }} />
           <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>
             Bug Report & Module Analysis
           </h1>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div className="cx-flex cx-items-center cx-gap-10">
           {exportResult && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px',
@@ -201,7 +201,7 @@ export default function BugReportPage() {
 
       {/* ─── BUGS TAB ─── */}
       {activeTab === 'bugs' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="cx-flex-col" style={{ gap: "8px" }}>
           {filteredBugs.length === 0 ? (
             <div style={{ padding: '40px', textAlign: 'center', color: 'rgb(var(--text-muted))' }}>
               {filterSeverity ? 'No bugs at this severity level.' : '🎉 No bugs found! Your codebase is healthy.'}

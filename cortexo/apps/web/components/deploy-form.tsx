@@ -94,14 +94,14 @@ export default function DeployForm({ onClose,onSuccess,initialData }:{ onClose:(
   const [pm2Script,setPm2Script]=useState(initialData?.pm2Script || '');
   const [pm2Interpreter,setPm2Interpreter]=useState(initialData?.pm2Interpreter || 'node');
   const [pm2Instances,setPm2Instances]=useState(initialData?.pm2Instances || '1');
-  const [pm2Restart]=useState(true);
+  const [pm2Restart, setPm2Restart]=useState(true);
   const [pm2Args,setPm2Args]=useState(initialData?.pm2Args || '');
 
   const [preDeployCmd,setPreDeployCmd]=useState(initialData?.preDeployCmd || '');
   const [postDeployCmd,setPostDeployCmd]=useState(initialData?.postDeployCmd || '');
   const [healthCheckUrl,setHealthCheckUrl]=useState(initialData?.healthCheckUrl || '');
-  const [notifyOnComplete]=useState(true);
-  const [truncateLogs]=useState(true);
+  const [notifyOnComplete, setNotifyOnComplete]=useState(true);
+  const [truncateLogs, setTruncateLogs]=useState(true);
 
   const [isClient, setIsClient] = useState(false);
 

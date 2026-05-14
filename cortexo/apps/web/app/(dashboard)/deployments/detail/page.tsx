@@ -10,10 +10,6 @@ import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAutoLoadToken } from '@/lib/hooks';
 
-const card: React.CSSProperties = {
-  borderRadius: '14px', border: '1px solid rgb(var(--border))',
-  backgroundColor: 'rgb(var(--surface))', overflow: 'hidden',
-};
 
 const statusIcon: Record<string, { icon: any; color: string }> = {
   success: { icon: CheckCircle, color: '#10B981' },
@@ -57,7 +53,7 @@ export default function DeployDetailPage() {
         <Link href="/deployments" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'rgb(var(--text-muted))', textDecoration: 'none', marginBottom: '16px' }}>
           <ArrowLeft style={{ width: '14px', height: '14px' }} /> Back to Deployments
         </Link>
-        <div style={{ ...card, padding: '40px', textAlign: 'center' }}>
+        <div className="cx-card cx-border" style={{ padding: '40px', textAlign: 'center' }}>
           <XCircle style={{ width: '32px', height: '32px', color: '#EF4444', marginBottom: '8px' }} />
           <p style={{ fontSize: '14px', color: '#EF4444', margin: 0 }}>{error || 'Deployment not found'}</p>
         </div>
@@ -77,7 +73,7 @@ export default function DeployDetailPage() {
       </Link>
 
       {/* Hero */}
-      <div style={{ ...card, marginBottom: '20px', background: `linear-gradient(135deg, ${stInfo.color}08, rgba(var(--primary),0.03))` }}>
+      <div className="cx-card cx-border" style={{ marginBottom: '20px', background: `linear-gradient(135deg, ${stInfo.color}08, rgba(var(--primary),0.03))` }}>
         <div style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
           <div style={{ width: '56px', height: '56px', borderRadius: '14px', backgroundColor: `${stInfo.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Rocket style={{ width: '24px', height: '24px', color: stInfo.color }} />
@@ -91,11 +87,11 @@ export default function DeployDetailPage() {
               <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, backgroundColor: 'rgba(239,68,68,0.1)', color: '#EF4444', textTransform: 'uppercase' }}>{d.environment || 'production'}</span>
             </div>
             <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: 'rgb(var(--text-muted))', flexWrap: 'wrap' }}>
-              {d.branch && <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><GitBranch style={{ width: '11px', height: '11px' }} />{d.branch}</span>}
-              {d.commitSha && <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><FileCode style={{ width: '11px', height: '11px' }} />{d.commitSha.slice(0, 7)}</span>}
-              {d.serverName && <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Server style={{ width: '11px', height: '11px' }} />{d.serverName}</span>}
-              {d.triggeredBy && <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><User style={{ width: '11px', height: '11px' }} />{d.triggeredBy}</span>}
-              {d.createdAt && <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Clock style={{ width: '11px', height: '11px' }} />{new Date(d.createdAt).toLocaleString()}</span>}
+              {d.branch && <span className="cx-flex cx-items-center cx-gap-4"><GitBranch style={{ width: '11px', height: '11px' }} />{d.branch}</span>}
+              {d.commitSha && <span className="cx-flex cx-items-center cx-gap-4"><FileCode style={{ width: '11px', height: '11px' }} />{d.commitSha.slice(0, 7)}</span>}
+              {d.serverName && <span className="cx-flex cx-items-center cx-gap-4"><Server style={{ width: '11px', height: '11px' }} />{d.serverName}</span>}
+              {d.triggeredBy && <span className="cx-flex cx-items-center cx-gap-4"><User style={{ width: '11px', height: '11px' }} />{d.triggeredBy}</span>}
+              {d.createdAt && <span className="cx-flex cx-items-center cx-gap-4"><Clock style={{ width: '11px', height: '11px' }} />{new Date(d.createdAt).toLocaleString()}</span>}
             </div>
           </div>
           {status === 'success' || status === 'completed' ? (
@@ -108,7 +104,7 @@ export default function DeployDetailPage() {
 
       {/* Commit message */}
       {d.commitMessage && (
-        <div style={{ ...card, padding: '14px 20px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="cx-card cx-border" style={{ padding: '14px 20px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <FileCode style={{ width: '14px', height: '14px', color: '#818CF8', flexShrink: 0 }} />
           <code style={{ fontSize: '13px', color: 'rgb(var(--text-primary))', fontFamily: "'JetBrains Mono', monospace" }}>{d.commitMessage}</code>
         </div>
@@ -116,7 +112,7 @@ export default function DeployDetailPage() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '16px' }}>
         {/* Pipeline Steps */}
-        <div style={card}>
+        <div className="cx-card cx-border">
           <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(var(--border),0.15)' }}>
             <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0 }}>Pipeline Steps</h3>
           </div>
@@ -142,7 +138,7 @@ export default function DeployDetailPage() {
         </div>
 
         {/* Logs */}
-        <div style={card}>
+        <div className="cx-card cx-border">
           <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(var(--border),0.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Terminal style={{ width: '14px', height: '14px', color: '#10B981' }} /> Build Logs

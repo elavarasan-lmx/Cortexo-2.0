@@ -45,12 +45,15 @@ export interface CreateProjectInput {
 }
 
 export interface Pipeline {
+  yamlConfig?: string;
   id: string;
   projectId: string;
   name: string;
   stages?: unknown;
   trigger?: string;
   status?: string;
+  isActive?: boolean;
+  lastRunStatus?: string;
   createdAt: string;
 }
 
@@ -71,7 +74,10 @@ export interface Deployment {
   targetId?: string;
   status: string;
   commitSha?: string;
+  commitMessage?: string;
   branch?: string;
+  environment?: string;
+  durationMs?: number;
   triggeredBy?: string;
   createdAt: string;
 }
@@ -92,6 +98,7 @@ export interface TrackedError {
   id: string;
   projectId: string;
   fingerprint: string;
+  module?: string;
   type: string;
   message: string;
   file?: string | null;
@@ -184,9 +191,21 @@ export interface Server {
 export interface ServerMount {
   id: number;
   serverId: number;
+  name?: string;
   localPath: string;
+  localMountPath?: string;
   remotePath: string;
   status: string;
+  createdAt?: string;
+}
+
+export interface MountFileEntry {
+  name: string;
+  type: string;
+  size: number;
+  path?: string;
+  isDirectory?: boolean;
+  modifiedAt?: string;
 }
 
 export interface LogSource {
@@ -201,6 +220,13 @@ export interface DeployConfig {
   name: string;
   config: Record<string, unknown>;
   createdAt?: string;
+  /* push-page fields */
+  projectId?: string;
+  serverId?: number;
+  clientSlug?: string;
+  domain?: string;
+  deployPath?: string;
+  deployUser?: string;
 }
 
 export interface AuditLog {
@@ -209,8 +235,9 @@ export interface AuditLog {
   resource: string;
   resourceId?: string;
   userId: string;
+  userName?: string;
   description?: string;
-  metadata?: Record<string, unknown>;
+  metadata?: Record<string, unknown> | string;
   createdAt: string;
 }
 
@@ -330,6 +357,7 @@ export interface KnowledgeHistoryEntry {
   question: string;
   answer?: string;
   provider?: string;
+  sourcesUsed?: string[];
   createdAt: string;
 }
 
@@ -337,6 +365,7 @@ export interface KnowledgeProvider {
   id: string;
   name: string;
   available: boolean;
+  free?: boolean;
 }
 
 export interface KnowledgeAnswer {
@@ -349,12 +378,19 @@ export interface KnowledgeAnswer {
 export interface DevopsDoc {
   id: string | number;
   title: string;
+  description?: string;
   content?: string;
   category?: string;
   tags?: string[];
   tool?: string;
   icon?: string;
   color?: string;
+  tips?: string[];
+  tipCount?: number;
+  commandCount?: number;
+  snippetCount?: number;
+  commands?: DevopsDocCommand[];
+  configSnippets?: DevopsDocSnippet[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -378,20 +414,103 @@ export interface CustomDoc {
   updatedAt?: string;
 }
 
-export interface Checklist {
-  id: number;
-  title: string;
-  status: 'pending' | 'in_progress' | 'done';
-  items?: ChecklistItem[];
-  createdAt?: string;
-  updatedAt?: string;
+export interface DevopsDocCommand {
+  cmd: string;
+  desc: string;
 }
 
-export interface ChecklistItem {
+export interface DevopsDocSnippet {
+  title: string;
+  lang: string;
+  code: string;
+}
+
+export interface ChecklistStep {
   id?: number;
-  label: string;
+  title: string;
+  label?: string;
   done: boolean;
   order?: number;
+}
+
+export interface DevopsChecklist {
+  id: number;
+  title: string;
+  status: 'pending' | 'in_progress' | 'done' | 'completed';
+  steps: ChecklistStep[];
+  clientName?: string;
+  projectType?: string;
+  createdAt?: string;
+}
+
+export interface SourceProfile {
+  id: string;
+  name: string;
+  repoUrl?: string;
+  branch?: string;
+  authType?: string;
+  authValue?: string;
+  notes?: string;
+  createdAt?: string;
+}
+
+export interface DbProfile {
+  id: string;
+  name: string;
+  host: string;
+  port?: number;
+  username: string;
+  password?: string;
+  databaseName?: string;
+  notes?: string;
+  createdAt?: string;
+}
+
+export interface AlertChannel {
+  id: string;
+  name: string;
+  type: string;
+  config: Record<string, unknown>;
+  enabled?: boolean;
+  createdAt?: string;
+}
+
+export interface AlertRule {
+  id: string;
+  name: string;
+  condition: string;
+  channelId?: string;
+  enabled?: boolean;
+  createdAt?: string;
+}
+
+export interface AlertHistoryEntry {
+  id: string;
+  ruleId?: string;
+  channelId?: string;
+  message: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface OrgMember {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  status?: string;
+  lastActive?: string;
+  createdAt?: string;
+}
+
+export interface KnowledgeDoc {
+  id: string;
+  title: string;
+  content?: string;
+  category?: string;
+  tags?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 
@@ -400,6 +519,9 @@ export interface ChecklistItem {
 class ApiClient {
   private baseUrl: string;
   private token: string | null = null;
+  private refreshToken: string | null = null;
+  private isRefreshing = false;
+  private refreshQueue: Array<{ resolve: (token: string) => void; reject: (err: Error) => void }> = [];
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
@@ -407,7 +529,7 @@ class ApiClient {
 
   setToken(token: string) { this.token = token; }
 
-  private async request<T>(method: string, path: string, body?: unknown): Promise<ApiResponse<T>> {
+  private async request<T>(method: string, path: string, body?: unknown, _skipRefresh = false): Promise<ApiResponse<T>> {
     const headers: Record<string, string> = {};
     if (body !== undefined) headers['Content-Type'] = 'application/json';
     if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
@@ -420,9 +542,15 @@ class ApiClient {
 
     const json = await res.json();
     if (!res.ok) {
-      if (res.status === 401) {
-        this.token = null;
-        if (typeof window !== 'undefined') localStorage.removeItem('cortexo_token');
+      if (res.status === 401 && !_skipRefresh) {
+        // Attempt silent token refresh before kicking to login
+        const refreshed = await this._tryRefresh();
+        if (refreshed) {
+          // Retry the original request with the new token
+          return this.request<T>(method, path, body, true);
+        }
+        // Refresh failed — clear everything and redirect
+        this._clearAuth();
         if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
           window.location.href = '/login';
         }
@@ -430,6 +558,74 @@ class ApiClient {
       throw new ApiError(json.error || 'Request failed', res.status, json);
     }
     return json;
+  }
+
+  /**
+   * Attempt to refresh the access token using the stored refresh token.
+   * Coalesces concurrent refresh attempts to prevent race conditions.
+   */
+  private async _tryRefresh(): Promise<boolean> {
+    const storedRefresh = this.refreshToken ||
+      (typeof window !== 'undefined' ? localStorage.getItem('cortexo_refresh_token') : null);
+
+    if (!storedRefresh) return false;
+
+    // If already refreshing, queue this request
+    if (this.isRefreshing) {
+      return new Promise<boolean>((resolve) => {
+        this.refreshQueue.push({
+          resolve: () => resolve(true),
+          reject: () => resolve(false),
+        });
+      });
+    }
+
+    this.isRefreshing = true;
+    try {
+      const res = await fetch(`${this.baseUrl}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: storedRefresh }),
+      });
+
+      if (!res.ok) {
+        this._drainRefreshQueue(false);
+        return false;
+      }
+
+      const json = await res.json() as ApiResponse<{ token: string; refreshToken: string }>;
+      if (json.data?.token) {
+        this._saveToken(json.data.token);
+        this._saveRefreshToken(json.data.refreshToken);
+        this._drainRefreshQueue(true);
+        return true;
+      }
+      this._drainRefreshQueue(false);
+      return false;
+    } catch {
+      this._drainRefreshQueue(false);
+      return false;
+    } finally {
+      this.isRefreshing = false;
+    }
+  }
+
+  private _drainRefreshQueue(success: boolean) {
+    const queue = [...this.refreshQueue];
+    this.refreshQueue = [];
+    for (const { resolve, reject } of queue) {
+      if (success) resolve(this.token!);
+      else reject(new Error('Token refresh failed'));
+    }
+  }
+
+  private _clearAuth() {
+    this.token = null;
+    this.refreshToken = null;
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('cortexo_token');
+      localStorage.removeItem('cortexo_refresh_token');
+    }
   }
 
   // ─── Projects ─────────────────────────────────────────────────────────────
@@ -625,9 +821,9 @@ class ApiClient {
   deleteDeployConfig(id: number)                     { return this.request<{ success: boolean }>('DELETE', `/deploy-configs/${id}`); }
 
   // ─── Organization & Members ────────────────────────────────────────────────
-  getUsers()                                         { return this.request<Record<string, unknown>[]>('GET', '/org/members'); }
-  inviteMember(data: { email: string; role?: string }) { return this.request<Record<string, unknown>>('POST', '/org/members/invite', data); }
-  updateMemberRole(id: string, role: string)         { return this.request<Record<string, unknown>>('PUT', `/org/members/${id}/role`, { role }); }
+  getUsers()                                         { return this.request<OrgMember[]>('GET', '/org/members'); }
+  inviteMember(data: { email: string; role?: string }) { return this.request<OrgMember>('POST', '/org/members/invite', data); }
+  updateMemberRole(id: string, role: string)         { return this.request<OrgMember>('PUT', `/org/members/${id}/role`, { role }); }
   removeMember(id: string)                           { return this.request<{ success: boolean }>('DELETE', `/org/members/${id}`); }
 
   // ─── Audit Trail ──────────────────────────────────────────────────────────
@@ -672,12 +868,14 @@ class ApiClient {
   async register(data: { name: string; email: string; password: string; orgName?: string }) {
     const res = await this.request<AuthResponse>('POST', '/auth/register', data);
     if (res.data?.token) this._saveToken(res.data.token);
+    if (res.data?.refreshToken) this._saveRefreshToken(res.data.refreshToken);
     return res;
   }
 
   async login(data: { email: string; password: string }) {
     const res = await this.request<AuthResponse>('POST', '/auth/login', data);
     if (res.data?.token) this._saveToken(res.data.token);
+    if (res.data?.refreshToken) this._saveRefreshToken(res.data.refreshToken);
     return res;
   }
 
@@ -694,14 +892,15 @@ class ApiClient {
   }
 
   logout() {
-    this.token = null;
-    if (typeof window !== 'undefined') localStorage.removeItem('cortexo_token');
+    this._clearAuth();
   }
 
   loadToken() {
     if (typeof window !== 'undefined') {
       const t = localStorage.getItem('cortexo_token');
       if (t) this.token = t;
+      const rt = localStorage.getItem('cortexo_refresh_token');
+      if (rt) this.refreshToken = rt;
     }
   }
 
@@ -709,16 +908,21 @@ class ApiClient {
     this.setToken(token);
     if (typeof window !== 'undefined') localStorage.setItem('cortexo_token', token);
   }
+
+  private _saveRefreshToken(refreshToken: string) {
+    this.refreshToken = refreshToken;
+    if (typeof window !== 'undefined') localStorage.setItem('cortexo_refresh_token', refreshToken);
+  }
   // ─── Source Profiles (reusable Git credentials) ────────────────────────────
-  getSourceProfiles()                                { return this.request<Record<string, unknown>[]>('GET', '/source-profiles'); }
-  createSourceProfile(data: Record<string, unknown>) { return this.request<Record<string, unknown>>('POST', '/source-profiles', data); }
-  updateSourceProfile(id: string, data: Record<string, unknown>) { return this.request<Record<string, unknown>>('PATCH', `/source-profiles/${id}`, data); }
+  getSourceProfiles()                                { return this.request<SourceProfile[]>('GET', '/source-profiles'); }
+  createSourceProfile(data: Omit<SourceProfile, 'id' | 'createdAt'>) { return this.request<SourceProfile>('POST', '/source-profiles', data); }
+  updateSourceProfile(id: string, data: Partial<SourceProfile>) { return this.request<SourceProfile>('PATCH', `/source-profiles/${id}`, data); }
   deleteSourceProfile(id: string)                    { return this.request<{ success: boolean }>('DELETE', `/source-profiles/${id}`); }
 
   // ─── DB Profiles (reusable database credentials) ──────────────────────────
-  getDbProfiles()                                    { return this.request<Record<string, unknown>[]>('GET', '/db-profiles'); }
-  createDbProfile(data: Record<string, unknown>)     { return this.request<Record<string, unknown>>('POST', '/db-profiles', data); }
-  updateDbProfile(id: string, data: Record<string, unknown>) { return this.request<Record<string, unknown>>('PATCH', `/db-profiles/${id}`, data); }
+  getDbProfiles()                                    { return this.request<DbProfile[]>('GET', '/db-profiles'); }
+  createDbProfile(data: Omit<DbProfile, 'id' | 'createdAt'>) { return this.request<DbProfile>('POST', '/db-profiles', data); }
+  updateDbProfile(id: string, data: Partial<DbProfile>) { return this.request<DbProfile>('PATCH', `/db-profiles/${id}`, data); }
   deleteDbProfile(id: string)                        { return this.request<{ success: boolean }>('DELETE', `/db-profiles/${id}`); }
 
   // ─── Client Git Profiles (new client provisioning) ────────────────────────
@@ -739,16 +943,16 @@ class ApiClient {
   }
 
   // ─── Alert Channels ──────────────────────────────────────────────────────
-  getAlertChannels()                                   { return this.request<Record<string, unknown>[]>('GET', '/alert-channels'); }
-  createAlertChannel(data: Record<string, unknown>)    { return this.request<Record<string, unknown>>('POST', '/alert-channels', data); }
-  updateAlertChannel(id: string, data: Record<string, unknown>) { return this.request<Record<string, unknown>>('PUT', `/alert-channels/${id}`, data); }
+  getAlertChannels()                                   { return this.request<AlertChannel[]>('GET', '/alert-channels'); }
+  createAlertChannel(data: Omit<AlertChannel, 'id' | 'createdAt'>) { return this.request<AlertChannel>('POST', '/alert-channels', data); }
+  updateAlertChannel(id: string, data: Partial<AlertChannel>) { return this.request<AlertChannel>('PUT', `/alert-channels/${id}`, data); }
   deleteAlertChannel(id: string)                       { return this.request<{ success: boolean }>('DELETE', `/alert-channels/${id}`); }
   testAlertChannel(id: string)                         { return this.request<{ success: boolean; message: string }>('POST', `/alert-channels/${id}/test`); }
-  getAlertRules()                                      { return this.request<Record<string, unknown>[]>('GET', '/alert-rules'); }
-  createAlertRule(data: Record<string, unknown>)       { return this.request<Record<string, unknown>>('POST', '/alert-rules', data); }
+  getAlertRules()                                      { return this.request<AlertRule[]>('GET', '/alert-rules'); }
+  createAlertRule(data: Omit<AlertRule, 'id' | 'createdAt'>) { return this.request<AlertRule>('POST', '/alert-rules', data); }
   getAlertHistory(params?: Record<string, string>) {
     const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    return this.request<Record<string, unknown>[]>('GET', `/alert-history${qs}`);
+    return this.request<AlertHistoryEntry[]>('GET', `/alert-history${qs}`);
   }
 
   // ─── Real-Time Metrics Stream ─────────────────────────────────────────
@@ -791,10 +995,10 @@ class ApiClient {
   // ─── Knowledge Base ─────────────────────────────────────────────────────────
   getKnowledgeDocs(params?: Record<string, string>)  {
     const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    return this.request<Record<string, unknown>[]>('GET', `/knowledge/docs${qs}`);
+    return this.request<KnowledgeDoc[]>('GET', `/knowledge/docs${qs}`);
   }
-  createKnowledgeDoc(data: Record<string, unknown>)  { return this.request<Record<string, unknown>>('POST', '/knowledge/docs', data); }
-  updateKnowledgeDoc(id: string, data: Record<string, unknown>) { return this.request<Record<string, unknown>>('PUT', `/knowledge/docs/${id}`, data); }
+  createKnowledgeDoc(data: Omit<KnowledgeDoc, 'id' | 'createdAt' | 'updatedAt'>)  { return this.request<KnowledgeDoc>('POST', '/knowledge/docs', data); }
+  updateKnowledgeDoc(id: string, data: Partial<KnowledgeDoc>) { return this.request<KnowledgeDoc>('PUT', `/knowledge/docs/${id}`, data); }
   deleteKnowledgeDoc(id: string)                     { return this.request<{ success: boolean }>('DELETE', `/knowledge/docs/${id}`); }
   getKnowledgeHistory()                              { return this.request<KnowledgeHistoryEntry[]>('GET', '/knowledge/history'); }
   getKnowledgeProviders()                            { return this.request<KnowledgeProvider[]>('GET', '/knowledge/providers'); }
@@ -817,9 +1021,9 @@ class ApiClient {
   updateCustomDoc(id: number, data: Partial<CustomDoc>) { return this.request<CustomDoc>('PUT', `/devops-docs/custom/${id}`, data); }
   deleteCustomDoc(id: number)                       { return this.request<{ success: boolean }>('DELETE', `/devops-docs/custom/${id}`); }
   // Deployment checklists
-  getChecklists(status?: string)                    { return this.request<Checklist[]>('GET', `/devops-docs/checklists${status ? `?status=${status}` : ''}`); }
-  createChecklist(data: Omit<Checklist, 'id' | 'createdAt' | 'updatedAt'>) { return this.request<Checklist>('POST', '/devops-docs/checklists', data); }
-  updateChecklist(id: number, data: Partial<Checklist>) { return this.request<Checklist>('PUT', `/devops-docs/checklists/${id}`, data); }
+  getChecklists(status?: string)                    { return this.request<DevopsChecklist[]>('GET', `/devops-docs/checklists${status ? `?status=${status}` : ''}`); }
+  createChecklist(data: Omit<DevopsChecklist, 'id' | 'createdAt' | 'updatedAt'>) { return this.request<DevopsChecklist>('POST', '/devops-docs/checklists', data); }
+  updateChecklist(id: number, data: Partial<DevopsChecklist>) { return this.request<DevopsChecklist>('PUT', `/devops-docs/checklists/${id}`, data); }
   deleteChecklist(id: number)                       { return this.request<{ success: boolean }>('DELETE', `/devops-docs/checklists/${id}`); }
 
   // ─── Notification Preferences ───────────────────────────────────────────────

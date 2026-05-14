@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { GitBranch, RotateCcw, CheckCircle, XCircle, Clock, Loader2, Terminal, Play } from 'lucide-react';
 import { useApiData, useAutoLoadToken, timeAgo, formatDuration, parseJsonField } from '@/lib/hooks';
-import { api } from '@/lib/api';
+import { Pipeline, PipelineRun, api } from '@/lib/api';
 import { LiveLogViewer } from '@/components/live-log-viewer';
 
 const statusConfig: Record<string, { icon: any; color: string; bg: string; label: string }> = {
@@ -13,11 +13,6 @@ const statusConfig: Record<string, { icon: any; color: string; bg: string; label
   queued:  { icon: Clock, color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)', label: 'Queued' },
 };
 
-const cardStyle: React.CSSProperties = {
-  backgroundColor: 'rgb(var(--surface))',
-  border: '1px solid rgb(var(--border))',
-  borderRadius: '14px',
-};
 
 export default function PipelineRunsPage() {
   useAutoLoadToken();
@@ -26,7 +21,7 @@ export default function PipelineRunsPage() {
   const [retrying, setRetrying] = useState<string | null>(null);
   const [showLogs, setShowLogs] = useState<string | null>(null);
 
-  const pipelineLookup = new Map((pipelines || []).map((p: any) => [p.id, p.name]));
+  const pipelineLookup = new Map((pipelines || []).map((p: Pipeline) => [p.id, p.name]));
 
   async function handleRetry(runId: string) {
     setRetrying(runId);
@@ -36,9 +31,9 @@ export default function PipelineRunsPage() {
   const safeRuns = (runs as any[]) || [];
   const stats = {
     total: safeRuns.length,
-    success: safeRuns.filter((r: any) => r.status === 'success').length,
-    failed: safeRuns.filter((r: any) => r.status === 'failed').length,
-    running: safeRuns.filter((r: any) => r.status === 'running' || r.status === 'queued').length,
+    success: safeRuns.filter((r: PipelineRun) => r.status === 'success').length,
+    failed: safeRuns.filter((r: PipelineRun) => r.status === 'failed').length,
+    running: safeRuns.filter((r: PipelineRun) => r.status === 'running' || r.status === 'queued').length,
   };
 
   const statCards = [
@@ -85,8 +80,7 @@ export default function PipelineRunsPage() {
         {statCards.map((s, i) => (
           <div
             key={i}
-            style={{
-              ...cardStyle,
+            className="cx-card cx-border" style={{
               padding: '18px',
               textAlign: 'center',
               position: 'relative',
@@ -109,8 +103,7 @@ export default function PipelineRunsPage() {
 
       {/* ─── Empty State ─── */}
       {!loading && safeRuns.length === 0 && (
-        <div style={{
-          ...cardStyle,
+        <div className="cx-card cx-border" style={{
           padding: '48px 24px',
           textAlign: 'center',
         }}>
@@ -126,7 +119,7 @@ export default function PipelineRunsPage() {
 
       {/* ─── Run List ─── */}
       {!loading && safeRuns.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="cx-flex-col" style={{ gap: "8px" }}>
           {safeRuns.map((run: any) => {
             const cfg = statusConfig[run.status] || statusConfig.queued;
             const Icon = cfg.icon;
@@ -136,8 +129,7 @@ export default function PipelineRunsPage() {
             return (
               <div key={run.id}>
                 <div
-                  style={{
-                    ...cardStyle,
+                  className="cx-card cx-border" style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '14px',

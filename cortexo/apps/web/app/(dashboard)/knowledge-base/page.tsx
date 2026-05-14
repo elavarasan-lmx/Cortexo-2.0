@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { BookOpen, Search, MessageSquare, Send, Book, FileText, Settings, Bot, User, Loader2, Plus, Edit2, Trash2, X, ChevronDown } from 'lucide-react';
-import { api } from '@/lib/api';
+import { KnowledgeDoc, KnowledgeHistoryEntry, KnowledgeProvider, api } from '@/lib/api';
 import { useCortexoQuery, useAutoLoadToken, timeAgo } from '@/lib/hooks';
 
 
@@ -43,7 +43,7 @@ export default function KnowledgeBasePage() {
   // Sync history with messages initially
   useEffect(() => {
     if (history && messages.length === 0) {
-      const formatted = history.flatMap((h: any) => [
+      const formatted = history.flatMap((h: KnowledgeHistoryEntry) => [
         { role: 'user', content: h.question, id: `q-${h.id}` },
         { role: 'assistant', content: h.answer, id: `a-${h.id}`, sources: h.sourcesUsed }
       ]);
@@ -117,34 +117,34 @@ export default function KnowledgeBasePage() {
     } catch (err) { console.error(err); }
   };
 
-  const handleEditDoc = (doc: any) => {
-    setDocForm({ title: doc.title, content: doc.content, category: doc.category || 'general', tags: (doc.tags || []).join(', ') });
+  const handleEditDoc = (doc: KnowledgeDoc) => {
+    setDocForm({ title: doc.title, content: doc.content ?? '', category: doc.category || 'general', tags: (doc.tags || []).join(', ') });
     setEditingDocId(doc.id);
     setShowDocModal(true);
   };
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
-      
+
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '24px' }}>
+      <div className="cx-flex-between" style={{ marginBottom: '24px', alignItems: 'flex-end' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <BookOpen style={{ width: '24px', height: '24px', color: 'rgb(var(--primary))' }} />
+          <h1 className="cx-fw-700 cx-text-primary cx-page-title cx-flex cx-items-center cx-gap-10" style={{ margin: 0 }}>
+            <BookOpen style={{ width: '24px', height: '24px' }} className="cx-text-accent" />
             Knowledge Base
           </h1>
-          <p style={{ fontSize: '14px', color: 'rgb(var(--text-secondary))', marginTop: '6px', margin: 0 }}>
+          <p className="cx-text-secondary cx-text-14" style={{ marginTop: '6px', margin: 0 }}>
             Unified AI Q&A Engine and Systems Documentation
           </p>
         </div>
 
         {/* Custom Tabs */}
-        <div style={{ display: 'flex', backgroundColor: 'rgb(var(--surface))', padding: '4px', borderRadius: '10px', border: '1px solid rgb(var(--border))' }}>
+        <div className="cx-flex cx-surface cx-border cx-r-10" style={{ padding: '4px' }}>
           <button
             onClick={() => setActiveTab('qa')}
+            className="cx-flex cx-items-center cx-gap-6 cx-fw-600"
             style={{
-              padding: '6px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer',
-              fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '6px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '13px',
               backgroundColor: activeTab === 'qa' ? 'rgba(var(--primary), 0.1)' : 'transparent',
               color: activeTab === 'qa' ? 'rgb(var(--primary))' : 'rgb(var(--text-secondary))',
               transition: 'all 200ms'
@@ -154,9 +154,9 @@ export default function KnowledgeBasePage() {
           </button>
           <button
             onClick={() => setActiveTab('docs')}
+            className="cx-flex cx-items-center cx-gap-6 cx-fw-600"
             style={{
-              padding: '6px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer',
-              fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '6px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '13px',
               backgroundColor: activeTab === 'docs' ? 'rgba(var(--primary), 0.1)' : 'transparent',
               color: activeTab === 'docs' ? 'rgb(var(--primary))' : 'rgb(var(--text-secondary))',
               transition: 'all 200ms'
@@ -168,10 +168,7 @@ export default function KnowledgeBasePage() {
       </div>
 
       {/* Main Content Area */}
-      <div style={{ 
-        flex: 1, backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', 
-        borderRadius: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden' 
-      }}>
+      <div className="cx-surface cx-border cx-r-16" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         
         {activeTab === 'qa' ? (
           // ─── Q&A Assistant View ───────────────────────────────
@@ -259,7 +256,7 @@ export default function KnowledgeBasePage() {
                     }}
                   >
                     <option value="">Auto ({providersData?.default || 'none'})</option>
-                    {providersData?.available?.map((p: any) => (
+                    {providersData?.available?.map((p: KnowledgeProvider) => (
                       <option key={p.id} value={p.id}>
                         {p.name}{p.free ? ' ✦ Free' : ' 💰'}
                       </option>
@@ -300,29 +297,22 @@ export default function KnowledgeBasePage() {
           // ─── Documentation View ───────────────────────────────
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             {/* Search Bar + Create Button */}
-            <div style={{ padding: '20px', borderBottom: '1px solid rgb(var(--border))', display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <div className="cx-flex cx-items-center cx-gap-12 cx-p-20 cx-border-b">
               <div style={{ position: 'relative', flex: 1 }}>
-                <Search style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', width: '18px', height: '18px', color: 'rgb(var(--text-muted))' }} />
+                <Search style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', width: '18px', height: '18px' }} className="cx-text-muted" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   placeholder="Search documentation, guides, and runbooks..."
-                  style={{
-                    width: '100%', padding: '12px 16px 12px 48px', borderRadius: '10px',
-                    border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))',
-                    color: 'rgb(var(--text-primary))', fontSize: '14px', outline: 'none', boxSizing: 'border-box'
-                  }}
+                  className="cx-input"
+                  style={{ width: '100%', padding: '12px 16px 12px 48px', boxSizing: 'border-box' }}
                 />
               </div>
               <button
                 onClick={() => { setDocForm({ title: '', content: '', category: 'general', tags: '' }); setEditingDocId(null); setShowDocModal(true); }}
-                style={{
-                  padding: '12px 20px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-                  background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))',
-                  color: '#fff', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px',
-                  whiteSpace: 'nowrap', transition: 'all 200ms'
-                }}
+                className="cx-btn-primary cx-flex cx-items-center cx-gap-6 cx-fw-600"
+                style={{ whiteSpace: 'nowrap', fontSize: '13px' }}
               >
                 <Plus style={{ width: '16px', height: '16px' }} /> Create Doc
               </button>
@@ -336,38 +326,36 @@ export default function KnowledgeBasePage() {
                 <div style={{ textAlign: 'center', color: 'rgb(var(--text-muted))', padding: '40px' }}>No documents found matching &quot;{searchQuery}&quot;</div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' }}>
-                  {docs?.map((doc: any) => (
-                    <div key={doc.id} style={{
-                      backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))',
-                      borderRadius: '12px', padding: '20px', display: 'flex', flexDirection: 'column',
-                      transition: 'all 200ms', position: 'relative'
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgb(var(--primary))'; e.currentTarget.style.transform = 'translateY(-2px)' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgb(var(--border))'; e.currentTarget.style.transform = 'none' }}
+                  {docs?.map((doc: KnowledgeDoc) => (
+                    <div key={doc.id}
+                      className="cx-card cx-flex-col"
+                      style={{ padding: '20px', transition: 'all 200ms', position: 'relative' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgb(var(--primary))'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgb(var(--border))'; e.currentTarget.style.transform = 'none'; }}
                     >
                       {/* Category + Actions */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                        <span style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', color: 'rgb(var(--primary))', backgroundColor: 'rgba(var(--primary), 0.1)', padding: '4px 8px', borderRadius: '6px' }}>
+                      <div className="cx-flex-between cx-mb-12">
+                        <span className="cx-fw-600 cx-text-accent" style={{ fontSize: '10px', textTransform: 'uppercase', backgroundColor: 'rgba(var(--primary), 0.1)', padding: '4px 8px', borderRadius: '6px' }}>
                           {doc.category}
                         </span>
-                        <div style={{ display: 'flex', gap: '4px' }}>
-                          <button onClick={() => handleEditDoc(doc)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', borderRadius: '6px', color: 'rgb(var(--text-muted))' }} title="Edit">
+                        <div className="cx-flex cx-gap-4">
+                          <button onClick={() => handleEditDoc(doc)} className="cx-icon-btn cx-text-muted" style={{ padding: '4px' }} title="Edit">
                             <Edit2 style={{ width: '14px', height: '14px' }} />
                           </button>
-                          <button onClick={() => handleDeleteDoc(doc.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', borderRadius: '6px', color: 'rgb(var(--danger))' }} title="Delete">
+                          <button onClick={() => handleDeleteDoc(doc.id)} className="cx-icon-btn cx-text-danger" style={{ padding: '4px' }} title="Delete">
                             <Trash2 style={{ width: '14px', height: '14px' }} />
                           </button>
                         </div>
                       </div>
-                      
-                      <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 8px 0' }}>{doc.title}</h3>
-                      <p style={{ fontSize: '13px', color: 'rgb(var(--text-secondary))', lineHeight: 1.5, margin: '0 0 16px 0', flex: 1 }}>
-                        {doc.content.length > 120 ? `${doc.content.substring(0, 120)}...` : doc.content}
+
+                      <h3 className="cx-fw-700 cx-text-primary" style={{ fontSize: '16px', margin: '0 0 8px 0' }}>{doc.title}</h3>
+                      <p className="cx-text-secondary cx-text-13" style={{ lineHeight: 1.5, margin: '0 0 16px 0', flex: 1 }}>
+                        {(doc.content ?? '').length > 120 ? `${(doc.content ?? '').substring(0, 120)}...` : (doc.content ?? '')}
                       </p>
 
-                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: 'auto' }}>
+                      <div className="cx-flex cx-gap-6" style={{ flexWrap: 'wrap', marginTop: 'auto' }}>
                         {doc.tags?.map((tag: string) => (
-                          <span key={tag} style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', backgroundColor: 'rgba(var(--border), 0.3)', padding: '2px 8px', borderRadius: '12px' }}>
+                          <span key={tag} className="cx-text-muted cx-text-11" style={{ backgroundColor: 'rgba(var(--border), 0.3)', padding: '2px 8px', borderRadius: '12px' }}>
                             #{tag}
                           </span>
                         ))}
@@ -384,36 +372,31 @@ export default function KnowledgeBasePage() {
 
       {/* ─── Create/Edit Doc Modal ─── */}
       {showDocModal && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowDocModal(false)}>
-          <div onClick={e => e.stopPropagation()} style={{
-            backgroundColor: 'rgb(var(--surface))', borderRadius: '16px', border: '1px solid rgb(var(--border))',
-            width: '560px', maxHeight: '80vh', overflow: 'auto', padding: '32px'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>
+        <div className="cx-modal-overlay" onClick={() => setShowDocModal(false)}>
+          <div onClick={e => e.stopPropagation()} className="cx-surface cx-border cx-r-16" style={{ width: '560px', maxHeight: '80vh', overflow: 'auto', padding: '32px' }}>
+            <div className="cx-flex-between cx-items-center cx-mb-24">
+              <h2 className="cx-fw-700 cx-text-primary" style={{ margin: 0, fontSize: '20px' }}>
                 {editingDocId ? 'Edit Document' : 'Create Document'}
               </h2>
-              <button onClick={() => setShowDocModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgb(var(--text-muted))' }}>
+              <button onClick={() => setShowDocModal(false)} className="cx-icon-btn cx-text-muted">
                 <X style={{ width: '20px', height: '20px' }} />
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className="cx-flex-col cx-gap-16">
               <div>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgb(var(--text-secondary))', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Title</label>
-                <input value={docForm.title} onChange={e => setDocForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. Nginx Configuration Guide"
-                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-primary))', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
+                <label className="cx-label" style={{ marginBottom: '6px' }}>Title</label>
+                <input value={docForm.title} onChange={e => setDocForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. Nginx Configuration Guide" className="cx-input" style={{ width: '100%', boxSizing: 'border-box' }} />
               </div>
               <div>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgb(var(--text-secondary))', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Content</label>
+                <label className="cx-label" style={{ marginBottom: '6px' }}>Content</label>
                 <textarea value={docForm.content} onChange={e => setDocForm(f => ({ ...f, content: e.target.value }))} placeholder="Document content..."
-                  rows={6} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-primary))', fontSize: '14px', outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+                  rows={6} className="cx-input" style={{ width: '100%', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }} />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="cx-grid-2-sm">
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgb(var(--text-secondary))', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Category</label>
-                  <select value={docForm.category} onChange={e => setDocForm(f => ({ ...f, category: e.target.value }))}
-                    style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-primary))', fontSize: '14px', outline: 'none' }}>
+                  <label className="cx-label" style={{ marginBottom: '6px' }}>Category</label>
+                  <select value={docForm.category} onChange={e => setDocForm(f => ({ ...f, category: e.target.value }))} className="cx-input" style={{ width: '100%' }}>
                     <option value="general">General</option>
                     <option value="architecture">Architecture</option>
                     <option value="deployment">Deployment</option>
@@ -423,16 +406,16 @@ export default function KnowledgeBasePage() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgb(var(--text-secondary))', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Tags</label>
-                  <input value={docForm.tags} onChange={e => setDocForm(f => ({ ...f, tags: e.target.value }))} placeholder="nginx, config, deploy"
-                    style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))', color: 'rgb(var(--text-primary))', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
+                  <label className="cx-label" style={{ marginBottom: '6px' }}>Tags</label>
+                  <input value={docForm.tags} onChange={e => setDocForm(f => ({ ...f, tags: e.target.value }))} placeholder="nginx, config, deploy" className="cx-input" style={{ width: '100%', boxSizing: 'border-box' }} />
                 </div>
               </div>
               <button onClick={handleSaveDoc} disabled={savingDoc || !docForm.title.trim() || !docForm.content.trim()}
+                className="cx-fw-600"
                 style={{
                   padding: '14px', borderRadius: '10px', border: 'none', cursor: 'pointer',
                   background: 'linear-gradient(135deg, rgb(var(--primary)), rgb(var(--agent)))',
-                  color: '#fff', fontSize: '14px', fontWeight: 600, marginTop: '8px',
+                  color: '#fff', fontSize: '14px', marginTop: '8px',
                   opacity: savingDoc || !docForm.title.trim() ? 0.6 : 1, transition: 'all 200ms'
                 }}
               >

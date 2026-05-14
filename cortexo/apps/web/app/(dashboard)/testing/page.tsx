@@ -120,7 +120,7 @@ export default function TestingHubPage() {
   return (
     <div>
       {/* Header */}
-      <div className="cx-page-header" style={{ marginBottom: '24px' }}>
+      <div className="cx-page-header cx-mb-24">
         <div>
           <h1 className="cx-flex cx-items-center cx-gap-10 cx-page-title">
             <FlaskConical style={{ width: '24px', height: '24px' }} className="cx-text-accent" />

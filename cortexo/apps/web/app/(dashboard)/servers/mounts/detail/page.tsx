@@ -10,10 +10,6 @@ import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useApiData, useAutoLoadToken } from '@/lib/hooks';
 
-const card: React.CSSProperties = {
-  borderRadius: '12px', border: '1px solid rgb(var(--border))',
-  backgroundColor: 'rgb(var(--card))', overflow: 'hidden',
-};
 
 export default function SSHFSDetailPage() {
   useAutoLoadToken();
@@ -43,12 +39,7 @@ export default function SSHFSDetailPage() {
   const localPath = m?.localPath || m?.mountPoint || '/mnt/sshfs/production';
   const port = m?.port || 22;
 
-  const btnStyle = {
-    display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', 
-    borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
-    border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', color: 'rgb(var(--text-primary))'
-  };
-
+  
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '40px' }}>
       {/* Breadcrumb */}
@@ -60,7 +51,7 @@ export default function SSHFSDetailPage() {
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div className="cx-flex cx-items-center cx-gap-16">
           <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'rgba(124, 58, 237, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <HardDrive style={{ width: '24px', height: '24px', color: '#7C3AED' }} />
           </div>
@@ -72,14 +63,14 @@ export default function SSHFSDetailPage() {
           </div>
         </div>
         
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button style={{ ...btnStyle, color: '#EF4444', borderColor: 'rgba(239, 68, 68, 0.2)', backgroundColor: 'rgba(239, 68, 68, 0.05)' }}>
+        <div className="cx-flex cx-gap-10">
+          <button className="cx-btn cx-btn-outline" style={{ color: "#EF4444", borderColor: "rgba(239,68,68,0.2)", backgroundColor: "rgba(239,68,68,0.05)" }}>
             <Circle fill="#EF4444" strokeWidth={0} style={{ width: '8px', height: '8px' }} /> Unmount
           </button>
-          <button style={btnStyle}>
+          <button className="cx-btn cx-btn-outline">
             <RefreshCw style={{ width: '14px', height: '14px' }} /> Remount
           </button>
-          <button style={{ ...btnStyle, backgroundColor: '#7C3AED', color: '#fff', border: 'none' }}>
+          <button className="cx-btn cx-btn-outline" style={{ backgroundColor: "#7C3AED", color: "#fff", border: "none" }}>
             <Code style={{ width: '14px', height: '14px' }} /> Open in VSCode
           </button>
         </div>
@@ -87,7 +78,7 @@ export default function SSHFSDetailPage() {
 
       {/* 4 Stat Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-        <div style={{ ...card, padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div className="cx-card cx-border cx-flex cx-items-center" style={{ padding: "20px", gap: 16 }}>
           <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: 'rgba(124, 58, 237, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <HardDrive style={{ width: '20px', height: '20px', color: '#7C3AED' }} />
           </div>
@@ -97,7 +88,7 @@ export default function SSHFSDetailPage() {
           </div>
         </div>
 
-        <div style={{ ...card, padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div className="cx-card cx-border cx-flex cx-items-center" style={{ padding: "20px", gap: 16 }}>
           <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Activity style={{ width: '20px', height: '20px', color: '#10B981' }} />
           </div>
@@ -107,7 +98,7 @@ export default function SSHFSDetailPage() {
           </div>
         </div>
 
-        <div style={{ ...card, padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div className="cx-card cx-border cx-flex cx-items-center" style={{ padding: "20px", gap: 16 }}>
           <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Zap style={{ width: '20px', height: '20px', color: '#3B82F6' }} />
           </div>
@@ -117,7 +108,7 @@ export default function SSHFSDetailPage() {
           </div>
         </div>
 
-        <div style={{ ...card, padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div className="cx-card cx-border cx-flex cx-items-center" style={{ padding: "20px", gap: 16 }}>
           <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: 'rgba(245, 158, 11, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <CheckCircle style={{ width: '20px', height: '20px', color: '#F59E0B' }} />
           </div>
@@ -140,7 +131,7 @@ export default function SSHFSDetailPage() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', alignItems: 'start' }}>
         
         {/* Left Col: Mount Config */}
-        <div style={card}>
+        <div className="cx-card cx-border">
           <div style={{ padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(var(--border),0.4)' }}>
             <h3 style={{ fontSize: '16px', fontWeight: 700, margin: 0, color: 'rgb(var(--text-primary))' }}>Mount Configuration</h3>
             <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '6px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', fontSize: '12px', fontWeight: 600, color: 'rgb(var(--text-primary))', cursor: 'pointer' }}>
@@ -166,10 +157,10 @@ export default function SSHFSDetailPage() {
         </div>
 
         {/* Right Col: Activity & Browser */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div className="cx-flex-col" style={{ gap: "24px" }}>
           
           {/* Recent Activity */}
-          <div style={card}>
+          <div className="cx-card cx-border">
             <div style={{ padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(var(--border),0.4)' }}>
               <h3 style={{ fontSize: '16px', fontWeight: 700, margin: 0, color: 'rgb(var(--text-primary))' }}>Recent Activity</h3>
               <button style={{ color: '#7C3AED', fontSize: '13px', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -178,7 +169,7 @@ export default function SSHFSDetailPage() {
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '20px', borderBottom: '1px solid rgba(var(--border),0.2)' }}>
-                <div style={{ display: 'flex', gap: '12px' }}>
+                <div className="cx-flex cx-gap-12">
                   <div style={{ marginTop: '4px' }}><Circle fill="#10B981" strokeWidth={0} style={{ width: '8px', height: '8px' }} /></div>
                   <div>
                     <div style={{ fontSize: '14px', fontWeight: 700, color: 'rgb(var(--text-primary))', marginBottom: '2px' }}>Sync Completed</div>
@@ -188,7 +179,7 @@ export default function SSHFSDetailPage() {
                 <span style={{ padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6' }}>Pull</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '20px', borderBottom: '1px solid rgba(var(--border),0.2)' }}>
-                <div style={{ display: 'flex', gap: '12px' }}>
+                <div className="cx-flex cx-gap-12">
                   <div style={{ marginTop: '4px' }}><Circle fill="#10B981" strokeWidth={0} style={{ width: '8px', height: '8px' }} /></div>
                   <div>
                     <div style={{ fontSize: '14px', fontWeight: 700, color: 'rgb(var(--text-primary))', marginBottom: '2px' }}>Mount Established</div>
@@ -198,7 +189,7 @@ export default function SSHFSDetailPage() {
                 <span style={{ padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, backgroundColor: 'rgba(124, 58, 237, 0.1)', color: '#7C3AED' }}>Auto</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '20px' }}>
-                <div style={{ display: 'flex', gap: '12px' }}>
+                <div className="cx-flex cx-gap-12">
                   <div style={{ marginTop: '4px' }}><Circle fill="#EF4444" strokeWidth={0} style={{ width: '8px', height: '8px' }} /></div>
                   <div>
                     <div style={{ fontSize: '14px', fontWeight: 700, color: '#EF4444', marginBottom: '2px' }}>Connection Lost</div>
@@ -211,7 +202,7 @@ export default function SSHFSDetailPage() {
           </div>
 
           {/* File Browser Preview */}
-          <div style={card}>
+          <div className="cx-card cx-border">
             <div style={{ padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(var(--border),0.4)' }}>
               <h3 style={{ fontSize: '16px', fontWeight: 700, margin: 0, color: 'rgb(var(--text-primary))' }}>File Browser</h3>
               <span style={{ padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10B981', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -220,7 +211,7 @@ export default function SSHFSDetailPage() {
             </div>
             <div style={{ padding: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', borderRadius: '8px', transition: 'background-color 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(var(--border), 0.3)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div className="cx-flex cx-items-center cx-gap-12">
                   <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Folder style={{ width: '18px', height: '18px', color: '#10B981' }} />
                   </div>
@@ -233,7 +224,7 @@ export default function SSHFSDetailPage() {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', borderRadius: '8px', transition: 'background-color 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(var(--border), 0.3)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div className="cx-flex cx-items-center cx-gap-12">
                   <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Folder style={{ width: '18px', height: '18px', color: '#10B981' }} />
                   </div>

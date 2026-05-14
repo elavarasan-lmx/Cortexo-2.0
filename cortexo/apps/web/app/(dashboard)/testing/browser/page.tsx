@@ -26,10 +26,6 @@ interface BrowserTestResult {
   duration: number; steps: StepResult[]; startedAt: string;
 }
 
-const card: React.CSSProperties = {
-  borderRadius: '14px', border: '1px solid rgb(var(--border))',
-  backgroundColor: 'rgb(var(--surface))', padding: '20px', transition: 'all 200ms',
-};
 
 export default function BrowserTestPage() {
   useAutoLoadToken();
@@ -125,7 +121,7 @@ export default function BrowserTestPage() {
   return (
     <div style={{ maxWidth: '100%' }}>
       {/* Header */}
-      <div style={{ marginBottom: '24px' }}>
+      <div className="cx-mb-24">
         <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <Monitor style={{ width: '22px', height: '22px', color: 'rgb(var(--primary))' }} /> Browser Testing
         </h1>
@@ -135,7 +131,7 @@ export default function BrowserTestPage() {
       </div>
 
       {/* Controls */}
-      <div style={{ ...card, marginBottom: '20px', padding: '16px 20px' }}>
+      <div className="cx-card cx-border" style={{ marginBottom: "20px", padding: "16px 20px" }}>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           <label style={{ fontSize: '10px', fontWeight: 700, color: 'rgb(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>TARGET</label>
           <select value={selectedTarget} onChange={e => setSelectedTarget(Number(e.target.value))} style={{
@@ -166,8 +162,7 @@ export default function BrowserTestPage() {
           const hasFields = f.fields && f.fields.length > 0;
           const hasCustomValues = hasFields && f.fields!.some(fld => customData[fld.key]?.trim());
           return (
-            <div key={f.id} style={{
-              ...card, cursor: selectedTarget ? 'default' : 'not-allowed',
+            <div key={f.id} className="cx-card cx-border" style={{
               opacity: selectedTarget ? 1 : 0.5,
               borderColor: isRunning ? 'rgb(var(--primary))' : isDataOpen ? '#8B5CF6' : undefined,
               boxShadow: isRunning ? '0 0 0 2px rgba(var(--primary), 0.15)' : isDataOpen ? '0 0 0 2px rgba(139,92,246,0.15)' : undefined,
@@ -177,7 +172,7 @@ export default function BrowserTestPage() {
                   <div style={{ fontSize: '24px', marginBottom: '6px' }}>{f.icon}</div>
                   <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>{f.name}</h3>
                 </div>
-                <div style={{ display: 'flex', gap: '6px' }}>
+                <div className="cx-flex cx-gap-6">
                   {hasFields && (
                     <button
                       onClick={() => setShowDataForm(isDataOpen ? null : f.id)}
@@ -212,7 +207,7 @@ export default function BrowserTestPage() {
                 </div>
               </div>
               <p style={{ fontSize: '12px', color: 'rgb(var(--text-secondary))', margin: '0 0 10px', lineHeight: '1.5' }}>{f.description}</p>
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div className="cx-flex cx-gap-10">
                 <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>📋 {f.stepCount} steps</span>
                 <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>🌐 Real Browser</span>
                 <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>📸 Screenshots</span>
@@ -280,7 +275,7 @@ export default function BrowserTestPage() {
 
       {/* Single Client Results */}
       {result && (
-        <div style={{ ...card, marginBottom: '24px', borderColor: result.failed > 0 ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)' }}>
+        <div className="cx-card cx-border" style={{ marginBottom: "24px", borderColor: result.failed > 0 ? "rgba(239,68,68,0.3)" : "rgba(16,185,129,0.3)" }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
             <div>
               <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 4px' }}>
@@ -296,7 +291,7 @@ export default function BrowserTestPage() {
                 <div style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>PASS RATE</div>
               </div>
               <div style={{ width: '1px', height: '40px', backgroundColor: 'rgb(var(--border))' }} />
-              <div style={{ display: 'flex', gap: '12px' }}>
+              <div className="cx-flex cx-gap-12">
                 <div style={{ textAlign: 'center' }}><div style={{ fontSize: '20px', fontWeight: 700, color: '#10B981' }}>{result.passed}</div><div style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>PASSED</div></div>
                 <div style={{ textAlign: 'center' }}><div style={{ fontSize: '20px', fontWeight: 700, color: result.failed > 0 ? '#EF4444' : 'rgb(var(--text-muted))' }}>{result.failed}</div><div style={{ fontSize: '10px', color: 'rgb(var(--text-muted))' }}>FAILED</div></div>
               </div>
@@ -355,7 +350,7 @@ export default function BrowserTestPage() {
           )}
 
           {/* Steps */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div className="cx-flex-col" style={{ gap: "6px" }}>
             {result.steps.map((s, i) => {
               const isExpanded = expandedSteps[i];
               return (
@@ -413,14 +408,14 @@ export default function BrowserTestPage() {
 
       {/* Multi-Client Results */}
       {multiResults && (
-        <div style={{ ...card, marginBottom: '24px' }}>
+        <div className="cx-card cx-border" style={{ marginBottom: "24px" }}>
           <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 4px' }}>
             🌐 Multi-Client Results — {multiResults.flow}
           </h2>
           <p style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', margin: '0 0 16px' }}>
             {multiResults.totalClients} clients tested • {multiResults.allPassed} passed • {multiResults.someFailed} with failures
           </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div className="cx-flex-col" style={{ gap: "8px" }}>
             {multiResults.results.map((r: any, i: number) => (
               <div key={i} style={{
                 display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '10px',

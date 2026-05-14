@@ -8,7 +8,7 @@ import {
   AlertTriangle, CheckCircle, XCircle, Zap, LayoutGrid, List,
   Calendar, X,
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { AuditLog, api } from '@/lib/api';
 import { useAutoLoadToken } from '@/lib/hooks';
 
 const ACTION_ICONS: Record<string, any> = {
@@ -82,13 +82,13 @@ export default function AuditLogPage() {
   useEffect(() => { fetchStats(); }, [fetchStats]);
 
   const totalPages = Math.ceil(total / limit) || 1;
-  const uniqueActions = [...new Set(logs.map((l: any) => l.action))].sort();
-  const uniqueResources = [...new Set(logs.map((l: any) => l.resource))].filter(Boolean).sort();
+  const uniqueActions = [...new Set(logs.map((l: AuditLog) => l.action))].sort();
+  const uniqueResources = [...new Set(logs.map((l: AuditLog) => l.resource))].filter(Boolean).sort();
 
   return (
     <div>
       {/* Header */}
-      <div className="cx-page-header" style={{ marginBottom: '24px' }}>
+      <div className="cx-page-header cx-mb-24">
         <div>
           <h1 className="cx-flex cx-items-center cx-gap-10 cx-page-title">
             <Activity style={{ width: '24px', height: '24px' }} className="cx-text-accent" />
@@ -182,8 +182,8 @@ export default function AuditLogPage() {
             const IconComp = ACTION_ICONS[log.action] || Terminal;
             const color = ACTION_COLORS[log.action] || '#94A3B8';
             return (
-              <div key={log.id || i} style={{
-                display: 'flex', alignItems: 'flex-start', gap: '14px', padding: '14px 18px',
+              <div key={log.id || i} className="cx-flex cx-items-start cx-gap-14" style={{
+                padding: '14px 18px',
                 borderBottom: i < logs.length - 1 ? '1px solid rgb(var(--border))' : 'none',
                 transition: 'background-color 150ms',
               }}
@@ -191,45 +191,43 @@ export default function AuditLogPage() {
                 onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
               >
                 {/* Icon */}
-                <div style={{
-                  width: '34px', height: '34px', borderRadius: '8px', flexShrink: 0,
-                  background: `${color}15`, border: `1px solid ${color}25`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '2px',
+                <div className="cx-flex-center cx-r-8" style={{
+                  width: '34px', height: '34px', flexShrink: 0,
+                  background: `${color}15`, border: `1px solid ${color}25`, marginTop: '2px',
                 }}>
                   <IconComp style={{ width: '16px', height: '16px', color }} />
                 </div>
 
                 {/* Content */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                    <span style={{
-                      padding: '2px 8px', borderRadius: '5px', fontSize: '10px', fontWeight: 700,
+                  <div className="cx-flex cx-items-center cx-gap-8" style={{ flexWrap: 'wrap' }}>
+                    <span className="cx-fw-700" style={{
+                      padding: '2px 8px', borderRadius: '5px', fontSize: '10px',
                       textTransform: 'uppercase', letterSpacing: '0.03em',
                       backgroundColor: `${color}15`, color, border: `1px solid ${color}25`,
                     }}>
                       {log.action?.replace(/_/g, ' ')}
                     </span>
                     {log.resource && (
-                      <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', fontFamily: "'JetBrains Mono', monospace" }}>
+                      <span className="cx-text-muted cx-mono cx-text-11">
                         {log.resource?.replace(/_/g, ' ')}
                       </span>
                     )}
                     {log.resourceId && (
-                      <span style={{ fontSize: '10px', color: 'rgb(var(--text-muted))', fontFamily: "'JetBrains Mono', monospace", opacity: 0.6 }}>
+                      <span className="cx-text-muted cx-mono" style={{ fontSize: '10px', opacity: 0.6 }}>
                         #{log.resourceId}
                       </span>
                     )}
                   </div>
-                  <p style={{ fontSize: '13px', color: 'rgb(var(--text-primary))', margin: '4px 0 0', lineHeight: 1.5, wordBreak: 'break-word' }}>
+                  <p className="cx-text-primary cx-text-13" style={{ margin: '4px 0 0', lineHeight: 1.5, wordBreak: 'break-word' }}>
                     {log.description || '—'}
                   </p>
                   {log.metadata && typeof log.metadata === 'object' && Object.keys(log.metadata).length > 0 && (
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
+                    <div className="cx-flex cx-gap-6" style={{ flexWrap: 'wrap', marginTop: '6px' }}>
                       {Object.entries(log.metadata).slice(0, 4).map(([k, v]) => (
-                        <span key={k} style={{
+                        <span key={k} className="cx-text-muted cx-mono" style={{
                           fontSize: '10px', padding: '2px 6px', borderRadius: '4px',
-                          backgroundColor: 'rgba(var(--border), 0.4)', color: 'rgb(var(--text-muted))',
-                          fontFamily: "'JetBrains Mono', monospace",
+                          backgroundColor: 'rgba(var(--border), 0.4)',
                         }}>
                           {k}: {typeof v === 'object' ? JSON.stringify(v) : String(v)}
                         </span>
@@ -240,16 +238,16 @@ export default function AuditLogPage() {
 
                 {/* Meta — right side */}
                 <div style={{ flexShrink: 0, textAlign: 'right', minWidth: '90px' }}>
-                  <div style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'flex-end' }}>
+                  <div className="cx-flex cx-items-center cx-gap-4 cx-text-muted cx-text-11" style={{ justifyContent: 'flex-end' }}>
                     <Clock style={{ width: '10px', height: '10px' }} />
                     {timeAgo(log.createdAt)}
                   </div>
-                  <div style={{ fontSize: '10px', color: 'rgb(var(--text-muted))', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'flex-end' }}>
+                  <div className="cx-flex cx-items-center cx-gap-4 cx-text-muted" style={{ fontSize: '10px', marginTop: '4px', justifyContent: 'flex-end' }}>
                     <User style={{ width: '10px', height: '10px' }} />
                     {log.userName || 'System'}
                   </div>
                   {log.ipAddress && (
-                    <div style={{ fontSize: '9px', color: 'rgb(var(--text-muted))', marginTop: '2px', fontFamily: "'JetBrains Mono', monospace", opacity: 0.5 }}>
+                    <div className="cx-text-muted cx-mono" style={{ fontSize: '9px', marginTop: '2px', opacity: 0.5 }}>
                       {log.ipAddress}
                     </div>
                   )}

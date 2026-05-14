@@ -110,11 +110,11 @@ export default function LevelResultsPage({ params }: { params: Promise<{ runId: 
                 <span style={{ fontSize: '14px', fontWeight: 700, color: meta.color }}>{meta.label}</span>
               </div>
               <div style={{ display: 'flex', gap: '16px', marginBottom: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <div className="cx-flex cx-items-center cx-gap-4">
                   <CheckCircle style={{ width: '14px', height: '14px', color: '#10B981' }} />
                   <span style={{ fontSize: '20px', fontWeight: 800, color: '#10B981' }}>{level.passed}</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <div className="cx-flex cx-items-center cx-gap-4">
                   <XCircle style={{ width: '14px', height: '14px', color: '#EF4444' }} />
                   <span style={{ fontSize: '20px', fontWeight: 800, color: '#EF4444' }}>{level.failed}</span>
                 </div>

@@ -1,0 +1,61 @@
+# Directories to ignore when scanning the project
+# Similar to .gitignore — one pattern per line
+
+# === Package Managers ===
+node_modules/
+.pnp/
+.yarn/
+bower_components/
+
+# === Build Outputs ===
+.next/
+dist/
+build/
+out/
+.turbo/
+www/
+.cache/
+
+# === Platform-Specific (Ionic/Cordova) ===
+platforms/
+plugins/
+
+# === IDE & OS ===
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# === Git ===
+.git/
+
+# === Test Artifacts ===
+coverage/
+.screenshots/
+.recordings/
+.test-results/
+
+# === Lock Files ===
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# === Logs ===
+*.log
+logs/
+
+# === TypeScript Build Info ===
+tsconfig.tsbuildinfo
+
+# === Secrets & Encrypted ===
+.vault/
+
+# === Mounted Filesystems (SSHFS — causes hangs) ===
+Project/
+
+# === CodeIgniter Vendor Code ===
+system/
+core/
+third_party/

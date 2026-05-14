@@ -120,14 +120,14 @@ export default function ProjectsPage() {
   return (
     <div>
       {/* Header */}
-      <div className="cx-page-header" style={{ marginBottom: '20px' }}>
+      <div className="cx-page-header cx-mb-20">
         <div>
           <h1 className="cx-page-title cx-fw-800">Projects</h1>
           <p className="cx-page-subtitle cx-text-muted" style={{ marginTop: '4px' }}>
             {allProjects.length} {allProjects.length === 1 ? 'project' : 'projects'} · {allProjects.filter(p => { const st = parseSettings(p); return st.productType === 'trade'; }).length} trade · {allProjects.filter(p => { const st = parseSettings(p); return st.productType === 'lite'; }).length} lite
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div className="cx-flex cx-gap-8 cx-items-center">
           <div ref={filterRef} style={{ position: 'relative' }}>
           <button
             onClick={() => setShowFilter(!showFilter)}
@@ -248,7 +248,7 @@ export default function ProjectsPage() {
       )}
 
       {/* Stat Cards */}
-      <div className="cx-stats-3" style={{ marginBottom: '20px' }}>
+      <div className="cx-stats-3 cx-mb-20">
         {[
           { icon: '📂', value: allProjects.length, label: 'Total Projects', color: '#7C3AED' },
           { icon: '📈', value: allProjects.filter(p => parseSettings(p).productType === 'trade').length, label: 'Trade', color: '#F59E0B' },
@@ -266,7 +266,7 @@ export default function ProjectsPage() {
 
       {/* Search bar */}
       {allProjects.length > 0 && (
-        <div className="cx-flex cx-gap-10 cx-items-center" style={{ marginBottom: '16px' }}>
+        <div className="cx-flex cx-gap-10 cx-items-center cx-mb-16">
           <div className="cx-flex cx-items-center cx-gap-8 cx-r-10 cx-surface cx-border" style={{ flex: 1, padding: '8px 14px' }}>
             <Search style={{ width: '14px', height: '14px', flexShrink: 0 }} className="cx-text-muted" />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search projects, domains, slugs…" className="cx-text-primary cx-text-13" style={{ flex: 1, border: 'none', outline: 'none', backgroundColor: 'transparent' }} />
@@ -287,7 +287,8 @@ export default function ProjectsPage() {
           return (
             <div key={project.id}
               onClick={() => router.push(`/projects/${project.id}`)}
-              style={{ borderRadius: '14px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', overflow: 'hidden', transition: 'box-shadow 200ms, transform 200ms', cursor: 'pointer', position: 'relative' }}
+              className="cx-card"
+              style={{ overflow: 'hidden', transition: 'box-shadow 200ms, transform 200ms', cursor: 'pointer', position: 'relative' }}
               onMouseEnter={e => { e.currentTarget.style.boxShadow = `0 12px 32px -8px ${productColor}20, 0 4px 12px rgba(0,0,0,0.2)`; e.currentTarget.style.transform = 'translateY(-2px)'; }}
               onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}
             >
@@ -328,12 +329,12 @@ export default function ProjectsPage() {
 
               {/* Client config rows */}
               <div style={{ padding: '0 18px 8px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px', fontSize: '11px' }}>
-                {s.domain && <div><span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>Admin URL</span><p style={{ margin: '2px 0 0', color: 'rgb(var(--text-primary))', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(s.adminBaseUrl || '—')}</p></div>}
-                {db.name && <div><span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>Database</span><p style={{ margin: '2px 0 0', color: '#00758F', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', wordBreak: 'break-all' }}>{db.name}</p></div>}
-                {s.adminUser && <div><span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>Admin User</span><p style={{ margin: '2px 0 0', color: '#A78BFA', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>{String(s.adminUser)}</p></div>}
-                {s.adminPassword && <div><span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>Admin Pass</span><div style={{ margin: '2px 0 0', display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ color: '#A78BFA', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>{visiblePassId === project.id ? String(s.adminPassword) : '••••••••'}</span><button onClick={e => { e.stopPropagation(); setVisiblePassId(visiblePassId === project.id ? null : project.id); }} style={{ padding: '2px', border: 'none', backgroundColor: 'transparent', color: 'rgb(var(--text-muted))', cursor: 'pointer', display: 'flex', flexShrink: 0 }} title={visiblePassId === project.id ? 'Hide' : 'Show'}>{visiblePassId === project.id ? <EyeOff style={{ width: '12px', height: '12px' }} /> : <Eye style={{ width: '12px', height: '12px' }} />}</button></div></div>}
-                {s.androidVersion && <div><span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>Android</span><p style={{ margin: '2px 0 0', color: 'rgb(var(--text-primary))', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>v{String(s.androidVersion)}</p></div>}
-                {s.iosVersion && <div><span style={{ color: 'rgb(var(--text-muted))', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>iOS</span><p style={{ margin: '2px 0 0', color: 'rgb(var(--text-primary))', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>v{String(s.iosVersion)}</p></div>}
+                {s.domain && <div><span className="cx-fw-600 cx-text-muted" style={{ textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>Admin URL</span><p className="cx-mono cx-text-primary" style={{ margin: '2px 0 0', fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(s.adminBaseUrl || '—')}</p></div>}
+                {db.name && <div><span className="cx-fw-600 cx-text-muted" style={{ textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>Database</span><p className="cx-mono" style={{ margin: '2px 0 0', color: '#00758F', fontSize: '11px', wordBreak: 'break-all' }}>{db.name}</p></div>}
+                {s.adminUser && <div><span className="cx-fw-600 cx-text-muted" style={{ textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>Admin User</span><p className="cx-mono" style={{ margin: '2px 0 0', color: '#A78BFA', fontSize: '11px' }}>{String(s.adminUser)}</p></div>}
+                {s.adminPassword && <div><span className="cx-fw-600 cx-text-muted" style={{ textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>Admin Pass</span><div className="cx-flex cx-items-center cx-gap-6" style={{ margin: '2px 0 0' }}><span className="cx-mono" style={{ color: '#A78BFA', fontSize: '11px' }}>{visiblePassId === project.id ? String(s.adminPassword) : '••••••••'}</span><button onClick={e => { e.stopPropagation(); setVisiblePassId(visiblePassId === project.id ? null : project.id); }} className="cx-icon-btn cx-text-muted" style={{ padding: '2px', flexShrink: 0 }} title={visiblePassId === project.id ? 'Hide' : 'Show'}>{visiblePassId === project.id ? <EyeOff style={{ width: '12px', height: '12px' }} /> : <Eye style={{ width: '12px', height: '12px' }} />}</button></div></div>}
+                {s.androidVersion && <div><span className="cx-fw-600 cx-text-muted" style={{ textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>Android</span><p className="cx-mono cx-text-primary" style={{ margin: '2px 0 0', fontSize: '11px' }}>v{String(s.androidVersion)}</p></div>}
+                {s.iosVersion && <div><span className="cx-fw-600 cx-text-muted" style={{ textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '9px' }}>iOS</span><p className="cx-mono cx-text-primary" style={{ margin: '2px 0 0', fontSize: '11px' }}>v{String(s.iosVersion)}</p></div>}
               </div>
 
               {/* Tech Tags — dynamic based on actual project data */}
@@ -345,7 +346,7 @@ export default function ProjectsPage() {
                   ...(s.iosVersion ? [{ label: `iOS v${s.iosVersion}`, color: '#007AFF', bg: 'rgba(0,122,255,0.1)' }] : []),
                   ...(((s.deploy || {}) as Record<string, string>).serverId ? [{ label: `Server ${((s.deploy || {}) as Record<string, string>).serverId}`, color: '#10B981', bg: 'rgba(16,185,129,0.1)' }] : []),
                 ].map((tag, ti) => (
-                  <span key={ti} style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 600, color: tag.color, backgroundColor: tag.bg }}>{tag.label}</span>
+                  <span key={ti} className="cx-fw-600" style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '10px', color: tag.color, backgroundColor: tag.bg }}>{tag.label}</span>
                 ))}
               </div>
 
@@ -414,7 +415,7 @@ export default function ProjectsPage() {
               </p>
               <div className="cx-flex cx-gap-8" style={{ justifyContent: 'flex-end' }}>
                 <button onClick={() => setDeleteProject(null)} className="cx-btn-secondary" style={{ padding: '9px 18px' }}>Cancel</button>
-                <button onClick={() => handleDelete(deleteProject)} disabled={deleting} style={{ padding: '9px 18px', borderRadius: '8px', border: 'none', backgroundColor: '#EF4444', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: deleting ? 'wait' : 'pointer', opacity: deleting ? 0.7 : 1 }}>
+                <button onClick={() => handleDelete(deleteProject)} disabled={deleting} className="cx-fw-600" style={{ padding: '9px 18px', borderRadius: '8px', border: 'none', backgroundColor: '#EF4444', color: '#fff', fontSize: '13px', cursor: deleting ? 'wait' : 'pointer', opacity: deleting ? 0.7 : 1 }}>
                   {deleting ? 'Deleting…' : 'Delete'}
                 </button>
               </div>

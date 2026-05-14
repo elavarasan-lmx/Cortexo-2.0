@@ -9,19 +9,6 @@ import { useAutoLoadToken, useApiData } from '@/lib/hooks';
 import { useToastStore } from '@/lib/toast-store';
 import { useModal } from '@/components/modal-provider';
 
-const card: React.CSSProperties = {
-  borderRadius: '14px', border: '1px solid rgb(var(--border))',
-  backgroundColor: 'rgb(var(--surface))', overflow: 'hidden',
-};
-const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '10px 14px', borderRadius: '10px',
-  border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface-hover))',
-  color: 'rgb(var(--text-primary))', fontSize: '13px', outline: 'none', boxSizing: 'border-box',
-};
-const labelStyle: React.CSSProperties = {
-  display: 'block', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase',
-  letterSpacing: '0.04em', marginBottom: '6px', color: 'rgb(var(--text-muted))',
-};
 
 export default function EditServerPage() {
   useAutoLoadToken();
@@ -114,7 +101,7 @@ export default function EditServerPage() {
         <Link href="/servers" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'rgb(var(--text-muted))', textDecoration: 'none' }}>
           <ArrowLeft style={{ width: '14px', height: '14px' }} /> Back to Servers
         </Link>
-        <div style={{ ...card, padding: '60px 24px', marginTop: '16px', textAlign: 'center' }}>
+        <div className="cx-card cx-border" style={{ padding: '60px 24px', marginTop: '16px', textAlign: 'center' }}>
           <Server style={{ width: '40px', height: '40px', color: 'rgb(var(--text-muted))', margin: '0 auto 16px', opacity: 0.4 }} />
           <p style={{ fontSize: '15px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: '0 0 6px' }}>Server not found</p>
           <p style={{ fontSize: '13px', color: 'rgb(var(--text-muted))', margin: 0 }}>Server ID "{serverId}" does not exist</p>
@@ -124,7 +111,7 @@ export default function EditServerPage() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="cx-flex-col" style={{ gap: "24px" }}>
       {/* Breadcrumb */}
       <Link href="/servers" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'rgb(var(--text-muted))', textDecoration: 'none' }}>
         <ArrowLeft style={{ width: '14px', height: '14px' }} /> Back to Servers
@@ -132,7 +119,7 @@ export default function EditServerPage() {
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="cx-flex cx-items-center cx-gap-12">
           <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'linear-gradient(135deg, #7C3AED, #A855F7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Server style={{ width: '20px', height: '20px', color: '#fff' }} />
           </div>
@@ -157,39 +144,39 @@ export default function EditServerPage() {
       {/* Two-column */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', alignItems: 'start' }}>
         {/* Left: Connection */}
-        <div style={card}>
+        <div className="cx-card cx-border">
           <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(var(--border),0.4)' }}>
             <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0, color: 'rgb(var(--text-primary))' }}>Connection Details</h3>
           </div>
           <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div><label style={labelStyle}>Server Name</label><input style={inputStyle} value={form.name} onChange={e => u('name', e.target.value)} /></div>
+            <div><label className="cx-label">Server Name</label><input className="cx-input" value={form.name} onChange={e => u('name', e.target.value)} /></div>
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
-              <div><label style={labelStyle}>Private IP</label><input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace" }} value={form.privateIp} onChange={e => u('privateIp', e.target.value)} /></div>
-              <div><label style={labelStyle}>SSH Port</label><input style={inputStyle} value={form.sshPort} onChange={e => u('sshPort', e.target.value)} /></div>
+              <div><label className="cx-label">Private IP</label><input className="cx-input" style={{ fontFamily: "'JetBrains Mono', monospace" }} value={form.privateIp} onChange={e => u('privateIp', e.target.value)} /></div>
+              <div><label className="cx-label">SSH Port</label><input className="cx-input" value={form.sshPort} onChange={e => u('sshPort', e.target.value)} /></div>
             </div>
-            <div><label style={labelStyle}>Public Address</label><input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace" }} value={form.publicAddress} onChange={e => u('publicAddress', e.target.value)} /></div>
-            <div><label style={labelStyle}>SSH User</label><input style={inputStyle} value={form.sshUser} onChange={e => u('sshUser', e.target.value)} /></div>
-            <div><label style={labelStyle}>SSH Key Path</label><input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace" }} value={form.sshKeyPath} onChange={e => u('sshKeyPath', e.target.value)} /></div>
+            <div><label className="cx-label">Public Address</label><input className="cx-input" style={{ fontFamily: "'JetBrains Mono', monospace" }} value={form.publicAddress} onChange={e => u('publicAddress', e.target.value)} /></div>
+            <div><label className="cx-label">SSH User</label><input className="cx-input" value={form.sshUser} onChange={e => u('sshUser', e.target.value)} /></div>
+            <div><label className="cx-label">SSH Key Path</label><input className="cx-input" style={{ fontFamily: "'JetBrains Mono', monospace" }} value={form.sshKeyPath} onChange={e => u('sshKeyPath', e.target.value)} /></div>
           </div>
         </div>
 
         {/* Right: Metadata */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={card}>
+        <div className="cx-flex-col" style={{ gap: "16px" }}>
+          <div className="cx-card cx-border">
             <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(var(--border),0.4)' }}>
               <h3 style={{ fontSize: '14px', fontWeight: 700, margin: 0, color: 'rgb(var(--text-primary))' }}>Server Metadata</h3>
             </div>
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div><label style={labelStyle}>Provider</label>
-                <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.provider} onChange={e => u('provider', e.target.value)}>
+              <div><label className="cx-label">Provider</label>
+                <select className="cx-input" style={{ cursor: "pointer" }} value={form.provider} onChange={e => u('provider', e.target.value)}>
                   <option value="aws">AWS (EC2)</option><option value="gcp">Google Cloud</option><option value="azure">Azure</option><option value="digitalocean">DigitalOcean</option><option value="hetzner">Hetzner</option><option value="custom">Custom</option>
                 </select>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div><label style={labelStyle}>Region</label><input style={inputStyle} value={form.region} onChange={e => u('region', e.target.value)} /></div>
-                <div><label style={labelStyle}>OS</label><input style={inputStyle} value={form.os} onChange={e => u('os', e.target.value)} /></div>
+                <div><label className="cx-label">Region</label><input className="cx-input" value={form.region} onChange={e => u('region', e.target.value)} /></div>
+                <div><label className="cx-label">OS</label><input className="cx-input" value={form.os} onChange={e => u('os', e.target.value)} /></div>
               </div>
-              <div><label style={labelStyle}>Description</label><textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} value={form.description} onChange={e => u('description', e.target.value)} /></div>
+              <div><label className="cx-label">Description</label><textarea className="cx-input" style={{ minHeight: "60px", resize: "vertical" }} value={form.description} onChange={e => u('description', e.target.value)} /></div>
             </div>
           </div>
         </div>

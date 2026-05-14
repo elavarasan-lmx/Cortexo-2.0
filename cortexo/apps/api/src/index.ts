@@ -142,9 +142,19 @@ async function start() {
   // --- JWT (registered at root scope so all routes can access app.jwt) ---
   const jwtSecret = process.env.JWT_SECRET;
   if (!jwtSecret || jwtSecret.length < 32) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error(`
+╔══════════════════════════════════════════════════════════════╗
+║  🚨 FATAL: JWT_SECRET is missing or too short (<32 chars)!  ║
+║  A strong secret is REQUIRED in production.                 ║
+║  Generate one: openssl rand -base64 48                      ║
+╚══════════════════════════════════════════════════════════════╝
+`);
+      process.exit(1);
+    }
     console.warn(
       '[Auth] JWT_SECRET is missing or too short (<32 chars). ' +
-      'Set a strong JWT_SECRET in your .env for production security.'
+      'Using dev fallback — DO NOT deploy this!'
     );
   }
   await app.register(jwt, {

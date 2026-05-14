@@ -50,23 +50,7 @@ stages:
 ` },
 };
 
-/* ─── Shared Styles ─── */
-const cardStyle: React.CSSProperties = {
-  backgroundColor: 'rgb(var(--surface))',
-  border: '1px solid rgb(var(--border))',
-  borderRadius: '14px',
-  padding: '16px',
-};
 
-const labelStyle: React.CSSProperties = {
-  fontSize: '10px',
-  fontWeight: 700,
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.06em',
-  color: 'rgb(var(--text-muted))',
-  marginBottom: '10px',
-  display: 'block',
-};
 
 export default function PipelineEditorPage() {
   useAutoLoadToken();
@@ -160,8 +144,8 @@ export default function PipelineEditorPage() {
         {/* Sidebar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {/* Templates */}
-          <div style={cardStyle}>
-            <p style={labelStyle}>Templates</p>
+          <div className="cx-card cx-border">
+            <p className="cx-label">Templates</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               {Object.entries(TEMPLATES).map(([key, t]) => {
                 const isSelected = selectedTemplate === key;
@@ -189,8 +173,8 @@ export default function PipelineEditorPage() {
           </div>
 
           {/* Project ID */}
-          <div style={cardStyle}>
-            <label style={labelStyle}>Project ID (optional)</label>
+          <div className="cx-card cx-border">
+            <label className="cx-label">Project ID (optional)</label>
             <input
               value={projectId}
               onChange={e => setProjectId(e.target.value)}
@@ -206,8 +190,8 @@ export default function PipelineEditorPage() {
           </div>
 
           {/* YAML Reference */}
-          <div style={cardStyle}>
-            <p style={labelStyle}>YAML Keys</p>
+          <div className="cx-card cx-border">
+            <p className="cx-label">YAML Keys</p>
             {[
               ['name', 'Pipeline name'],
               ['trigger.push', 'Branch triggers'],
@@ -237,7 +221,7 @@ export default function PipelineEditorPage() {
             backgroundColor: '#141420',
             borderBottom: '1px solid rgba(255,255,255,0.08)',
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div className="cx-flex cx-items-center cx-gap-6">
               <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#EF4444', opacity: 0.6 }} />
               <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#F59E0B', opacity: 0.6 }} />
               <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#10B981', opacity: 0.6 }} />

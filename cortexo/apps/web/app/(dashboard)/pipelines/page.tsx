@@ -7,7 +7,7 @@ import {
   Plus, Zap, GitBranch, Timer, MoreVertical,
   Activity, Cpu, Edit3, Trash2, Power, List, Upload,
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { Pipeline, PipelineRun, api } from '@/lib/api';
 import { useCortexoQuery, useAutoLoadToken, useProjectLookup, parseJsonField, resolveProjectName, timeAgo } from '@/lib/hooks';
 
 import { useModal } from '@/components/modal-provider';
@@ -93,11 +93,10 @@ function DropdownMenu({ pipeline, onRefetch }: { pipeline: any; onRefetch: () =>
     }
   };
 
-  const menuItem: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
-    padding: '8px 14px', border: 'none', cursor: 'pointer',
-    fontSize: '12px', fontWeight: 500, backgroundColor: 'transparent',
-    color: 'rgb(var(--text-secondary))', textAlign: 'left',
+  const menuItemCls = 'cx-flex cx-items-center cx-gap-8 cx-fw-500 cx-text-secondary';
+  const menuItemStyle: React.CSSProperties = {
+    width: '100%', padding: '8px 14px', border: 'none', cursor: 'pointer',
+    fontSize: '12px', backgroundColor: 'transparent', textAlign: 'left',
     borderRadius: '6px', transition: 'background-color 100ms',
   };
 
@@ -115,19 +114,19 @@ function DropdownMenu({ pipeline, onRefetch }: { pipeline: any; onRefetch: () =>
 
       {open && (
         <div className="cx-dropdown" style={{ width: '180px' }}>
-          <button style={menuItem} onClick={handleEdit}
+          <button className={menuItemCls} style={menuItemStyle} onClick={handleEdit}
             onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))'; }}
             onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
           >
             <Edit3 style={{ width: '13px', height: '13px' }} /> Edit Pipeline
           </button>
-          <button style={menuItem} onClick={handleViewRuns}
+          <button className={menuItemCls} style={menuItemStyle} onClick={handleViewRuns}
             onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))'; }}
             onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
           >
             <List style={{ width: '13px', height: '13px' }} /> View Runs
           </button>
-          <button style={menuItem} onClick={handleToggleActive} disabled={toggling}
+          <button className={menuItemCls} style={menuItemStyle} onClick={handleToggleActive} disabled={toggling}
             onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgb(var(--surface-hover))'; }}
             onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
           >
@@ -135,7 +134,7 @@ function DropdownMenu({ pipeline, onRefetch }: { pipeline: any; onRefetch: () =>
             {pipeline.isActive ? 'Deactivate' : 'Activate'}
           </button>
           <div style={{ height: '1px', backgroundColor: 'rgb(var(--border))', margin: '4px 0' }} />
-          <button style={{ ...menuItem, color: '#EF4444' }} onClick={handleDelete}
+          <button className={menuItemCls} style={{ ...menuItemStyle, color: '#EF4444' }} onClick={handleDelete}
             onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.08)'; }}
             onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
           >
@@ -183,9 +182,9 @@ export default function PipelinesPage() {
   }
 
   const allPipelines = (pipelines as any[]) || [];
-  const activePipelines   = allPipelines.filter((p: any) => p.isActive).length;
-  const runningPipelines  = allPipelines.filter((p: any) => p.lastRunStatus === 'running').length;
-  const failedPipelines   = allPipelines.filter((p: any) => p.lastRunStatus === 'failed').length;
+  const activePipelines   = allPipelines.filter((p: Pipeline) => p.isActive).length;
+  const runningPipelines  = allPipelines.filter((p: Pipeline) => p.lastRunStatus === 'running').length;
+  const failedPipelines   = allPipelines.filter((p: Pipeline) => p.lastRunStatus === 'failed').length;
 
   return (
     <div>
@@ -213,16 +212,15 @@ export default function PipelinesPage() {
 
       {/* --- Summary bar --- */}
       {allPipelines.length > 0 && (
-        <div className="cx-stats-3" style={{ marginBottom: '24px' }}>
+        <div className="cx-stats-3 cx-mb-24">
           {[
             { label: 'Active Pipelines',  value: activePipelines,  total: allPipelines.length, color: '#10B981', icon: Activity },
             { label: 'Currently Running', value: runningPipelines,  total: null, color: '#3B82F6', icon: Cpu },
             { label: 'Failed Last Run',   value: failedPipelines,   total: null, color: '#EF4444', icon: XCircle },
           ].map(s => (
-            <div key={s.label} className="cx-flex cx-items-center cx-gap-14" style={{
-              borderRadius: '12px', border: '1px solid rgb(var(--border))',
+            <div key={s.label} className="cx-flex cx-items-center cx-gap-14 cx-surface cx-border cx-r-12" style={{
               borderTop: `3px solid ${s.color}`,
-              backgroundColor: 'rgb(var(--surface))', padding: '14px 18px',
+              padding: '14px 18px',
             }}>
               <div className="cx-flex-center cx-r-10" style={{ width: '36px', height: '36px', flexShrink: 0, backgroundColor: `${s.color}15` }}>
                 <s.icon style={{ width: '16px', height: '16px', color: s.color }} />
@@ -250,10 +248,10 @@ export default function PipelinesPage() {
           return (
             <div
               key={pipeline.id}
+              className="cx-card"
               style={{
-                borderRadius: '14px', border: '1px solid rgb(var(--border))',
                 borderLeft: `4px solid ${accentColor}`,
-                backgroundColor: 'rgb(var(--surface))', transition: 'box-shadow 200ms, transform 200ms',
+                transition: 'box-shadow 200ms, transform 200ms',
               }}
               onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 8px 24px -4px rgba(0,0,0,0.12)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
               onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}

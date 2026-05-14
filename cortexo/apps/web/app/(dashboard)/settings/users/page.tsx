@@ -1,16 +1,12 @@
 'use client';
 import { useState } from 'react';
 import { Users, Search, Shield, MoreHorizontal, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { api } from '@/lib/api';
+import { OrgMember, api } from '@/lib/api';
 import { useApiData, useAutoLoadToken } from '@/lib/hooks';
 
 const rc: Record<string, string> = { owner: '#A78BFA', admin: '#3B82F6', developer: '#10B981', member: '#F59E0B', viewer: '#6B7280', 'super admin': '#7C3AED' };
 const avatarColors = ['#7C3AED', '#F59E0B', '#10B981', '#3B82F6', '#EF4444', '#EC4899', '#F97316'];
 
-const card: React.CSSProperties = {
-  borderRadius: '12px', border: '1px solid rgb(var(--border))',
-  backgroundColor: 'rgb(var(--card))', padding: '20px',
-};
 
 
 
@@ -25,7 +21,7 @@ export default function UsersPage() {
     { default: [] as any[] }
   );
 
-  const apiUsers = (rawUsers || []).map((u: any) => ({
+  const apiUsers = (rawUsers || []).map((u: OrgMember) => ({
     id: u.id,
     name: u.name || 'User',
     email: u.email || '—',
@@ -37,25 +33,21 @@ export default function UsersPage() {
 
   const users = apiUsers;
 
-  const filtered = users.filter((u: any) => {
+  const filtered = users.filter((u: OrgMember) => {
     if (searchQ && !u.name.toLowerCase().includes(searchQ.toLowerCase()) && !u.email.toLowerCase().includes(searchQ.toLowerCase())) return false;
     if (roleFilter !== 'All Roles' && u.role.toLowerCase() !== roleFilter.toLowerCase()) return false;
-    if (statusFilter !== 'All Status' && u.status.toLowerCase() !== statusFilter.toLowerCase()) return false;
+    if (statusFilter !== 'All Status' && (u.status ?? '').toLowerCase() !== statusFilter.toLowerCase()) return false;
     return true;
   });
 
   const stats = [
     { label: 'Total Users', value: users.length, sub: `${users.length} registered`, color: '#7C3AED', icon: '👥' },
-    { label: 'Active Now', value: users.filter((u: any) => u.status === 'active').length, sub: 'Online', color: '#10B981', icon: '🟢' },
-    { label: 'Suspended', value: users.filter((u: any) => u.status === 'suspended').length, sub: 'Blocked', color: '#EF4444', icon: '🚫' },
-    { label: 'Super Admins', value: users.filter((u: any) => u.role.toLowerCase() === 'super admin').length, sub: 'Full access', color: '#8B5CF6', icon: '🛡️' },
+    { label: 'Active Now', value: users.filter((u: OrgMember) => u.status === 'active').length, sub: 'Online', color: '#10B981', icon: '🟢' },
+    { label: 'Suspended', value: users.filter((u: OrgMember) => u.status === 'suspended').length, sub: 'Blocked', color: '#EF4444', icon: '🚫' },
+    { label: 'Super Admins', value: users.filter((u: OrgMember) => u.role.toLowerCase() === 'super admin').length, sub: 'Full access', color: '#8B5CF6', icon: '🛡️' },
   ];
 
-  const selectStyle: React.CSSProperties = {
-    padding: '8px 14px', borderRadius: '8px', border: '1px solid rgb(var(--border))',
-    backgroundColor: 'rgb(var(--card))', color: 'rgb(var(--text-primary))',
-    fontSize: '13px', cursor: 'pointer', outline: 'none',
-  };
+
 
   const statusDot = (s: string) => {
     const c = s === 'active' ? '#10B981' : s === 'suspended' ? '#EF4444' : '#F59E0B';
@@ -68,7 +60,7 @@ export default function UsersPage() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="cx-flex-col" style={{ gap: "24px" }}>
       {/* Header */}
       <div>
         <h1 style={{ fontSize: '24px', fontWeight: 800, color: 'rgb(var(--text-primary))', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -82,7 +74,7 @@ export default function UsersPage() {
       {/* Stat Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
         {stats.map((s, i) => (
-          <div key={i} style={{ ...card, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div key={i} className="cx-card cx-border" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <div style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', fontWeight: 500 }}>{s.label}</div>
             <div style={{ fontSize: '28px', fontWeight: 800, color: 'rgb(var(--text-primary))' }}>{s.value}</div>
             <div style={{ fontSize: '11px', color: s.color, fontWeight: 600 }}>{s.icon} {s.sub}</div>
@@ -101,11 +93,11 @@ export default function UsersPage() {
             style={{ width: '100%', padding: '8px 14px 8px 34px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--card))', color: 'rgb(var(--text-primary))', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }}
           />
         </div>
-        <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)} style={selectStyle}>
+        <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)} className="cx-input" style={{ cursor: 'pointer' }}>
           <option>All Roles</option>
           {['Super Admin', 'Admin', 'Developer', 'Member', 'Viewer'].map(r => <option key={r}>{r}</option>)}
         </select>
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={selectStyle}>
+        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="cx-input" style={{ cursor: 'pointer' }}>
           <option>All Status</option>
           {['Active', 'Pending', 'Suspended'].map(s => <option key={s}>{s}</option>)}
         </select>
@@ -118,7 +110,7 @@ export default function UsersPage() {
           <p style={{ fontSize: '13px', color: 'rgb(var(--text-muted))', marginTop: '8px' }}>Loading users...</p>
         </div>
       ) : (
-        <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
+        <div className="cx-card cx-border" style={{ padding: 0, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid rgb(var(--border))' }}>
@@ -128,7 +120,7 @@ export default function UsersPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((u: any, idx: number) => {
+              {filtered.map((u: OrgMember, idx: number) => {
                 const roleColor = rc[u.role.toLowerCase()] || '#6B7280';
                 const avColor = avatarColors[idx % avatarColors.length];
                 return (
@@ -136,7 +128,7 @@ export default function UsersPage() {
                     onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(var(--border),0.08)'}
                     onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
                     <td style={{ padding: '14px 16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div className="cx-flex cx-items-center cx-gap-12">
                         <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: `linear-gradient(135deg, ${avColor}, ${avColor}CC)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '14px', fontWeight: 700, flexShrink: 0 }}>
                           {(u.name || 'U').charAt(0).toUpperCase()}
                         </div>
@@ -149,7 +141,7 @@ export default function UsersPage() {
                     <td style={{ padding: '14px 16px' }}>
                       <span style={{ fontSize: '11px', fontWeight: 700, color: roleColor, padding: '4px 10px', borderRadius: '6px', backgroundColor: `${roleColor}15`, textTransform: 'capitalize' }}>{u.role}</span>
                     </td>
-                    <td style={{ padding: '14px 16px' }}>{statusDot(u.status)}</td>
+                    <td style={{ padding: '14px 16px' }}>{statusDot(u.status ?? 'unknown')}</td>
                     <td style={{ padding: '14px 16px', fontSize: '12px', color: 'rgb(var(--text-muted))' }}>{u.lastActive || '—'}</td>
                     <td style={{ padding: '14px 16px', fontSize: '12px', color: 'rgb(var(--text-muted))' }}>
                       {u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
@@ -168,7 +160,7 @@ export default function UsersPage() {
             <span style={{ fontSize: '13px', color: 'rgb(var(--text-muted))' }}>
               Showing {filtered.length} of {users.length} users
             </span>
-            <div style={{ display: 'flex', gap: '6px' }}>
+            <div className="cx-flex cx-gap-6">
               <button style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', fontSize: '12px', cursor: 'pointer', color: 'rgb(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <ChevronLeft style={{ width: '14px', height: '14px' }} /> Back
               </button>

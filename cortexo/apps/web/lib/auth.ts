@@ -87,6 +87,9 @@ export const {
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      authorization: {
+        params: { prompt: 'consent', access_type: 'offline' },
+      },
     }),
     Credentials({
       name: 'Email',
@@ -144,4 +147,103 @@ export const {
       },
     }),
   ],
+
+  callbacks: {
+    ...authConfig.callbacks,
+
+    /**
+     * OAuth sign-in: upsert user in DB on first login.
+     * For Credentials, the authorize() function handles it already.
+     */
+    async signIn({ user, account, profile }) {
+      // Credentials are handled by authorize() above
+      if (account?.provider === 'credentials') return true;
+
+      // OAuth: create or update user in DB
+      try {
+        const db = getDb();
+        if (!db) {
+          console.error('[Auth] DB not available for OAuth sign-in');
+          return false;
+        }
+
+        const email = user.email || profile?.email;
+        if (!email) {
+          console.error('[Auth] No email from OAuth provider');
+          return false;
+        }
+
+        // Check if user exists
+        const existing = await db
+          .select()
+          .from(users)
+          .where(eq(users.email, email as string))
+          .limit(1);
+
+        if (existing[0]) {
+          // Update existing user with OAuth info + last login
+          await db
+            .update(users)
+            .set({
+              provider: account?.provider,
+              providerId: account?.providerAccountId,
+              avatarUrl: user.image || existing[0].avatarUrl,
+              lastLoginAt: new Date(),
+              ...(account?.provider === 'github' ? { githubId: account.providerAccountId } : {}),
+            })
+            .where(eq(users.id, existing[0].id));
+
+          // Set the user ID to match our DB
+          user.id = existing[0].id;
+        } else {
+          // Create new user from OAuth
+          const newUser = await db
+            .insert(users)
+            .values({
+              name: user.name || profile?.name || email.split('@')[0],
+              email: email as string,
+              avatarUrl: user.image || null,
+              provider: account?.provider,
+              providerId: account?.providerAccountId,
+              role: 'member',
+              lastLoginAt: new Date(),
+              ...(account?.provider === 'github' ? { githubId: account.providerAccountId } : {}),
+            })
+            .returning({ id: users.id });
+
+          user.id = newUser[0].id;
+        }
+
+        console.log(`[Auth] OAuth sign-in OK: ${email} via ${account?.provider}`);
+        return true;
+      } catch (error) {
+        console.error('[Auth] OAuth sign-in error:', error);
+        return false;
+      }
+    },
+
+    async jwt({ token, user, account }) {
+      // On initial sign-in, persist user.id from DB
+      if (user) {
+        token.id = user.id;
+      }
+      if (account) {
+        token.provider = account.provider;
+      }
+      return token;
+    },
+
+    async session({ session, token }) {
+      if (session.user && token.id) {
+        session.user.id = token.id as string;
+      }
+      return session;
+    },
+
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith(baseUrl)) return url;
+      if (url.startsWith('/')) return `${baseUrl}${url}`;
+      return `${baseUrl}/dashboard`;
+    },
+  },
 });

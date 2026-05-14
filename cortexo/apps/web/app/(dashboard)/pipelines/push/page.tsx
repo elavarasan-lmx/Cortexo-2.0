@@ -3,21 +3,12 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Upload, Server, FileCode, CheckCircle, XCircle, Loader2, FolderSearch, RotateCcw, ChevronDown, ChevronRight } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api, DeployConfig } from '@/lib/api';
 import { useApiData, useAutoLoadToken } from '@/lib/hooks';
 import { useToastStore } from '@/lib/toast-store';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/v1';
 
-interface DeployConfig {
-  id: number;
-  projectId: string;
-  serverId: number;
-  clientSlug: string;
-  domain: string;
-  deployPath: string;
-  deployUser: string;
-}
 
 interface TargetResult {
   clientSlug: string;
@@ -29,15 +20,6 @@ interface TargetResult {
 }
 
 // ── Styles ────────────────────────────────────────────────────────
-const card: React.CSSProperties = {
-  background: 'rgba(var(--surface), 0.6)', borderRadius: '16px', border: '1px solid rgba(var(--border), 0.15)',
-  padding: '24px', backdropFilter: 'blur(20px)',
-};
-const label: React.CSSProperties = { fontSize: '11px', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.5px', color: 'rgba(var(--foreground), 0.5)', marginBottom: '8px' };
-const input: React.CSSProperties = {
-  width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(var(--border), 0.2)',
-  background: 'rgba(var(--background), 0.5)', color: 'rgb(var(--foreground))', fontSize: '13px', outline: 'none',
-};
 const btn = (primary = false): React.CSSProperties => ({
   display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '10px',
   border: primary ? 'none' : '1px solid rgba(var(--border), 0.2)', cursor: 'pointer', fontSize: '12px', fontWeight: 600,
@@ -135,7 +117,8 @@ export default function FilePushPage() {
     setPushing(true);
     setPushComplete(false);
     setTargetResults(targets.map(t => ({
-      clientSlug: t!.clientSlug, status: 'pending', filesProcessed: 0, errors: [], durationMs: 0,
+      clientSlug: t!.clientSlug ?? '', status: 'pending', filesProcessed: 0, errors: [], durationMs: 0,
+
       fileStatuses: Object.fromEntries(selectedFiles.map(f => [f, 'pending' as const])),
     })));
 
@@ -207,28 +190,28 @@ export default function FilePushPage() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
         {/* Left: Source + Files */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="cx-flex-col" style={{ gap: "20px" }}>
           {/* Source Config */}
-          <div style={card}>
+          <div className="cx-card cx-border">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
               <Server style={{ width: 16, height: 16, color: 'rgb(var(--primary))' }} />
               <span style={{ fontSize: '14px', fontWeight: 600 }}>Source</span>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div className="cx-flex-col" style={{ gap: "12px" }}>
               <div>
-                <div style={label}>Source Server</div>
-                <select value={sourceServerId} onChange={e => setSourceServerId(Number(e.target.value))} style={input}>
+                <div className="cx-label">Source Server</div>
+                <select value={sourceServerId} onChange={e => setSourceServerId(Number(e.target.value))} className="cx-input">
                   <option value={0}>Select server...</option>
                   {serverList.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
               <div>
-                <div style={label}>Source Path</div>
-                <input value={sourcePath} onChange={e => setSourcePath(e.target.value)} style={input} placeholder="/var/www/html/winbullSource" />
+                <div className="cx-label">Source Path</div>
+                <input value={sourcePath} onChange={e => setSourcePath(e.target.value)} className="cx-input" placeholder="/var/www/html/winbullSource" />
               </div>
               <div>
-                <div style={label}>Base Slug (in source files)</div>
-                <input value={baseSlug} onChange={e => setBaseSlug(e.target.value)} style={input} placeholder="lmxtrade" />
+                <div className="cx-label">Base Slug (in source files)</div>
+                <input value={baseSlug} onChange={e => setBaseSlug(e.target.value)} className="cx-input" placeholder="lmxtrade" />
               </div>
               <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', cursor: 'pointer', color: 'rgba(var(--foreground), 0.7)' }}>
@@ -245,9 +228,9 @@ export default function FilePushPage() {
           </div>
 
           {/* File Browser */}
-          <div style={card}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="cx-card cx-border">
+            <div className="cx-flex-between" style={{ marginBottom: "12px" }}>
+              <div className="cx-flex cx-items-center cx-gap-8">
                 <FileCode style={{ width: 16, height: 16, color: 'rgb(var(--agent))' }} />
                 <span style={{ fontSize: '14px', fontWeight: 600 }}>Files</span>
                 {selectedFiles.length > 0 && (
@@ -258,7 +241,7 @@ export default function FilePushPage() {
               </div>
             </div>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-              <input value={fileSearchPattern} onChange={e => setFileSearchPattern(e.target.value)} style={{ ...input, flex: 1 }} placeholder="*.php or leave empty for recent" />
+              <input value={fileSearchPattern} onChange={e => setFileSearchPattern(e.target.value)} style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', color: 'rgb(var(--text-primary))', fontSize: '13px', outline: 'none' }} placeholder="*.php or leave empty for recent" />
               <button onClick={loadFiles} disabled={loadingFiles} style={btn()}>
                 {loadingFiles ? <Loader2 style={{ width: 14, height: 14, animation: 'spin 1s linear infinite' }} /> : <FolderSearch style={{ width: 14, height: 14 }} />}
                 Scan
@@ -278,11 +261,11 @@ export default function FilePushPage() {
         </div>
 
         {/* Right: Targets + Progress */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="cx-flex-col" style={{ gap: "20px" }}>
           {/* Target Clients */}
-          <div style={card}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="cx-card cx-border">
+            <div className="cx-flex-between" style={{ marginBottom: "12px" }}>
+              <div className="cx-flex cx-items-center cx-gap-8">
                 <Upload style={{ width: 16, height: 16, color: 'rgb(var(--success))' }} />
                 <span style={{ fontSize: '14px', fontWeight: 600 }}>Target Clients</span>
               </div>
@@ -314,7 +297,7 @@ export default function FilePushPage() {
 
           {/* Progress */}
           {targetResults.length > 0 && (
-            <div style={card}>
+            <div className="cx-card cx-border">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                 <span style={{ fontSize: '14px', fontWeight: 600 }}>Progress</span>
                 {pushComplete && (
@@ -326,7 +309,7 @@ export default function FilePushPage() {
                   </span>
                 )}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="cx-flex-col" style={{ gap: "8px" }}>
                 {targetResults.map((tr, i) => (
                   <div key={tr.clientSlug}>
                     <div onClick={() => setExpandedTarget(expandedTarget === tr.clientSlug ? null : tr.clientSlug)}

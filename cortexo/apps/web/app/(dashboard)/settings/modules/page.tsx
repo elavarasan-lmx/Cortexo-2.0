@@ -84,7 +84,7 @@ function SortableItem({
       }}
         onMouseEnter={(e) => { if (!isDragOverlay) e.currentTarget.style.backgroundColor = 'rgba(var(--primary), 0.03)'; }}
         onMouseLeave={(e) => { if (!isDragOverlay) e.currentTarget.style.backgroundColor = 'transparent'; }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="cx-flex cx-items-center cx-gap-12">
           <div {...attributes} {...listeners} style={{ cursor: 'grab', display: 'flex', color: 'rgb(var(--text-muted))' }}>
             <GripVertical size={14} />
           </div>
@@ -135,7 +135,7 @@ function DroppableSection({
         borderBottom: '1px solid rgba(var(--border), 0.3)',
         transition: 'background-color 200ms',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="cx-flex cx-items-center cx-gap-12">
           <div style={{
             width: 10, height: 10, borderRadius: '50%',
             backgroundColor: allOff ? 'rgb(var(--text-muted))' : section.color,
@@ -408,7 +408,7 @@ export default function ModulesPage() {
   })() : '#888';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div className="cx-flex-col" style={{ gap: "20px" }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 4px' }}>Sidebar Modules</h1>
@@ -416,7 +416,7 @@ export default function ModulesPage() {
             {visibleItems} of {totalItems} modules visible — drag items between sections to reorganize
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '6px' }}>
+        <div className="cx-flex cx-gap-6">
           <button onClick={resetLayout} style={btnStyle}
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgb(var(--primary))'; e.currentTarget.style.color = 'rgb(var(--primary))'; }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgb(var(--border))'; e.currentTarget.style.color = 'rgb(var(--text-secondary))'; }}>

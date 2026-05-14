@@ -2,15 +2,43 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { Lock, ArrowLeft, Mail, CheckCircle } from 'lucide-react';
+import { Lock, ArrowLeft, Mail, CheckCircle, Loader2 } from 'lucide-react';
 
 const BRAND_PURPLE = '#7c5cfc';
 const INPUT_BG = '#f3f1f9';
 const TEXT_MUTED = '#8b8b9e';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/v1';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${API_URL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Something went wrong. Please try again.');
+      }
+
+      setSent(true);
+    } catch (err: any) {
+      setError(err.message || 'Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div style={{
@@ -74,8 +102,20 @@ export default function ForgotPasswordPage() {
               }}>
                 No worries! Enter your email and we&apos;ll send you a reset link.
               </p>
+
+              {error && (
+                <div style={{
+                  padding: '12px 16px', marginBottom: '16px',
+                  borderRadius: '10px', backgroundColor: '#fef2f2',
+                  border: '1px solid #fecaca', color: '#dc2626',
+                  fontSize: '13px', fontWeight: 500,
+                }}>
+                  {error}
+                </div>
+              )}
+
               <form
-                onSubmit={(e) => { e.preventDefault(); setSent(true); }}
+                onSubmit={handleSubmit}
                 style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
               >
                 <div>
@@ -93,25 +133,36 @@ export default function ForgotPasswordPage() {
                       id="email" type="email" value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="jerry@cortexo.dev" required
+                      disabled={loading}
                       style={{
                         width: '100%', padding: '14px 16px 14px 42px',
                         borderRadius: '10px', border: 'none',
                         backgroundColor: INPUT_BG, fontSize: '14px',
                         color: '#1a1a2e', outline: 'none',
+                        opacity: loading ? 0.6 : 1,
                       }}
                       onFocus={(e) => e.target.style.boxShadow = `0 0 0 2px ${BRAND_PURPLE}40`}
                       onBlur={(e) => e.target.style.boxShadow = 'none'}
                     />
                   </div>
                 </div>
-                <button type="submit" id="reset-submit" style={{
+                <button type="submit" id="reset-submit" disabled={loading} style={{
                   width: '100%', padding: '14px',
                   borderRadius: '12px', border: 'none',
                   background: `linear-gradient(135deg, ${BRAND_PURPLE}, #a855f7)`,
                   fontSize: '15px', fontWeight: 600,
-                  color: 'white', cursor: 'pointer',
+                  color: 'white', cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.7 : 1,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                 }}>
-                  Send Reset Link →
+                  {loading ? (
+                    <>
+                      <Loader2 style={{ height: '18px', width: '18px', animation: 'spin 1s linear infinite' }} />
+                      Sending...
+                    </>
+                  ) : (
+                    'Send Reset Link →'
+                  )}
                 </button>
               </form>
               <div style={{ marginTop: '24px', textAlign: 'center' }}>
@@ -128,6 +179,13 @@ export default function ForgotPasswordPage() {
           )}
         </div>
       </div>
+
+      <style jsx global>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }

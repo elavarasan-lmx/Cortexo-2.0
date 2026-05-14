@@ -1,9 +1,9 @@
 'use client';
 
 import {
-  FolderGit2, Rocket, Server, Bug, Activity, Shield, ArrowRight, Zap, TrendingUp
+  FolderGit2, Rocket, Server as ServerIcon, Bug, Activity, Shield, ArrowRight, Zap, TrendingUp
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { AuditLog, Deployment, Project, Server, TrackedError, api } from '@/lib/api';
 import { useCortexoQuery, useAutoLoadToken } from '@/lib/hooks';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -25,10 +25,10 @@ export default function DashboardPage() {
 
   const projectCount = (projects || []).length;
   const deployCount = (deployments || []).length;
-  const activeServers = (servers || []).filter((s: any) => s.status === 'active').length;
+  const activeServers = (servers || []).filter((s: Server) => s.status === 'active').length;
   const totalServers = (servers || []).length;
-  const errorCount = (errors || []).filter((e: any) => e.status === 'unresolved').length;
-  const resolvedCount = (errors || []).filter((e: any) => e.status === 'resolved').length;
+  const errorCount = (errors || []).filter((e: TrackedError) => e.status === 'unresolved').length;
+  const resolvedCount = (errors || []).filter((e: TrackedError) => e.status === 'resolved').length;
 
   // Compute trends from real data
   const projectTrend = projectCount > 0 ? `${projectCount} total` : 'No projects';
@@ -101,7 +101,7 @@ export default function DashboardPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
         <StatCard title="Projects" value={String(projectCount)} trend={projectTrend} color="#10B981" icon={FolderGit2} bg="rgba(16,185,129,0.1)" />
         <StatCard title="Total Deployments" value={String(deployCount)} trend={deployTrend} color="#8B5CF6" icon={Rocket} bg="rgba(139,92,246,0.1)" />
-        <StatCard title="Active Servers" value={String(activeServers)} trend={serverTrend} color="#3B82F6" icon={Server} bg="rgba(59,130,246,0.1)" />
+        <StatCard title="Active Servers" value={String(activeServers)} trend={serverTrend} color="#3B82F6" icon={ServerIcon} bg="rgba(59,130,246,0.1)" />
         <StatCard title="Open Bugs" value={String(errorCount)} trend={errorTrend} color="#F59E0B" icon={Bug} bg="rgba(245,158,11,0.1)" />
       </div>
 
@@ -109,7 +109,7 @@ export default function DashboardPage() {
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
         {/* Chart Area */}
         <div className="cx-card cx-border" style={{ padding: '24px', position: 'relative' }}>
-          <div className="cx-flex-between" style={{ marginBottom: '24px' }}>
+          <div className="cx-flex-between cx-mb-24">
             <h2 className="cx-fw-600 cx-text-primary" style={{ fontSize: '16px', margin: 0 }}>Deployment Activity (7 Days)</h2>
             <span className="cx-fw-600" style={{ fontSize: '12px', color: '#10B981', backgroundColor: 'rgba(16,185,129,0.1)', padding: '4px 10px', borderRadius: '12px' }}>
               {chartData.counts.reduce((a, b) => a + b, 0)} deploys
@@ -129,11 +129,11 @@ export default function DashboardPage() {
                 <circle key={i} cx={dot.x} cy={dot.y} r="4" fill="#8B5CF6" />
               ))}
             </svg>
-            <div className="cx-flex-between cx-text-muted" style={{ marginTop: '16px', fontSize: '11px', fontWeight: 500, textTransform: 'uppercase' }}>
+            <div className="cx-flex-between cx-text-muted cx-fw-500" style={{ marginTop: '16px', fontSize: '11px', textTransform: 'uppercase' }}>
               {chartData.labels.map((label, i) => (
-                <span key={i} className="cx-flex-col cx-flex-center" style={{ gap: '2px' }}>
+                <span key={i} className="cx-flex-col cx-flex-center cx-gap-2">
                   {label}
-                  <span className="cx-fw-600 cx-text-primary" style={{ fontSize: '10px' }}>{chartData.counts[i]}</span>
+                  <span className="cx-fw-600 cx-text-primary cx-text-10">{chartData.counts[i]}</span>
                 </span>
               ))}
             </div>
@@ -142,7 +142,7 @@ export default function DashboardPage() {
 
         {/* Recent Activity List */}
         <div className="cx-card cx-border" style={{ padding: '24px' }}>
-          <div className="cx-flex-between" style={{ marginBottom: '24px' }}>
+          <div className="cx-flex-between cx-mb-24">
             <h2 className="cx-fw-600 cx-text-primary" style={{ fontSize: '16px', margin: 0 }}>Recent Activity</h2>
             <a href="/audit-log" className="cx-fw-600 cx-text-accent" style={{ fontSize: '12px', textDecoration: 'none' }}>View All →</a>
           </div>
@@ -162,10 +162,10 @@ export default function DashboardPage() {
         {/* Quick Actions */}
         <div className="cx-card cx-border" style={{ padding: '24px' }}>
           <h2 className="cx-fw-600 cx-text-primary" style={{ fontSize: '16px', margin: '0 0 24px 0' }}>Quick Actions</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+          <div className="cx-grid-4">
             <QuickActionBtn title="New Deploy" icon={Rocket} bgColor="#7C3AED" href="/deployments" />
             <QuickActionBtn title="Add Project" icon={FolderGit2} bgColor="#3B82F6" href="/projects" />
-            <QuickActionBtn title="Add Server" icon={Server} bgColor="#10B981" href="/servers" />
+            <QuickActionBtn title="Add Server" icon={ServerIcon} bgColor="#10B981" href="/servers" />
             <QuickActionBtn title="Run Scan" icon={Shield} bgColor="#F59E0B" href="/scans" />
           </div>
         </div>
@@ -189,17 +189,17 @@ export default function DashboardPage() {
 
 function StatCard({ title, value, trend, color, icon: Icon, bg }: { title: string; value: string; trend: string; color: string; icon: any; bg: string }) {
   return (
-    <div className="cx-border" style={{ backgroundColor: 'rgb(var(--surface))', borderRadius: '14px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', position: 'relative', overflow: 'hidden' }}>
+    <div className="cx-card cx-border cx-flex-col" style={{ borderRadius: '14px', padding: '24px', gap: '16px', position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', backgroundColor: color }} />
       <div className="cx-flex-between">
-        <span className="cx-fw-600 cx-text-secondary" style={{ fontSize: '13px' }}>{title}</span>
+        <span className="cx-fw-600 cx-text-secondary cx-text-13">{title}</span>
         <div className="cx-flex-center cx-r-10" style={{ width: '36px', height: '36px', backgroundColor: bg }}>
           <Icon style={{ width: '18px', height: '18px', color }} />
         </div>
       </div>
       <div className="cx-flex cx-items-center cx-gap-12">
         <span className="cx-fw-700 cx-text-primary" style={{ fontSize: '32px', lineHeight: 1 }}>{value}</span>
-        <span className="cx-fw-600 cx-text-muted" style={{ fontSize: '12px', backgroundColor: 'rgba(var(--text-muted), 0.08)', padding: '4px 8px', borderRadius: '12px' }}>{trend}</span>
+        <span className="cx-fw-600 cx-text-muted cx-text-12" style={{ backgroundColor: 'rgba(var(--text-muted), 0.08)', padding: '4px 8px', borderRadius: '12px' }}>{trend}</span>
       </div>
     </div>
   );
@@ -210,7 +210,7 @@ function ActivityRow({ iconColor, title, time }: { iconColor: string; title: str
     <div className="cx-flex-between">
       <div className="cx-flex cx-items-center cx-gap-12">
         <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: iconColor }} />
-        <span className="cx-text-primary" style={{ fontSize: '14px', fontWeight: 500 }}>{title}</span>
+        <span className="cx-text-primary cx-fw-500 cx-text-14">{title}</span>
       </div>
       <span className="cx-text-12 cx-text-muted">{time}</span>
     </div>
@@ -221,7 +221,7 @@ function QuickActionBtn({ title, icon: Icon, bgColor, href }: { title: string; i
   return (
     <a href={href} className="cx-flex-col cx-flex-center cx-r-12" style={{ backgroundColor: bgColor, padding: '24px 16px', gap: '12px', textDecoration: 'none', color: '#fff', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'none'}>
       <Icon style={{ width: '24px', height: '24px' }} />
-      <span className="cx-fw-600" style={{ fontSize: '14px' }}>{title}</span>
+      <span className="cx-fw-600 cx-text-14">{title}</span>
     </a>
   );
 }
@@ -232,11 +232,11 @@ function ServerHealthRow({ name, ip, color, status }: { name: string; ip?: strin
       <div className="cx-flex cx-items-center cx-gap-12">
         <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: color }} />
         <div className="cx-flex-col">
-          <span className="cx-text-primary" style={{ fontSize: '14px', fontWeight: 500 }}>{name}</span>
-          {ip && <span className="cx-text-muted cx-mono" style={{ fontSize: '11px' }}>{ip}</span>}
+          <span className="cx-text-primary cx-fw-500 cx-text-14">{name}</span>
+          {ip && <span className="cx-text-muted cx-mono cx-text-11">{ip}</span>}
         </div>
       </div>
-      <span className="cx-fw-600 cx-mono" style={{ fontSize: '12px', color }}>{status}</span>
+      <span className="cx-fw-600 cx-mono cx-text-12" style={{ color }}>{status}</span>
     </div>
   );
 }

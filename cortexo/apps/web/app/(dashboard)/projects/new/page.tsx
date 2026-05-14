@@ -26,35 +26,8 @@ function detectProvider(url: string): string {
 }
 
 /* ─── shared styles ─── */
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '11px 14px',
-  borderRadius: '10px',
-  border: '1px solid rgb(var(--border))',
-  backgroundColor: 'rgb(var(--surface-hover))',
-  color: 'rgb(var(--text-primary))',
-  fontSize: '13px',
-  outline: 'none',
-  transition: 'border-color 200ms',
-  boxSizing: 'border-box',
-};
 
-const labelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: '11px',
-  fontWeight: 600,
-  textTransform: 'uppercase',
-  letterSpacing: '0.04em',
-  marginBottom: '6px',
-  color: 'rgb(var(--text-muted))',
-};
 
-const cardStyle: React.CSSProperties = {
-  backgroundColor: 'rgb(var(--surface))',
-  border: '1px solid rgb(var(--border))',
-  borderRadius: '16px',
-  padding: '32px',
-};
 
 const DEFAULT_FORM = {
   // Step 1: Client Info
@@ -318,9 +291,9 @@ export default function NewProjectPage() {
   }
 
   const previewPanel = (
-    <div style={{ ...cardStyle, width: '320px', flexShrink: 0, position: 'sticky', top: '20px', alignSelf: 'flex-start' }}>
+    <div className="cx-card cx-border" style={{ width: "320px", flexShrink: 0, position: "sticky", top: "20px", alignSelf: "flex-start" }}>
       <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 20px' }}>Project Preview</h3>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+      <div className="cx-flex cx-items-center cx-gap-12" style={{ marginBottom: "20px" }}>
         <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'rgba(124,58,237,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <FolderGit2 style={{ width: '24px', height: '24px', color: '#7C3AED' }} />
         </div>
@@ -334,9 +307,9 @@ export default function NewProjectPage() {
       {form.dbName && <div style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', marginBottom: '4px' }}>🗄 {form.dbName}</div>}
       <div style={{ marginTop: '20px', padding: '16px', borderRadius: '10px', backgroundColor: 'rgba(124,58,237,0.04)', border: '1px solid rgba(124,58,237,0.1)' }}>
         <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#7C3AED', margin: '0 0 10px' }}>What happens next?</h4>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="cx-flex-col cx-gap-8">
           {['Project is registered in Cortexo', 'CI/CD pipeline is created', 'Ready for first deployment'].map((t, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'rgb(var(--text-muted))' }}>
+            <div key={i} className="cx-flex cx-items-center cx-gap-8 cx-text-muted cx-text-12">
               <span style={{ width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'rgba(124,58,237,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: '#7C3AED', flexShrink: 0 }}>{i + 1}</span>
               {t}
             </div>
@@ -349,8 +322,8 @@ export default function NewProjectPage() {
   return (
     <div style={{ maxWidth: '1080px', margin: '0 auto' }}>
       {/* ─── Header ─── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div className="cx-flex-between" style={{ marginBottom: "28px" }}>
+        <div className="cx-flex cx-items-center cx-gap-12">
           <button
             onClick={() => router.push('/projects')}
             style={{
@@ -389,7 +362,7 @@ export default function NewProjectPage() {
       </div>
 
       {/* ─── Step Indicator ─── */}
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '28px' }}>
+      <div className="cx-flex cx-items-center" style={{ marginBottom: "28px" }}>
         {steps.map((s, i) => {
           const isDone = step > s.id || done;
           const isCurrent = step === s.id;
@@ -431,30 +404,30 @@ export default function NewProjectPage() {
       </div>
 
       {/* ─── Main Content with Sidebar ─── */}
-      <div style={{ display: 'flex', gap: '32px' }}>
-      <div style={{ ...cardStyle, flex: 1 }}>
+      <div className="cx-flex cx-gap-32">
+      <div className="cx-card cx-border" style={{ flex: 1 }}>
 
         {/* Step 1: Client Info */}
         {step === 1 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="cx-flex-col" style={{ gap: "20px" }}>
             <h2 style={{ fontSize: '17px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: 0 }}>
               Project Basic Information
             </h2>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div className="cx-grid-2">
               <div>
-                <label style={labelStyle}>Project Name *</label>
+                <label className="cx-label">Project Name *</label>
                 <input
-                  style={inputStyle}
+                  className="cx-input"
                   placeholder="e.g. Vijay Bullion"
                   value={form.name}
                   onChange={e => updateName(e.target.value)}
                 />
               </div>
               <div>
-                <label style={labelStyle}>Client Slug <span style={{ fontWeight: 400, textTransform: 'none', fontSize: '9px', color: 'rgb(var(--text-muted))' }}>(auto)</span></label>
+                <label className="cx-label">Client Slug <span style={{ fontWeight: 400, textTransform: 'none', fontSize: '9px', color: 'rgb(var(--text-muted))' }}>(auto)</span></label>
                 <input
-                  style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace", borderColor: conflicts.clientSlug ? '#EF4444' : (form.clientSlug && !validating ? '#10B981' : undefined) }}
+                  className="cx-input cx-mono" style={{ borderColor: conflicts.clientSlug ? '#EF4444' : (form.clientSlug && !validating ? '#10B981' : undefined) }}
                   placeholder="vijaybullion"
                   value={form.clientSlug}
                   onChange={e => update('clientSlug', e.target.value)}
@@ -475,8 +448,8 @@ export default function NewProjectPage() {
             </div>
 
             <div>
-              <label style={labelStyle}>Product Type</label>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <label className="cx-label">Product Type</label>
+              <div className="cx-flex cx-gap-8">
                 {([{ key: 'lite', label: 'Winbull Lite', color: '#10B981' }, { key: 'trade', label: 'Winbull Trade', color: '#F59E0B' }] as const).map(pt => (
                   <button key={pt.key} onClick={() => update('productType', pt.key)} style={{
                     padding: '10px 22px', borderRadius: '10px', fontSize: '12px', fontWeight: form.productType === pt.key ? 600 : 500, cursor: 'pointer', transition: 'all 200ms',
@@ -488,15 +461,15 @@ export default function NewProjectPage() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <div><label style={labelStyle}>Android App Version</label><input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace" }} placeholder="1.0.0" value={form.androidVersion} onChange={e => update('androidVersion', e.target.value)} /></div>
-              <div><label style={labelStyle}>iOS App Version</label><input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace" }} placeholder="1.0.0" value={form.iosVersion} onChange={e => update('iosVersion', e.target.value)} /></div>
+            <div className="cx-grid-2">
+              <div><label className="cx-label">Android App Version</label><input className="cx-input cx-mono" placeholder="1.0.0" value={form.androidVersion} onChange={e => update('androidVersion', e.target.value)} /></div>
+              <div><label className="cx-label">iOS App Version</label><input className="cx-input cx-mono" placeholder="1.0.0" value={form.iosVersion} onChange={e => update('iosVersion', e.target.value)} /></div>
             </div>
 
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <label style={{ ...labelStyle, margin: 0 }}>Repository</label>
-                <div style={{ display: 'flex', gap: '4px' }}>
+                <label className="cx-label" style={{ margin: 0 }}>Repository</label>
+                <div className="cx-flex cx-gap-4">
                   <button onClick={() => setRepoMode('github')} style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '10px', fontWeight: 600, border: 'none', cursor: 'pointer', backgroundColor: repoMode === 'github' ? 'rgba(var(--primary),0.12)' : 'transparent', color: repoMode === 'github' ? 'rgb(var(--primary))' : 'rgb(var(--text-muted))' }}>
                     GitHub
                   </button>
@@ -509,7 +482,7 @@ export default function NewProjectPage() {
               {repoMode === 'github' ? (
                 <div style={{ position: 'relative' }}>
                   {ghLoading ? (
-                    <div style={{ ...inputStyle, display: 'flex', alignItems: 'center', gap: '8px', color: 'rgb(var(--text-muted))' }}>
+                    <div className="cx-input cx-flex cx-items-center cx-gap-8 cx-text-muted">
                       <Loader2 style={{ width: 14, height: 14, animation: 'spin 1s linear infinite' }} /> Loading repos...
                     </div>
                   ) : ghError ? (
@@ -522,10 +495,10 @@ export default function NewProjectPage() {
                     <>
                       <div
                         onClick={() => setShowRepoDropdown(!showRepoDropdown)}
-                        style={{ ...inputStyle, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                        className="cx-input cx-flex cx-items-center cx-flex-between" style={{ cursor: "pointer" }}
                       >
                         {form.repoUrl ? (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span className="cx-flex cx-items-center cx-gap-6">
                             <Github style={{ width: 14, height: 14, color: 'rgb(var(--primary))' }} />
                             {ghRepos.find(r => r.url === form.repoUrl)?.name || form.repoUrl}
                           </span>
@@ -546,7 +519,7 @@ export default function NewProjectPage() {
                                 placeholder="Search repos..."
                                 value={repoSearch}
                                 onChange={e => setRepoSearch(e.target.value)}
-                                style={{ ...inputStyle, paddingLeft: '30px', border: '1px solid rgb(var(--border))' }}
+                                className="cx-input" style={{ paddingLeft: "30px" }}
                               />
                             </div>
                           </div>
@@ -594,7 +567,7 @@ export default function NewProjectPage() {
               ) : (
                 <>
                   <input
-                    style={inputStyle}
+                    className="cx-input"
                     placeholder="https://github.com/yourname/project"
                     value={form.repoUrl}
                     onChange={e => update('repoUrl', e.target.value)}
@@ -610,18 +583,18 @@ export default function NewProjectPage() {
 
             {form.repoUrl && (
               <div style={{ position: 'relative' }}>
-                <label style={labelStyle}>Default Branch</label>
+                <label className="cx-label">Default Branch</label>
                 {branchLoading ? (
-                  <div style={{ ...inputStyle, display: 'flex', alignItems: 'center', gap: '8px', color: 'rgb(var(--text-muted))' }}>
+                  <div className="cx-input cx-flex cx-items-center cx-gap-8 cx-text-muted">
                     <Loader2 style={{ width: 14, height: 14, animation: 'spin 1s linear infinite' }} /> Loading branches...
                   </div>
                 ) : branches.length > 0 ? (
                   <>
                     <div
                       onClick={() => setShowBranchDropdown(!showBranchDropdown)}
-                      style={{ ...inputStyle, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                      className="cx-input cx-flex cx-items-center cx-flex-between" style={{ cursor: "pointer" }}
                     >
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span className="cx-flex cx-items-center cx-gap-6">
                         <GitBranch style={{ width: 14, height: 14, color: '#10B981' }} />
                         {form.branch || 'Select branch...'}
                       </span>
@@ -637,7 +610,7 @@ export default function NewProjectPage() {
                               placeholder="Search branches..."
                               value={branchSearch}
                               onChange={e => setBranchSearch(e.target.value)}
-                              style={{ ...inputStyle, paddingLeft: '30px', border: '1px solid rgb(var(--border))' }}
+                              className="cx-input" style={{ paddingLeft: "30px" }}
                             />
                           </div>
                         </div>
@@ -674,7 +647,7 @@ export default function NewProjectPage() {
                   </>
                 ) : (
                   <input
-                    style={inputStyle}
+                    className="cx-input"
                     placeholder="development"
                     value={form.branch}
                     onChange={e => update('branch', e.target.value)}
@@ -685,18 +658,18 @@ export default function NewProjectPage() {
 
             {/* Server Selection */}
             <div style={{ borderTop: '1px solid rgb(var(--border))', paddingTop: '20px', marginTop: '4px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="cx-grid-2">
                 <div>
-                  <label style={labelStyle}>Deployment Server</label>
-                  <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.serverId} onChange={e => update('serverId', e.target.value)}>
+                  <label className="cx-label">Deployment Server</label>
+                  <select className="cx-input" style={{ cursor: "pointer" }} value={form.serverId} onChange={e => update('serverId', e.target.value)}>
                     <option value="">Select deployment server...</option>
                     {allServers.map((s: Record<string, unknown>) => (<option key={String(s.id)} value={String(s.id)}>🖥 {String(s.name)} ({String(s.privateIp)})</option>))}
                     {allServers.length === 0 && <option value="" disabled>No servers configured — add one in Servers page</option>}
                   </select>
                 </div>
                 <div>
-                  <label style={labelStyle}>Server Path</label>
-                  <input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace", borderColor: conflicts.serverPath ? '#EF4444' : undefined }} placeholder="/var/www/html/client" value={form.serverPath} onChange={e => update('serverPath', e.target.value)} />
+                  <label className="cx-label">Server Path</label>
+                  <input className="cx-input cx-mono" style={{ borderColor: conflicts.serverPath ? "#EF4444" : undefined }} placeholder="/var/www/html/client" value={form.serverPath} onChange={e => update('serverPath', e.target.value)} />
                   {conflicts.serverPath && (
                     <p style={{ fontSize: '11px', color: '#EF4444', margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <AlertTriangle style={{ width: 12, height: 12 }} />
@@ -713,22 +686,22 @@ export default function NewProjectPage() {
 
         {/* Step 2: Domain & DB */}
         {step === 2 && !done && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="cx-flex-col" style={{ gap: "20px" }}>
             <h2 style={{ fontSize: '17px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: 0 }}>Domain & Access</h2>
             <div>
-              <label style={labelStyle}>Domain *</label>
-              <input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace" }} placeholder="e.g. vijaybullion.com" value={form.domain} onChange={e => updateDomain(e.target.value)} />
+              <label className="cx-label">Domain *</label>
+              <input className="cx-input cx-mono" placeholder="e.g. vijaybullion.com" value={form.domain} onChange={e => updateDomain(e.target.value)} />
               <p style={{ fontSize: '10px', color: 'rgb(var(--text-muted))', margin: '4px 0 0' }}>All URLs below auto-generate from domain</p>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
-              <div><label style={labelStyle}>Admin URL</label><input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace", fontSize: '12px' }} placeholder="auto from domain" value={form.adminBaseUrl} onChange={e => update('adminBaseUrl', e.target.value)} /></div>
-              <div><label style={labelStyle}>Admin Username</label><input style={inputStyle} placeholder="e.g. admin" value={form.adminUser} onChange={e => update('adminUser', e.target.value)} /></div>
-              <div><label style={labelStyle}>Admin Password</label><input type="password" style={inputStyle} placeholder="••••••••" value={form.adminPassword} onChange={e => update('adminPassword', e.target.value)} /></div>
+              <div><label className="cx-label">Admin URL</label><input className="cx-input cx-mono" style={{ fontSize: "12px" }} placeholder="auto from domain" value={form.adminBaseUrl} onChange={e => update('adminBaseUrl', e.target.value)} /></div>
+              <div><label className="cx-label">Admin Username</label><input className="cx-input" placeholder="e.g. admin" value={form.adminUser} onChange={e => update('adminUser', e.target.value)} /></div>
+              <div><label className="cx-label">Admin Password</label><input type="password" className="cx-input" placeholder="••••••••" value={form.adminPassword} onChange={e => update('adminPassword', e.target.value)} /></div>
             </div>
 
             {form.domain && (
               <div style={{ padding: '14px 16px', borderRadius: '10px', backgroundColor: 'rgb(var(--surface-hover))', border: '1px solid rgb(var(--border))' }}>
-                <label style={{ ...labelStyle, marginBottom: '10px' }}>Generated URLs</label>
+                <label className="cx-label" style={{ marginBottom: "10px" }}>Generated URLs</label>
                 {[{ l: 'Web', v: form.webBaseUrl }, { l: 'Mobile API', v: form.appBaseUrl }].map(u => (
                   <div key={u.l} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                     <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgb(var(--text-muted))', width: '70px' }}>{u.l}</span>
@@ -744,20 +717,20 @@ export default function NewProjectPage() {
         {step === 2 && !done && (
           <>
             <div style={{ borderTop: '1px solid rgb(var(--border))', marginTop: '8px', paddingTop: '20px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <div className="cx-flex-between" style={{ marginBottom: "16px" }}>
                 <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: 0 }}>Database</h3>
                 <span style={{ padding: '4px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, backgroundColor: 'rgba(0,117,143,0.1)', color: '#00758F' }}>MySQL</span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                <div><label style={labelStyle}>DB Host *</label><input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace" }} placeholder="database-1.rds.amazonaws.com" value={form.dbHost} onChange={e => update('dbHost', e.target.value)} /></div>
-                <div><label style={labelStyle}>DB Port</label><input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace" }} placeholder="3306" value={form.dbPort} onChange={e => update('dbPort', e.target.value)} /></div>
+                <div><label className="cx-label">DB Host *</label><input className="cx-input cx-mono" placeholder="database-1.rds.amazonaws.com" value={form.dbHost} onChange={e => update('dbHost', e.target.value)} /></div>
+                <div><label className="cx-label">DB Port</label><input className="cx-input cx-mono" placeholder="3306" value={form.dbPort} onChange={e => update('dbPort', e.target.value)} /></div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
-                <div><label style={labelStyle}>DB Username *</label><input style={inputStyle} placeholder="admin" value={form.dbUser} onChange={e => update('dbUser', e.target.value)} /></div>
-                <div><label style={labelStyle}>DB Password *</label><input type="password" style={inputStyle} placeholder="••••••••" value={form.dbPassword} onChange={e => update('dbPassword', e.target.value)} /></div>
+                <div><label className="cx-label">DB Username *</label><input className="cx-input" placeholder="admin" value={form.dbUser} onChange={e => update('dbUser', e.target.value)} /></div>
+                <div><label className="cx-label">DB Password *</label><input type="password" className="cx-input" placeholder="••••••••" value={form.dbPassword} onChange={e => update('dbPassword', e.target.value)} /></div>
                 <div>
-                  <label style={labelStyle}>DB Name *</label>
-                  <input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace", borderColor: conflicts.dbName ? '#EF4444' : undefined }} placeholder="winbullSource" value={form.dbName} onChange={e => update('dbName', e.target.value)} />
+                  <label className="cx-label">DB Name *</label>
+                  <input className="cx-input cx-mono" style={{ borderColor: conflicts.dbName ? "#EF4444" : undefined }} placeholder="winbullSource" value={form.dbName} onChange={e => update('dbName', e.target.value)} />
                   {conflicts.dbName && (
                     <p style={{ fontSize: '11px', color: '#EF4444', margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <AlertTriangle style={{ width: 12, height: 12 }} />
@@ -768,14 +741,14 @@ export default function NewProjectPage() {
               </div>
             </div>
             <div style={{ borderTop: '1px solid rgb(var(--border))', marginTop: '8px', paddingTop: '20px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <div className="cx-flex-between" style={{ marginBottom: "16px" }}>
                 <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: 0 }}>Socket</h3>
                 <span style={{ padding: '4px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, backgroundColor: 'rgba(168,85,247,0.1)', color: '#A855F7' }}>WebSocket</span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="cx-grid-2">
                 <div>
-                  <label style={labelStyle}>WS Port * <span style={{ fontWeight: 400, textTransform: 'none', fontSize: '9px' }}>(Native)</span></label>
-                  <input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace", borderColor: conflicts.wsPort ? '#EF4444' : undefined }} placeholder="e.g. 57124" value={form.wsPort} onChange={e => update('wsPort', e.target.value)} />
+                  <label className="cx-label">WS Port * <span style={{ fontWeight: 400, textTransform: 'none', fontSize: '9px' }}>(Native)</span></label>
+                  <input className="cx-input cx-mono" style={{ borderColor: conflicts.wsPort ? "#EF4444" : undefined }} placeholder="e.g. 57124" value={form.wsPort} onChange={e => update('wsPort', e.target.value)} />
                   {conflicts.wsPort && (
                     <p style={{ fontSize: '11px', color: '#EF4444', margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <AlertTriangle style={{ width: 12, height: 12 }} />
@@ -784,8 +757,8 @@ export default function NewProjectPage() {
                   )}
                 </div>
                 <div>
-                  <label style={labelStyle}>Socket.IO Port * <span style={{ fontWeight: 400, textTransform: 'none', fontSize: '9px' }}>(Redis)</span></label>
-                  <input style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace", borderColor: conflicts.socketIoPort ? '#EF4444' : undefined }} placeholder="e.g. 7124" value={form.socketIoPort} onChange={e => update('socketIoPort', e.target.value)} />
+                  <label className="cx-label">Socket.IO Port * <span style={{ fontWeight: 400, textTransform: 'none', fontSize: '9px' }}>(Redis)</span></label>
+                  <input className="cx-input cx-mono" style={{ borderColor: conflicts.socketIoPort ? "#EF4444" : undefined }} placeholder="e.g. 7124" value={form.socketIoPort} onChange={e => update('socketIoPort', e.target.value)} />
                   {conflicts.socketIoPort && (
                     <p style={{ fontSize: '11px', color: '#EF4444', margin: '4px 0 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <AlertTriangle style={{ width: 12, height: 12 }} />
@@ -800,7 +773,7 @@ export default function NewProjectPage() {
 
         {/* Step 3: Review */}
         {step === 3 && !done && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="cx-flex-col" style={{ gap: "20px" }}>
             <h2 style={{ fontSize: '17px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: 0 }}>Review & Create</h2>
             {hasConflicts ? (
               <div style={{ padding: '14px 16px', borderRadius: '10px', backgroundColor: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.3)' }}>
@@ -864,7 +837,7 @@ export default function NewProjectPage() {
 
       {/* ─── Navigation Buttons ─── */}
       {!done && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '20px' }}>
+        <div className="cx-flex-between" style={{ marginTop: "20px" }}>
           <button
             onClick={() => step > 1 ? setStep(s => s - 1) : router.push('/projects')}
             style={{
@@ -937,7 +910,7 @@ export default function NewProjectPage() {
           <div style={{ width: '480px', maxHeight: '80vh', borderRadius: '16px', backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', overflow: 'hidden', boxShadow: '0 24px 48px rgba(0,0,0,0.35)' }}>
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', borderBottom: '1px solid rgb(var(--border))', background: 'linear-gradient(135deg, rgba(239,68,68,0.08), rgba(239,68,68,0.02))' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div className="cx-flex cx-items-center cx-gap-10">
                 <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: 'rgba(239,68,68,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <AlertTriangle style={{ width: '18px', height: '18px', color: '#EF4444' }} />
                 </div>

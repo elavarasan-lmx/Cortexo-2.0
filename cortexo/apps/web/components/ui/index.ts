@@ -18,3 +18,5 @@ export { Badge, StatusBadge } from './badge';
 export { Toggle } from './toggle';
 
 export { Button } from './button';
+
+export { Ico, MetaText, ChipTag, SectionHead, EmptyState } from './primitives';

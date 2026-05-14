@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import {
-  Server, Plus, Trash2, Edit3, HardDrive, Cpu, MemoryStick,
+  Server as ServerIcon, Plus, Trash2, Edit3, HardDrive, Cpu, MemoryStick,
   Loader2, RefreshCw, Wifi, WifiOff, Globe, Shield, FolderSync, Plug,
 } from 'lucide-react';
 import Link from 'next/link';
-import { api } from '@/lib/api';
+import { Server, api } from '@/lib/api';
 import { useCortexoQuery, useAutoLoadToken } from '@/lib/hooks';
 
 import { useToastStore } from '@/lib/toast-store';
@@ -19,13 +19,13 @@ function MetricBar({ label, value, max, unit, color }: { label: string; value: n
   return (
     <div style={{ marginBottom: '8px' }}>
       <div className="cx-flex-between" style={{ marginBottom: '3px' }}>
-        <span className="cx-text-muted" style={{ fontSize: '11px' }}>{label}</span>
-        <span className="cx-fw-600" style={{ fontSize: '11px', color: barColor }}>{pct}%</span>
+        <span className="cx-text-muted cx-text-11">{label}</span>
+        <span className="cx-fw-600 cx-text-11" style={{ color: barColor }}>{pct}%</span>
       </div>
-      <div style={{ height: '5px', borderRadius: '3px', backgroundColor: 'rgba(var(--border), 0.8)', overflow: 'hidden' }}>
+      <div className="cx-metric-track">
         <div style={{ height: '100%', width: `${pct}%`, borderRadius: '3px', background: `linear-gradient(90deg, ${barColor}99, ${barColor})`, transition: 'width 600ms ease' }} />
       </div>
-      <span className="cx-text-muted" style={{ fontSize: '10px' }}>{value}{unit} / {max}{unit}</span>
+      <span className="cx-text-muted cx-text-10">{value}{unit} / {max}{unit}</span>
     </div>
   );
 }
@@ -154,7 +154,7 @@ export default function ServersPage() {
             <div className="cx-modal-header">
               <div className="cx-flex cx-items-center cx-gap-10">
                 <div className="cx-flex-center cx-r-10" style={{ width: '36px', height: '36px', background: 'linear-gradient(135deg, rgba(var(--primary),0.15), rgba(var(--agent),0.1))' }}>
-                  <Server style={{ width: '18px', height: '18px' }} className="cx-text-accent" />
+                  <ServerIcon style={{ width: '18px', height: '18px' }} className="cx-text-accent" />
                 </div>
                 <div>
                   <h3 className="cx-fw-700 cx-text-primary" style={{ fontSize: '16px', margin: 0 }}>Add New Server</h3>
@@ -166,43 +166,42 @@ export default function ServersPage() {
             {/* Body */}
             <div style={{ padding: '20px 24px' }}>
               {(() => {
-                const chipStyle: React.CSSProperties = { padding: '3px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 500, border: '1px solid rgba(var(--primary), 0.25)', backgroundColor: 'rgba(var(--primary), 0.06)', color: 'rgb(var(--primary))', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 150ms' };
-                const chipRow: React.CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px' };
-                const existingIps = allServers.map((s: any) => s.privateIp).filter(Boolean);
+                // cx-chip + cx-chip-row classes used below (defined in globals.css)
+                const existingIps = allServers.map((s: Server) => s.privateIp).filter((ip): ip is string => Boolean(ip));
                 const usedNums = existingIps.map((ip: string) => { const m = ip.match(/10\.0\.1\.(\d+)/); return m ? parseInt(m[1]) : 0; }).filter(Boolean);
                 const nextNum = usedNums.length > 0 ? Math.max(...usedNums) + 1 : 41;
                 const suggestedIps = [nextNum, nextNum + 1, nextNum + 10].map(n => `10.0.1.${n}`);
                 const serverCount = allServers.length + 1;
                 const nameHints = [`Server ${serverCount}`, `Production Web ${serverCount}`, `Staging ${serverCount}`, `DB Server ${serverCount}`];
                 const sshHints = ['~/.ssh/winbull.pem', '~/.ssh/id_rsa', '~/.ssh/cortexo.pem'];
-                const existingSshKeys = [...new Set(allServers.map((s: any) => s.sshKey).filter(Boolean))];
+                const existingSshKeys = [...new Set(allServers.map((s: Server) => s.sshKey).filter((k): k is string => Boolean(k)))];
                 const allSshHints = [...new Set([...existingSshKeys, ...sshHints])].slice(0, 4);
 
                 return (
                   <div className="cx-flex-col" style={{ gap: '14px' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div className="cx-grid-2-sm">
                       <div>
                         <label className="cx-label">Server Name *</label>
                         <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Production Web 1" className="cx-input cx-mono" autoFocus />
-                        <div style={chipRow}>
-                          {nameHints.map(h => <button key={h} type="button" onClick={() => setForm(f => ({ ...f, name: h }))} style={chipStyle} onMouseEnter={e => { (e.target as HTMLElement).style.backgroundColor = 'rgba(var(--primary), 0.15)'; }} onMouseLeave={e => { (e.target as HTMLElement).style.backgroundColor = 'rgba(var(--primary), 0.06)'; }}>{h}</button>)}
+                        <div className="cx-chip-row">
+                          {nameHints.map(h => <button key={h} type="button" onClick={() => setForm(f => ({ ...f, name: h }))} className="cx-chip">{h}</button>)}
                         </div>
                       </div>
                       <div>
                         <label className="cx-label">Private IP *</label>
                         <input value={form.privateIp} onChange={e => setForm(f => ({ ...f, privateIp: e.target.value }))} placeholder="e.g. 10.0.1.50" className="cx-input cx-mono" />
-                        <div style={chipRow}>
-                          {suggestedIps.map(ip => <button key={ip} type="button" onClick={() => setForm(f => ({ ...f, privateIp: ip }))} style={chipStyle} onMouseEnter={e => { (e.target as HTMLElement).style.backgroundColor = 'rgba(var(--primary), 0.15)'; }} onMouseLeave={e => { (e.target as HTMLElement).style.backgroundColor = 'rgba(var(--primary), 0.06)'; }}>{ip}</button>)}
+                        <div className="cx-chip-row">
+                          {suggestedIps.map(ip => <button key={ip} type="button" onClick={() => setForm(f => ({ ...f, privateIp: ip }))} className="cx-chip">{ip}</button>)}
                         </div>
                       </div>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div className="cx-grid-2-sm">
                       <div><label className="cx-label">Public Address</label><input value={form.publicAddress} onChange={e => setForm(f => ({ ...f, publicAddress: e.target.value }))} placeholder="e.g. ec2-xx.compute.amazonaws.com" className="cx-input cx-mono" /></div>
                       <div>
                         <label className="cx-label">SSH Key Path</label>
                         <input value={form.sshKey} onChange={e => setForm(f => ({ ...f, sshKey: e.target.value }))} placeholder="e.g. ~/.ssh/id_rsa" className="cx-input cx-mono" />
-                        <div style={chipRow}>
-                          {allSshHints.map(h => <button key={h} type="button" onClick={() => setForm(f => ({ ...f, sshKey: h }))} style={chipStyle} onMouseEnter={e => { (e.target as HTMLElement).style.backgroundColor = 'rgba(var(--primary), 0.15)'; }} onMouseLeave={e => { (e.target as HTMLElement).style.backgroundColor = 'rgba(var(--primary), 0.06)'; }}>{h}</button>)}
+                        <div className="cx-chip-row">
+                          {allSshHints.map(h => <button key={h} type="button" onClick={() => setForm(f => ({ ...f, sshKey: h }))} className="cx-chip">{h}</button>)}
                         </div>
                       </div>
                     </div>
@@ -229,7 +228,7 @@ export default function ServersPage() {
           const accentColor = cpuPct > 80 ? '#EF4444' : cpuPct > 60 ? '#F59E0B' : '#10B981';
 
           return (
-            <div key={srv.id} style={{ borderRadius: '14px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', overflow: 'hidden', transition: 'box-shadow 200ms, transform 200ms', position: 'relative' }}
+            <div key={srv.id} className="cx-card" style={{ borderRadius: '14px', overflow: 'hidden', transition: 'box-shadow 200ms, transform 200ms', position: 'relative' }}
               onMouseEnter={e => { e.currentTarget.style.boxShadow = `0 12px 32px -8px ${accentColor}20, 0 4px 12px rgba(0,0,0,0.15)`; e.currentTarget.style.transform = 'translateY(-2px)'; }}
               onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}
             >
@@ -238,7 +237,7 @@ export default function ServersPage() {
               <div className="cx-flex-between" style={{ alignItems: 'flex-start', padding: '18px 18px 12px', borderBottom: '1px solid rgb(var(--border))' }}>
                 <div className="cx-flex cx-gap-12" style={{ alignItems: 'flex-start' }}>
                   <div className="cx-flex-center cx-r-10" style={{ width: '42px', height: '42px', background: `linear-gradient(135deg, ${accentColor}20, ${accentColor}08)`, border: `1px solid ${accentColor}30` }}>
-                    <Server style={{ width: '20px', height: '20px', color: accentColor }} />
+                    <ServerIcon style={{ width: '20px', height: '20px', color: accentColor }} />
                   </div>
                   <div>
                     <h3 className="cx-fw-700 cx-text-primary" style={{ fontSize: '15px', margin: 0 }}>{srv.name}</h3>
@@ -311,11 +310,11 @@ export default function ServersPage() {
             </div>
             <div style={{ padding: '20px 24px' }}>
               <div className="cx-flex-col" style={{ gap: '14px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="cx-grid-2-sm">
                   <div><label className="cx-label">Server Name *</label><input value={editTarget.name} onChange={e => setEditTarget((p: any) => ({ ...p, name: e.target.value }))} className="cx-input cx-mono" autoFocus /></div>
                   <div><label className="cx-label">Private IP *</label><input value={editTarget.privateIp} onChange={e => setEditTarget((p: any) => ({ ...p, privateIp: e.target.value }))} className="cx-input cx-mono" /></div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="cx-grid-2-sm">
                   <div><label className="cx-label">Public Address</label><input value={editTarget.publicAddress} onChange={e => setEditTarget((p: any) => ({ ...p, publicAddress: e.target.value }))} className="cx-input cx-mono" /></div>
                   <div><label className="cx-label">SSH Key Path</label><input value={editTarget.sshKey} onChange={e => setEditTarget((p: any) => ({ ...p, sshKey: e.target.value }))} className="cx-input cx-mono" /></div>
                 </div>
@@ -346,7 +345,7 @@ export default function ServersPage() {
             </div>
             <div className="cx-modal-footer">
               <button onClick={() => setDeleteTarget(null)} className="cx-btn-secondary cx-fw-600" style={{ padding: '10px 20px', fontSize: '13px' }}>Cancel</button>
-              <button onClick={deleteServer} className="cx-fw-600" style={{ padding: '10px 20px', borderRadius: '10px', fontSize: '13px', color: '#fff', border: 'none', cursor: 'pointer', backgroundColor: '#EF4444', boxShadow: '0 4px 12px rgba(239,68,68,0.3)' }}>Delete</button>
+              <button onClick={deleteServer} className="cx-btn-danger cx-fw-600" style={{ padding: '10px 20px', fontSize: '13px' }}>Delete</button>
             </div>
           </div>
         </div>

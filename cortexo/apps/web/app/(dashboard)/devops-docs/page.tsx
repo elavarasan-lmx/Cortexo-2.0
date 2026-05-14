@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { BookOpen, Search, Terminal, Copy, Check, ChevronRight, ChevronDown, Lightbulb, FileCode2, ArrowLeft, Star, FileDown, Plus, ClipboardList, Trash2, CheckCircle2, Circle } from 'lucide-react';
-import { api } from '@/lib/api';
+import { ChecklistStep, DevopsChecklist, DevopsDoc, DevopsDocCommand, DevopsDocSnippet, api } from '@/lib/api';
 import { useAutoLoadToken } from '@/lib/hooks';
 
 // ─── Syntax Highlighting (basic keyword coloring) ───────────────────
@@ -45,13 +45,13 @@ function highlightCode(code: string): React.ReactNode[] {
 }
 
 // ─── Copy as Markdown helper ────────────────────────────────────────
-function docToMarkdown(doc: any): string {
+function docToMarkdown(doc: DevopsDoc & { commands?: DevopsDocCommand[]; configSnippets?: DevopsDocSnippet[] }): string {
   let md = `# ${doc.title}\n\n${doc.description}\n\n`;
   md += `## Commands\n\n| Command | Description |\n|---|---|\n`;
-  doc.commands.forEach((c: any) => { md += `| \`${c.cmd}\` | ${c.desc} |\n`; });
+  doc.commands?.forEach((c: DevopsDocCommand) => { md += `| \`${c.cmd}\` | ${c.desc} |\n`; });
   if (doc.configSnippets?.length) {
     md += `\n## Config Snippets\n\n`;
-    doc.configSnippets.forEach((s: any) => { md += `### ${s.title}\n\n\`\`\`${s.lang}\n${s.code}\n\`\`\`\n\n`; });
+    doc.configSnippets?.forEach((s: DevopsDocSnippet) => { md += `### ${s.title}\n\n\`\`\`${s.lang}\n${s.code}\n\`\`\`\n\n`; });
   }
   if (doc.tips?.length) {
     md += `## Pro Tips\n\n`;
@@ -196,10 +196,10 @@ export default function DevOpsDocsPage() {
     setNewClient('');
     fetchChecklists();
   };
-  const toggleStep = async (cl: any, stepIdx: number) => {
+  const toggleStep = async (cl: DevopsChecklist, stepIdx: number) => {
     const steps = [...cl.steps];
     steps[stepIdx] = { ...steps[stepIdx], done: !steps[stepIdx].done };
-    const allDone = steps.every((s: any) => s.done);
+    const allDone = steps.every((s: ChecklistStep) => s.done);
     await api.updateChecklist(cl.id, { steps, status: allDone ? 'done' : 'in_progress' } as any);
     fetchChecklists();
   };
@@ -208,12 +208,12 @@ export default function DevOpsDocsPage() {
     fetchChecklists();
   };
 
-  const tools = [...new Set(docs.map((d: any) => d.tool))];
+  const tools = [...new Set(docs.map((d: DevopsDoc) => d.tool))];
 
   // ─── Detail View ──────────────────────────────────────────────────
   if (selectedDoc) {
     const doc = selectedDoc;
-    const toolColor = TOOL_COLORS[doc.tool] || 'rgb(var(--primary))';
+    const toolColor = TOOL_COLORS[doc.tool ?? ''] || 'rgb(var(--primary))';
 
     return (
       <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
@@ -229,7 +229,7 @@ export default function DevOpsDocsPage() {
         {/* Header */}
         <div className="cx-flex cx-items-center cx-gap-16" style={{ marginBottom: '28px', padding: '24px', borderRadius: '16px', border: '1px solid rgb(var(--border))', background: `linear-gradient(135deg, ${toolColor}12, transparent 60%)` }}>
           <div className="cx-flex-center cx-fw-800" style={{ width: '56px', height: '56px', borderRadius: '14px', backgroundColor: toolColor, color: '#fff', fontSize: '22px', flexShrink: 0 }}>
-            {TOOL_ICONS[doc.tool] || doc.tool[0]}
+            {doc.tool ? (TOOL_ICONS[doc.tool] ?? doc.tool[0]) : '?'}
           </div>
           <div style={{ flex: 1 }}>
             <h1 className="cx-fw-700 cx-text-primary" style={{ fontSize: '22px', margin: 0 }}>{doc.title}</h1>
@@ -266,7 +266,7 @@ export default function DevOpsDocsPage() {
             <h2 className="cx-fw-700 cx-text-primary" style={{ fontSize: '16px', margin: 0 }}>Commands ({doc.commands.length})</h2>
           </div>
           <div>
-            {doc.commands.map((cmd: any, i: number) => (
+            {(doc.commands as DevopsDocCommand[] | undefined)?.map((cmd, i: number) => (
               <div
                 key={i}
                 className="cx-flex cx-items-center cx-gap-12"
@@ -289,7 +289,7 @@ export default function DevOpsDocsPage() {
               <FileCode2 style={{ width: '18px', height: '18px', color: toolColor }} />
               <h2 className="cx-fw-700 cx-text-primary" style={{ fontSize: '16px', margin: 0 }}>Config Snippets ({doc.configSnippets.length})</h2>
             </div>
-            {doc.configSnippets.map((snip: any, i: number) => {
+            {(doc.configSnippets as DevopsDocSnippet[] | undefined)?.map((snip, i: number) => {
               const key = `${doc.id}-snip-${i}`;
               const expanded = expandedSnippets[key] !== false;
               return (
@@ -373,7 +373,7 @@ export default function DevOpsDocsPage() {
       {activeTab === 'checklists' && (
         <div>
           {/* Create new */}
-          <div className="cx-flex cx-gap-10" style={{ marginBottom: '24px' }}>
+          <div className="cx-flex cx-gap-10 cx-mb-24">
             <input
               value={newClient}
               onChange={e => setNewClient(e.target.value)}
@@ -387,15 +387,15 @@ export default function DevOpsDocsPage() {
             </button>
           </div>
           {clLoading ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: 'rgb(var(--text-muted))' }}>Loading...</div>
+            <div className="cx-empty cx-text-muted" style={{ padding: '40px', fontSize: '14px', textAlign: 'center' }}>Loading...</div>
           ) : checklists.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px', color: 'rgb(var(--text-muted))', fontSize: '14px' }}>
+            <div className="cx-empty cx-text-muted" style={{ padding: '60px', fontSize: '14px', textAlign: 'center' }}>
               No checklists yet. Create one for a client deployment.
             </div>
           ) : (
             <div className="cx-flex-col cx-gap-16">
-              {checklists.map((cl: any) => {
-                const done = cl.steps.filter((s: any) => s.done).length;
+              {checklists.map((cl: DevopsChecklist) => {
+                const done = cl.steps.filter((s: ChecklistStep) => s.done).length;
                 const total = cl.steps.length;
                 const pct = total ? Math.round((done / total) * 100) : 0;
                 const statusColor = cl.status === 'completed' ? '#10B981' : cl.status === 'in_progress' ? '#F59E0B' : 'rgb(var(--text-muted))';
@@ -407,7 +407,7 @@ export default function DevOpsDocsPage() {
                         <ClipboardList style={{ width: '20px', height: '20px', color: statusColor }} />
                         <div>
                           <div className="cx-fw-700 cx-text-primary" style={{ fontSize: '16px' }}>{cl.clientName}</div>
-                          <div className="cx-text-muted" style={{ fontSize: '11px' }}>{cl.projectType} · {new Date(cl.createdAt).toLocaleDateString()}</div>
+                          <div className="cx-text-muted" style={{ fontSize: '11px' }}>{cl.projectType} · {cl.createdAt ? new Date(cl.createdAt).toLocaleDateString() : '—'}</div>
                         </div>
                       </div>
                       <div className="cx-flex cx-items-center cx-gap-12">
@@ -422,7 +422,7 @@ export default function DevOpsDocsPage() {
                     </div>
                     {/* Steps */}
                     <div style={{ padding: '8px 0' }}>
-                      {cl.steps.map((step: any, i: number) => (
+                      {cl.steps.map((step: ChecklistStep, i: number) => (
                         <div
                           key={i}
                           onClick={() => toggleStep(cl, i)}
@@ -471,12 +471,12 @@ export default function DevOpsDocsPage() {
         <div className="cx-flex cx-gap-6" style={{ flexWrap: 'wrap' }}>
           <button
             onClick={() => setActiveTool('')}
+            className="cx-fw-600"
             style={{
               padding: '7px 14px', borderRadius: '8px', border: '1px solid rgb(var(--border))',
-              cursor: 'pointer', fontSize: '12px', fontWeight: 600,
+              cursor: 'pointer', fontSize: '12px', transition: 'all 200ms',
               backgroundColor: !activeTool ? 'rgba(var(--primary), 0.1)' : 'transparent',
               color: !activeTool ? 'rgb(var(--primary))' : 'rgb(var(--text-secondary))',
-              transition: 'all 200ms',
             }}
           >
             All
@@ -485,13 +485,12 @@ export default function DevOpsDocsPage() {
             <button
               key={tool}
               onClick={() => setActiveTool(activeTool === tool ? '' : tool)}
+              className="cx-fw-600"
               style={{
-                padding: '7px 14px', borderRadius: '8px',
+                padding: '7px 14px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', transition: 'all 200ms',
                 border: `1px solid ${activeTool === tool ? TOOL_COLORS[tool] + '60' : 'rgb(var(--border))'}`,
-                cursor: 'pointer', fontSize: '12px', fontWeight: 600,
                 backgroundColor: activeTool === tool ? TOOL_COLORS[tool] + '18' : 'transparent',
                 color: activeTool === tool ? TOOL_COLORS[tool] : 'rgb(var(--text-secondary))',
-                transition: 'all 200ms',
               }}
             >
               {tool}
@@ -502,17 +501,11 @@ export default function DevOpsDocsPage() {
 
       {/* Docs Grid */}
       {loading ? (
-        <div style={{
-          textAlign: 'center', color: 'rgb(var(--text-muted))', padding: '60px',
-          fontSize: '14px',
-        }}>
+        <div className="cx-empty cx-text-muted" style={{ padding: '60px', fontSize: '14px', textAlign: 'center' }}>
           Loading documentation...
         </div>
       ) : docs.length === 0 ? (
-        <div style={{
-          textAlign: 'center', color: 'rgb(var(--text-muted))', padding: '60px',
-          fontSize: '14px',
-        }}>
+        <div className="cx-empty cx-text-muted" style={{ padding: '60px', fontSize: '14px', textAlign: 'center' }}>
           No docs found{searchQuery ? ` matching "${searchQuery}"` : ''}
         </div>
       ) : (
@@ -523,23 +516,18 @@ export default function DevOpsDocsPage() {
         }}>
           {/* Pinned docs first, then the rest */}
           {[...docs].sort((a, b) => {
-            const aPin = bookmarks.includes(a.id) ? 0 : 1;
-            const bPin = bookmarks.includes(b.id) ? 0 : 1;
+            const aPin = bookmarks.includes(String(a.id)) ? 0 : 1;
+            const bPin = bookmarks.includes(String(b.id)) ? 0 : 1;
             return aPin - bPin;
-          }).map((doc: any) => {
-            const toolColor = TOOL_COLORS[doc.tool] || 'rgb(var(--primary))';
-            const isPinned = bookmarks.includes(doc.id);
+          }).map((doc: DevopsDoc) => {
+            const toolColor = TOOL_COLORS[doc.tool ?? ''] || 'rgb(var(--primary))';
+            const isPinned = bookmarks.includes(String(doc.id));
             return (
               <div
-                key={doc.id}
-                onClick={() => openDoc(doc.id)}
-                style={{
-                  backgroundColor: 'rgb(var(--surface))',
-                  border: '1px solid rgb(var(--border))',
-                  borderRadius: '14px', padding: '20px', cursor: 'pointer',
-                  transition: 'all 250ms ease',
-                  display: 'flex', flexDirection: 'column', gap: '14px',
-                }}
+                key={String(doc.id)}
+                onClick={() => openDoc(String(doc.id))}
+                className="cx-card cx-flex-col cx-gap-14"
+                style={{ padding: '20px', cursor: 'pointer', transition: 'all 250ms ease' }}
                 onMouseEnter={e => {
                   e.currentTarget.style.borderColor = toolColor;
                   e.currentTarget.style.transform = 'translateY(-3px)';
@@ -552,35 +540,30 @@ export default function DevOpsDocsPage() {
                 }}
               >
                 {/* Tool badge + category + pin */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{
+                <div className="cx-flex-between">
+                  <div className="cx-flex cx-items-center cx-gap-10">
+                    <div className="cx-flex-center cx-fw-800" style={{
                       width: '38px', height: '38px', borderRadius: '10px',
-                      backgroundColor: toolColor, color: '#fff',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '16px', fontWeight: 800,
+                      backgroundColor: toolColor, color: '#fff', fontSize: '16px',
                     }}>
-                      {TOOL_ICONS[doc.tool] || doc.tool[0]}
+                      {doc.tool ? (TOOL_ICONS[doc.tool] ?? doc.tool[0]) : '?'}
                     </div>
                     <div>
-                      <div style={{ fontSize: '15px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>
-                        {doc.title}
-                      </div>
-                      <div style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', marginTop: '2px' }}>
-                        {doc.tool}
-                      </div>
+                      <div className="cx-fw-700 cx-text-primary" style={{ fontSize: '15px' }}>{doc.title}</div>
+                      <div className="cx-text-muted" style={{ fontSize: '11px', marginTop: '2px' }}>{doc.tool}</div>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div className="cx-flex cx-items-center cx-gap-6">
                     <button
-                      onClick={e => handleBookmark(doc.id, e)}
+                      onClick={e => handleBookmark(String(doc.id), e)}
                       title={isPinned ? 'Unpin' : 'Pin'}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: isPinned ? '#F59E0B' : 'rgb(var(--text-muted))', transition: 'color 200ms' }}
+                      className="cx-icon-btn"
+                      style={{ color: isPinned ? '#F59E0B' : 'rgb(var(--text-muted))' }}
                     >
                       <Star style={{ width: '16px', height: '16px', fill: isPinned ? '#F59E0B' : 'none' }} />
                     </button>
-                    <span style={{
-                      fontSize: '10px', fontWeight: 600, textTransform: 'uppercase',
+                    <span className="cx-fw-600" style={{
+                      fontSize: '10px', textTransform: 'uppercase',
                       padding: '4px 8px', borderRadius: '6px',
                       color: toolColor, backgroundColor: `${toolColor}12`,
                     }}>
@@ -590,30 +573,24 @@ export default function DevOpsDocsPage() {
                 </div>
 
                 {/* Description */}
-                <p style={{
-                  fontSize: '13px', color: 'rgb(var(--text-secondary))',
-                  lineHeight: 1.5, margin: 0,
-                }}>
+                <p className="cx-text-secondary" style={{ fontSize: '13px', lineHeight: 1.5, margin: 0 }}>
                   {doc.description}
                 </p>
 
                 {/* Stats row */}
-                <div style={{
-                  display: 'flex', gap: '16px', marginTop: 'auto', paddingTop: '12px',
-                  borderTop: '1px solid rgba(var(--border), 0.5)',
-                }}>
-                  <span style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <div className="cx-flex cx-gap-16" style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid rgba(var(--border), 0.5)' }}>
+                  <span className="cx-flex cx-items-center cx-gap-4 cx-text-muted" style={{ fontSize: '12px' }}>
                     <Terminal style={{ width: '12px', height: '12px' }} />
                     {doc.commandCount} commands
                   </span>
-                  {doc.snippetCount > 0 && (
-                    <span style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  {(doc.snippetCount ?? 0) > 0 && (
+                    <span className="cx-flex cx-items-center cx-gap-4 cx-text-muted" style={{ fontSize: '12px' }}>
                       <FileCode2 style={{ width: '12px', height: '12px' }} />
                       {doc.snippetCount} snippets
                     </span>
                   )}
-                  {doc.tipCount > 0 && (
-                    <span style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  {(doc.tipCount ?? 0) > 0 && (
+                    <span className="cx-flex cx-items-center cx-gap-4 cx-text-muted" style={{ fontSize: '12px' }}>
                       <Lightbulb style={{ width: '12px', height: '12px' }} />
                       {doc.tipCount} tips
                     </span>

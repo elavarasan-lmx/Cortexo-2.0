@@ -77,13 +77,13 @@ export default function DeploymentDetailPage({ params }: { params: Promise<{ id:
           ); })}
         </div>
         {d.commitMessage && (
-          <div style={{ marginBottom: '20px' }}>
+          <div className="cx-mb-20">
             <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: '0 0 8px' }}>Commit Message</h3>
             <p style={{ fontSize: '13px', color: 'rgb(var(--text-secondary))', margin: 0, padding: '12px', borderRadius: '10px', backgroundColor: 'rgba(var(--border),0.08)', fontFamily: "'JetBrains Mono', monospace" }}>{d.commitMessage}</p>
           </div>
         )}
         <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: '0 0 12px' }}>Timeline</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="cx-flex-col" style={{ gap: "8px" }}>
           {[
             { name: 'Created', time: started ? new Date(started).toLocaleString() : '—' },
             { name: 'Completed', time: finished ? new Date(finished).toLocaleString() : '—' },

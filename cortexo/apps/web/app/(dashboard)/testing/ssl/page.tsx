@@ -187,7 +187,7 @@ export default function SslMonitorPage() {
           borderLeft: `4px solid ${statusConfig[manualResult.status]?.color || '#6B7280'}`,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="cx-flex cx-items-center cx-gap-8">
               {React.createElement(statusConfig[manualResult.status]?.icon || XCircle, { style: { width: '18px', height: '18px', color: statusConfig[manualResult.status]?.color } })}
               <span style={{ fontSize: '15px', fontWeight: 700, color: 'rgb(var(--text-primary))' }}>{manualResult.domain}</span>
             </div>
@@ -231,7 +231,7 @@ export default function SslMonitorPage() {
               style={{ flex: 1, border: 'none', outline: 'none', backgroundColor: 'transparent', fontSize: '13px', color: 'rgb(var(--text-primary))' }}
             />
           </div>
-          <div style={{ display: 'flex', gap: '4px' }}>
+          <div className="cx-flex cx-gap-4">
             {['all', 'valid', 'expiring', 'expired', 'error'].map(f => {
               const active = filter === f;
               const cfg = statusConfig[f];
