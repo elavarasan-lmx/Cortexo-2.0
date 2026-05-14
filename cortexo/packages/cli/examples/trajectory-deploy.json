@@ -1,0 +1,57 @@
+{
+  "task": "Deploy new code version to Winbull staging server with database backup",
+  "success": true,
+  "timestamp": "2026-05-14T10:30:00Z",
+  "serverId": "server-7",
+  "orgId": "winbull",
+  "steps": [
+    {
+      "command": "ssh -i ~/.ssh/winbull.pem ubuntu@staging.winbull.in",
+      "output": "Welcome to Ubuntu 22.04 LTS",
+      "success": true,
+      "notes": "Connected to staging server via SSH"
+    },
+    {
+      "command": "mysqldump -h rds-staging.winbull.in -u admin -p --single-transaction --routines --triggers --events winbull_staging > /tmp/backup_20260514.sql",
+      "output": "-- MySQL dump complete",
+      "success": true,
+      "notes": "Created full database backup before deployment. --single-transaction is critical for InnoDB to avoid table locks."
+    },
+    {
+      "command": "cd /var/www/winbull && git fetch origin && git log --oneline HEAD..origin/staging -5",
+      "output": "abc1234 Fix rate calculation\ndef5678 Add new commodity type\nghi9012 Update config for SMS provider",
+      "success": true,
+      "notes": "Previewed incoming changes before pulling"
+    },
+    {
+      "command": "cd /var/www/winbull && git stash && git pull origin staging",
+      "output": "Updating abc1234..ghi9012\nFast-forward\n 15 files changed, 234 insertions(+), 89 deletions(-)",
+      "success": true,
+      "notes": "Stashed local changes and pulled latest from staging branch"
+    },
+    {
+      "command": "cd /var/www/winbull && php artisan migrate --force",
+      "output": "Migrating: 2026_05_14_000001_add_commodity_types\nMigrated: 2026_05_14_000001_add_commodity_types (45.12ms)",
+      "success": true,
+      "notes": "Ran pending migrations with --force for non-interactive mode"
+    },
+    {
+      "command": "sudo systemctl reload nginx",
+      "output": "",
+      "success": true,
+      "notes": "Reload (not restart) Nginx to pick up any config changes without dropping connections"
+    },
+    {
+      "command": "sudo supervisorctl restart winbull-worker:*",
+      "output": "winbull-worker:winbull-worker_00: stopped\nwinbull-worker:winbull-worker_00: started",
+      "success": true,
+      "notes": "Restart queue workers to pick up new code"
+    },
+    {
+      "command": "curl -s http://localhost/api/health | jq '.status'",
+      "output": "\"ok\"",
+      "success": true,
+      "notes": "Health check confirms application is running"
+    }
+  ]
+}

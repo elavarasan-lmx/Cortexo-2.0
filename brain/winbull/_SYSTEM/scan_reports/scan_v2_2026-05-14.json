@@ -1,0 +1,772 @@
+{
+    "metadata": {
+        "tool": "Winbull Bug Pattern Scanner v2.0",
+        "version": "2.0",
+        "scan_date": "2026-05-14",
+        "scan_time": "17:15:44",
+        "scan_path": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion",
+        "zones": [
+            "web"
+        ],
+        "files_scanned": 26,
+        "patterns_used": 22,
+        "fast_mode": false
+    },
+    "summary": {
+        "total_hits": 439,
+        "patterns_hit": 6,
+        "p0_hits": 156,
+        "p1_hits": 2,
+        "p2_hits": 2,
+        "p3_hits": 0,
+        "manual_checks": 3
+    },
+    "results": {
+        "SEC-001": {
+            "pattern": {
+                "id": "SEC-001",
+                "name": "SQL Injection via raw POST",
+                "severity": "CRITICAL",
+                "priority": "P0",
+                "category": "Security",
+                "description": "Raw $_POST values without sanitization",
+                "regex": "\\$_POST\\[",
+                "fix_ref": "SYS-001",
+                "manual_check": false
+            },
+            "hit_count": 153,
+            "hits": [
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 101,
+                    "content": "$book_no = $_POST['book_no'];",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 131,
+                    "content": "echo $this->Login_model->check_userpwd($_POST['username'],$_POST['password']);",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 136,
+                    "content": "echo json_encode($this->booking_model->get_commoditystatus($_POST['cust_id']));",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 155,
+                    "content": "$com_id = isset($_POST['com_id']) ? $_POST['com_id'] : NULL;",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 178,
+                    "content": "echo json_encode($this->booking_model->customerCommodities(trim($_POST['cust_id']), trim($_POST['com_ids'])));",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 184,
+                    "content": "$saved_comm = $this->booking_model->removed_commodities($_POST['cust_id']);",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 198,
+                    "content": "$return = $this->booking_model->add_remarks($_POST['book_no'],$_POST['remarks']);",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_client_main.php",
+                    "line": 410,
+                    "content": "$name = $_POST['name'];",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_client_main.php",
+                    "line": 411,
+                    "content": "$emailid = $_POST['email'];",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_client_main.php",
+                    "line": 412,
+                    "content": "$phone = $_POST['phone'];",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_client_main.php",
+                    "line": 413,
+                    "content": "$comments = $_POST['comments'];",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_client_main.php",
+                    "line": 465,
+                    "content": "if (isset($_POST['answer']) && strtolower(trim($_POST['answer'])) == $expected && !empty($expected)) {",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_client_main.php",
+                    "line": 467,
+                    "content": "$name = $_POST['name'];",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_client_main.php",
+                    "line": 468,
+                    "content": "$emailid = $_POST['email'];",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_client_main.php",
+                    "line": 469,
+                    "content": "$phone = $_POST['phone'];",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_client_main.php",
+                    "line": 470,
+                    "content": "$comments = $_POST['comments'];",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_email_settings.php",
+                    "line": 24,
+                    "content": "$_POST['fv']\t\t\t\t=\t$record;",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_email_settings.php",
+                    "line": 25,
+                    "content": "$_POST['fv']['type']\t\t=\t$type;",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_email_settings.php",
+                    "line": 26,
+                    "content": "$_POST['fv']['code']\t\t=\t$code;",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_email_settings.php",
+                    "line": 28,
+                    "content": "$this->load->view($this->entry_form,$_POST['fv']);",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                }
+            ],
+            "manual_check_count": 0
+        },
+        "SEC-002": {
+            "pattern": {
+                "id": "SEC-002",
+                "name": "OTP bypass via loose comparison",
+                "severity": "CRITICAL",
+                "priority": "P0",
+                "category": "Security",
+                "description": "OTP check using == instead of ===",
+                "regex": "\\$.*otp.*==|==.*otp",
+                "fix_ref": "SYS-008",
+                "manual_check": false
+            },
+            "hit_count": 3,
+            "hits": [
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_mobile.php",
+                    "line": 151,
+                    "content": "if($resendotp['status'] == 1) {",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 903,
+                    "content": "if ($field_name[$i] == 'otp') {",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/MLogin_model.php",
+                    "line": 314,
+                    "content": "$data = array('status' => 1, 'error' => mysqli_error(), 'token' => $query->row()->device_user_otp, 'name' => $query",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                }
+            ],
+            "manual_check_count": 0
+        },
+        "SEC-005": {
+            "pattern": {
+                "id": "SEC-005",
+                "name": "Debug artifacts in production",
+                "severity": "MEDIUM",
+                "priority": "P2",
+                "category": "Security",
+                "description": "echo/print_r/var_dump in production code",
+                "regex": "(echo\\s+|print_r\\s*\\(|var_dump\\s*\\()",
+                "fix_ref": "SYS-007",
+                "manual_check": false
+            },
+            "hit_count": 144,
+            "hits": [
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 15,
+                    "content": "echo json_encode($return_data);",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 18,
+                    "content": "echo $this->booking_model->m_get_rate();",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 46,
+                    "content": "echo json_encode($return_data);",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 53,
+                    "content": "echo json_encode($return_data);",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 78,
+                    "content": "echo json_encode($return_data);",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 111,
+                    "content": "echo json_encode($return_data);",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 116,
+                    "content": "echo $this->booking_model->get_available_qty();",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 122,
+                    "content": "echo \"loggedout\";",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 124,
+                    "content": "echo \" \";",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 131,
+                    "content": "echo $this->Login_model->check_userpwd($_POST['username'],$_POST['password']);",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 136,
+                    "content": "echo json_encode($this->booking_model->get_commoditystatus($_POST['cust_id']));",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 141,
+                    "content": "echo json_encode($this->booking_model->get_tolerance());",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 150,
+                    "content": "echo json_encode($result);",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 158,
+                    "content": "echo json_encode($result);",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 163,
+                    "content": "echo json_encode($this->booking_model->get_MarqueNews());",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 168,
+                    "content": "echo json_encode($this->booking_model->get_text());",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 173,
+                    "content": "echo json_encode($this->booking_model->get_News());",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 178,
+                    "content": "echo json_encode($this->booking_model->customerCommodities(trim($_POST['cust_id']), trim($_POST['com_ids'])));",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 193,
+                    "content": "echo json_encode($return_value);",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 200,
+                    "content": "echo json_encode(array(\"status\" => 1));",
+                    "type": "regex_match",
+                    "needs_manual_check": false
+                }
+            ],
+            "manual_check_count": 0
+        },
+        "TXN-001": {
+            "pattern": {
+                "id": "TXN-001",
+                "name": "trans_commit without rollback check",
+                "severity": "HIGH",
+                "priority": "P1",
+                "category": "Transaction",
+                "description": "trans_commit in error branch",
+                "regex": "trans_commit",
+                "fix_ref": "SYS-002",
+                "manual_check": true
+            },
+            "hit_count": 9,
+            "hits": [
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 35,
+                    "content": "$this->db->trans_commit();",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 62,
+                    "content": "$this->db->trans_commit();",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 87,
+                    "content": "$this->db->trans_commit();",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_email_settings.php",
+                    "line": 47,
+                    "content": "$this->db->trans_commit();\t\t\t\t\t\t\t\t\t\t\t//Commit the transactions.",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_kyc.php",
+                    "line": 61,
+                    "content": "$this->db->trans_commit();",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_trade.php",
+                    "line": 45,
+                    "content": "$this->db->trans_commit();",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_trade.php",
+                    "line": 100,
+                    "content": "$this->db->trans_commit();",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_trade.php",
+                    "line": 141,
+                    "content": "$this->db->trans_commit();",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_userregistration.php",
+                    "line": 151,
+                    "content": "$this->db->trans_commit();",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                }
+            ],
+            "manual_check_count": 9
+        },
+        "ARCH-001": {
+            "pattern": {
+                "id": "ARCH-001",
+                "name": "N+1 Query Pattern",
+                "severity": "MEDIUM",
+                "priority": "P2",
+                "category": "Architecture",
+                "description": "SQL query inside foreach loop",
+                "regex": "foreach.*\\$",
+                "fix_ref": "ARCH-001",
+                "manual_check": true
+            },
+            "hit_count": 78,
+            "hits": [
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_ajax.php",
+                    "line": 186,
+                    "content": "foreach($saved_comm as $comm)",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_booking.php",
+                    "line": 182,
+                    "content": "foreach ($rows as $row) {",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_client_main.php",
+                    "line": 590,
+                    "content": "foreach ($regIdChunk as $RegId) {",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_sendorderstatus.php",
+                    "line": 25,
+                    "content": "foreach ($execOrders as $orders) {",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_sendorderstatus.php",
+                    "line": 52,
+                    "content": "foreach ($execOrders as $orders) {",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_sendorderstatus.php",
+                    "line": 176,
+                    "content": "foreach ($str_arr as $mob => $cusmobile) {",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_sendorderstatus.php",
+                    "line": 246,
+                    "content": "foreach ($qMarbal->result() as $qMarbalrow) {",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_sendorderstatus.php",
+                    "line": 275,
+                    "content": "foreach ($rem_margin as $rmar) {",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_sendorderstatus.php",
+                    "line": 366,
+                    "content": "foreach ($str_arr as $mob => $cusmobile) {",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_sendorderstatus.php",
+                    "line": 454,
+                    "content": "foreach ($expireOrders['book_numbers'] as $orders) {",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_userregistration.php",
+                    "line": 198,
+                    "content": "foreach ($resultset->result() as $row) {",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/Email_model.php",
+                    "line": 17,
+                    "content": "foreach ($resultset->result() as $row) {",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/Email_model.php",
+                    "line": 47,
+                    "content": "foreach ($resultset->result() as $row) {",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 150,
+                    "content": "foreach ($rpanelbankquery->result() as $rpbankrow) {",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 155,
+                    "content": "foreach ($contractquery->result() as $contractrow) {",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 169,
+                    "content": "foreach ($rpanelcommodityquery->result() as $commodityrow) {",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 228,
+                    "content": "foreach ($rpanelbankquery->result() as $rpbankrow) {",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 233,
+                    "content": "foreach ($contractquery->result() as $contractrow) {",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 247,
+                    "content": "foreach ($rpanelcommodityquery->result() as $commodityrow) {",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 298,
+                    "content": "foreach ($rpanelcommodityquery->result() as $commodityrow) {",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                }
+            ],
+            "manual_check_count": 78
+        },
+        "ARCH-005": {
+            "pattern": {
+                "id": "ARCH-005",
+                "name": "Cartesian JOIN",
+                "severity": "HIGH",
+                "priority": "P1",
+                "category": "Architecture",
+                "description": "JOIN without proper ON condition",
+                "regex": "JOIN",
+                "fix_ref": "ARCH-006",
+                "manual_check": true
+            },
+            "hit_count": 52,
+            "hits": [
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/controllers/C_sendorderstatus.php",
+                    "line": 106,
+                    "content": "LEFT JOIN dt_rpanelcommodities ON rcom_id = com_type",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Adminlog_model.php",
+                    "line": 22,
+                    "content": "LEFT JOIN dt_admin_user ON admin_user_id = log_admin_id",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 129,
+                    "content": "LEFT JOIN dt_com_group_com as cgc ON cgc.com_id = com.com_id AND com_group_id = 1",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 130,
+                    "content": "LEFT JOIN dt_prem_group_master as prgc ON prgc.prem_default = 1",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 131,
+                    "content": "LEFT JOIN dt_prem_group_com as prmgrp ON prmgrp.prem_group_id = prgc.prem_group_id AND com.com_id = prmgrp.pr",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 132,
+                    "content": "LEFT JOIN dt_rpanelcommodities as rpc ON rpc.rcom_id = com_type",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 133,
+                    "content": "LEFT JOIN dt_rpanelcontract as rcon ON rcon.rpanelcomid = rcom_id",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 147,
+                    "content": "LEFT JOIN dt_rpanelbank ON banksymbol = bcontract_id",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 148,
+                    "content": "LEFT JOIN dt_contractmaster ON contract_symbol = bcontract_rate",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 165,
+                    "content": "LEFT JOIN dt_mcxcontractmaster ON contract_id = rcom_mcxsymbol",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 166,
+                    "content": "LEFT JOIN dt_bankcontractmaster ON bcontract_id = rcom_banksymbol",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 167,
+                    "content": "LEFT JOIN dt_rpanelcontract ON rpanelid = 1 AND rpanelcomid = rcom_id",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 205,
+                    "content": "LEFT JOIN dt_com_group_com comgrp ON comgrp.com_group_id = 1",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 206,
+                    "content": "LEFT JOIN dt_cus_commodity cuscom ON cuscom.cus_com_cus_id = cusgrp.cgitems_cusid",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 208,
+                    "content": "LEFT JOIN dt_com_master com ON com.com_id = comgrp.com_id",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 209,
+                    "content": "LEFT JOIN dt_rpanelcommodities ON rcom_id = com_type",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 210,
+                    "content": "LEFT JOIN dt_rpanelcontract as rcon ON rcon.rpanelcomid = rcom_id",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 211,
+                    "content": "LEFT JOIN dt_prem_group_master as pgm ON  pgm.prem_group_id = cgitems_comgroupid",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 212,
+                    "content": "LEFT JOIN dt_prem_group_com as pgc ON pgc.prem_group_id = pgm.prem_group_id AND prem_id = cus_com_id",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                },
+                {
+                    "file": "/run/media/lmx/LMX/Winbull/WTWeb/WTWeb-Winbulltradeversion/application/models/Booking_model.php",
+                    "line": 225,
+                    "content": "LEFT JOIN dt_rpanelbank ON banksymbol = bcontract_id",
+                    "type": "regex_match",
+                    "needs_manual_check": true
+                }
+            ],
+            "manual_check_count": 52
+        }
+    }
+}

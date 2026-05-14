@@ -135,6 +135,47 @@ The core business logic engine. Handles rate calculations, alerts, client manage
 | `TradingStatusUpdateJob` | Trade status update handler |
 | `SMSJobWC` | WhatsApp/SMS job (1.8KB — contains API integration) |
 
+---
+
+## Rate Calculation Formulas
+
+### MCX Rate Calculation
+```php
+// calculate_mcx_rates($base, $commodity, $client_code)
+$final_rate = $base_mcx_rate 
+    + $mcx_premium           // MCX exchange premium
+    + $gst_on_premium        // 18% GST on premium
+    + $brokerage_charge      // Brokerage per lot
+    + $conversion_spread;    // Conversion spread
+```
+
+### Bank Rate Calculation
+```php
+// calculate_bank_rates($base, $commodity, $client_code)
+$final_rate = $bank_base_rate
+    + $forex_markup          // USD/INR conversion markup
+    + $bank_premium          // Bank-specific premium
+    + $processing_fee        // Processing fee
+    + $gst_on_fees;          // GST on all fees
+```
+
+### Manual Rate (Fixed)
+```php
+// calculate_manual_rates($base, $commodity)
+$final_rate = $manual_base_rate  // Admin-set fixed rate
+    + $fixed_premium;           // Admin-set premium
+```
+
+### Weight Conversion
+```php
+// gold_conversion($value, $weight)
+$grams = $weight * 10;           // Tola to grams
+$spot_value = $spot_rate * $grams;
+$final_value = $spot_value + $making_charge;
+```
+
+---
+
 ## Key Issues
 - **93KB single controller** — `WinbullliteController.php` is a god class
 - Rate calculation logic (MCX, bank, manual) is deeply intertwined and hard to test

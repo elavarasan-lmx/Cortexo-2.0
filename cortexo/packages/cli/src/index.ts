@@ -8,6 +8,13 @@ import { join, dirname } from 'node:path';
 
 import { registerConfigCommand } from './commands/config.js';
 import { registerServersCommand } from './commands/servers.js';
+import { registerAuditCommand } from './commands/audit.js';
+import { registerOrgsCommand } from './commands/orgs.js';
+import { registerWorkflowsCommand } from './commands/workflows.js';
+import { registerSkillsCommand } from './commands/skills.js';
+import { registerTestCommand } from './commands/test.js';
+import { registerSecurityCommand } from './commands/security.js';
+import { registerReportCommand } from './commands/report.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -43,6 +50,13 @@ program
 // Register modular commands
 registerConfigCommand(program);
 registerServersCommand(program);
+registerAuditCommand(program);
+registerOrgsCommand(program);
+registerWorkflowsCommand(program);
+registerSkillsCommand(program);
+registerTestCommand(program);
+registerSecurityCommand(program);
+registerReportCommand(program);
 
 // Hook unhandled errors
 process.on('uncaughtException', (err) => {
