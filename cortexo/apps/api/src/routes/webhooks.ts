@@ -67,7 +67,7 @@ export async function webhookRoutes(app: FastifyInstance) {
     }, `Deploy webhook received: ${payload.status.toUpperCase()} [${payload.client_id}/${payload.environment}]`);
 
     // ── Persist to DB (deployments table) ────────────────────────
-    let deploymentId: number | null = null;
+    let deploymentId: string | null = null;
     try {
       const db = await getDb();
 
@@ -125,7 +125,7 @@ export async function webhookRoutes(app: FastifyInstance) {
       const recent = await db.query.deployments.findMany({
         orderBy: (d, { desc }) => [desc(d.startedAt)],
         limit: 20,
-        where: (d, { eq }) => eq(d.triggeredBy as any, 'webhook' as any),
+        where: (d: any, { eq }: any) => eq(d.triggeredBy, 'webhook'),
       });
 
       return reply.send({ deployments: recent });

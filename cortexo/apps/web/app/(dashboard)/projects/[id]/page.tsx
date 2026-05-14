@@ -69,7 +69,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     environment: 'production', serverPath: '', serverId: '',
   });
 
-  const p = project as Record<string, unknown> | null;
+  const p = (project as unknown) as Record<string, unknown> | null;
   const s = p ? parseSettings(p) : form;
   const serverName = s.serverId ? serverList.find((sv: any) => String(sv.id) === String(s.serverId))?.name || `Server ${s.serverId}` : '—';
 

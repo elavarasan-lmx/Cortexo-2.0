@@ -50,7 +50,7 @@ import { winbullDeployRoutes } from './routes/winbull-deploy.js';
 import { filePushRoutes } from './routes/file-push.js';
 
 import { knowledgeRoutes } from './routes/knowledge.js';
-import { testingRoutes } from './routes/testing.js';
+import { testingRoutes } from './routes/testing/index.js';
 import { browserTestRoutes } from './routes/browser-tests.js';
 import { devopsDocsRoutes } from './routes/devops-docs.js';
 

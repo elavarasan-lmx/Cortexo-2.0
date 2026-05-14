@@ -4,11 +4,12 @@ import { getDb } from '../lib/db.js';
 import { eq } from 'drizzle-orm';
 import { serverMounts } from '@cortexo/db/schema';
 import { logAudit } from './audit.js';
-import { execFile } from 'child_process';
-import { promisify } from 'util';
 import { readdirSync, statSync, readFileSync, existsSync, mkdirSync } from 'fs';
-import { join, resolve, basename, extname, relative } from 'path';
+import { basename, relative, resolve } from 'path';
 import { homedir } from 'os';
+import {
+  validateShellSafe, expandHome, isMounted, safePath, getFileType, execFileAsync,
+} from '../lib/mount-utils.js';
 
 const createMountSchema = z.object({
   serverId: z.number(),
@@ -20,65 +21,6 @@ const createMountSchema = z.object({
 });
 
 const updateMountSchema = createMountSchema.partial();
-
-/**
- * Validate that a string is safe for use in shell contexts.
- * Rejects characters that could enable command injection.
- */
-function validateShellSafe(input: string, fieldName: string): void {
-  const dangerous = /[;|&$`"'\\\n\r(){}\[\]<>!#~]/;
-  if (dangerous.test(input)) {
-    throw new Error(`Invalid characters in ${fieldName}`);
-  }
-}
-
-/** Resolve ~ to home directory */
-function expandHome(p: string): string {
-  if (p.startsWith('~/') || p === '~') {
-    return join(homedir(), p.slice(1));
-  }
-  return p;
-}
-
-const execFileAsync = promisify(execFile);
-
-/** Check if a path is currently mounted via SSHFS (async — no user input in command) */
-async function isMounted(localPath: string): Promise<boolean> {
-  try {
-    const { stdout } = await execFileAsync('mount', [], { encoding: 'utf-8', timeout: 5000 });
-    return (stdout || '').includes(expandHome(localPath));
-  } catch {
-    return false;
-  }
-}
-
-/** Prevent directory traversal — ensure resolved path is within the mount */
-function safePath(basePath: string, requestedPath: string): string {
-  const base = resolve(expandHome(basePath));
-  const target = resolve(base, requestedPath);
-  if (!target.startsWith(base)) {
-    throw new Error('Path traversal detected');
-  }
-  return target;
-}
-
-/** Get file type icon hint based on extension */
-function getFileType(name: string): string {
-  const ext = extname(name).toLowerCase();
-  const map: Record<string, string> = {
-    '.php': 'php', '.js': 'javascript', '.ts': 'typescript', '.jsx': 'react',
-    '.tsx': 'react', '.css': 'css', '.scss': 'scss', '.html': 'html',
-    '.json': 'json', '.xml': 'xml', '.sql': 'sql', '.md': 'markdown',
-    '.yml': 'yaml', '.yaml': 'yaml', '.sh': 'shell', '.py': 'python',
-    '.rb': 'ruby', '.java': 'java', '.go': 'go', '.rs': 'rust',
-    '.dart': 'dart', '.swift': 'swift', '.kt': 'kotlin',
-    '.png': 'image', '.jpg': 'image', '.jpeg': 'image', '.gif': 'image',
-    '.svg': 'image', '.webp': 'image', '.ico': 'image',
-    '.pdf': 'pdf', '.zip': 'archive', '.tar': 'archive', '.gz': 'archive',
-    '.env': 'config', '.gitignore': 'config', '.htaccess': 'config',
-  };
-  return map[ext] || 'file';
-}
 
 /**
  * Server Mounts API — /v1/server-mounts
@@ -216,9 +158,6 @@ export async function serverMountRoutes(app: FastifyInstance) {
       const localPath = expandHome(row.localMountPath);
 
       // Determine the SSH host to connect to.
-      // We prefer privateIp because ~/.ssh/config already has ProxyCommand
-      // rules for 10.0.*.* that handle bastion-jumping and key selection.
-      // Only fall back to publicAddress for direct connections.
       const privateIp = server.privateIp || '';
       const publicAddr = server.publicAddress || '';
       if (!privateIp && !publicAddr) return reply.code(400).send({ error: 'Server has no IP address configured' });
@@ -226,7 +165,6 @@ export async function serverMountRoutes(app: FastifyInstance) {
       let sshUser = row.sshUser;
       let sshHost = privateIp || publicAddr;
 
-      // If no privateIp, extract user/host from publicAddress
       if (!privateIp && publicAddr) {
         if (publicAddr.includes('@')) {
           const parts = publicAddr.split('@');
@@ -247,20 +185,16 @@ export async function serverMountRoutes(app: FastifyInstance) {
         mkdirSync(localPath, { recursive: true });
       }
 
-      // Execute SSHFS mount — defer to ~/.ssh/config for ProxyCommand,
-      // IdentityFile, and other per-host SSH options.
+      // Execute SSHFS mount
       try {
         validateShellSafe(sshUser, 'sshUser');
         validateShellSafe(sshHost, 'sshHost');
         validateShellSafe(row.remotePath, 'remotePath');
 
-        // Only add explicit IdentityFile if the server record has a private key *path*
-        // (skip public key strings that start with "ssh-")
         const sshKeyOpts = server.sshKey && server.sshKey.length > 0 && !server.sshKey.startsWith('ssh-')
           ? `,IdentityFile=${expandHome(server.sshKey)}`
           : '';
 
-        // Read-only flag — mount with -o ro to enforce at OS level
         const roFlag = row.readOnly ? ',ro' : '';
 
         const sshfsArgs = [
@@ -276,10 +210,7 @@ export async function serverMountRoutes(app: FastifyInstance) {
           encoding: 'utf-8',
           env: { ...process.env, HOME: homedir() },
         });
-
-        // execFileAsync throws on non-zero exit, so if we reach here it's success
       } catch (execErr: any) {
-        // Update status to error
         await db.update(serverMounts)
           .set({ status: 'error' } as any)
           .where(eq(serverMounts.id, parseInt(id)));
@@ -404,6 +335,7 @@ export async function serverMountRoutes(app: FastifyInstance) {
       }
 
       const targetPath = safePath(row.localMountPath, browsePath);
+      const { join } = await import('path');
 
       const entries = readdirSync(targetPath).map(name => {
         try {
@@ -481,6 +413,7 @@ export async function serverMountRoutes(app: FastifyInstance) {
       }
 
       const targetPath = safePath(row.localMountPath, filePath);
+      const { extname } = await import('path');
       const stat = statSync(targetPath);
 
       // Limit file size to 2MB
@@ -653,7 +586,6 @@ export async function serverMountRoutes(app: FastifyInstance) {
         }
 
         if (!unmounted) {
-          // Can't unmount (permission denied etc.) — just update DB, skip remount
           app.log.warn(`Cannot unmount ${localPath} for readonly toggle — will apply on next mount cycle`);
         } else {
           // Remount with new permission

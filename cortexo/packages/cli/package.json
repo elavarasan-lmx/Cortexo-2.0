@@ -1,0 +1,35 @@
+{
+  "name": "@cortexo/cli",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cortexo CLI — scriptable DevOps automation for servers, deployments, testing, and credentials",
+  "type": "module",
+  "bin": {
+    "cortexo": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "cli-table3": "^0.6.5",
+    "commander": "^14.0.3",
+    "yaml": "^2.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.7.0"
+  }
+}

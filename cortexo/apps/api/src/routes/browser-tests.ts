@@ -78,7 +78,7 @@ export async function browserTestRoutes(app: FastifyInstance) {
     for (const target of selectedTargets) {
       try {
         const result = await runBrowserTest(body.flowId, target.baseUrl, body.customData);
-        results.push({ target: target.name, baseUrl: target.baseUrl, ...result });
+        results.push({ ...result, target: target.name, baseUrl: target.baseUrl });
       } catch (err: any) {
         results.push({ target: target.name, baseUrl: target.baseUrl, error: err.message, passed: 0, failed: 1 });
       }

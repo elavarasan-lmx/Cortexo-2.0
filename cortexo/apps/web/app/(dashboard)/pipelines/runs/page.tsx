@@ -53,7 +53,7 @@ export default function PipelineRunsPage() {
           </p>
         </div>
         <button
-          onClick={refetch}
+          onClick={() => refetch()}
           style={{
             display: 'flex', alignItems: 'center', gap: '8px',
             padding: '10px 18px', borderRadius: '10px',

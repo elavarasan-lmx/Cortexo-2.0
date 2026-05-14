@@ -15,9 +15,9 @@ import { PLATFORM_DEFAULTS } from '@/lib/platform-config';
  */
 export default function GeneralSettingsPage() {
 
-  const [platformName, setPlatformName] = useState(PLATFORM_DEFAULTS.name);
-  const [shortName, setShortName] = useState(PLATFORM_DEFAULTS.shortName);
-  const [tagline, setTagline] = useState(PLATFORM_DEFAULTS.tagline);
+  const [platformName, setPlatformName] = useState<string>(PLATFORM_DEFAULTS.name);
+  const [shortName, setShortName] = useState<string>(PLATFORM_DEFAULTS.shortName);
+  const [tagline, setTagline] = useState<string>(PLATFORM_DEFAULTS.tagline);
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
 

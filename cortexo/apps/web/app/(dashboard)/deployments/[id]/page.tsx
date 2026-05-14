@@ -31,7 +31,7 @@ export default function DeploymentDetailPage({ params }: { params: Promise<{ id:
 
   if (error || !deployment) return (
     <div style={{ textAlign: 'center', padding: '60px' }}>
-      <p style={{ fontSize: '14px', color: '#EF4444' }}>{error || 'Deployment not found'}</p>
+      <p style={{ fontSize: '14px', color: '#EF4444' }}>{error instanceof Error ? error.message : error || 'Deployment not found'}</p>
       <Link href="/deployments" style={{ fontSize: '13px', color: 'rgb(var(--primary))' }}>← Back to Deployments</Link>
     </div>
   );

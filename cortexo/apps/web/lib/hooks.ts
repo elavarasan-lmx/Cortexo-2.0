@@ -46,7 +46,11 @@ export function useCortexoQuery<T>(
  * Uses the shared 'projects' cache key so data is reused across pages.
  */
 export function useProjectLookup() {
-  const { data: projects } = useCortexoQuery(['projects'], () => api.getProjects());
+  const { data: projects } = useCortexoQuery(
+    ['projects'],
+    () => api.getProjects(),
+    { staleTime: 5 * 60 * 1000 },  // 5 min — projects rarely change
+  );
   const lookup = useMemo(() => {
     const map = new Map<string, { name: string; repoUrl?: string }>();
     (projects || []).forEach((p: any) => {
@@ -56,6 +60,18 @@ export function useProjectLookup() {
   }, [projects]);
 
   return { projects, lookup };
+}
+
+/**
+ * Hook: loads servers with shared cache and staleTime.
+ * 7+ pages use the ['servers'] cache key — this ensures consistent caching.
+ */
+export function useServers() {
+  return useCortexoQuery(
+    ['servers'],
+    () => api.getServers(),
+    { staleTime: 2 * 60 * 1000 },  // 2 min — servers change less often than deployments
+  );
 }
 
 // useAutoLoadToken — REMOVED

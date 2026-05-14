@@ -1,0 +1,258 @@
+{
+    "patterns": [
+        {
+            "id": "SEC-001",
+            "name": "SQL Injection via raw POST",
+            "severity": "CRITICAL",
+            "priority": "P0",
+            "category": "Security",
+            "description": "Raw $_POST values without sanitization",
+            "regex": "\\$_POST\\[",
+            "fix_ref": "SYS-001",
+            "manual_check": false
+        },
+        {
+            "id": "SEC-002",
+            "name": "OTP bypass via loose comparison",
+            "severity": "CRITICAL",
+            "priority": "P0",
+            "category": "Security",
+            "description": "OTP check using == instead of ===",
+            "regex": "\\$.*otp.*==|==.*otp",
+            "fix_ref": "SYS-008",
+            "manual_check": false
+        },
+        {
+            "id": "SEC-003",
+            "name": "No auth on destructive operation",
+            "severity": "CRITICAL",
+            "priority": "P0",
+            "category": "Security",
+            "description": "Destructive functions without auth check",
+            "regex": "function\\s+(clear_database|db_backup|truncate_table|reset_data)",
+            "fix_ref": "SYS-003",
+            "manual_check": true
+        },
+        {
+            "id": "SEC-004",
+            "name": "Mobile API missing auth",
+            "severity": "CRITICAL",
+            "priority": "P0",
+            "category": "Security",
+            "description": "Mobile controllers without token verification",
+            "regex": "class\\s+C_(mobile|tradeapi)",
+            "fix_ref": "SYS-005",
+            "manual_check": true
+        },
+        {
+            "id": "SEC-005",
+            "name": "Debug artifacts in production",
+            "severity": "MEDIUM",
+            "priority": "P2",
+            "category": "Security",
+            "description": "echo/print_r/var_dump in production code",
+            "regex": "(echo\\s+|print_r\\s*\\(|var_dump\\s*\\()",
+            "fix_ref": "SYS-007",
+            "manual_check": false
+        },
+        {
+            "id": "SEC-006",
+            "name": "CSRF: GET-based delete",
+            "severity": "CRITICAL",
+            "priority": "P0",
+            "category": "Security",
+            "description": "Delete via GET link instead of POST",
+            "regex": "href.*(delete|remove)",
+            "fix_ref": "SYS-004",
+            "manual_check": false
+        },
+        {
+            "id": "SEC-007",
+            "name": "mkdir with 0777 permissions",
+            "severity": "MEDIUM",
+            "priority": "P1",
+            "category": "Security",
+            "description": "World-writable directories",
+            "regex": "mkdir\\s*\\([^,]+,\\s*0777",
+            "fix_ref": "SYS-006",
+            "manual_check": false
+        },
+        {
+            "id": "TXN-001",
+            "name": "trans_commit without rollback check",
+            "severity": "HIGH",
+            "priority": "P1",
+            "category": "Transaction",
+            "description": "trans_commit in error branch",
+            "regex": "trans_commit",
+            "fix_ref": "SYS-002",
+            "manual_check": true
+        },
+        {
+            "id": "BIZ-001",
+            "name": "JS Calculation differs from PHP",
+            "severity": "CRITICAL",
+            "priority": "P0",
+            "category": "Business",
+            "description": "Rate formulas differ between JS and PHP",
+            "fix_ref": "BIZ-001",
+            "manual_check": true,
+            "requires_comparison": true
+        },
+        {
+            "id": "BIZ-002",
+            "name": "Rate not re-validated server-side",
+            "severity": "CRITICAL",
+            "priority": "P0",
+            "category": "Business",
+            "description": "Customer-submitted rate used without validation",
+            "regex": "insert\\s+into\\s+.*booking",
+            "fix_ref": "BIZ-002",
+            "manual_check": true
+        },
+        {
+            "id": "BIZ-003",
+            "name": "parseFloat missing on form values",
+            "severity": "HIGH",
+            "priority": "P1",
+            "category": "Business",
+            "description": "String concat instead of numeric addition",
+            "regex": "\\.val\\(\\)",
+            "fix_ref": "BIZ-003",
+            "manual_check": false,
+            "scan_js": true
+        },
+        {
+            "id": "BIZ-004",
+            "name": "toFixed missing on currency",
+            "severity": "MEDIUM",
+            "priority": "P2",
+            "category": "Business",
+            "description": "Financial amounts without decimal formatting",
+            "regex": "\\.toFixed\\s*\\(",
+            "fix_ref": "BIZ-004",
+            "manual_check": false,
+            "scan_js": true
+        },
+        {
+            "id": "BIZ-005",
+            "name": "Socket event without client prefix",
+            "severity": "CRITICAL",
+            "priority": "P0",
+            "category": "Business",
+            "description": "Socket.IO without client prefix - data leak",
+            "regex": "socket\\.emit\\s*\\(|io\\.emit",
+            "fix_ref": "BIZ-005",
+            "manual_check": true
+        },
+        {
+            "id": "BIZ-006",
+            "name": "AJAX without error handler",
+            "severity": "HIGH",
+            "priority": "P1",
+            "category": "Business",
+            "description": "$.ajax without error callback",
+            "regex": "\\$\\.ajax\\s*\\(",
+            "fix_ref": "SYS-003",
+            "manual_check": true,
+            "scan_js": true
+        },
+        {
+            "id": "ARCH-001",
+            "name": "N+1 Query Pattern",
+            "severity": "MEDIUM",
+            "priority": "P2",
+            "category": "Architecture",
+            "description": "SQL query inside foreach loop",
+            "regex": "foreach.*\\$",
+            "fix_ref": "ARCH-001",
+            "manual_check": true
+        },
+        {
+            "id": "ARCH-002",
+            "name": "Hardcoded URLs in AJAX",
+            "severity": "MEDIUM",
+            "priority": "P2",
+            "category": "Architecture",
+            "description": "URL hardcoded instead of base_url",
+            "regex": "url\\s*:\\s*['\"]/",
+            "fix_ref": "ARCH-002",
+            "manual_check": false,
+            "scan_js": true
+        },
+        {
+            "id": "ARCH-003",
+            "name": "Select2 on dynamic elements",
+            "severity": "MEDIUM",
+            "priority": "P2",
+            "category": "Architecture",
+            "description": "select2() called once, breaks for dynamic rows",
+            "regex": "\\.select2\\s*\\(",
+            "fix_ref": "ARCH-003",
+            "manual_check": false,
+            "scan_js": true
+        },
+        {
+            "id": "ARCH-004",
+            "name": "Event handler fires multiple times",
+            "severity": "HIGH",
+            "priority": "P1",
+            "category": "Architecture",
+            "description": ".on() bound inside function that runs multiple times",
+            "regex": "\\.on\\s*\\(\\s*['\"]change['\"]",
+            "fix_ref": "ARCH-004",
+            "manual_check": true,
+            "scan_js": true
+        },
+        {
+            "id": "ARCH-005",
+            "name": "Cartesian JOIN",
+            "severity": "HIGH",
+            "priority": "P1",
+            "category": "Architecture",
+            "description": "JOIN without proper ON condition",
+            "regex": "JOIN",
+            "fix_ref": "ARCH-006",
+            "manual_check": true
+        },
+        {
+            "id": "ARCH-006",
+            "name": "Hardcoded rate/price",
+            "severity": "MEDIUM",
+            "priority": "P2",
+            "category": "Architecture",
+            "description": "Rate hardcoded instead of DB",
+            "regex": "(gold_rate|silver_rate)\\s*=\\s*[0-9]",
+            "fix_ref": "BIZ-001",
+            "manual_check": false
+        },
+        {
+            "id": "ARCH-007",
+            "name": "Date-suffixed dead method",
+            "severity": "MEDIUM",
+            "priority": "P2",
+            "category": "Architecture",
+            "description": "Legacy method with date suffix",
+            "regex": "function\\s+\\w+_\\d{2}_\\d{2}_\\d{4}\\s*\\(",
+            "fix_ref": "ARCH-001",
+            "manual_check": false
+        },
+        {
+            "id": "ARCH-008",
+            "name": "Commented-out function body",
+            "severity": "LOW",
+            "priority": "P3",
+            "category": "Architecture",
+            "description": "Large commented-out code blocks",
+            "regex": "/\\*\\s*function",
+            "fix_ref": "ARCH-001",
+            "manual_check": false
+        }
+    ],
+    "metadata": {
+        "version": "2.0",
+        "platform": "Winbull Bullion",
+        "created": "2026-05-14",
+        "total_patterns": 22
+    }
+}

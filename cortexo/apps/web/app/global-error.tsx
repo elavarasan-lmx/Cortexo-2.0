@@ -28,16 +28,21 @@ export default function GlobalError({
         <div style={{ textAlign: 'center', maxWidth: '480px' }}>
           <div
             style={{
-              fontSize: '64px',
-              marginBottom: '16px',
-              animation: 'float 3s ease-in-out infinite',
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              border: '3px solid #F87171',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+              fontSize: '32px',
+              fontWeight: 800,
+              color: '#F87171',
+              lineHeight: 1,
             }}
           >
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#F87171" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}>
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
+            !
           </div>
           <h1
             style={{

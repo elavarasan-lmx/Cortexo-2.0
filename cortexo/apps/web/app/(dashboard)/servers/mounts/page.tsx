@@ -187,7 +187,7 @@ export default function ServerMountsPage() {
           </p>
         </div>
         <div className="cx-flex cx-gap-8">
-          <button onClick={refetch} className="cx-btn cx-btn-outline"><RefreshCw style={{ width:14, height:14 }} /> Refresh</button>
+          <button onClick={() => refetch()} className="cx-btn cx-btn-outline"><RefreshCw style={{ width:14, height:14 }} /> Refresh</button>
           <button onClick={() => setShowCreate(true)} className="cx-btn cx-btn-primary"><Plus style={{ width:16, height:16 }} /> Add Mount</button>
         </div>
       </div>

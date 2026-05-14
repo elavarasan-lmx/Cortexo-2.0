@@ -76,9 +76,16 @@ export interface Deployment {
   commitSha?: string;
   commitMessage?: string;
   branch?: string;
+  gitBranch?: string;
   environment?: string;
   durationMs?: number;
   triggeredBy?: string;
+  startedAt?: string;
+  finishedAt?: string;
+  completedAt?: string;
+  version?: string;
+  serverName?: string;
+  userName?: string;
   createdAt: string;
 }
 
@@ -192,9 +199,15 @@ export interface ServerMount {
   id: number;
   serverId: number;
   name?: string;
+  label?: string;
   localPath: string;
   localMountPath?: string;
   remotePath: string;
+  mountPoint?: string;
+  host?: string;
+  server?: { ip?: string; name?: string };
+  username?: string;
+  port?: number;
   status: string;
   createdAt?: string;
 }
@@ -913,6 +926,10 @@ class ApiClient {
     this.refreshToken = refreshToken;
     if (typeof window !== 'undefined') localStorage.setItem('cortexo_refresh_token', refreshToken);
   }
+  // ─── Credentials Vault (platform branding + secrets) ────────────────────────
+  getCredentials()                                     { return this.request<any>('GET', '/credentials'); }
+  setCredential(key: string, value: string)            { return this.request<any>('POST', '/credentials', { key, value }); }
+
   // ─── Source Profiles (reusable Git credentials) ────────────────────────────
   getSourceProfiles()                                { return this.request<SourceProfile[]>('GET', '/source-profiles'); }
   createSourceProfile(data: Omit<SourceProfile, 'id' | 'createdAt'>) { return this.request<SourceProfile>('POST', '/source-profiles', data); }
