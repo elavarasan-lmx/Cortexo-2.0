@@ -1,11 +1,18 @@
-# /build-system-brain Workflow
+# /build-system-brain Workflow (v1.0)
 
 > Build the cross-module System Brain for Winbull.
 > Purpose: Maps shared tables, module dependencies, and integration risk across ALL modules.
-> Prerequisite: At least 3 module brains built via /build-module-brain
 
 ## Usage
 Say: `/build-system-brain`
+
+---
+
+## Prerequisites
+
+- At least 3 module brains built via `/build-module-brain`
+- Read `brain/winbull/1_architecture.md` for shared tables info
+- Read `brain/winbull/7_bugs_and_issues.md` for cross-module bugs
 
 ---
 

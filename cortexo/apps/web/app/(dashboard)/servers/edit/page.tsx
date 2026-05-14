@@ -5,20 +5,21 @@ import { Server, Save, ArrowLeft, Loader2, Trash2, CheckCircle } from 'lucide-re
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
-import { useAutoLoadToken, useApiData } from '@/lib/hooks';
+import { useCortexoQuery } from '@/lib/hooks';
 import { useToastStore } from '@/lib/toast-store';
 import { useModal } from '@/components/modal-provider';
 
 
 export default function EditServerPage() {
-  useAutoLoadToken();
   const router = useRouter();
   const toast = useToastStore();
   const searchParams = useSearchParams();
   const serverId = searchParams.get('id');
 
-  const { data: serverData, loading } = useApiData(
-    () => serverId ? api.getServer(Number(serverId)) : Promise.resolve({ data: null as any })
+  const { data: serverData, isLoading: loading } = useCortexoQuery(
+    ['server', serverId],
+    () => api.getServer(Number(serverId!)),
+    { enabled: !!serverId }
   );
 
   const [form, setForm] = useState({
@@ -124,7 +125,7 @@ export default function EditServerPage() {
             <Server style={{ width: '20px', height: '20px', color: '#fff' }} />
           </div>
           <div>
-            <h1 style={{ fontSize: '22px', fontWeight: 800, color: 'rgb(var(--text-primary))', margin: 0 }}>✏️ Edit Server: {form.name || 'Untitled'}</h1>
+            <h1 style={{ fontSize: '22px', fontWeight: 800, color: 'rgb(var(--text-primary))', margin: 0 }}>Edit Server: {form.name || 'Untitled'}</h1>
             <span style={{ fontSize: '11px', fontWeight: 600, color: '#10B981', padding: '2px 8px', borderRadius: '4px', backgroundColor: 'rgba(16,185,129,0.1)' }}>● Active</span>
           </div>
         </div>

@@ -1,4 +1,4 @@
-# /scan-cross-module Workflow
+# /scan-cross-module Workflow (v1.0)
 
 > After fixing a bug in one module, check ALL other modules for the same pattern.
 > Copy-paste development = if one module has a bug, others likely do too.
@@ -6,6 +6,14 @@
 ## Usage
 Say: `/scan-cross-module [pattern or bug ID]`
 Auto-triggered: Called by `/fix-bug` Step 8 after every fix.
+
+---
+
+## Prerequisites
+
+- Bug fix completed via `/fix-bug`
+- Pattern ID known (e.g., SYS-001, BIZ-002)
+- Read `brain/winbull/11_bug_patterns.md` for detection rules
 
 ---
 

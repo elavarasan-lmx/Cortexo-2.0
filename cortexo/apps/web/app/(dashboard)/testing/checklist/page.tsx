@@ -1,7 +1,6 @@
 'use client';
 import React, { useState } from 'react';
 import { ClipboardCheck, Check, Circle, ChevronDown, ChevronRight, AlertTriangle, Smartphone, Globe } from 'lucide-react';
-import { useAutoLoadToken } from '@/lib/hooks';
 
 interface CheckItem { id: string; label: string; desc: string; priority: 'high'|'medium'|'low'; platform: 'ionic'|'flutter'|'both'; }
 interface CheckGroup { title: string; items: CheckItem[]; }
@@ -60,7 +59,6 @@ const platStyle = (p: string): React.CSSProperties => ({
 });
 
 export default function ChecklistPage() {
-  useAutoLoadToken();
   const [checked, setChecked] = useState<Record<string,boolean>>({});
   const [collapsed, setCollapsed] = useState<Record<string,boolean>>({});
 
@@ -90,7 +88,7 @@ export default function ChecklistPage() {
         <div style={{height:'8px',borderRadius:'4px',backgroundColor:'rgba(var(--border),0.15)',overflow:'hidden'}}>
           <div style={{height:'100%',width:`${pct}%`,background:pct===100?'#10B981':'linear-gradient(90deg,rgb(var(--primary)),rgb(var(--agent)))',transition:'width 300ms',borderRadius:'4px'}}/>
         </div>
-        {pct===100 && <div style={{marginTop:'10px',fontSize:'13px',fontWeight:600,color:'#10B981',display:'flex',alignItems:'center',gap:'6px'}}><Check style={{width:'16px',height:'16px'}}/>All checks passed! Ready to deploy 🚀</div>}
+        {pct===100 && <div style={{marginTop:'10px',fontSize:'13px',fontWeight:600,color:'#10B981',display:'flex',alignItems:'center',gap:'6px'}}><Check style={{width:'16px',height:'16px'}}/>All checks passed! Ready to deploy</div>}
       </div>
 
       {/* Groups */}

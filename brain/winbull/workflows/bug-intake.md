@@ -1,9 +1,17 @@
-# /bug-intake Workflow
+# /bug-intake Workflow (v1.0)
 
 > Standardize how bugs enter the pipeline. Entry point for ALL bugs.
 
 ## Usage
 Say: `/bug-intake [description of bug]`
+
+---
+
+## Prerequisites
+
+- Read `brain/winbull/0_session_start.md` first
+- Read `brain/winbull/11_bug_patterns.md` to check if bug matches known pattern
+- Read `brain/winbull/7_bugs_and_issues.md` to verify bug isn't already documented
 
 ---
 

@@ -4,6 +4,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/components/auth-provider';
 import { ModalProvider } from '@/components/modal-provider';
 import { QueryProvider } from '@/components/query-provider';
+import { PLATFORM_DEFAULTS } from '@/lib/platform-config';
 import './globals.css';
 
 
@@ -20,9 +21,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Cortexo — The Brain for Your Code',
-  description:
-    'Deploy. Detect. Debug. The only DevOps tool that deploys your code, catches bugs automatically, and tells you WHY they happened — powered by AI.',
+  title: PLATFORM_DEFAULTS.seoTitle,
+  description: PLATFORM_DEFAULTS.seoDescription,
   keywords: [
     'DevOps',
     'CI/CD',
@@ -30,10 +30,12 @@ export const metadata: Metadata = {
     'AI code review',
     'deployment automation',
     'bug detection',
+    'bullion',
+    'Logimax',
   ],
-  authors: [{ name: 'Cortexo' }],
+  authors: [{ name: PLATFORM_DEFAULTS.author }],
   openGraph: {
-    title: 'Cortexo — The Brain for Your Code',
+    title: PLATFORM_DEFAULTS.seoTitle,
     description:
       'Deploy. Detect. Debug. AI-powered DevOps for small teams.',
     type: 'website',

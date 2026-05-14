@@ -9,28 +9,26 @@ import {
   Boxes, BarChart3, Send, ExternalLink, Check, X,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useAutoLoadToken } from '@/lib/hooks';
 
-const SEVERITY_CONFIG: Record<string, { color: string; bg: string; icon: string; label: string }> = {
-  critical: { color: '#EF4444', bg: 'rgba(239,68,68,0.08)', icon: '🔴', label: 'Critical' },
-  high:     { color: '#F59E0B', bg: 'rgba(245,158,11,0.08)', icon: '🟠', label: 'High' },
-  medium:   { color: '#3B82F6', bg: 'rgba(59,130,246,0.08)', icon: '🔵', label: 'Medium' },
-  low:      { color: '#10B981', bg: 'rgba(16,185,129,0.08)', icon: '🟢', label: 'Low' },
+const SEVERITY_CONFIG: Record<string, { color: string; bg: string; label: string }> = {
+  critical: { color: '#EF4444', bg: 'rgba(239,68,68,0.08)', label: 'Critical' },
+  high:     { color: '#F59E0B', bg: 'rgba(245,158,11,0.08)', label: 'High' },
+  medium:   { color: '#3B82F6', bg: 'rgba(59,130,246,0.08)', label: 'Medium' },
+  low:      { color: '#10B981', bg: 'rgba(16,185,129,0.08)', label: 'Low' },
 };
 
 const BUG_TYPE_LABELS: Record<string, string> = {
-  server_error: '💥 Server Crash',
-  timeout: '⏱️ Timeout',
-  slow_response: '🐌 Slow Response',
-  missing_endpoint: '🔍 Missing Endpoint',
-  broken_json: '📄 Broken Response',
-  empty_response: '📭 Empty Response',
-  client_error: '⚠️ Client Error',
-  connection_error: '🔌 Connection Failed',
+  server_error: 'Server Crash',
+  timeout: 'Timeout',
+  slow_response: 'Slow Response',
+  missing_endpoint: 'Missing Endpoint',
+  broken_json: 'Broken Response',
+  empty_response: 'Empty Response',
+  client_error: 'Client Error',
+  connection_error: 'Connection Failed',
 };
 
 export default function BugReportPage() {
-  useAutoLoadToken();
   const params = useParams();
   const runId = Number(params.runId);
 
@@ -95,8 +93,8 @@ export default function BugReportPage() {
             }}>
               {exportResult.success ? <Check style={{ width: '14px', height: '14px' }} /> : <X style={{ width: '14px', height: '14px' }} />}
               {exportResult.success
-                ? `✅ ${exportResult.exported?.created || 0} new, ${exportResult.exported?.updated || 0} updated`
-                : '❌ Export failed'
+                ? `${exportResult.exported?.created || 0} new, ${exportResult.exported?.updated || 0} updated`
+                : 'Export failed'
               }
               {exportResult.success && (
                 <Link href="/bug-tracker" style={{ color: '#22C55E', marginLeft: '6px', display: 'flex', alignItems: 'center', gap: '3px' }}>
@@ -150,7 +148,7 @@ export default function BugReportPage() {
                 transition: 'all 150ms',
               }}>
               <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: conf.color, marginBottom: '4px' }}>
-                {conf.icon} {conf.label}
+                {conf.label}
               </div>
               <div style={{ fontSize: '26px', fontWeight: 800, color: count > 0 ? conf.color : 'rgb(var(--text-muted))' }}>{count}</div>
             </button>
@@ -158,7 +156,7 @@ export default function BugReportPage() {
         })}
         <div style={{ padding: '14px 16px', borderRadius: '12px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))' }}>
           <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgb(var(--text-muted))', marginBottom: '4px' }}>
-            ℹ️ Auth Expected
+            Auth Expected
           </div>
           <div style={{ fontSize: '26px', fontWeight: 800, color: 'rgb(var(--text-muted))' }}>{bugData?.authExpectedCount || 0}</div>
         </div>
@@ -187,7 +185,7 @@ export default function BugReportPage() {
           color: activeTab === 'bugs' ? 'rgb(var(--primary))' : 'rgb(var(--text-muted))',
           backgroundColor: 'transparent', marginBottom: '-2px',
         }}>
-          🐛 Bugs ({bugData?.totalBugs || 0})
+          Bugs ({bugData?.totalBugs || 0})
         </button>
         <button onClick={() => setActiveTab('modules')} style={{
           padding: '10px 20px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
@@ -195,7 +193,7 @@ export default function BugReportPage() {
           color: activeTab === 'modules' ? 'rgb(var(--primary))' : 'rgb(var(--text-muted))',
           backgroundColor: 'transparent', marginBottom: '-2px',
         }}>
-          📦 Module Health ({moduleData.length})
+          Module Health ({moduleData.length})
         </button>
       </div>
 
@@ -204,7 +202,7 @@ export default function BugReportPage() {
         <div className="cx-flex-col" style={{ gap: "8px" }}>
           {filteredBugs.length === 0 ? (
             <div style={{ padding: '40px', textAlign: 'center', color: 'rgb(var(--text-muted))' }}>
-              {filterSeverity ? 'No bugs at this severity level.' : '🎉 No bugs found! Your codebase is healthy.'}
+              {filterSeverity ? 'No bugs at this severity level.' : 'No bugs found! Your codebase is healthy.'}
             </div>
           ) : filteredBugs.map((bug: any) => {
             const conf = SEVERITY_CONFIG[bug.severity];
@@ -326,7 +324,7 @@ export default function BugReportPage() {
                 {hasCritical && (
                   <div style={{ marginTop: '10px', padding: '8px 12px', borderRadius: '8px', backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }}>
                     <div style={{ fontSize: '10px', fontWeight: 700, color: '#EF4444', textTransform: 'uppercase', marginBottom: '4px' }}>
-                      🔴 Critical Failures (500 errors)
+                      Critical Failures (500 errors)
                     </div>
                     {mod.criticalEndpoints.map((ep: any, i: number) => (
                       <div key={i} style={{ fontSize: '12px', fontFamily: "'JetBrains Mono', monospace", color: '#FCA5A5', padding: '2px 0' }}>

@@ -6,7 +6,6 @@ import {
   ChevronDown, ChevronRight, Users, ShieldAlert, Monitor,
   Bug, ExternalLink, CheckCheck, Settings2, RotateCcw
 } from 'lucide-react';
-import { useAutoLoadToken } from '@/lib/hooks';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/v1';
 
@@ -28,7 +27,6 @@ interface BrowserTestResult {
 
 
 export default function BrowserTestPage() {
-  useAutoLoadToken();
   const [flows, setFlows] = useState<FlowInfo[]>([]);
   const [targets, setTargets] = useState<Target[]>([]);
   const [selectedTarget, setSelectedTarget] = useState<number>(0);
@@ -208,10 +206,10 @@ export default function BrowserTestPage() {
               </div>
               <p style={{ fontSize: '12px', color: 'rgb(var(--text-secondary))', margin: '0 0 10px', lineHeight: '1.5' }}>{f.description}</p>
               <div className="cx-flex cx-gap-10">
-                <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>📋 {f.stepCount} steps</span>
-                <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>🌐 Real Browser</span>
-                <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>📸 Screenshots</span>
-                {hasCustomValues && <span style={{ fontSize: '11px', color: '#F59E0B', fontWeight: 600 }}>⚡ Custom Data</span>}
+                <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>{f.stepCount} steps</span>
+                <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>Real Browser</span>
+                <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>Screenshots</span>
+                {hasCustomValues && <span style={{ fontSize: '11px', color: '#F59E0B', fontWeight: 600 }}>Custom Data</span>}
               </div>
 
               {/* Custom Data Form — Collapsible */}
@@ -222,7 +220,7 @@ export default function BrowserTestPage() {
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                     <span style={{ fontSize: '11px', fontWeight: 700, color: '#8B5CF6', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      ⚡ Custom Test Data
+                      Custom Test Data
                     </span>
                     <button
                       onClick={() => {
@@ -264,7 +262,7 @@ export default function BrowserTestPage() {
                     ))}
                   </div>
                   <p style={{ fontSize: '10px', color: 'rgb(var(--text-muted))', margin: '8px 0 0', lineHeight: '1.5' }}>
-                    💡 Leave fields empty to use auto-generated defaults. Only filled values override the test data.
+                    Leave fields empty to use auto-generated defaults. Only filled values override the test data.
                   </p>
                 </div>
               )}
@@ -279,7 +277,7 @@ export default function BrowserTestPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
             <div>
               <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 4px' }}>
-                🧪 Browser Test Results
+                Browser Test Results
               </h2>
               <p style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', margin: 0, fontFamily: "'JetBrains Mono', monospace" }}>
                 {result.baseUrl} • {(result.duration / 1000).toFixed(1)}s • {new Date(result.startedAt).toLocaleTimeString()}
@@ -376,11 +374,11 @@ export default function BrowserTestPage() {
                   </button>
                   {isExpanded && (
                     <div style={{ padding: '0 14px 14px 52px', fontSize: '12px' }}>
-                      {s.details && <p style={{ color: 'rgb(var(--text-secondary))', margin: '0 0 8px' }}>✅ {s.details}</p>}
-                      {s.error && <p style={{ color: '#EF4444', margin: '0 0 8px', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>❌ {s.error}</p>}
+                      {s.details && <p style={{ color: 'rgb(var(--text-secondary))', margin: '0 0 8px' }}>{s.details}</p>}
+                      {s.error && <p style={{ color: '#EF4444', margin: '0 0 8px', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>{s.error}</p>}
                       {s.evidence && (
                         <details style={{ marginBottom: '8px' }}>
-                          <summary style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', cursor: 'pointer' }}>📋 Evidence Data</summary>
+                          <summary style={{ fontSize: '11px', color: 'rgb(var(--text-muted))', cursor: 'pointer' }}>Evidence Data</summary>
                           <pre style={{ fontSize: '10px', color: 'rgb(var(--text-secondary))', backgroundColor: 'rgb(var(--surface-hover))', padding: '8px', borderRadius: '8px', overflow: 'auto', maxHeight: '200px', marginTop: '6px' }}>
                             {JSON.stringify(s.evidence, null, 2)}
                           </pre>
@@ -410,7 +408,7 @@ export default function BrowserTestPage() {
       {multiResults && (
         <div className="cx-card cx-border" style={{ marginBottom: "24px" }}>
           <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 4px' }}>
-            🌐 Multi-Client Results — {multiResults.flow}
+            Multi-Client Results — {multiResults.flow}
           </h2>
           <p style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', margin: '0 0 16px' }}>
             {multiResults.totalClients} clients tested • {multiResults.allPassed} passed • {multiResults.someFailed} with failures
@@ -431,7 +429,7 @@ export default function BrowserTestPage() {
                   {r.passed}/{r.total}
                 </span>
                 <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>
-                  {r.duration ? `${(r.duration / 1000).toFixed(1)}s` : r.error ? '❌' : '—'}
+                  {r.duration ? `${(r.duration / 1000).toFixed(1)}s` : r.error ? 'Error' : '—'}
                 </span>
                 {r.steps && (
                   <button onClick={() => { setResult(r); setMultiResults(null); }} style={{

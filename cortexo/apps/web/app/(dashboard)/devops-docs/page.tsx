@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { BookOpen, Search, Terminal, Copy, Check, ChevronRight, ChevronDown, Lightbulb, FileCode2, ArrowLeft, Star, FileDown, Plus, ClipboardList, Trash2, CheckCircle2, Circle } from 'lucide-react';
 import { ChecklistStep, DevopsChecklist, DevopsDoc, DevopsDocCommand, DevopsDocSnippet, api } from '@/lib/api';
-import { useAutoLoadToken } from '@/lib/hooks';
 
 // ─── Syntax Highlighting (basic keyword coloring) ───────────────────
 const KW_COLORS: Record<string, string[]> = {
@@ -128,7 +127,6 @@ function CopyBtn({ text }: { text: string }) {
 
 // ─── Main Page ──────────────────────────────────────────────────────
 export default function DevOpsDocsPage() {
-  useAutoLoadToken();
   const [docs, setDocs] = useState<any[]>([]);
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
   const [loading, setLoading] = useState(true);

@@ -8,7 +8,6 @@ import {
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { api, type Server } from '@/lib/api';
-import { useAutoLoadToken } from '@/lib/hooks';
 
 
 const statusColors: Record<string, { color: string; bg: string }> = {
@@ -33,7 +32,6 @@ function MetricBar({ label, used, total, unit, color }: { label: string; used: n
 }
 
 export default function ServerDetailPage() {
-  useAutoLoadToken();
   const params = useSearchParams();
   const id = params.get('id');
   const [server, setServer] = useState<Server | null>(null);
@@ -63,9 +61,9 @@ export default function ServerDetailPage() {
     setTesting(true); setTestResult(null);
     try {
       const res = await api.testServerSSH(parseInt(id));
-      setTestResult(res.data?.success ? '✅ SSH connected!' : `❌ ${res.data?.message || 'Failed'}`);
+      setTestResult(res.data?.success ? 'SSH connected successfully' : `Failed: ${res.data?.message || 'Unknown error'}`);
     } catch (err: any) {
-      setTestResult(`❌ ${err?.message || 'Connection failed'}`);
+      setTestResult(`Failed: ${err?.message || 'Connection failed'}`);
     }
     setTesting(false);
   };
@@ -137,7 +135,7 @@ export default function ServerDetailPage() {
       </div>
 
       {testResult && (
-        <div className="cx-card cx-border" style={{ padding: '12px 20px', marginBottom: '16px', fontSize: '13px', fontWeight: 600, color: testResult.includes('✅') ? '#10B981' : '#EF4444' }}>
+        <div className="cx-card cx-border" style={{ padding: '12px 20px', marginBottom: '16px', fontSize: '13px', fontWeight: 600, color: testResult.includes('successfully') ? '#10B981' : '#EF4444' }}>
           {testResult}
         </div>
       )}

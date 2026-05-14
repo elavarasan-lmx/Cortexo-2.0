@@ -8,17 +8,16 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
-import { useApiData, useAutoLoadToken } from '@/lib/hooks';
+import { useCortexoQuery } from '@/lib/hooks';
 
 
 export default function SSHFSDetailPage() {
-  useAutoLoadToken();
   const params = useSearchParams();
   const mountId = params.get('id') || '';
 
-  const { data: mounts, loading, error, refetch } = useApiData(
+  const { data: mounts, isLoading: loading, refetch } = useCortexoQuery(
+    ['server-mounts'],
     () => api.getServerMounts(),
-    { default: [] as any[] }
   );
 
   const m = mountId

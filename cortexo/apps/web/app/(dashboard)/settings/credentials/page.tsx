@@ -6,7 +6,6 @@ import {
   GitBranch, Key, Bot, Zap, Lock, Edit3, X, Mail,
 } from 'lucide-react';
 import { useModal } from '@/components/modal-provider';
-import { useAutoLoadToken } from '@/lib/hooks';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/v1';
 const DOTS = '••••••••••••••••••••';
@@ -44,7 +43,6 @@ const categoryMeta: Record<string, { icon: any; label: string; color: string; de
 
 
 export default function CredentialsPage() {
-  useAutoLoadToken();
   const [categories, setCategories] = useState<Category[]>([]);
   const [savedCreds, setSavedCreds] = useState<SavedCred[]>([]);
   const [loading, setLoading] = useState(true);

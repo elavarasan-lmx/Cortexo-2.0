@@ -1,10 +1,20 @@
-# /fix-bug Workflow
+# /fix-bug Workflow (v1.0)
 
 > Fix ONE bug at a time. Surgical precision. One commit per fix.
 > Core principle: Documentation first → Plan → Fix → Ripple Check → Test → Approve → Close
 
 ## Usage
 Say: `/fix-bug [BUG_ID or description]`
+
+---
+
+## Prerequisites
+
+- Bug must be triaged via `/bug-intake` first
+- Read `brain/winbull/0_session_start.md` — check dangerous files list
+- Read `brain/winbull/11_bug_patterns.md` — check if fix template exists
+- Track B (business logic) bugs require human confirmation before coding
+- Max 3-5 bugs per session — quality over quantity
 
 ---
 

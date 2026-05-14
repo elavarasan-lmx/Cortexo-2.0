@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { GitBranch, RotateCcw, CheckCircle, XCircle, Clock, Loader2, Terminal, Play } from 'lucide-react';
-import { useApiData, useAutoLoadToken, timeAgo, formatDuration, parseJsonField } from '@/lib/hooks';
+import { useCortexoQuery, timeAgo, formatDuration, parseJsonField } from '@/lib/hooks';
 import { Pipeline, PipelineRun, api } from '@/lib/api';
 import { LiveLogViewer } from '@/components/live-log-viewer';
 
@@ -15,9 +15,8 @@ const statusConfig: Record<string, { icon: any; color: string; bg: string; label
 
 
 export default function PipelineRunsPage() {
-  useAutoLoadToken();
-  const { data: runs, loading, refetch } = useApiData(() => api.getPipelineRuns({ limit: 100 }));
-  const { data: pipelines } = useApiData(() => api.getPipelines());
+  const { data: runs, isLoading: loading, refetch } = useCortexoQuery(['pipeline-runs'], () => api.getPipelineRuns({ limit: 100 }));
+  const { data: pipelines } = useCortexoQuery(['pipelines'], () => api.getPipelines());
   const [retrying, setRetrying] = useState<string | null>(null);
   const [showLogs, setShowLogs] = useState<string | null>(null);
 
@@ -190,7 +189,7 @@ export default function PipelineRunsPage() {
                               backgroundColor: `${stageColor}15`,
                               color: stageColor,
                             }}>
-                              {stage.status === 'success' ? '✓' : stage.status === 'failed' ? '✗' : '◉'} {stage.name}
+                              {stage.name}
                               {stage.durationMs != null && ` ${stage.durationMs}ms`}
                             </span>
                           );

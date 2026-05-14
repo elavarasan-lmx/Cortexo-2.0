@@ -5,19 +5,20 @@ import { Rocket, ArrowLeft, Save, Loader2, Trash2, GitBranch } from 'lucide-reac
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
-import { useAutoLoadToken, useApiData } from '@/lib/hooks';
+import { useCortexoQuery } from '@/lib/hooks';
 import { useToastStore } from '@/lib/toast-store';
 import { useModal } from '@/components/modal-provider';
 
 export default function EditDeployPage() {
-  useAutoLoadToken();
   const router = useRouter();
   const toast = useToastStore();
   const searchParams = useSearchParams();
   const deployId = searchParams.get('id');
 
-  const { data: deployData, loading } = useApiData(
-    () => deployId ? api.getDeployment(deployId) : Promise.resolve({ data: null as any })
+  const { data: deployData, isLoading: loading } = useCortexoQuery(
+    ['deployment', deployId],
+    () => deployId ? api.getDeployment(deployId) : Promise.resolve({ data: null as any }),
+    { enabled: !!deployId }
   );
 
   const [form, setForm] = useState({
@@ -97,7 +98,7 @@ export default function EditDeployPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
         <div className="cx-flex cx-items-center cx-gap-12">
           <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'linear-gradient(135deg, #10B981, #059669)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Rocket style={{ width: '20px', height: '20px', color: '#fff' }} /></div>
-          <div><h1 style={{ fontSize: '22px', fontWeight: 800, color: 'rgb(var(--text-primary))', margin: 0 }}>✏️ Edit Deploy {d?.id ? `#${String(d.id).slice(0, 6)}` : ''}</h1><span style={{ fontSize: '11px', fontWeight: 600, color: d?.status === 'success' ? '#10B981' : '#F59E0B', padding: '2px 8px', borderRadius: '4px', backgroundColor: d?.status === 'success' ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)' }}>{d?.status || 'pending'}</span></div>
+          <div><h1 style={{ fontSize: '22px', fontWeight: 800, color: 'rgb(var(--text-primary))', margin: 0 }}>Edit Deploy {d?.id ? `#${String(d.id).slice(0, 6)}` : ''}</h1><span style={{ fontSize: '11px', fontWeight: 600, color: d?.status === 'success' ? '#10B981' : '#F59E0B', padding: '2px 8px', borderRadius: '4px', backgroundColor: d?.status === 'success' ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)' }}>{d?.status || 'pending'}</span></div>
         </div>
         <div className="cx-flex cx-gap-10">
           <button onClick={handleDelete} disabled={deleting} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', border: '1px solid #EF4444', backgroundColor: 'transparent', color: '#EF4444', fontSize: '13px', fontWeight: 600, cursor: deleting ? 'wait' : 'pointer', opacity: deleting ? 0.6 : 1 }}>

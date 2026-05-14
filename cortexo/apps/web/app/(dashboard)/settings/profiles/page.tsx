@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useAutoLoadToken } from '@/lib/hooks';
 import { useModal } from '@/components/modal-provider';
 
 import {
@@ -234,7 +233,6 @@ function DbModal({ item, onClose, onSave }: { item: DbProfile | null; onClose: (
 
 
 export default function ProfilesPage() {
-  useAutoLoadToken();
   const { confirm } = useModal();
   const [sources, setSources] = useState<SourceProfile[]>([]);
   const [dbs, setDbs] = useState<DbProfile[]>([]);

@@ -11,6 +11,14 @@ Say: `/sprint-status`
 ---
 
 ## Prerequisites
+
+- Read `brain/winbull/7_bugs_and_issues.md` for bug data
+- GitHub MCP configured (optional, for live issue sync)
+- Sprint scope defined in project tracker
+
+---
+
+## Prerequisites
 - `brain/winbull/7_bugs_and_issues.md` is up to date
 - Optionally: GitHub tracking for live issue counts
 

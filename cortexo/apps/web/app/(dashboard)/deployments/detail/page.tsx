@@ -8,7 +8,6 @@ import {
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
-import { useAutoLoadToken } from '@/lib/hooks';
 
 
 const statusIcon: Record<string, { icon: any; color: string }> = {
@@ -21,7 +20,6 @@ const statusIcon: Record<string, { icon: any; color: string }> = {
 };
 
 export default function DeployDetailPage() {
-  useAutoLoadToken();
   const params = useSearchParams();
   const id = params.get('id');
   const [deploy, setDeploy] = useState<any>(null);
@@ -146,7 +144,7 @@ export default function DeployDetailPage() {
           </div>
           <div style={{ padding: '16px 20px', backgroundColor: 'rgba(0,0,0,0.03)', maxHeight: '400px', overflowY: 'auto' }}>
             <pre style={{ margin: 0, fontSize: '12px', lineHeight: 1.7, fontFamily: "'JetBrains Mono', monospace", color: 'rgb(var(--text-primary))', whiteSpace: 'pre-wrap' }}>
-              {logs?.logs ? logs.logs.map((s: any) => `[${s.step}] ${s.stdout || ''}${s.stderr ? '\n⚠ ' + s.stderr : ''}`).join('\n') : 'No logs available yet.'}
+              {logs?.logs ? logs.logs.map((s: any) => `[${s.step}] ${s.stdout || ''}${s.stderr ? '\nWARN: ' + s.stderr : ''}`).join('\n') : 'No logs available yet.'}
             </pre>
           </div>
         </div>

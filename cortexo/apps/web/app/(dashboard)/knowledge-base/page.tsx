@@ -3,11 +3,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { BookOpen, Search, MessageSquare, Send, Book, FileText, Settings, Bot, User, Loader2, Plus, Edit2, Trash2, X, ChevronDown } from 'lucide-react';
 import { KnowledgeDoc, KnowledgeHistoryEntry, KnowledgeProvider, api } from '@/lib/api';
-import { useCortexoQuery, useAutoLoadToken, timeAgo } from '@/lib/hooks';
+import { useCortexoQuery, timeAgo } from '@/lib/hooks';
 
 
 export default function KnowledgeBasePage() {
-  useAutoLoadToken();
   const [activeTab, setActiveTab] = useState<'qa' | 'docs'>('qa');
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -179,7 +178,7 @@ export default function KnowledgeBasePage() {
                 <div style={{ margin: 'auto', textAlign: 'center', color: 'rgb(var(--text-muted))', maxWidth: '400px' }}>
                   <Bot style={{ width: '48px', height: '48px', opacity: 0.5, margin: '0 auto 16px' }} />
                   <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'rgb(var(--text-primary))', marginBottom: '8px' }}>How can I help you?</h3>
-                  <p style={{ fontSize: '14px', lineHeight: 1.5 }}>Ask me anything about Cortexo's architecture, existing deployments, or troubleshooting procedures.</p>
+                  <p style={{ fontSize: '14px', lineHeight: 1.5 }}>Ask me anything about the platform's architecture, existing deployments, or troubleshooting procedures.</p>
                 </div>
               ) : (
                 messages.map((msg, idx) => (
@@ -258,7 +257,7 @@ export default function KnowledgeBasePage() {
                     <option value="">Auto ({providersData?.default || 'none'})</option>
                     {providersData?.available?.map((p: KnowledgeProvider) => (
                       <option key={p.id} value={p.id}>
-                        {p.name}{p.free ? ' ✦ Free' : ' 💰'}
+                        {p.name}{p.free ? ' — Free' : ' — Paid'}
                       </option>
                     ))}
                   </select>

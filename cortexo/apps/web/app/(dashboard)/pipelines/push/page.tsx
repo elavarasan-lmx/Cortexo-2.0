@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Upload, Server, FileCode, CheckCircle, XCircle, Loader2, FolderSearch, RotateCcw, ChevronDown, ChevronRight } from 'lucide-react';
 import { api, DeployConfig } from '@/lib/api';
-import { useApiData, useAutoLoadToken } from '@/lib/hooks';
+import { useCortexoQuery } from '@/lib/hooks';
 import { useToastStore } from '@/lib/toast-store';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/v1';
@@ -41,13 +41,12 @@ const fileItem = (selected: boolean): React.CSSProperties => ({
 });
 
 export default function FilePushPage() {
-  useAutoLoadToken();
   const router = useRouter();
   const toast = useToastStore();
 
   // Data
-  const { data: servers } = useApiData(() => api.getServers());
-  const { data: deployConfigs } = useApiData(() => api.getDeployConfigs());
+  const { data: servers } = useCortexoQuery(['servers'], () => api.getServers());
+  const { data: deployConfigs } = useCortexoQuery(['deploy-configs'], () => api.getDeployConfigs());
 
   // Form state
   const [sourceServerId, setSourceServerId] = useState<number>(0);

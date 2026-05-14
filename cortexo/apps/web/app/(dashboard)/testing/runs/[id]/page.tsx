@@ -8,14 +8,12 @@ import {
   Loader2, ChevronDown, Filter, Zap,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useAutoLoadToken } from '@/lib/hooks';
 
 const CATEGORY_COLORS: Record<string, string> = {
   api: '#10B981', mobileapi: '#F59E0B', controller: '#818CF8', admin: '#EF4444',
 };
 
 export default function TestRunDetailPage() {
-  useAutoLoadToken();
   const params = useParams();
   const runId = Number(params.id);
 
@@ -81,7 +79,7 @@ export default function TestRunDetailPage() {
           backgroundColor: '#EF4444', color: '#fff', textDecoration: 'none',
           transition: 'opacity 200ms', flexShrink: 0,
         }}>
-          🐛 Find Bugs & Module Test
+          Find Bugs & Module Test
         </Link>
       </div>
 
@@ -115,10 +113,10 @@ export default function TestRunDetailPage() {
           All ({results?.length || 0})
         </button>
         <button onClick={() => setFilterStatus('failed')} style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, border: filterStatus === 'failed' ? '1px solid #EF4444' : '1px solid rgb(var(--border))', backgroundColor: filterStatus === 'failed' ? 'rgba(239,68,68,0.1)' : 'transparent', color: filterStatus === 'failed' ? '#EF4444' : 'rgb(var(--text-muted))', cursor: 'pointer' }}>
-          ✗ Failed ({failedResults.length})
+          Failed ({failedResults.length})
         </button>
         <button onClick={() => setFilterStatus('passed')} style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, border: filterStatus === 'passed' ? '1px solid #10B981' : '1px solid rgb(var(--border))', backgroundColor: filterStatus === 'passed' ? 'rgba(16,185,129,0.1)' : 'transparent', color: filterStatus === 'passed' ? '#10B981' : 'rgb(var(--text-muted))', cursor: 'pointer' }}>
-          ✓ Passed ({run.passed})
+          Passed ({run.passed})
         </button>
         <div style={{ width: '1px', backgroundColor: 'rgb(var(--border))', margin: '0 4px' }} />
         {categories.map((cat: string) => (

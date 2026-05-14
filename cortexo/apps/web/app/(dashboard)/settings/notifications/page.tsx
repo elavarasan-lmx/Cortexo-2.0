@@ -6,7 +6,6 @@ import {
   FileText, Shield, Activity, Brain, RefreshCw,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useAutoLoadToken } from '@/lib/hooks';
 
 
 // ─── Toggle Component ───────────────────────────────────────────────
@@ -66,7 +65,6 @@ interface EventPref {
 // ─── Main Page ──────────────────────────────────────────────────────
 
 export default function NotificationsPage() {
-  useAutoLoadToken();
   const [prefs, setPrefs] = useState<EventPref[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

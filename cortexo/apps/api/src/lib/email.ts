@@ -7,7 +7,7 @@
  */
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const EMAIL_FROM = process.env.EMAIL_FROM || 'Cortexo <alerts@cortexo.io>';
+const EMAIL_FROM = process.env.EMAIL_FROM || 'Logimax Bullion DevOps <alerts@logimaxindia.com>';
 const APP_URL = process.env.APP_URL || 'http://localhost:3000';
 
 interface EmailPayload {
@@ -118,7 +118,7 @@ export async function sendCriticalErrorAlert(opts: {
       ${opts.file ? `<div class="file-tag">${opts.file}${opts.line ? `:${opts.line}` : ''}</div><br>` : ''}
       <a href="${errorUrl}" class="cta">View Error Details &amp; AI Root Cause →</a>
     </div>
-    <div class="footer">Cortexo DevOps Intelligence · <a href="${APP_URL}/settings/notifications" style="color:#6366f1">Manage alerts</a></div>
+    <div class="footer">Logimax Bullion DevOps · <a href="${APP_URL}/settings/notifications" style="color:#6366f1">Manage alerts</a></div>
   </div>
 </body>
 </html>`;
@@ -180,7 +180,7 @@ export async function sendDeploymentAlert(opts: {
       </div>
       <a href="${deployUrl}" class="cta">View Deployment →</a>
     </div>
-    <div class="footer">Cortexo DevOps Intelligence</div>
+    <div class="footer">Logimax Bullion DevOps</div>
   </div>
 </body>
 </html>`;
@@ -245,19 +245,19 @@ export async function sendPasswordResetEmail(opts: {
     </div>
     <div class="body">
       <p style="color:#94a3b8;margin:0 0 16px">Hi <strong style="color:#f1f5f9">${opts.userName}</strong>,</p>
-      <p style="color:#94a3b8;margin:0 0 16px">We received a request to reset your Cortexo password. Click the button below to set a new password:</p>
+      <p style="color:#94a3b8;margin:0 0 16px">We received a request to reset your Logimax Bullion DevOps password. Click the button below to set a new password:</p>
       <a href="${resetUrl}" class="cta">Reset Password →</a>
       <p style="color:#64748b;font-size:12px;margin:16px 0 0">This link expires in <strong>1 hour</strong>. If you didn't request this, you can safely ignore this email.</p>
     </div>
-    <div class="footer">Cortexo DevOps Intelligence · <a href="${APP_URL}" style="color:#6366f1">cortexo.io</a></div>
+    <div class="footer">Logimax Bullion DevOps · <a href="${APP_URL}" style="color:#6366f1">logimaxindia.com</a></div>
   </div>
 </body>
 </html>`;
 
   return sendEmail({
     to: opts.to,
-    subject: '🔐 Reset your Cortexo password',
+    subject: '🔐 Reset your Logimax Bullion DevOps password',
     html,
-    text: `Hi ${opts.userName},\n\nReset your Cortexo password:\n${resetUrl}\n\nThis link expires in 1 hour.`,
+    text: `Hi ${opts.userName},\n\nReset your Logimax Bullion DevOps password:\n${resetUrl}\n\nThis link expires in 1 hour.`,
   });
 }

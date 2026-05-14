@@ -4,10 +4,11 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
 import {
-  User, Bell, LayoutGrid, Shield, Database, Users,
+  User, Bell, LayoutGrid, Shield, Database, Users, Cog,
 } from 'lucide-react';
 
 const tabs = [
+  { label: 'General', href: '/settings/general', icon: Cog },
   { label: 'Profile', href: '/settings', icon: User },
   { label: 'Credentials', href: '/settings/credentials', icon: Shield },
   { label: 'Users', href: '/settings/users', icon: Users },

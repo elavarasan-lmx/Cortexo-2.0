@@ -5,23 +5,25 @@ import {
   Bug, AlertOctagon, CheckCircle2, CircleDashed,
   Search, Plus, Filter, ChevronRight, AlertTriangle,
   Users, ChevronDown, Activity, Clock, Loader2,
-  Zap, Boxes,
+  Zap, Boxes, UserCircle, Lock, BarChart3, Coins,
+  UsersRound, TrendingUp, Bell, Settings2, Wrench, HelpCircle,
+  type LucideIcon,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useCortexoQuery, useAutoLoadToken, timeAgo } from '@/lib/hooks';
+import { useCortexoQuery, timeAgo } from '@/lib/hooks';
 
 
-const MODULE_META: Record<string, { icon: string; label: string; color: string }> = {
-  registration:    { icon: '👤', label: 'Registration',    color: '#8B5CF6' },
-  login_auth:      { icon: '🔐', label: 'Login & Auth',    color: '#3B82F6' },
-  rate_engine:     { icon: '📊', label: 'Rate Engine',     color: '#F59E0B' },
-  trading:         { icon: '💰', label: 'Trading',         color: '#10B981' },
-  client_mgmt:     { icon: '👥', label: 'Client Mgmt',     color: '#EC4899' },
-  reports:         { icon: '📈', label: 'Reports',         color: '#6366F1' },
-  notifications:   { icon: '🔔', label: 'Notifications',   color: '#F97316' },
-  admin_settings:  { icon: '⚙️', label: 'Admin/Settings',  color: '#64748B' },
-  infrastructure:  { icon: '🔧', label: 'Infrastructure',  color: '#EF4444' },
-  uncategorized:   { icon: '❓', label: 'Uncategorized',    color: '#94A3B8' },
+const MODULE_META: Record<string, { Icon: LucideIcon; label: string; color: string }> = {
+  registration:    { Icon: UserCircle,  label: 'Registration',    color: '#8B5CF6' },
+  login_auth:      { Icon: Lock,        label: 'Login & Auth',    color: '#3B82F6' },
+  rate_engine:     { Icon: BarChart3,   label: 'Rate Engine',     color: '#F59E0B' },
+  trading:         { Icon: Coins,       label: 'Trading',         color: '#10B981' },
+  client_mgmt:     { Icon: UsersRound,  label: 'Client Mgmt',     color: '#EC4899' },
+  reports:         { Icon: TrendingUp,  label: 'Reports',         color: '#6366F1' },
+  notifications:   { Icon: Bell,        label: 'Notifications',   color: '#F97316' },
+  admin_settings:  { Icon: Settings2,   label: 'Admin/Settings',  color: '#64748B' },
+  infrastructure:  { Icon: Wrench,      label: 'Infrastructure',  color: '#EF4444' },
+  uncategorized:   { Icon: HelpCircle,  label: 'Uncategorized',    color: '#94A3B8' },
 };
 
 const priorityConfig: Record<string, { bg: string; color: string; icon: React.ElementType }> = {
@@ -48,7 +50,6 @@ const getBadgeColor = (name: string) => {
 };
 
 export default function BugTrackerPage() {
-  useAutoLoadToken();
   const [filter, setFilter] = useState('all');
   const [moduleFilter, setModuleFilter] = useState<string | null>(null);
   const [sourceFilter, setSourceFilter] = useState<'all' | 'testing' | 'manual'>('all');
@@ -112,7 +113,7 @@ export default function BugTrackerPage() {
             Bug Tracker
           </h1>
           <p className="cx-page-subtitle">
-            {moduleFilter ? `${MODULE_META[moduleFilter]?.icon} ${MODULE_META[moduleFilter]?.label} bugs` : 'All modules'} · {totalBugs} bugs
+            {moduleFilter ? `${MODULE_META[moduleFilter]?.label} bugs` : 'All modules'} · {totalBugs} bugs
           </p>
         </div>
         <div className="cx-flex cx-gap-12 cx-items-center">
@@ -138,7 +139,7 @@ export default function BugTrackerPage() {
               marginLeft: '8px', padding: '3px 10px', borderRadius: '12px', border: 'none', fontSize: '11px',
               backgroundColor: MODULE_META[moduleFilter]?.color || '#666', color: '#fff', cursor: 'pointer',
             }}>
-              {MODULE_META[moduleFilter]?.icon} {MODULE_META[moduleFilter]?.label} ✕
+              {MODULE_META[moduleFilter]?.label} ✕
             </button>
           )}
         </div>
@@ -158,12 +159,12 @@ export default function BugTrackerPage() {
                   boxShadow: isActive ? `0 0 0 2px ${meta.color}30` : 'none',
                   transition: 'all 150ms',
                 }}>
-                <div style={{ fontSize: '20px', marginBottom: '6px' }}>{meta.icon}</div>
+                <div style={{ marginBottom: '6px' }}><meta.Icon style={{ width: '20px', height: '20px', color: meta.color }} /></div>
                 <div className="cx-fw-700 cx-text-primary" style={{ fontSize: '12px', marginBottom: '4px' }}>{meta.label}</div>
                 <div className="cx-flex cx-items-center cx-gap-8">
                   <span className="cx-fw-800" style={{ fontSize: '20px', color: open > 0 ? meta.color : '#10B981' }}>{total}</span>
-                  {critical > 0 && <span className="cx-fw-700" style={{ fontSize: '10px', color: '#EF4444' }}>🔴{critical}</span>}
-                  {open === 0 && <span style={{ fontSize: '10px', color: '#10B981' }}>✅</span>}
+                  {critical > 0 && <span className="cx-fw-700" style={{ fontSize: '10px', color: '#EF4444' }}><AlertOctagon style={{ width: '10px', height: '10px', display: 'inline' }} /> {critical}</span>}
+                  {open === 0 && <span style={{ fontSize: '10px', color: '#10B981' }}><CheckCircle2 style={{ width: '10px', height: '10px', display: 'inline' }} /></span>}
                 </div>
               </button>
             );
@@ -260,7 +261,7 @@ export default function BugTrackerPage() {
                         display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', borderRadius: '6px',
                         fontSize: '11px', backgroundColor: `${mod.color}15`, color: mod.color,
                       }}>
-                        {mod.icon} {mod.label}
+                        <mod.Icon style={{ width: '11px', height: '11px' }} /> {mod.label}
                       </span>
                     </td>
                     <td style={{ padding: '16px' }}>
@@ -283,7 +284,7 @@ export default function BugTrackerPage() {
                   <Bug style={{ width: '24px', height: '24px', margin: '0 auto 12px' }} className="cx-text-muted" />
                   <p className="cx-fw-600 cx-text-primary" style={{ margin: 0, fontSize: '14px' }}>No bugs found</p>
                   <p className="cx-text-secondary" style={{ margin: '4px 0 0', fontSize: '13px' }}>
-                    {searchQuery ? 'Try a different search term.' : moduleFilter ? 'This module has no bugs! 🎉' : 'All systems running clean! 🎉'}
+                    {searchQuery ? 'Try a different search term.' : moduleFilter ? 'This module has no bugs!' : 'All systems running clean!'}
                   </p>
                 </td></tr>
               )}
@@ -309,7 +310,7 @@ export default function BugTrackerPage() {
               {/* Module badge */}
               {(() => { const m = MODULE_META[selectedBug.module ?? 'uncategorized'] || MODULE_META.uncategorized; return (
                 <div className="cx-flex cx-items-center cx-gap-8" style={{ padding: '10px 14px', borderRadius: '10px', backgroundColor: `${m.color}10`, border: `1px solid ${m.color}25` }}>
-                  <span style={{ fontSize: '20px' }}>{m.icon}</span>
+                  <m.Icon style={{ width: '20px', height: '20px', color: m.color }} />
                   <div>
                     <div className="cx-fw-700" style={{ fontSize: '13px', color: m.color }}>{m.label}</div>
                     <div className="cx-text-muted" style={{ fontSize: '11px' }}>Module</div>

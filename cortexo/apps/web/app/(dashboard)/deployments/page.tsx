@@ -10,7 +10,7 @@ import DeployForm, { type DeployFormInitialData } from '@/components/deploy-form
 import { useModal } from '@/components/modal-provider';
 import { useState, useEffect } from 'react';
 import { Deployment, Project, Server, api } from '@/lib/api';
-import { useCortexoQuery, useAutoLoadToken, useProjectLookup, resolveProjectName, timeAgo, formatDuration } from '@/lib/hooks';
+import { useCortexoQuery, useProjectLookup, resolveProjectName, timeAgo, formatDuration } from '@/lib/hooks';
 
 import { useToastStore } from '@/lib/toast-store';
 
@@ -78,7 +78,6 @@ function DeployLogViewer({ deployId }: { deployId: string }) {
 /* DeployForm imported from @/components/deploy-form */
 
 export default function DeploymentsPage() {
-  useAutoLoadToken();
   const toast = useToastStore();
   const { confirm } = useModal();
 
@@ -243,7 +242,7 @@ export default function DeploymentsPage() {
         <div className="cx-flex cx-items-center cx-gap-16">
           <h1 className="cx-fw-700 cx-text-primary cx-page-title" style={{ margin: 0 }}>Deployments</h1>
           <div className="cx-flex cx-items-center cx-gap-6" style={{ padding: '6px 12px', borderRadius: '12px', backgroundColor: 'rgba(22, 163, 74, 0.1)', border: '1px solid rgba(22, 163, 74, 0.2)' }}>
-            <span className="cx-fw-500" style={{ fontSize: '11px', color: '#16A34A' }}>🟢 Live • Updated 5s ago</span>
+            <span className="cx-fw-500" style={{ fontSize: '11px', color: '#16A34A' }}>Live • Updated 5s ago</span>
           </div>
         </div>
         <button
@@ -286,9 +285,9 @@ export default function DeploymentsPage() {
         <div className="cx-flex cx-items-center cx-gap-12">
           {[
             { key: 'all', label: `All (${dateFiltered.length})`, activeColor: 'rgb(var(--primary))', activeBg: 'rgb(var(--primary))' },
-            { key: 'success', label: `✅ Success (${dateFiltered.filter((d: Deployment) => d.status === 'success').length})`, activeColor: '#16A34A', activeBg: 'rgba(22,163,74,0.2)' },
+            { key: 'success', label: `Success (${dateFiltered.filter((d: Deployment) => d.status === 'success').length})`, activeColor: '#16A34A', activeBg: 'rgba(22,163,74,0.2)' },
             { key: 'deploying', label: `⟳ Building (${dateFiltered.filter((d: Deployment) => d.status === 'deploying' || d.status === 'running').length})`, activeColor: '#D97706', activeBg: 'rgba(217,119,6,0.2)' },
-            { key: 'failed', label: `✗ Failed (${dateFiltered.filter((d: Deployment) => d.status === 'failed').length})`, activeColor: '#EF4444', activeBg: 'rgba(239,68,68,0.2)' },
+            { key: 'failed', label: `Failed (${dateFiltered.filter((d: Deployment) => d.status === 'failed').length})`, activeColor: '#EF4444', activeBg: 'rgba(239,68,68,0.2)' },
           ].map(btn => (
             <button key={btn.key} onClick={() => setFilter(btn.key)} style={{
               padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',

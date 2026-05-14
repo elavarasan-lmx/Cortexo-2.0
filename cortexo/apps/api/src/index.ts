@@ -172,7 +172,7 @@ async function start() {
   await app.register(swagger, {
     openapi: {
       info: {
-        title: 'Cortexo API',
+        title: 'Logimax Bullion DevOps API',
         description: 'DevOps Intelligence Platform API',
         version: '0.5.0',
       },
@@ -284,7 +284,7 @@ async function start() {
     const routeCount = app.printRoutes({ commonPrefix: false }).split('\n').filter(l => l.trim()).length;
     console.log(`
 ╔══════════════════════════════════════════╗
-║  🚀 Cortexo API Server v0.5.0           ║
+║  🚀 Logimax Bullion DevOps API v0.5.0     ║
 ║  http://${HOST}:${PORT}                  ║
 ║  Endpoints: ${routeCount} routes registered      ║
 ╚══════════════════════════════════════════╝

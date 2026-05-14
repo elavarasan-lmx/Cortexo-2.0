@@ -86,19 +86,16 @@ export default function RegisterPage() {
           {/* Logo */}
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            gap: '14px', marginBottom: '24px',
+            marginBottom: '24px',
           }}>
-            <div style={{
-              width: '44px', height: '44px', borderRadius: '50%',
-              border: '2px solid rgba(255,255,255,0.8)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <div style={{
-                width: '14px', height: '14px', borderRadius: '50%',
-                backgroundColor: 'white',
-              }} />
-            </div>
-            <span style={{ fontSize: '32px', fontWeight: 700, letterSpacing: '-0.5px' }}>Cortexo</span>
+            <img
+              src="/logo.png"
+              alt="Logimax Bullion"
+              style={{
+                height: '52px',
+                objectFit: 'contain',
+              }}
+            />
           </div>
 
           <h2 style={{
@@ -236,7 +233,7 @@ export default function RegisterPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="jerry@cortexo.dev"
+                placeholder="you@logimaxindia.com"
                 required
                 style={{
                   width: '100%', padding: '12px 14px',

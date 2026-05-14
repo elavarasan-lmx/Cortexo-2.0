@@ -43,7 +43,7 @@ async function sendSlackAlert(alerts: { server: string; ip: string; metric: stri
   const blocks = alerts.map(a => `• *${a.server}* (${a.ip}): ${a.metric} at *${a.value}* (threshold: ${a.threshold}%)`);
 
   const payload = {
-    text: `🚨 *Cortexo Server Alert*`,
+    text: `🚨 *Logimax Bullion DevOps — Server Alert*`,
     blocks: [
       {
         type: 'header',
@@ -59,7 +59,7 @@ async function sendSlackAlert(alerts: { server: string; ip: string; metric: stri
       {
         type: 'context',
         elements: [
-          { type: 'mrkdwn', text: `_${new Date().toISOString()} — Cortexo Monitoring_` },
+          { type: 'mrkdwn', text: `_${new Date().toISOString()} — Logimax Bullion DevOps Monitoring_` },
         ],
       },
     ],

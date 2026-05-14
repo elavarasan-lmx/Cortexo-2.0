@@ -2,6 +2,7 @@ import NextAuth from 'next-auth';
 import GitHub from 'next-auth/providers/github';
 import Google from 'next-auth/providers/google';
 import Credentials from 'next-auth/providers/credentials';
+import { clockTolerance } from 'oauth4webapi';
 import crypto from 'crypto';
 import { eq } from 'drizzle-orm';
 import { getDb } from './db';
@@ -90,6 +91,9 @@ export const {
       authorization: {
         params: { prompt: 'consent', access_type: 'offline' },
       },
+      // System clock is out of sync — allow generous skew for OIDC token validation
+      // TODO: Remove once `sudo timedatectl set-ntp true` is run
+      client: { [clockTolerance]: 86400 },
     }),
     Credentials({
       name: 'Email',

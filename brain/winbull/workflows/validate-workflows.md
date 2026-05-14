@@ -59,20 +59,22 @@ List all `.md` files in `brain/winbull/workflows/`. Verify these core workflows 
 
 | #   | Workflow                 | File                          | Status |
 | --- | ------------------------ | ----------------------------- | ------ |
-| 1   | Build Module Brain       | `build-module-brain.md`       | ✅/❌ |
-| 2   | Module Bug Audit         | `module-bug-audit.md`         | ✅/❌ |
-| 3   | Bug Intake & Triage      | `bug-intake-triage.md`        | ✅/❌ |
-| 4   | Fix Single Bug           | `fix-single-bug.md`           | ✅/❌ |
-| 5   | Fix Architecture Bug     | `fix-architecture-bug.md`     | ✅/❌ |
-| 6   | Fix Business Bug         | `fix-business-bug.md`         | ✅/❌ |
-| 7   | Test & Verify            | `test-and-verify.md`          | ✅/❌ |
-| 8   | Learn & Improve          | `learn-and-improve.md`        | ✅/❌ |
-| 9   | Manage Bug Patterns      | `manage-bug-patterns.md`      | ✅/❌ |
-| 10  | GitHub Bug Tracking      | `github-bug-tracking.md`      | ✅/❌ |
-| 11  | Sprint Status            | `sprint-status.md`            | ✅/❌ |
-| 12  | System Health            | `system-health.md`            | ✅/❌ |
-| 13  | Overall Bug Dashboard    | `overall-bug-dashboard.md`    | ✅/❌ |
-| 14  | Validate Workflows       | `validate-workflows.md`       | ✅/❌ |
+| 1   | Build Module Brain       | `build-module-brain.md`       | ✅ EXISTS |
+| 2   | Module Bug Audit         | `audit-module.md`             | ✅ EXISTS |
+| 3   | Bug Intake & Triage      | `bug-intake.md`               | ✅ EXISTS |
+| 4   | Fix Single Bug           | `fix-bug.md`                  | ✅ EXISTS |
+| 5   | Scan Cross Module        | `scan-cross-module.md`        | ✅ EXISTS |
+| 6   | Fingerprint Scan         | `fingerprint-scan.md`         | ✅ EXISTS |
+| 7   | Learn & Improve          | `learn-and-improve.md`       | ✅ EXISTS |
+| 8   | GitHub Bug Tracking      | `github-bug-tracking.md`      | ✅ EXISTS |
+| 9   | Git Push                 | `git-push.md`                 | ✅ EXISTS |
+| 10  | Deploy                   | `deploy.md`                   | ✅ EXISTS |
+| 11  | Sprint Status            | `sprint-status.md`            | ✅ EXISTS |
+| 12  | System Health            | `system-health.md`           | ✅ EXISTS |
+| 13  | Overall Bug Dashboard    | `overall-bug-dashboard.md`    | ✅ EXISTS |
+| 14  | Validate Workflows       | `validate-workflows.md`       | ✅ EXISTS |
+
+**Note**: If additional workflows exist beyond the 14 core above, they are optional enhancements.
 
 ---
 
@@ -82,11 +84,12 @@ Scan all workflow files for `/workflow-name` references. Verify each referenced 
 
 Common references to check:
 
-- `/fix-single-bug` → should reference `/bug-intake-triage`, `/fix-architecture-bug`, `/fix-business-bug`, `/test-and-verify`, `/learn-and-improve`
+- `/fix-bug` → should reference `/bug-intake`, `/learn-and-improve`, `/git-push`
+- `/audit-module` → should reference `/build-module-brain`, `/fix-bug`
 - `/learn-and-improve` → should reference `/fix-bug`, `/github-bug-tracking`
-- `/module-bug-audit` → should reference `/build-module-brain`, `/fix-single-bug`
-- `/bug-intake-triage` → should reference `/github-bug-tracking`
+- `/bug-intake` → should reference `/github-bug-tracking`
 - `/overall-bug-dashboard` → should reference `/sprint-status`, `/system-health`
+- `/system-health` → should reference `/audit-module`, `/overall-bug-dashboard`
 
 ---
 
@@ -124,8 +127,11 @@ Verify all referenced files/templates exist:
 
 For each workflow file:
 - [ ] Has version header (e.g., `v1.0`, `v2.0`)
-- [ ] Has clear "Usage" section
-- [ ] Has "Completion Report" section
+- [ ] Has clear "Usage" section with how to invoke
+- [ ] Has "Completion Report" section with summary
+- [ ] Has "Prerequisites" section listing what must exist first
+
+**Note**: Recommended version format: `v{Major}.{Minor}` (e.g., v1.0, v2.1)
 
 ---
 

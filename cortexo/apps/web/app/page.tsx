@@ -69,10 +69,7 @@ export default function LandingPage() {
       <nav className="fixed top-0 z-50 w-full border-b border-white/[0.06] backdrop-blur-2xl bg-[#060918]/80">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 lg:px-8">
           <Link href="/" className="flex items-center gap-2.5 no-underline group">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/20 transition-shadow duration-300 group-hover:shadow-indigo-500/40">
-              <span className="text-sm font-bold text-white">C</span>
-            </div>
-            <span className="text-lg font-semibold text-white tracking-tight">Cortexo</span>
+            <img src="/logo.png" alt="Logimax Bullion" className="h-10 transition-shadow duration-300 group-hover:shadow-indigo-500/40" />
           </Link>
 
           <div className="hidden md:flex items-center gap-8">
@@ -211,7 +208,7 @@ export default function LandingPage() {
               Everything you need to ship with confidence
             </motion.h2>
             <motion.p variants={fadeUp} className="mx-auto mt-4 max-w-2xl text-lg text-slate-400">
-              From CI/CD pipelines to AI-powered debugging — Cortexo covers your entire deployment lifecycle.
+              From CI/CD pipelines to AI-powered debugging — Logimax Bullion DevOps covers your entire deployment lifecycle.
             </motion.p>
           </motion.div>
 
@@ -286,7 +283,7 @@ export default function LandingPage() {
               step="01"
               icon={Terminal}
               title="Connect"
-              description="Link your GitHub repo. Cortexo auto-detects your stack (PHP, Node, Flutter) and suggests the optimal pipeline."
+              description="Link your GitHub repo. Logimax auto-detects your stack (PHP, Node, Flutter) and suggests the optimal pipeline."
             />
             <StepCard
               step="02"
@@ -406,8 +403,8 @@ export default function LandingPage() {
 
           <div className="flex flex-col gap-3">
             <FaqItem
-              question="What makes Cortexo different from Sentry or Datadog?"
-              answer="Cortexo combines CI/CD, error monitoring, and AI root cause analysis in one tool. Sentry only monitors — Cortexo also deploys and fixes. Plus, our AI learns your deployment patterns over time."
+              question="What makes Logimax Bullion DevOps different from Sentry or Datadog?"
+              answer="Logimax Bullion DevOps combines CI/CD, error monitoring, and AI root cause analysis in one tool. Sentry only monitors — we also deploy and fix. Plus, our AI learns your deployment patterns over time."
             />
             <FaqItem
               question="Does it work with SSH/SFTP servers?"
@@ -470,11 +467,8 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600">
-                <span className="text-xs font-bold text-white">C</span>
-              </div>
-              <span className="text-sm font-semibold text-white">Cortexo</span>
-              <span className="text-xs text-slate-600">— The brain for your code</span>
+              <img src="/logo.png" alt="Logimax Bullion" className="h-8" />
+              <span className="text-xs text-slate-600">— Internal Developer Platform</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-slate-500">
               {['Privacy', 'Terms', 'Documentation', 'GitHub'].map((item) => (
@@ -485,7 +479,7 @@ export default function LandingPage() {
             </div>
           </div>
           <p className="mt-8 text-center text-xs text-slate-600">
-            © 2026 Cortexo. Built for small DevOps teams.
+            © 2026 Logimax Bullion DevOps. Built for small DevOps teams.
           </p>
         </div>
       </footer>

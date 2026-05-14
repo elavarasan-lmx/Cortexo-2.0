@@ -2,24 +2,23 @@
 import { use } from 'react';
 import { Rocket, Clock, CheckCircle2, XCircle, Server, GitBranch, User, ArrowLeft, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useApiData, useAutoLoadToken } from '@/lib/hooks';
+import { useCortexoQuery } from '@/lib/hooks';
 import Link from 'next/link';
 
 const stColors: Record<string, { color: string; label: string }> = {
-  success: { color: '#10B981', label: '✓ Success' },
-  failed: { color: '#EF4444', label: '✗ Failed' },
-  running: { color: '#3B82F6', label: '⟳ Running' },
-  pending: { color: '#F59E0B', label: '⏳ Pending' },
-  cancelled: { color: '#6B7280', label: '⊘ Cancelled' },
+  success: { color: '#10B981', label: 'Success' },
+  failed: { color: '#EF4444', label: 'Failed' },
+  running: { color: '#3B82F6', label: 'Running' },
+  pending: { color: '#F59E0B', label: 'Pending' },
+  cancelled: { color: '#6B7280', label: 'Cancelled' },
 };
 
 export default function DeploymentDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  useAutoLoadToken();
   const { id } = use(params);
 
-  const { data: deployment, loading, error } = useApiData(
-    () => api.getDeployment(id),
-    { default: null as any }
+  const { data: deployment, isLoading: loading, error } = useCortexoQuery(
+    ['deployment', id],
+    () => api.getDeployment(id)
   );
 
   if (loading) return (

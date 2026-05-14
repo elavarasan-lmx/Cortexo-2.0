@@ -1,4 +1,4 @@
-# /audit-module Workflow
+# /audit-module Workflow (v1.0)
 
 > Run a complete 6-round deep audit on any module.
 > This is the **Bug Discovery** phase — it finds bugs. Use /fix-bug to fix them.

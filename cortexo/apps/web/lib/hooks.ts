@@ -1,54 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { api } from './api';
-
-
-/**
- * Generic hook for fetching API data with loading/error states.
- * Provides refetch callback for manual refresh.
- *
- * Second argument can be:
- *   - A dependency array: `useApiData(fetcher, [dep1, dep2])`
- *   - An options object:  `useApiData(fetcher, { default: [], deps: [] })`
- */
-export function useApiData<T>(
-  fetcher: () => Promise<{ data: T; total?: number }>,
-  depsOrOptions: unknown[] | { default?: T; deps?: unknown[] } = [],
-) {
-  // Normalize: extract deps array and default value
-  const isOptions = !Array.isArray(depsOrOptions);
-  const deps = isOptions ? (depsOrOptions as any).deps || [] : depsOrOptions;
-  const defaultValue = isOptions ? (depsOrOptions as any).default ?? null : null;
-
-  const [data, setData] = useState<T | null>(defaultValue);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetch = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      // Ensure auth token is loaded before every API call
-      api.loadToken();
-      const res = await fetcher();
-      setData(res.data);
-      setTotal(res.total ?? 0);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch data');
-    } finally {
-      setLoading(false);
-    }
-  }, deps);
-
-  useEffect(() => {
-    fetch();
-  }, [fetch]);
-
-  return { data, total, loading, error, refetch: fetch };
-}
 
 // ─── TanStack Query ──────────────────────────────────────────────────────────
 
@@ -104,14 +58,8 @@ export function useProjectLookup() {
   return { projects, lookup };
 }
 
-/**
- * Hook: auto-loads the stored auth token on mount.
- */
-export function useAutoLoadToken() {
-  useEffect(() => {
-    api.loadToken();
-  }, []);
-}
+// useAutoLoadToken — REMOVED
+// Token loading is now handled internally by useCortexoQuery.
 
 /**
  * Helper: safely parse a JSON field that may be a string or already parsed.

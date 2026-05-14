@@ -145,7 +145,7 @@ async function sendEmail(
     if (emailLib && (emailLib as any).sendEmail) {
       await (emailLib as any).sendEmail({
         to: userId, // TODO: resolve userId → email address
-        subject: `[Cortexo] ${title}`,
+        subject: `[LB DevOps] ${title}`,
         text: body,
         html: `
           <div style="font-family: Inter, sans-serif; max-width: 600px; margin: 0 auto;">

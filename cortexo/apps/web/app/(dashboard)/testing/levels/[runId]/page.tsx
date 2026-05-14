@@ -7,7 +7,6 @@ import {
   AlertTriangle, Lock, Database, FileWarning, Loader2,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useAutoLoadToken } from '@/lib/hooks';
 
 const LEVEL_META: Record<string, { label: string; icon: any; color: string; desc: string }> = {
   L1: { label: 'Level 1 — Endpoint + Schema', icon: Globe, color: '#8B5CF6', desc: 'HTTP status codes + JSON schema validation' },
@@ -15,30 +14,29 @@ const LEVEL_META: Record<string, { label: string; icon: any; color: string; desc
   L3: { label: 'Level 3 — Security', icon: Shield, color: '#EF4444', desc: 'Auth bypass, SQL injection, input validation' },
 };
 
-const MODULE_LABELS: Record<string, { emoji: string; label: string }> = {
-  auth: { emoji: '🔐', label: 'Authentication' },
-  rates: { emoji: '📊', label: 'Rate Engine' },
-  trading: { emoji: '💰', label: 'Trading & Booking' },
-  delivery: { emoji: '📦', label: 'Delivery' },
-  margin: { emoji: '💹', label: 'Margin & Funds' },
-  kyc: { emoji: '👤', label: 'KYC / Registration' },
-  reports: { emoji: '📈', label: 'Reports' },
-  notif: { emoji: '🔔', label: 'Notifications' },
-  config: { emoji: '⚙️', label: 'Settings & Config' },
-  admin: { emoji: '🛡️', label: 'Admin Panel' },
-  other: { emoji: '📁', label: 'Other' },
+const MODULE_LABELS: Record<string, { label: string }> = {
+  auth: { label: 'Authentication' },
+  rates: { label: 'Rate Engine' },
+  trading: { label: 'Trading & Booking' },
+  delivery: { label: 'Delivery' },
+  margin: { label: 'Margin & Funds' },
+  kyc: { label: 'KYC / Registration' },
+  reports: { label: 'Reports' },
+  notif: { label: 'Notifications' },
+  config: { label: 'Settings & Config' },
+  admin: { label: 'Admin Panel' },
+  other: { label: 'Other' },
 };
 
 const SECURITY_LABELS: Record<string, { label: string; color: string }> = {
-  auth_bypass: { label: '🚨 AUTH BYPASS', color: '#EF4444' },
-  sql_injection: { label: '💉 SQL INJECTION', color: '#DC2626' },
-  sqli_crash: { label: '💥 SQLi CRASH', color: '#B91C1C' },
-  input_crash: { label: '💣 INPUT CRASH', color: '#F59E0B' },
-  missing_validation: { label: '⚠️ NO VALIDATION', color: '#F97316' },
+  auth_bypass: { label: 'AUTH BYPASS', color: '#EF4444' },
+  sql_injection: { label: 'SQL INJECTION', color: '#DC2626' },
+  sqli_crash: { label: 'SQLi CRASH', color: '#B91C1C' },
+  input_crash: { label: 'INPUT CRASH', color: '#F59E0B' },
+  missing_validation: { label: 'NO VALIDATION', color: '#F97316' },
 };
 
 export default function LevelResultsPage({ params }: { params: Promise<{ runId: string }> }) {
-  useAutoLoadToken();
   const { runId } = use(params);
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -144,7 +142,7 @@ export default function LevelResultsPage({ params }: { params: Promise<{ runId: 
 
             {/* Module breakdown */}
             {Object.entries(level.modules || {}).map(([mod, modData]: [string, any]) => {
-              const modMeta = MODULE_LABELS[mod] || { emoji: '📁', label: mod };
+              const modMeta = MODULE_LABELS[mod] || { label: mod };
               const hasFails = modData.failed > 0;
 
               return (
@@ -155,11 +153,11 @@ export default function LevelResultsPage({ params }: { params: Promise<{ runId: 
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: hasFails ? '10px' : '0' }}>
                     <span style={{ fontSize: '14px', fontWeight: 600, color: 'rgb(var(--text-primary))' }}>
-                      {modMeta.emoji} {modMeta.label}
+                      {modMeta.label}
                     </span>
                     <div style={{ display: 'flex', gap: '10px', fontSize: '13px' }}>
-                      <span style={{ color: '#10B981', fontWeight: 600 }}>✓ {modData.passed}</span>
-                      {modData.failed > 0 && <span style={{ color: '#EF4444', fontWeight: 600 }}>✗ {modData.failed}</span>}
+                      <span style={{ color: '#10B981', fontWeight: 600 }}>{modData.passed} passed</span>
+                      {modData.failed > 0 && <span style={{ color: '#EF4444', fontWeight: 600 }}>{modData.failed} failed</span>}
                     </div>
                   </div>
 

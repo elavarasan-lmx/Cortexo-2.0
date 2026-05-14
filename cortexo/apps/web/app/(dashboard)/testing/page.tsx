@@ -8,7 +8,6 @@ import {
   AlertTriangle, FolderSearch, Zap, ChevronRight, X,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useAutoLoadToken } from '@/lib/hooks';
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -25,7 +24,6 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export default function TestingHubPage() {
-  useAutoLoadToken();
 
   const [targets, setTargets] = useState<any[]>([]);
   const [cases, setCases] = useState<any[]>([]);
@@ -186,7 +184,7 @@ export default function TestingHubPage() {
           border: '1px solid rgba(139,92,246,0.25)', backgroundColor: 'rgba(139,92,246,0.06)',
           textDecoration: 'none', transition: 'all 200ms',
         }}>
-          <span style={{ fontSize: '28px' }}>🌐</span>
+          <Globe style={{ width: '28px', height: '28px', color: '#8B5CF6' }} />
           <div style={{ flex: 1 }}>
             <div className="cx-fw-700 cx-text-primary" style={{ fontSize: '14px' }}>Browser Testing</div>
             <div className="cx-text-secondary" style={{ fontSize: '11px' }}>Real Chrome automation — fills forms, submits, screenshots</div>
@@ -198,7 +196,7 @@ export default function TestingHubPage() {
           border: '1px solid rgba(16,185,129,0.25)', backgroundColor: 'rgba(16,185,129,0.06)',
           textDecoration: 'none', transition: 'all 200ms',
         }}>
-          <span style={{ fontSize: '28px' }}>🧪</span>
+          <FlaskConical style={{ width: '28px', height: '28px', color: '#10B981' }} />
           <div style={{ flex: 1 }}>
             <div className="cx-fw-700 cx-text-primary" style={{ fontSize: '14px' }}>Module Testing</div>
             <div className="cx-text-secondary" style={{ fontSize: '11px' }}>Business flow test suites — Registration, Login, Trading</div>
@@ -217,9 +215,9 @@ export default function TestingHubPage() {
             borderBottom: tab === t ? '2px solid rgb(var(--primary))' : '2px solid transparent',
             transition: 'all 150ms', textTransform: 'capitalize',
           }}>
-            {t === 'targets' ? `🎯 Targets (${targets.length})` :
-             t === 'cases' ? `📋 Test Cases (${cases.length})` :
-             `📊 Run History (${runs.length})`}
+            {t === 'targets' ? `Targets (${targets.length})` :
+             t === 'cases' ? `Test Cases (${cases.length})` :
+             `Run History (${runs.length})`}
           </button>
         ))}
       </div>
@@ -414,8 +412,8 @@ export default function TestingHubPage() {
                         {/* Results bar */}
                         <div className="cx-flex cx-items-center cx-gap-12">
                           <div className="cx-flex cx-gap-8 cx-fw-600" style={{ fontSize: '12px' }}>
-                            <span style={{ color: '#10B981' }}>✓ {r.passed}</span>
-                            <span style={{ color: '#EF4444' }}>✗ {r.failed}</span>
+                            <span style={{ color: '#10B981' }}>{r.passed} passed</span>
+                            <span style={{ color: '#EF4444' }}>{r.failed} failed</span>
                           </div>
                           <div style={{ width: '80px', height: '6px', borderRadius: '3px', backgroundColor: 'rgb(var(--border))', overflow: 'hidden' }}>
                             <div style={{

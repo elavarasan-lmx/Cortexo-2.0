@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import {
   Server as ServerIcon, Plus, Trash2, Edit3, HardDrive, Cpu, MemoryStick,
-  Loader2, RefreshCw, Wifi, WifiOff, Globe, Shield, FolderSync, Plug,
+  Loader2, RefreshCw, Wifi, WifiOff, Globe, Shield, FolderSync, Plug, X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Server, api } from '@/lib/api';
-import { useCortexoQuery, useAutoLoadToken } from '@/lib/hooks';
+import { useCortexoQuery } from '@/lib/hooks';
 
 import { useToastStore } from '@/lib/toast-store';
 
@@ -31,7 +31,6 @@ function MetricBar({ label, value, max, unit, color }: { label: string; value: n
 }
 
 export default function ServersPage() {
-  useAutoLoadToken();
   const { data: servers, isLoading: loading, isError: error, refetch } = useCortexoQuery(['servers'], () => api.getServers());
   const { data: resources, refetch: refetchResources } = useCortexoQuery(['server-resources-latest'], () => api.getServerResourcesLatest());
 
@@ -161,7 +160,7 @@ export default function ServersPage() {
                   <p className="cx-text-muted" style={{ fontSize: '12px', margin: 0 }}>Register a server for monitoring</p>
                 </div>
               </div>
-              <button onClick={() => setShowForm(false)} className="cx-icon-btn" style={{ fontSize: '18px' }}>✕</button>
+              <button onClick={() => setShowForm(false)} className="cx-icon-btn" style={{ fontSize: '18px' }}><X style={{ width: '16px', height: '16px' }} /></button>
             </div>
             {/* Body */}
             <div style={{ padding: '20px 24px' }}>
@@ -306,7 +305,7 @@ export default function ServersPage() {
                   <p className="cx-text-muted" style={{ fontSize: '12px', margin: 0 }}>Update server details</p>
                 </div>
               </div>
-              <button onClick={() => setEditTarget(null)} className="cx-icon-btn" style={{ fontSize: '18px' }}>✕</button>
+              <button onClick={() => setEditTarget(null)} className="cx-icon-btn" style={{ fontSize: '18px' }}><X style={{ width: '16px', height: '16px' }} /></button>
             </div>
             <div style={{ padding: '20px 24px' }}>
               <div className="cx-flex-col" style={{ gap: '14px' }}>

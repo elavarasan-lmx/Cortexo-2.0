@@ -1,4 +1,4 @@
-# /fingerprint-scan Workflow
+# /fingerprint-scan Workflow (v1.0)
 
 > Auto-scan the Winbull codebase for known bug patterns.
 > Generates P0–P3 hit list in ~30 seconds. No manual file-reading needed.
@@ -10,6 +10,17 @@ Say: `/fingerprint-scan` or run directly:
 ```bash
 cd /run/media/lmx/LMX/Winbull/Personal/Devops
 php scripts/winbull_scan.php [OPTIONS]
+```
+
+---
+
+## Prerequisites
+
+- Read `brain/winbull/11_bug_patterns.md` to understand patterns being scanned
+- Codebase cloned at `/run/media/lmx/LMX/Winbull/Personal/Devops/Server/winbullstaging/`
+- PHP CLI available for running scan scripts
+
+---
 ```
 
 ---

@@ -7,15 +7,42 @@ import { signOut } from 'next-auth/react';
 import { useSidebarStore, SIDEBAR_WIDTH, SIDEBAR_COLLAPSED_WIDTH } from '@/lib/sidebar-store';
 import { useSidebarFeatures } from '@/lib/sidebar-features';
 import { NAVIGATION } from '@/lib/nav-config';
+import { PLATFORM_DEFAULTS } from '@/lib/platform-config';
 import type { NavItem } from '@/lib/nav-config';
 import {
   ChevronLeft,
   ChevronRight,
   X,
   LogOut,
+  LayoutDashboard,
+  FolderKanban,
+  Rocket,
+  BookOpen,
+  FileText,
+  Bug,
+  Server,
+  GitBranch,
+  ScrollText,
+  FlaskConical,
+  Settings,
 } from 'lucide-react';
 
-/* ── Nav link — matches pencil.pen navItem styling ── */
+/* ── Lucide icon registry — maps icon name strings to components ── */
+const ICON_MAP: Record<string, React.ComponentType<any>> = {
+  LayoutDashboard,
+  FolderKanban,
+  Rocket,
+  BookOpen,
+  FileText,
+  Bug,
+  Server,
+  GitBranch,
+  ScrollText,
+  FlaskConical,
+  Settings,
+};
+
+/* ── Nav link — professional icon-based styling ── */
 function NavLink({
   item,
   isActive,
@@ -27,6 +54,8 @@ function NavLink({
   collapsed: boolean;
   onNavigate?: () => void;
 }) {
+  const IconComponent = ICON_MAP[item.icon];
+
   return (
     <Link
       href={item.href}
@@ -61,16 +90,15 @@ function NavLink({
         }
       }}
     >
-      {/* Emoji icon */}
-      <span style={{
-        fontSize: collapsed ? '18px' : '16px',
-        lineHeight: 1,
-        flexShrink: 0,
-        width: collapsed ? 'auto' : '20px',
-        textAlign: 'center',
-      }}>
-        {item.emoji}
-      </span>
+      {/* Lucide icon */}
+      {IconComponent && (
+        <IconComponent style={{
+          width: collapsed ? '20px' : '18px',
+          height: collapsed ? '20px' : '18px',
+          flexShrink: 0,
+          strokeWidth: isActive ? 2.2 : 1.8,
+        }} />
+      )}
 
       {!collapsed && (
         <span style={{
@@ -166,7 +194,7 @@ export function Sidebar({ isMobile = false }: { isMobile?: boolean }) {
         boxShadow: isMobile && mobileOpen ? '4px 0 24px rgba(0,0,0,0.15)' : 'none',
       }}
     >
-      {/* ── Logo Area — matches pencil.pen logoArea ── */}
+      {/* ── Logo Area ── */}
       <div style={{
         height: '64px',
         display: 'flex',
@@ -185,37 +213,16 @@ export function Sidebar({ isMobile = false }: { isMobile?: boolean }) {
             textDecoration: 'none',
           }}
         >
-          {/* Logo icon — purple square with rounded corners */}
-          <div style={{
-            width: '32px',
-            height: '32px',
-            flexShrink: 0,
-            borderRadius: '8px',
-            backgroundColor: '#7C3AED',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            <span style={{
-              fontSize: '14px',
-              fontWeight: 800,
-              color: '#fff',
-              letterSpacing: '-0.5px',
-            }}>C</span>
-          </div>
-
-          {/* Brand name */}
-          {!effectiveCollapsed && (
-            <span style={{
-              fontSize: '20px',
-              fontWeight: 700,
-              color: 'rgb(var(--text-primary))',
-              fontFamily: 'Inter, system-ui, sans-serif',
-              lineHeight: 1,
-            }}>
-              Cortexo
-            </span>
-          )}
+          {/* Logo — contains brand text */}
+          <img
+            src="/logo.png"
+            alt={PLATFORM_DEFAULTS.name}
+            style={{
+              height: '36px',
+              flexShrink: 0,
+              objectFit: 'contain',
+            }}
+          />
         </Link>
 
         {/* Mobile close button */}
@@ -242,7 +249,7 @@ export function Sidebar({ isMobile = false }: { isMobile?: boolean }) {
         )}
       </div>
 
-      {/* ── Main Navigation — matches pencil.pen navSection ── */}
+      {/* ── Main Navigation ── */}
       <nav
         style={{
           flex: 1,
@@ -349,7 +356,7 @@ export function Sidebar({ isMobile = false }: { isMobile?: boolean }) {
                 e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
-              <span style={{ fontSize: '14px', width: '20px', textAlign: 'center' }}>🚪</span>
+              <LogOut style={{ width: '18px', height: '18px', strokeWidth: 1.8 }} />
               Logout
             </button>
           </div>

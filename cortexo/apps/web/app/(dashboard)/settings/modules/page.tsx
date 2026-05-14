@@ -3,7 +3,6 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { Eye, EyeOff, GripVertical, RotateCcw, ArrowRightLeft } from 'lucide-react';
 import { useSidebarFeatures, SECTIONS, SectionMeta } from '@/lib/sidebar-features';
-import { useAutoLoadToken } from '@/lib/hooks';
 import {
   DndContext,
   pointerWithin,
@@ -228,7 +227,6 @@ function SortableSectionWrapper({
 
 // ─── Main Page ──────────────────────────────────────────────────────────────
 export default function ModulesPage() {
-  useAutoLoadToken();
   const {
     permissions, showAll, hideAll, loadFromApi,
     sectionOrder, itemOrders, itemSectionMap,

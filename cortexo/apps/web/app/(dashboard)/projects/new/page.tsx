@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, FolderGit2, Loader2, ArrowLeft, ArrowRight, Github, Search, Trash2, GitBranch, ChevronDown, AlertTriangle, X } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useApiData, useAutoLoadToken } from '@/lib/hooks';
+import { useCortexoQuery } from '@/lib/hooks';
 import { useModal } from '@/components/modal-provider';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/v1';
@@ -51,7 +51,6 @@ const DEFAULT_FORM = {
 };
 
 export default function NewProjectPage() {
-  useAutoLoadToken();
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
@@ -59,7 +58,7 @@ export default function NewProjectPage() {
 
   const [isClient, setIsClient] = useState(false);
 
-  const { data: servers } = useApiData(() => api.getServers());
+  const { data: servers } = useCortexoQuery(['servers'], () => api.getServers());
   const allServers = (servers as any[]) || [];
 
   const [form, setForm] = useState(DEFAULT_FORM);
@@ -153,7 +152,7 @@ export default function NewProjectPage() {
       .then(r => r.json())
       .then(d => {
         if (d.tokenExpired || d.error?.includes('expired')) {
-          setGhError('⚠️ GitHub token expired — update in Settings → Credentials');
+          setGhError('GitHub token expired — update in Settings → Credentials');
           setRepoMode('manual');
         } else if (d.data && d.data.length > 0) {
           setGhRepos(d.data); setGhError('');
@@ -302,13 +301,13 @@ export default function NewProjectPage() {
           <div style={{ fontSize: '12px', color: 'rgb(var(--text-muted))' }}>{form.clientSlug || 'client-slug'} · {form.productType}</div>
         </div>
       </div>
-      {form.domain && <div style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', marginBottom: '4px' }}>🌐 {form.domain}</div>}
-      {form.repoUrl && <div style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📦 {form.repoUrl.split('/').pop()}</div>}
-      {form.dbName && <div style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', marginBottom: '4px' }}>🗄 {form.dbName}</div>}
+      {form.domain && <div style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', marginBottom: '4px' }}>{form.domain}</div>}
+      {form.repoUrl && <div style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{form.repoUrl.split('/').pop()}</div>}
+      {form.dbName && <div style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', marginBottom: '4px' }}>{form.dbName}</div>}
       <div style={{ marginTop: '20px', padding: '16px', borderRadius: '10px', backgroundColor: 'rgba(124,58,237,0.04)', border: '1px solid rgba(124,58,237,0.1)' }}>
         <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#7C3AED', margin: '0 0 10px' }}>What happens next?</h4>
         <div className="cx-flex-col cx-gap-8">
-          {['Project is registered in Cortexo', 'CI/CD pipeline is created', 'Ready for first deployment'].map((t, i) => (
+          {['Project is registered', 'CI/CD pipeline is created', 'Ready for first deployment'].map((t, i) => (
             <div key={i} className="cx-flex cx-items-center cx-gap-8 cx-text-muted cx-text-12">
               <span style={{ width: '18px', height: '18px', borderRadius: '50%', backgroundColor: 'rgba(124,58,237,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: '#7C3AED', flexShrink: 0 }}>{i + 1}</span>
               {t}
@@ -488,7 +487,7 @@ export default function NewProjectPage() {
                   ) : ghError ? (
                     <div>
                       <div style={{ padding: '12px 14px', borderRadius: '10px', backgroundColor: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', fontSize: '12px', color: '#F59E0B', marginBottom: '8px' }}>
-                        ⚠️ {ghError}. <button onClick={() => setRepoMode('manual')} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'rgb(var(--primary))', fontWeight: 600, textDecoration: 'underline', fontSize: '12px' }}>Enter URL manually</button> or add your token in <a href="/settings/credentials" style={{ color: 'rgb(var(--primary))', fontWeight: 600 }}>Settings → Credentials</a>.
+                        {ghError}. <button onClick={() => setRepoMode('manual')} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'rgb(var(--primary))', fontWeight: 600, textDecoration: 'underline', fontSize: '12px' }}>Enter URL manually</button> or add your token in <a href="/settings/credentials" style={{ color: 'rgb(var(--primary))', fontWeight: 600 }}>Settings → Credentials</a>.
                       </div>
                     </div>
                   ) : (
@@ -663,7 +662,7 @@ export default function NewProjectPage() {
                   <label className="cx-label">Deployment Server</label>
                   <select className="cx-input" style={{ cursor: "pointer" }} value={form.serverId} onChange={e => update('serverId', e.target.value)}>
                     <option value="">Select deployment server...</option>
-                    {allServers.map((s: Record<string, unknown>) => (<option key={String(s.id)} value={String(s.id)}>🖥 {String(s.name)} ({String(s.privateIp)})</option>))}
+                    {allServers.map((s: Record<string, unknown>) => (<option key={String(s.id)} value={String(s.id)}>{String(s.name)} ({String(s.privateIp)})</option>))}
                     {allServers.length === 0 && <option value="" disabled>No servers configured — add one in Servers page</option>}
                   </select>
                 </div>
@@ -796,10 +795,10 @@ export default function NewProjectPage() {
                 <div><span style={{ fontSize: '14px', fontWeight: 700, color: '#10B981' }}>Ready to Create Project!</span><br/><span style={{ fontSize: '12px', color: 'rgb(var(--text-muted))' }}>No conflicts found. Please review all details before submitting.</span></div>
               </div>
             )}
-            {[{ title: '🔹 Basic Info', items: [['Project', form.name], ['Slug', form.clientSlug], ['Product', form.productType], ['Repo', form.repoUrl || '—'], ['Server', allServers.find((s: Record<string, unknown>) => String(s.id) === form.serverId)?.name as string || '—'], ['Server Path', form.serverPath || '—']] },
-              { title: '🔹 Domain & Access', items: [['Domain', form.domain || '—'], ['Admin URL', form.adminBaseUrl || '—'], ['Admin User', form.adminUser || '—']] },
-              { title: '🔹 Database', items: [['DB Host', form.dbHost || '—'], ['DB Name', form.dbName || '—'], ['DB User', form.dbUser || '—'], ['DB Port', form.dbPort || '3306']] },
-              { title: '🔹 Socket', items: [['WS Port (Native)', form.wsPort || '—'], ['Socket.IO Port (Redis)', form.socketIoPort || '—']] },
+            {[{ title: 'Basic Info', items: [['Project', form.name], ['Slug', form.clientSlug], ['Product', form.productType], ['Repo', form.repoUrl || '—'], ['Server', allServers.find((s: Record<string, unknown>) => String(s.id) === form.serverId)?.name as string || '—'], ['Server Path', form.serverPath || '—']] },
+              { title: 'Domain & Access', items: [['Domain', form.domain || '—'], ['Admin URL', form.adminBaseUrl || '—'], ['Admin User', form.adminUser || '—']] },
+              { title: 'Database', items: [['DB Host', form.dbHost || '—'], ['DB Name', form.dbName || '—'], ['DB User', form.dbUser || '—'], ['DB Port', form.dbPort || '3306']] },
+              { title: 'Socket', items: [['WS Port (Native)', form.wsPort || '—'], ['Socket.IO Port (Redis)', form.socketIoPort || '—']] },
             ].map((section, si) => (
               <div key={si} style={{ padding: '16px', borderRadius: '10px', border: '1px solid rgb(var(--border))' }}>
                 <h4 style={{ fontSize: '13px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 12px' }}>{section.title}</h4>

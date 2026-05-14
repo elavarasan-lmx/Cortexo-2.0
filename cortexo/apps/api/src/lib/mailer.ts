@@ -86,7 +86,7 @@ export async function sendDeployEmail(data: DeployEmailData): Promise<void> {
     <!-- Header -->
     <div style="background:${statusColor};padding:24px 32px;color:#fff;">
       <h1 style="margin:0;font-size:20px;font-weight:700;">${emoji} Deployment ${statusText}</h1>
-      <p style="margin:8px 0 0;font-size:13px;opacity:0.9;">Cortexo DevOps • ${new Date().toLocaleString()}</p>
+      <p style="margin:8px 0 0;font-size:13px;opacity:0.9;">Logimax Bullion DevOps • ${new Date().toLocaleString()}</p>
     </div>
 
     <!-- Body -->
@@ -131,7 +131,7 @@ export async function sendDeployEmail(data: DeployEmailData): Promise<void> {
         Deployment ID: <code style="background:#e2e8f0;padding:2px 6px;border-radius:4px;">${data.deploymentId}</code>
       </p>
       <p style="margin:8px 0 0;font-size:11px;color:#cbd5e1;">
-        Sent by Cortexo DevOps Platform
+        Sent by Logimax Bullion DevOps Platform
       </p>
     </div>
   </div>
@@ -140,7 +140,7 @@ export async function sendDeployEmail(data: DeployEmailData): Promise<void> {
 
   try {
     await transport.sendMail({
-      from: `Cortexo DevOps <${fromEmail}>`,
+      from: `Logimax Bullion DevOps <${fromEmail}>`,
       to: recipient,
       subject: `${emoji} Deploy ${statusText}: ${data.target} (${data.branch})`,
       html,
@@ -166,7 +166,7 @@ export async function sendEmail(opts: {
 
   try {
     await transport.sendMail({
-      from: `Cortexo DevOps <${fromEmail}>`,
+      from: `Logimax Bullion DevOps <${fromEmail}>`,
       to: opts.to,
       subject: opts.subject,
       html: opts.html,

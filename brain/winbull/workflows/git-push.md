@@ -1,9 +1,18 @@
-# /git-push Workflow
+# /git-push Workflow (v1.0)
 
 > One commit per bug fix. Never bundle unrelated changes.
 
 ## Usage
 Say: `/git-push [BUG_ID]`
+
+---
+
+## Prerequisites
+
+- Bug fix completed via `/fix-bug`
+- Changes tested locally
+- No uncommitted secrets or credentials
+- Git remote configured
 
 ---
 

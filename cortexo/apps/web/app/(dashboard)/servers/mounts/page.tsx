@@ -8,7 +8,7 @@ import {
   Shield, Eye, Clock, Lock, Unlock,
 } from 'lucide-react';
 import { AuditLog, MountFileEntry, Server, ServerMount, api } from '@/lib/api';
-import { useApiData, useAutoLoadToken } from '@/lib/hooks';
+import { useCortexoQuery } from '@/lib/hooks';
 import { useModal } from '@/components/modal-provider';
 import { useToastStore } from '@/lib/toast-store';
 
@@ -54,9 +54,11 @@ function StatusBadge({ status }: { status: string }) {
 
 
 export default function ServerMountsPage() {
-  useAutoLoadToken();
-  const { data: mounts, loading, refetch } = useApiData(() => api.getServerMounts());
-  const { data: servers } = useApiData(() => api.getServers());
+  const { data: mounts, isLoading: loading, refetch } = useCortexoQuery(
+    ['server-mounts'],
+    () => api.getServerMounts(),
+  );
+  const { data: servers } = useCortexoQuery(['servers'], () => api.getServers());
 
   const [showCreate, setShowCreate] = useState(false);
   const [actionLoading, setActionLoading] = useState<Record<number, string>>({});
@@ -352,12 +354,12 @@ export default function ServerMountsPage() {
                     <div>
                       <label style={{ fontSize:12, fontWeight:600, color:'rgb(var(--text-secondary))', display:'block', marginBottom:4 }}>Remote Path</label>
                       <input placeholder="/var/www/html/rubysilver" value={form.remotePath} onChange={e => setForm(p => ({ ...p, remotePath: e.target.value }))} className="cx-input cx-mono" style={{ fontSize:12 }} />
-                      {form.remotePath && <p style={{ fontSize:10, color:'rgb(var(--text-muted))', margin:'4px 0 0' }}>💡 Auto-filled from mount name</p>}
+                      {form.remotePath && <p style={{ fontSize:10, color:'rgb(var(--text-muted))', margin:'4px 0 0' }}>Auto-filled from mount name</p>}
                     </div>
                     <div>
                       <label style={{ fontSize:12, fontWeight:600, color:'rgb(var(--text-secondary))', display:'block', marginBottom:4 }}>Local Mount Path</label>
                       <input placeholder="~/ec2-rubysilver" value={form.localMountPath} onChange={e => setForm(p => ({ ...p, localMountPath: e.target.value }))} className="cx-input cx-mono" style={{ fontSize:12 }} />
-                      {form.localMountPath && <p style={{ fontSize:10, color:'rgb(var(--text-muted))', margin:'4px 0 0' }}>💡 Auto-filled from mount name</p>}
+                      {form.localMountPath && <p style={{ fontSize:10, color:'rgb(var(--text-muted))', margin:'4px 0 0' }}>Auto-filled from mount name</p>}
                     </div>
 
                     <label style={{ display:'flex', alignItems:'center', gap:8, fontSize:13, color:'rgb(var(--text-secondary))', cursor:'pointer' }}>

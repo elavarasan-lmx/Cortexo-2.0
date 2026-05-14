@@ -1,4 +1,4 @@
-# /build-module-brain Workflow
+# /build-module-brain Workflow (v1.0)
 
 > Build a complete knowledge base for any Winbull module before auditing or fixing.
 > Purpose: Reduce bug diagnosis time by ~60%. MANDATORY before running /audit-module on a new module.
@@ -7,6 +7,14 @@
 Say: `/build-module-brain [MODULE_NAME]`
 
 Examples: `Booking`, `Margin`, `MobileAPI`, `Admin`, `RateEngine`, `Socket`
+
+---
+
+## Prerequisites
+
+- Read `brain/winbull/0_session_start.md` first
+- Identify module path in winbullstaging codebase
+- Prepare empty brain file: `brain/winbull/modules/{MODULE}_module_brain.md`
 
 ---
 

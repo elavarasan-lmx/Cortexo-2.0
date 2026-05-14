@@ -3,12 +3,14 @@
  *
  * Both the sidebar component and the modules settings page
  * read from this file. Add/remove items HERE only.
+ *
+ * Icons are Lucide icon names (rendered by sidebar.tsx).
  */
 
 export interface NavItem {
   label: string;
   href: string;
-  emoji: string;
+  icon: string;
   badge?: number;
 }
 
@@ -22,32 +24,32 @@ export const NAVIGATION: NavSection[] = [
   {
     title: 'MAIN', color: '#818CF8',
     items: [
-      { label: 'Dashboard',    href: '/dashboard',      emoji: '◉' },
-      { label: 'Projects',     href: '/projects',       emoji: '📁' },
-      { label: 'Deployments',  href: '/deployments',    emoji: '⬡' },
-      { label: 'Knowledge',    href: '/knowledge-base', emoji: '📚' },
-      { label: 'DevOps Docs',  href: '/devops-docs',    emoji: '📖' },
+      { label: 'Dashboard',    href: '/dashboard',      icon: 'LayoutDashboard' },
+      { label: 'Projects',     href: '/projects',       icon: 'FolderKanban' },
+      { label: 'Deployments',  href: '/deployments',    icon: 'Rocket' },
+      { label: 'Knowledge',    href: '/knowledge-base', icon: 'BookOpen' },
+      { label: 'DevOps Docs',  href: '/devops-docs',    icon: 'FileText' },
     ],
   },
   {
     title: 'MONITORING', color: '#EF4444',
     items: [
-      { label: 'Bug Tracker',   href: '/bug-tracker',  emoji: '🐛' },
+      { label: 'Bug Tracker',   href: '/bug-tracker',  icon: 'Bug' },
     ],
   },
   {
     title: 'INFRASTRUCTURE', color: '#06B6D4',
     items: [
-      { label: 'Servers',        href: '/servers',        emoji: '🖥' },
-      { label: 'Pipelines',      href: '/pipelines',      emoji: '🔀' },
+      { label: 'Servers',        href: '/servers',        icon: 'Server' },
+      { label: 'Pipelines',      href: '/pipelines',      icon: 'GitBranch' },
     ],
   },
   {
     title: 'ADMIN', color: '#6B7280',
     items: [
-      { label: 'Audit Log', href: '/audit-log', emoji: '📜' },
-      { label: 'Testing',   href: '/testing',   emoji: '🧪' },
-      { label: 'Settings',  href: '/settings',  emoji: '⚙' },
+      { label: 'Audit Log', href: '/audit-log', icon: 'ScrollText' },
+      { label: 'Testing',   href: '/testing',   icon: 'FlaskConical' },
+      { label: 'Settings',  href: '/settings',  icon: 'Settings' },
     ],
   },
 ];

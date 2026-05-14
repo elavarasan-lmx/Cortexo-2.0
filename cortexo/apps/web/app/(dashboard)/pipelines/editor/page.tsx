@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { GitBranch, Code2, Play, Plus, Trash2, CheckCircle, Loader2, FileCode } from 'lucide-react';
-import { useAutoLoadToken } from '@/lib/hooks';
 import { api } from '@/lib/api';
 
 const TEMPLATES = {
@@ -53,7 +52,6 @@ stages:
 
 
 export default function PipelineEditorPage() {
-  useAutoLoadToken();
   const [yaml, setYaml] = useState(TEMPLATES.blank.yaml);
   const [selectedTemplate, setSelectedTemplate] = useState('blank');
   const [projectId, setProjectId] = useState('');
@@ -292,7 +290,7 @@ export default function PipelineEditorPage() {
               borderTop: '1px solid rgba(239, 68, 68, 0.2)',
               color: '#EF4444',
             }}>
-              ⚠ {error}
+              {error}
             </div>
           )}
         </div>

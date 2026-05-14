@@ -4,12 +4,11 @@ import {
   FolderGit2, Rocket, Server as ServerIcon, Bug, Activity, Shield, ArrowRight, Zap, TrendingUp
 } from 'lucide-react';
 import { AuditLog, Deployment, Project, Server, TrackedError, api } from '@/lib/api';
-import { useCortexoQuery, useAutoLoadToken } from '@/lib/hooks';
+import { useCortexoQuery } from '@/lib/hooks';
 
 import { useState, useEffect, useMemo } from 'react';
 
 export default function DashboardPage() {
-  useAutoLoadToken();
   const { data: projects }    = useCortexoQuery(['projects'],    () => api.getProjects());
   const { data: deployments } = useCortexoQuery(['deployments'],  () => api.getDeployments());
   const { data: errors }      = useCortexoQuery(['errors'],       () => api.getErrors());
@@ -36,7 +35,7 @@ export default function DashboardPage() {
   const serverTrend = totalServers > 0 ? `${activeServers} active` : 'None configured';
   const errorTrend = errorCount > 0
     ? `${resolvedCount} resolved`
-    : resolvedCount > 0 ? '✓ All clear' : 'No errors';
+    : resolvedCount > 0 ? 'All clear' : 'No errors';
 
   // Build 7-day deployment activity chart from real data
   const chartData = useMemo(() => {
@@ -90,7 +89,7 @@ export default function DashboardPage() {
       {/* Welcome Header */}
       <div>
         <h1 className="cx-fw-700 cx-text-primary" style={{ fontSize: '24px', margin: 0 }}>
-          Welcome back, {userName} 👋
+          Welcome back, {userName}
         </h1>
         <p className="cx-text-secondary" style={{ fontSize: '14px', marginTop: '4px' }}>
           Here's what's happening across your infrastructure today.

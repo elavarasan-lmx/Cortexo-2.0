@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Rocket, Check, ArrowLeft, ArrowRight, Loader2, Save, GitBranch, Server, FileText } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useApiData, useAutoLoadToken } from '@/lib/hooks';
+import { useCortexoQuery } from '@/lib/hooks';
 import { useRouter } from 'next/navigation';
 
 const steps = [
@@ -13,7 +13,6 @@ const steps = [
 
 
 export default function DeployNewPage() {
-  useAutoLoadToken();
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [deploying, setDeploying] = useState(false);
@@ -29,8 +28,8 @@ export default function DeployNewPage() {
   const [notifySlack, setNotifySlack] = useState(false);
   const [autoRollback, setAutoRollback] = useState(true);
 
-  const { data: projects } = useApiData(() => api.getProjects(), { default: [] as any[] });
-  const { data: servers } = useApiData(() => api.getServers(), { default: [] as any[] });
+  const { data: projects } = useCortexoQuery(['projects'], () => api.getProjects());
+  const { data: servers } = useCortexoQuery(['servers'], () => api.getServers());
 
   const projName = (projects || []).find((p: any) => String(p.id) === selectedProject)?.name || 'Select project';
   const serverName = (servers || []).find((s: any) => String(s.id) === selectedServer)?.name || 'Select server';
@@ -61,15 +60,15 @@ export default function DeployNewPage() {
       <div className="cx-flex-between">
         <div>
           <h1 style={{ fontSize: '24px', fontWeight: 800, color: 'rgb(var(--text-primary))', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            🚀 New Deployment
+            New Deployment
           </h1>
           <p style={{ fontSize: '14px', color: 'rgb(var(--text-muted))', margin: 0 }}>
             Configure and trigger a new deployment to your infrastructure.
           </p>
         </div>
         <div className="cx-flex cx-gap-8">
-          <span style={{ fontSize: '11px', fontWeight: 600, padding: '6px 12px', borderRadius: '6px', backgroundColor: 'rgba(16,185,129,0.1)', color: '#10B981' }}>✓ Deployment</span>
-          <span style={{ fontSize: '11px', fontWeight: 600, padding: '6px 12px', borderRadius: '6px', backgroundColor: 'rgba(124,58,237,0.1)', color: '#7C3AED' }}>⚡ Auto Deploy</span>
+          <span style={{ fontSize: '11px', fontWeight: 600, padding: '6px 12px', borderRadius: '6px', backgroundColor: 'rgba(16,185,129,0.1)', color: '#10B981' }}>Deployment</span>
+          <span style={{ fontSize: '11px', fontWeight: 600, padding: '6px 12px', borderRadius: '6px', backgroundColor: 'rgba(124,58,237,0.1)', color: '#7C3AED' }}>Auto Deploy</span>
         </div>
       </div>
 
@@ -113,14 +112,14 @@ export default function DeployNewPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
               <div className="cx-grid-2">
                 <div>
-                  <label className="cx-label">🗂 Project *</label>
+                  <label className="cx-label">Project *</label>
                   <select value={selectedProject} onChange={e => setSelectedProject(e.target.value)} className="cx-input" style={{ cursor: 'pointer' }}>
                     <option value="">Select project...</option>
                     {(projects || []).map((p: any) => (<option key={p.id} value={p.id}>{p.name || p.slug}</option>))}
                   </select>
                 </div>
                 <div>
-                  <label className="cx-label">🌿 Branch *</label>
+                  <label className="cx-label">Branch *</label>
                   <select value={branch} onChange={e => setBranch(e.target.value)} className="cx-input" style={{ cursor: 'pointer' }}>
                     <option>main</option><option>develop</option><option>staging</option>
                   </select>
@@ -128,7 +127,7 @@ export default function DeployNewPage() {
               </div>
               <div className="cx-grid-2">
                 <div>
-                  <label className="cx-label">🌐 Environment *</label>
+                  <label className="cx-label">Environment *</label>
                   <div className="cx-flex cx-gap-6">
                     {['Production', 'Staging', 'Development'].map(e => (
                       <button key={e} onClick={() => setEnv(e.toLowerCase())} style={{
@@ -141,7 +140,7 @@ export default function DeployNewPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="cx-label">🖥 Server *</label>
+                  <label className="cx-label">Server *</label>
                   <select value={selectedServer} onChange={e => setSelectedServer(e.target.value)} className="cx-input" style={{ cursor: 'pointer' }}>
                     <option value="">Select server...</option>
                     {(servers || []).map((s: any) => (<option key={s.id} value={s.id}>{s.name || s.hostname}</option>))}
@@ -150,18 +149,18 @@ export default function DeployNewPage() {
               </div>
               <div className="cx-grid-2">
                 <div>
-                  <label className="cx-label">🏷 Commit / Tag</label>
+                  <label className="cx-label">Commit / Tag</label>
                   <input className="cx-input" style={{ fontFamily: "'JetBrains Mono', monospace" }} value={commitTag} onChange={e => setCommitTag(e.target.value)} />
                 </div>
                 <div>
-                  <label className="cx-label">📋 Deploy Strategy</label>
+                  <label className="cx-label">Deploy Strategy</label>
                   <select className="cx-input" style={{ cursor: 'pointer' }} value={strategy} onChange={e => setStrategy(e.target.value)}>
                     <option>Rolling Update</option><option>Blue/Green</option><option>Canary</option><option>Recreate</option>
                   </select>
                 </div>
               </div>
               <div>
-                <label className="cx-label">📝 Deploy Notes</label>
+                <label className="cx-label">Deploy Notes</label>
                 <textarea className="cx-input" style={{ minHeight: '70px', resize: 'vertical', fontFamily: "'JetBrains Mono', monospace" }} placeholder="Add deployment notes or changelog..." value={notes} onChange={e => setNotes(e.target.value)} />
               </div>
             </div>
@@ -206,10 +205,10 @@ export default function DeployNewPage() {
               </div>
               {[
                 { title: 'Configuration', items: [['Project', projName], ['Branch', branch], ['Environment', env], ['Server', serverName], ['Commit', commitTag], ['Strategy', strategy]] },
-                { title: 'Options', items: [['Pre-deploy script', preCheck ? '✓ Enabled' : '✗ Disabled'], ['Run tests', runTests ? '✓ Enabled' : '✗ Disabled'], ['Slack notify', notifySlack ? '✓ Enabled' : '✗ Disabled'], ['Auto rollback', autoRollback ? '✓ Enabled' : '✗ Disabled']] },
+                { title: 'Options', items: [['Pre-deploy script', preCheck ? 'Enabled' : 'Disabled'], ['Run tests', runTests ? 'Enabled' : 'Disabled'], ['Slack notify', notifySlack ? 'Enabled' : 'Disabled'], ['Auto rollback', autoRollback ? 'Enabled' : 'Disabled']] },
               ].map((sec, si) => (
                 <div key={si} style={{ padding: '16px', borderRadius: '10px', border: '1px solid rgb(var(--border))' }}>
-                  <h4 style={{ fontSize: '13px', fontWeight: 700, margin: '0 0 10px', color: '#7C3AED' }}>🔹 {sec.title}</h4>
+                  <h4 style={{ fontSize: '13px', fontWeight: 700, margin: '0 0 10px', color: '#7C3AED' }}>{sec.title}</h4>
                   {sec.items.map(([label, value], ii) => (
                     <div key={ii} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: ii < sec.items.length - 1 ? '1px solid rgba(var(--border),0.3)' : 'none' }}>
                       <span style={{ fontSize: '12px', color: 'rgb(var(--text-muted))' }}>{label}</span>
@@ -314,7 +313,7 @@ export default function DeployNewPage() {
           ) : (
             <button onClick={handleDeploy} disabled={deploying} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 24px', borderRadius: '8px', border: 'none', backgroundColor: '#10B981', color: '#fff', fontSize: '13px', fontWeight: 700, cursor: deploying ? 'not-allowed' : 'pointer', opacity: deploying ? 0.6 : 1 }}>
               {deploying ? <Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} /> : <Rocket style={{ width: '14px', height: '14px' }} />}
-              {deploying ? 'Deploying...' : '🚀 Deploy Now'}
+              {deploying ? 'Deploying...' : 'Deploy Now'}
             </button>
           )}
         </div>

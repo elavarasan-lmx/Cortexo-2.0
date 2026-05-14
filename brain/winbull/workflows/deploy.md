@@ -1,7 +1,21 @@
-# /deploy Workflow
+# /deploy Workflow (v1.0)
 
 > Deploy the Winbull codebase to the live server.
 > Script: `scripts/winbull_deploy.sh`
+
+## Usage
+Say: `/deploy`
+
+---
+
+## Prerequisites
+
+- All bug fixes committed via `/git-push`
+- SSH access to production server configured
+- Database migrations tested on staging first
+- Socket server restart permission
+
+---
 
 ## Quick Deploy (Manual SSH)
 

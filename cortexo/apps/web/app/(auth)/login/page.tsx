@@ -4,11 +4,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Rocket, Bot, BarChart3 } from 'lucide-react';
 
 /* ── Design 34_Login.png ──────────────────────────────────────────────
  * Split-screen layout:
- *   LEFT  → Dark navy (#1a1a3e) panel with ◉ Cortexo branding
+ *   LEFT  → Dark navy (#1a1a3e) panel with Cortexo branding
  *   RIGHT → White panel with "Welcome Back" form
  * ──────────────────────────────────────────────────────────────────── */
 
@@ -90,26 +90,23 @@ export default function LoginPage() {
           {/* Logo */}
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            gap: '14px', marginBottom: '20px',
+            marginBottom: '20px',
           }}>
-            <div style={{
-              width: '44px', height: '44px', borderRadius: '50%',
-              border: '2px solid rgba(255,255,255,0.8)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <div style={{
-                width: '14px', height: '14px', borderRadius: '50%',
-                backgroundColor: 'white',
-              }} />
-            </div>
-            <span style={{ fontSize: '32px', fontWeight: 700, letterSpacing: '-0.5px' }}>Cortexo</span>
+            <img
+              src="/logo.png"
+              alt="Logimax Bullion"
+              style={{
+                height: '52px',
+                objectFit: 'contain',
+              }}
+            />
           </div>
 
           <p style={{
             fontSize: '16px', fontWeight: 500, color: 'rgba(255,255,255,0.7)',
             marginBottom: '8px',
           }}>
-            Internal Developer Platform
+            DevOps Platform
           </p>
           <p style={{
             fontSize: '13px', color: 'rgba(255,255,255,0.45)',
@@ -122,12 +119,12 @@ export default function LoginPage() {
           {/* Feature bullets */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'left', marginBottom: '36px' }}>
             {[
-              { icon: '🚀', title: 'One-Click Deployments', desc: 'Deploy to production in seconds' },
-              { icon: '🤖', title: 'AI-Powered Bug Detection', desc: 'Catch issues before users do' },
-              { icon: '📊', title: 'Real-time Monitoring', desc: 'Live dashboards with alert automations' },
+              { Icon: Rocket, title: 'One-Click Deployments', desc: 'Deploy to production in seconds' },
+              { Icon: Bot, title: 'AI-Powered Bug Detection', desc: 'Catch issues before users do' },
+              { Icon: BarChart3, title: 'Real-time Monitoring', desc: 'Live dashboards with alert automations' },
             ].map((f, i) => (
               <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                <span style={{ fontSize: '18px', marginTop: '2px' }}>{f.icon}</span>
+                <f.Icon style={{ width: '18px', height: '18px', marginTop: '2px', color: 'rgba(255,255,255,0.7)', flexShrink: 0 }} />
                 <div>
                   <div style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>{f.title}</div>
                   <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)' }}>{f.desc}</div>
@@ -202,7 +199,7 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="jerry@cortexo.dev"
+                placeholder="you@logimaxindia.com"
                 required
                 style={{
                   width: '100%', padding: '14px 16px',

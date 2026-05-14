@@ -1,8 +1,8 @@
 'use client';
 import { useState } from 'react';
-import { Users, Search, Shield, MoreHorizontal, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Users, Search, Shield, MoreHorizontal, Loader2, ChevronLeft, ChevronRight, UserCheck, Ban, type LucideIcon } from 'lucide-react';
 import { OrgMember, api } from '@/lib/api';
-import { useApiData, useAutoLoadToken } from '@/lib/hooks';
+import { useCortexoQuery } from '@/lib/hooks';
 
 const rc: Record<string, string> = { owner: '#A78BFA', admin: '#3B82F6', developer: '#10B981', member: '#F59E0B', viewer: '#6B7280', 'super admin': '#7C3AED' };
 const avatarColors = ['#7C3AED', '#F59E0B', '#10B981', '#3B82F6', '#EF4444', '#EC4899', '#F97316'];
@@ -11,14 +11,13 @@ const avatarColors = ['#7C3AED', '#F59E0B', '#10B981', '#3B82F6', '#EF4444', '#E
 
 
 export default function UsersPage() {
-  useAutoLoadToken();
   const [searchQ, setSearchQ] = useState('');
   const [roleFilter, setRoleFilter] = useState('All Roles');
   const [statusFilter, setStatusFilter] = useState('All Status');
 
-  const { data: rawUsers, loading, error, refetch } = useApiData(
+  const { data: rawUsers, isLoading: loading, refetch } = useCortexoQuery(
+    ['users'],
     () => api.getUsers(),
-    { default: [] as any[] }
   );
 
   const apiUsers = (rawUsers || []).map((u: OrgMember) => ({
@@ -41,10 +40,10 @@ export default function UsersPage() {
   });
 
   const stats = [
-    { label: 'Total Users', value: users.length, sub: `${users.length} registered`, color: '#7C3AED', icon: '👥' },
-    { label: 'Active Now', value: users.filter((u: OrgMember) => u.status === 'active').length, sub: 'Online', color: '#10B981', icon: '🟢' },
-    { label: 'Suspended', value: users.filter((u: OrgMember) => u.status === 'suspended').length, sub: 'Blocked', color: '#EF4444', icon: '🚫' },
-    { label: 'Super Admins', value: users.filter((u: OrgMember) => u.role.toLowerCase() === 'super admin').length, sub: 'Full access', color: '#8B5CF6', icon: '🛡️' },
+    { label: 'Total Users', value: users.length, sub: `${users.length} registered`, color: '#7C3AED', Icon: Users },
+    { label: 'Active Now', value: users.filter((u: OrgMember) => u.status === 'active').length, sub: 'Online', color: '#10B981', Icon: UserCheck },
+    { label: 'Suspended', value: users.filter((u: OrgMember) => u.status === 'suspended').length, sub: 'Blocked', color: '#EF4444', Icon: Ban },
+    { label: 'Super Admins', value: users.filter((u: OrgMember) => u.role.toLowerCase() === 'super admin').length, sub: 'Full access', color: '#8B5CF6', Icon: Shield },
   ];
 
 
@@ -77,7 +76,7 @@ export default function UsersPage() {
           <div key={i} className="cx-card cx-border" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <div style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', fontWeight: 500 }}>{s.label}</div>
             <div style={{ fontSize: '28px', fontWeight: 800, color: 'rgb(var(--text-primary))' }}>{s.value}</div>
-            <div style={{ fontSize: '11px', color: s.color, fontWeight: 600 }}>{s.icon} {s.sub}</div>
+            <div style={{ fontSize: '11px', color: s.color, fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}><s.Icon style={{ width: '12px', height: '12px' }} /> {s.sub}</div>
           </div>
         ))}
       </div>

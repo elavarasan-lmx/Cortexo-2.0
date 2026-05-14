@@ -9,7 +9,6 @@ import {
   Calendar, X,
 } from 'lucide-react';
 import { AuditLog, api } from '@/lib/api';
-import { useAutoLoadToken } from '@/lib/hooks';
 
 const ACTION_ICONS: Record<string, any> = {
   file_browse: FolderSync, file_read: Eye, file_modified: Edit3,
@@ -42,7 +41,6 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function AuditLogPage() {
-  useAutoLoadToken();
   const [logs, setLogs] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -174,7 +172,7 @@ export default function AuditLogPage() {
         <div className="cx-empty cx-text-muted" style={{ padding: '60px 20px' }}>
           <Activity style={{ width: '48px', height: '48px', opacity: 0.3, marginBottom: '16px' }} />
           <p className="cx-fw-600" style={{ fontSize: '15px' }}>No audit logs found</p>
-          <p style={{ fontSize: '13px' }}>Activity will appear here as you use Cortexo</p>
+          <p style={{ fontSize: '13px' }}>Activity will appear here as you use the platform</p>
         </div>
       ) : (
         <div className="cx-table-wrap">

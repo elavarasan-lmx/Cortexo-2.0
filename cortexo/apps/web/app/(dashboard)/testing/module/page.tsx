@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Boxes, Play, CheckCircle, XCircle, Loader2, Clock, ShieldAlert, AlertTriangle, ChevronDown, ChevronRight, ArrowLeft } from 'lucide-react';
-import { useAutoLoadToken } from '@/lib/hooks';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/v1';
 
@@ -37,7 +36,6 @@ const sevBadge = (s: string): React.CSSProperties => ({
 });
 
 export default function ModuleTestPage() {
-  useAutoLoadToken();
   const [modules, setModules] = useState<ModuleInfo[]>([]);
   const [targets, setTargets] = useState<Target[]>([]);
   const [selectedTarget, setSelectedTarget] = useState<number>(0);
@@ -111,7 +109,7 @@ export default function ModuleTestPage() {
             {targets.map(t => <option key={t.id} value={t.id}>{t.name} — {t.baseUrl}</option>)}
           </select>
           {targets.length === 0 && (
-            <span style={{ fontSize: '12px', color: '#EF4444' }}>⚠ No targets configured. Add one in the Testing Hub first.</span>
+            <span style={{ fontSize: '12px', color: '#EF4444' }}>No targets configured. Add one in the Testing Hub first.</span>
           )}
         </div>
       </div>
@@ -143,9 +141,9 @@ export default function ModuleTestPage() {
               </div>
               <p style={{ fontSize: '12px', color: 'rgb(var(--text-secondary))', margin: '0 0 12px', lineHeight: '1.5' }}>{m.description}</p>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>📋 {m.stepCount} steps</span>
-                {m.criticalCount > 0 && <span style={{ fontSize: '11px', color: '#EF4444', fontWeight: 600 }}>🔴 {m.criticalCount} critical</span>}
-                {m.highCount > 0 && <span style={{ fontSize: '11px', color: '#F59E0B', fontWeight: 600 }}>🟡 {m.highCount} high</span>}
+                <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>{m.stepCount} steps</span>
+                {m.criticalCount > 0 && <span style={{ fontSize: '11px', color: '#EF4444', fontWeight: 600 }}>{m.criticalCount} critical</span>}
+                {m.highCount > 0 && <span style={{ fontSize: '11px', color: '#F59E0B', fontWeight: 600 }}>{m.highCount} high</span>}
                 <span style={sevBadge(m.category)}>{m.category}</span>
               </div>
             </div>
@@ -247,8 +245,8 @@ export default function ModuleTestPage() {
                   {isExpanded && (
                     <div style={{ padding: '0 14px 12px 52px', fontSize: '12px' }}>
                       <p style={{ color: 'rgb(var(--text-secondary))', margin: '0 0 6px' }}>{s.description}</p>
-                      {s.error && <p style={{ color: '#EF4444', margin: '0 0 4px', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>❌ {s.error}</p>}
-                      {s.securityIssue && <p style={{ color: '#EF4444', margin: '0 0 4px' }}>🛡 Security: <strong>{s.securityIssue}</strong></p>}
+                      {s.error && <p style={{ color: '#EF4444', margin: '0 0 4px', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}>{s.error}</p>}
+                      {s.securityIssue && <p style={{ color: '#EF4444', margin: '0 0 4px' }}>Security: <strong>{s.securityIssue}</strong></p>}
                       {s.schemaErrors && s.schemaErrors.length > 0 && (
                         <p style={{ color: '#F59E0B', margin: '0', fontSize: '11px' }}>Schema: {s.schemaErrors.join(', ')}</p>
                       )}

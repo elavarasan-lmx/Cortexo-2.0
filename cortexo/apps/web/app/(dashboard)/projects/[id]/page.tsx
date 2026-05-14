@@ -2,7 +2,7 @@
 
 import { use, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useApiData, useAutoLoadToken } from '@/lib/hooks';
+import { useCortexoQuery } from '@/lib/hooks';
 import { api } from '@/lib/api';
 import {
   ArrowLeft, GitBranch, Loader2,
@@ -42,10 +42,13 @@ function parseSettings(p: Record<string, unknown>): SettingsForm {
 }
 
 export default function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  useAutoLoadToken();
   const { id } = use(params);
   const router = useRouter();
-  const { data: project, loading, refetch } = useApiData(() => api.getProject(id), [id]);
+  const { data: project, isLoading: loading, refetch } = useCortexoQuery(
+    ['project', id],
+    () => api.getProject(id),
+    { enabled: !!id }
+  );
 
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -54,7 +57,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [showDbPass, setShowDbPass] = useState(false);
 
   // Fetch server name for display
-  const { data: servers } = useApiData(() => api.getServers(), []);
+  const { data: servers } = useCortexoQuery(['servers'], () => api.getServers());
   const serverList = Array.isArray(servers) ? servers : ((servers as any)?.data || []);
 
   const [form, setForm] = useState<SettingsForm & { name: string; repoUrl: string; defaultBranch: string }>({

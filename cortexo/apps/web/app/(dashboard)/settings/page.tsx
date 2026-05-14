@@ -3,11 +3,9 @@
 import { useState, useEffect } from 'react';
 import { User, Mail, Camera, Save, Shield, Loader2, AlertCircle } from 'lucide-react';
 import { api } from '@/lib/api';
-import { useAutoLoadToken } from '@/lib/hooks';
 import { useToastStore } from '@/lib/toast-store';
 
 export default function SettingsPage() {
-  useAutoLoadToken();
   const [profile, setProfile] = useState({ name: '', email: '' });
   const [passwords, setPasswords] = useState({ current: '', newPassword: '', confirm: '' });
   const [saving, setSaving] = useState(false);

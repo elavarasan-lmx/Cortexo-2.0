@@ -7,11 +7,11 @@ import {
   FolderGit2,
   Plus, Search,
   Loader2, Github, Globe, X, Edit3, Trash2, Eye, EyeOff, GitBranch as GitBranchIcon,
-  Filter, ChevronDown,
+  Filter, ChevronDown, FolderOpen, TrendingUp, BarChart3, Clock, UserCircle,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { Project } from '@/lib/api';
-import { useCortexoQuery, useAutoLoadToken, useQueryClient } from '@/lib/hooks';
+import { useCortexoQuery, useQueryClient } from '@/lib/hooks';
 
 import { useToastStore } from '@/lib/toast-store';
 
@@ -30,7 +30,6 @@ type Filters = {
 };
 
 export default function ProjectsPage() {
-  useAutoLoadToken();
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: projects, isLoading: loading, refetch } = useCortexoQuery(['projects'], () => api.getProjects());
@@ -250,12 +249,14 @@ export default function ProjectsPage() {
       {/* Stat Cards */}
       <div className="cx-stats-3 cx-mb-20">
         {[
-          { icon: '📂', value: allProjects.length, label: 'Total Projects', color: '#7C3AED' },
-          { icon: '📈', value: allProjects.filter(p => parseSettings(p).productType === 'trade').length, label: 'Trade', color: '#F59E0B' },
-          { icon: '📊', value: allProjects.filter(p => parseSettings(p).productType === 'lite').length, label: 'Lite', color: '#10B981' },
+          { Icon: FolderOpen, value: allProjects.length, label: 'Total Projects', color: '#7C3AED' },
+          { Icon: TrendingUp, value: allProjects.filter(p => parseSettings(p).productType === 'trade').length, label: 'Trade', color: '#F59E0B' },
+          { Icon: BarChart3, value: allProjects.filter(p => parseSettings(p).productType === 'lite').length, label: 'Lite', color: '#10B981' },
         ].map((stat, i) => (
           <div key={i} className="cx-flex cx-items-center cx-gap-12 cx-r-10 cx-surface cx-border" style={{ padding: '14px 20px' }}>
-            <span style={{ fontSize: '22px' }}>{stat.icon}</span>
+            <div className="cx-flex-center" style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: `${stat.color}15` }}>
+              <stat.Icon style={{ width: '18px', height: '18px', color: stat.color }} />
+            </div>
             <div>
               <div className="cx-fw-800" style={{ fontSize: '22px', color: stat.color }}>{stat.value}</div>
               <div className="cx-text-11 cx-fw-600 cx-text-muted">{stat.label}</div>
@@ -363,8 +364,8 @@ export default function ProjectsPage() {
                   </div>
                 </div>
                 <div className="cx-flex cx-items-center cx-gap-8">
-                  <span className="cx-text-muted" style={{ fontSize: '10px' }}>⏱ {(() => { const d = project.updatedAt ? new Date(project.updatedAt) : project.createdAt ? new Date(project.createdAt) : null; if (!d) return '—'; const s = Math.floor((Date.now() - d.getTime()) / 1000); if (s < 60) return 'just now'; if (s < 3600) return `${Math.floor(s / 60)}m ago`; if (s < 86400) return `${Math.floor(s / 3600)}h ago`; return `${Math.floor(s / 86400)}d ago`; })()}</span>
-                  {s.adminUser && <span className="cx-text-muted" style={{ fontSize: '10px' }}>👤 {String(s.adminUser)}</span>}
+                  <span className="cx-text-muted" style={{ fontSize: '10px' }}><Clock style={{ width: '10px', height: '10px', display: 'inline', verticalAlign: 'middle', marginRight: '2px' }} />{(() => { const d = project.updatedAt ? new Date(project.updatedAt) : project.createdAt ? new Date(project.createdAt) : null; if (!d) return '—'; const s = Math.floor((Date.now() - d.getTime()) / 1000); if (s < 60) return 'just now'; if (s < 3600) return `${Math.floor(s / 60)}m ago`; if (s < 86400) return `${Math.floor(s / 3600)}h ago`; return `${Math.floor(s / 86400)}d ago`; })()}</span>
+                  {s.adminUser && <span className="cx-text-muted cx-flex cx-items-center cx-gap-4" style={{ fontSize: '10px' }}><UserCircle style={{ width: '10px', height: '10px' }} />{String(s.adminUser)}</span>}
                 </div>
               </div>
             </div>
