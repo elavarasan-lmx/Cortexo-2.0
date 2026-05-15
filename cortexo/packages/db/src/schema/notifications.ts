@@ -9,8 +9,6 @@ import {
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { users } from './users';
-import { organizations } from './organizations';
-
 /**
  * Notifications table — in-app notifications for users.
  * Supports deploy alerts, error spikes, AI reports, fix rollouts.
@@ -23,9 +21,6 @@ export const notifications = pgTable(
       .defaultRandom(),
     userId: uuid('user_id')
       .references(() => users.id)
-      .notNull(),
-    orgId: uuid('org_id')
-      .references(() => organizations.id)
       .notNull(),
     type: varchar('type', { length: 50 }).notNull(),
     title: varchar('title', { length: 200 }),

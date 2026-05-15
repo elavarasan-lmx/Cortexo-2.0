@@ -1,17 +1,15 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getDb } from '../lib/db.js';
-import { users, organizations } from '@cortexo/db/schema';
+import { users } from '@cortexo/db/schema';
 import { eq } from 'drizzle-orm';
 import crypto from 'crypto';
 import type { JwtUser } from '../middleware/auth.js';
 
 // ── Auth Zod Schemas ────────────────────────────────────────────────────────
-const registerSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string().email('Valid email required'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
-  orgName: z.string().optional(),
 });
 
 const loginSchema = z.object({
@@ -69,12 +67,11 @@ function verifyPassword(password: string, hash: string): Promise<boolean> {
 /**
  * Generate a signed JWT access token (15min expiry, set in index.ts JWT config).
  */
-function signAccessToken(app: FastifyInstance, user: { id: string; email: string; name: string; orgId: string; role: string }): string {
+function signAccessToken(app: FastifyInstance, user: { id: string; email: string; name: string; role: string }): string {
   const payload: JwtUser = {
     sub: user.id,
     email: user.email,
     name: user.name,
-    orgId: user.orgId,
     role: user.role,
   };
   return app.jwt.sign(payload);
@@ -98,7 +95,7 @@ export async function authRoutes(app: FastifyInstance) {
   app.post('/auth/register', authRateLimit, async (request, reply) => {
     const parsed = registerSchema.safeParse(request.body);
     if (!parsed.success) return reply.code(400).send({ error: 'Validation failed', details: parsed.error.flatten() });
-    const { name, email, password, orgName } = parsed.data;
+    const { name, email, password } = parsed.data;
 
     try {
       const db = await getDb();
@@ -112,36 +109,25 @@ export async function authRoutes(app: FastifyInstance) {
         return reply.code(409).send({ error: 'Email already registered' });
       }
 
-      // Create organization
-      const orgId = crypto.randomUUID();
-      const orgSlug = (orgName || name).toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
-      await db.insert(organizations).values({
-        id: orgId,
-        name: orgName || `${name}'s Org`,
-        slug: orgSlug + '-' + orgId.slice(0, 4),
-        plan: 'free',
-      });
-
       // Create user
       const userId = crypto.randomUUID();
       const passwordHash = await hashPassword(password);
       await db.insert(users).values({
         id: userId,
-        orgId,
         name,
         email,
         passwordHash,
         role: 'admin',
       });
 
-      const token = signAccessToken(app, { id: userId, email, name, orgId, role: 'admin' });
+      const token = signAccessToken(app, { id: userId, email, name, role: 'admin' });
       const refreshToken = signRefreshToken(app, userId);
 
       return {
         data: {
           token,
           refreshToken,
-          user: { id: userId, name, email, role: 'admin', orgId },
+          user: { id: userId, name, email, role: 'admin' },
         }
       };
     } catch (err: unknown) {
@@ -184,7 +170,6 @@ export async function authRoutes(app: FastifyInstance) {
         id: user.id,
         email: user.email,
         name: user.name,
-        orgId: user.orgId || '',
         role: user.role || 'member',
       });
       const refreshToken = signRefreshToken(app, user.id);
@@ -198,7 +183,6 @@ export async function authRoutes(app: FastifyInstance) {
             name: user.name,
             email: user.email,
             role: user.role,
-            orgId: user.orgId,
             avatarUrl: user.avatarUrl,
           },
         }
@@ -234,7 +218,6 @@ export async function authRoutes(app: FastifyInstance) {
                   name: user.name,
                   email: user.email,
                   role: user.role,
-                  orgId: user.orgId,
                   avatarUrl: user.avatarUrl,
                 },
               }
@@ -248,7 +231,6 @@ export async function authRoutes(app: FastifyInstance) {
               name: devUser?.name || 'Developer',
               email: devUser?.email || 'dev-bypass@cortexo.local',
               role: devUser?.role || 'admin',
-              orgId: devUser?.orgId || '',
               avatarUrl: null,
             },
           }
@@ -276,7 +258,6 @@ export async function authRoutes(app: FastifyInstance) {
             name: user.name,
             email: user.email,
             role: user.role,
-            orgId: user.orgId,
             avatarUrl: user.avatarUrl,
           },
         }
@@ -335,14 +316,13 @@ export async function authRoutes(app: FastifyInstance) {
         id: user.id,
         email: user.email,
         name: user.name,
-        orgId: user.orgId || '',
         role: user.role || 'member',
       });
 
       return {
         data: {
           token: newToken,
-          user: { id: user.id, name: user.name, email: user.email, role: user.role, orgId: user.orgId },
+          user: { id: user.id, name: user.name, email: user.email, role: user.role },
         }
       };
     } catch (err: unknown) {
@@ -448,22 +428,19 @@ export async function authRoutes(app: FastifyInstance) {
       let user = await db.query.users.findFirst({ where: eq(users.email, ghUser.email || `${ghUser.login}@github`) });
 
       if (!user) {
-        const orgId = crypto.randomUUID();
-        await db.insert(organizations).values({ id: orgId, name: `${ghUser.login}'s Org`, slug: ghUser.login, plan: 'free' });
         const userId = crypto.randomUUID();
         await db.insert(users).values({
-          id: userId, orgId, name: ghUser.name || ghUser.login,
+          id: userId, name: ghUser.name || ghUser.login,
           email: ghUser.email || `${ghUser.login}@github`, role: 'admin',
           avatarUrl: ghUser.avatar_url, githubId: String(ghUser.id),
         });
-        user = { id: userId, email: ghUser.email || `${ghUser.login}@github`, orgId, name: ghUser.name || ghUser.login, role: 'admin' } as any;
+        user = { id: userId, email: ghUser.email || `${ghUser.login}@github`, name: ghUser.name || ghUser.login, role: 'admin' } as any;
       }
 
       const token = signAccessToken(app, {
         id: user!.id,
         email: user!.email,
         name: user!.name,
-        orgId: user!.orgId || '',
         role: user!.role || 'member',
       });
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -502,7 +479,6 @@ export async function authRoutes(app: FastifyInstance) {
         id: user.id,
         email: user.email,
         name: user.name,
-        orgId: user.orgId || '',
         role: user.role || 'member',
       });
       const newRefreshToken = signRefreshToken(app, user.id);

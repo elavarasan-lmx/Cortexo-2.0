@@ -521,9 +521,6 @@ export default function DashboardPage() {
             <QuickActionBtn title="New Deploy" icon={Rocket} bgColor="#7C3AED" href="/deployments/new" tooltip="Create a new deployment" />
             <QuickActionBtn title="Add Project" icon={FolderGit2} bgColor="#3B82F6" href="/projects/new" tooltip="Add a new project" />
             <QuickActionBtn title="Add Server" icon={ServerIcon} bgColor="#10B981" href="/servers" tooltip="Register a new server" />
-            <QuickActionBtn title="Security" icon={Shield} bgColor="#EF4444" href="/security" tooltip="View security dashboard" />
-            <QuickActionBtn title="Code Audit" icon={SearchCode} bgColor="#F59E0B" href="/code-audit" tooltip="Run code analysis" />
-            <QuickActionBtn title="Reports" icon={FileBarChart} bgColor="#06B6D4" href="/reports" tooltip="View reports" />
           </div>
         </div>
 

@@ -5,8 +5,6 @@
  */
 
 // Phase 1: Foundation
-export { organizations } from './organizations';
-export type { Organization, NewOrganization } from './organizations';
 
 export { users } from './users';
 export type { User, NewUser } from './users';

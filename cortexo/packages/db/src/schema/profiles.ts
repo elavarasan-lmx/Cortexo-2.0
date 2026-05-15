@@ -9,8 +9,6 @@ import {
   index,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
-import { organizations } from './organizations';
-
 /**
  * Source Profiles — reusable Git repo credentials for deployments.
  * Store once, select from dropdown during deploy.
@@ -21,9 +19,6 @@ export const sourceProfiles = pgTable(
     id: uuid('id')
       .primaryKey()
       .defaultRandom(),
-    orgId: uuid('org_id')
-      .references(() => organizations.id)
-      .notNull(),
     name: varchar('name', { length: 100 }).notNull(),
     repoUrl: varchar('repo_url', { length: 500 }).notNull(),
     branch: varchar('branch', { length: 100 }).default('main'),
@@ -36,10 +31,7 @@ export const sourceProfiles = pgTable(
     updatedAt: timestamp('updated_at')
       .defaultNow()
       .notNull(),
-  },
-  (table) => [
-    index('idx_source_profiles_org').on(table.orgId),
-  ],
+  }
 );
 
 /**
@@ -52,9 +44,6 @@ export const dbProfiles = pgTable(
     id: uuid('id')
       .primaryKey()
       .defaultRandom(),
-    orgId: uuid('org_id')
-      .references(() => organizations.id)
-      .notNull(),
     name: varchar('name', { length: 100 }).notNull(),
     host: varchar('host', { length: 255 }).notNull(),
     port: integer('port').default(3306),
@@ -68,10 +57,7 @@ export const dbProfiles = pgTable(
     updatedAt: timestamp('updated_at')
       .defaultNow()
       .notNull(),
-  },
-  (table) => [
-    index('idx_db_profiles_org').on(table.orgId),
-  ],
+  }
 );
 
 /**
@@ -84,9 +70,6 @@ export const clientGitProfiles = pgTable(
     id: uuid('id')
       .primaryKey()
       .defaultRandom(),
-    orgId: uuid('org_id')
-      .references(() => organizations.id)
-      .notNull(),
     name: varchar('name', { length: 100 }).notNull(),
     repoUrl: varchar('repo_url', { length: 500 }).notNull(),
     branch: varchar('branch', { length: 100 }).default('main'),
@@ -100,10 +83,7 @@ export const clientGitProfiles = pgTable(
     updatedAt: timestamp('updated_at')
       .defaultNow()
       .notNull(),
-  },
-  (table) => [
-    index('idx_client_git_profiles_org').on(table.orgId),
-  ],
+  }
 );
 
 /**
@@ -116,9 +96,6 @@ export const clientDbProfiles = pgTable(
     id: uuid('id')
       .primaryKey()
       .defaultRandom(),
-    orgId: uuid('org_id')
-      .references(() => organizations.id)
-      .notNull(),
     name: varchar('name', { length: 100 }).notNull(),
     host: varchar('host', { length: 255 }).notNull(),
     port: integer('port').default(3306),
@@ -133,10 +110,7 @@ export const clientDbProfiles = pgTable(
     updatedAt: timestamp('updated_at')
       .defaultNow()
       .notNull(),
-  },
-  (table) => [
-    index('idx_client_db_profiles_org').on(table.orgId),
-  ],
+  }
 );
 
 // Type exports

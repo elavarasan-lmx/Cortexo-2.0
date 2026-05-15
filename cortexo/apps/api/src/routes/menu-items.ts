@@ -106,7 +106,6 @@ export async function menuItemRoutes(app: FastifyInstance) {
       { label: 'DevOps Docs',   href: '/devops-docs',    emoji: '📄', sectionTitle: 'MAIN',           sectionColor: '#818CF8', sortOrder: 6 },
       // MONITORING
       { label: 'Bug Tracker',   href: '/bug-tracker',    emoji: '🐛', sectionTitle: 'MONITORING',     sectionColor: '#EF4444', sortOrder: 10 },
-      { label: 'Code Audit',    href: '/code-audit',     emoji: '🔍', sectionTitle: 'MONITORING',     sectionColor: '#EF4444', sortOrder: 11 },
       // INFRASTRUCTURE
       { label: 'Servers',       href: '/servers',        emoji: '🖥',  sectionTitle: 'INFRASTRUCTURE', sectionColor: '#06B6D4', sortOrder: 20 },
       { label: 'Pipelines',     href: '/pipelines',      emoji: '🔀', sectionTitle: 'INFRASTRUCTURE', sectionColor: '#06B6D4', sortOrder: 21 },

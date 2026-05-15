@@ -11,7 +11,6 @@ import {
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { projects } from './projects';
-import { organizations } from './organizations';
 import { users } from './users';
 
 /**
@@ -26,9 +25,6 @@ export const pipelines = pgTable(
       .defaultRandom(),
     projectId: uuid('project_id')
       .references(() => projects.id, { onDelete: 'cascade' })
-      .notNull(),
-    orgId: uuid('org_id')
-      .references(() => organizations.id)
       .notNull(),
     name: varchar('name', { length: 100 }).notNull(),
     description: text('description'),
@@ -73,9 +69,6 @@ export const pipelineRuns = pgTable(
     projectId: uuid('project_id')
       .references(() => projects.id, { onDelete: 'cascade' })
       .notNull(),
-    orgId: uuid('org_id')
-      .references(() => organizations.id)
-      .notNull(),
     runNumber: integer('run_number').notNull(),
     status: varchar('status', { length: 20 }).default('queued'),
     branch: varchar('branch', { length: 100 }),
@@ -115,9 +108,6 @@ export const deployTargets = pgTable(
     id: uuid('id')
       .primaryKey()
       .defaultRandom(),
-    orgId: uuid('org_id')
-      .references(() => organizations.id)
-      .notNull(),
     name: varchar('name', { length: 100 }).notNull(),
     type: varchar('type', { length: 20 }).default('ssh'),
     host: varchar('host', { length: 255 }).notNull(),
@@ -134,8 +124,7 @@ export const deployTargets = pgTable(
     createdAt: timestamp('created_at')
       .defaultNow()
       .notNull(),
-  },
-  (table) => [index('idx_deploy_targets_org').on(table.orgId)],
+  }
 );
 
 /**
@@ -150,9 +139,6 @@ export const deployments = pgTable(
       .defaultRandom(),
     projectId: uuid('project_id')
       .references(() => projects.id, { onDelete: 'cascade' })
-      .notNull(),
-    orgId: uuid('org_id')
-      .references(() => organizations.id)
       .notNull(),
     pipelineRunId: uuid('pipeline_run_id'),
     deployTargetId: uuid('deploy_target_id'),

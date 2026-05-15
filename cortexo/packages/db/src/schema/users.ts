@@ -5,11 +5,8 @@ import {
   timestamp,
   index,
 } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
-import { organizations } from './organizations';
-
 /**
- * Users table — team members belonging to an organization.
+ * Users table — team members.
  * Supports email/password + OAuth providers (GitHub, Google).
  */
 export const users = pgTable(
@@ -18,7 +15,6 @@ export const users = pgTable(
     id: uuid('id')
       .primaryKey()
       .defaultRandom(),
-    orgId: uuid('org_id').references(() => organizations.id),
     name: varchar('name', { length: 100 }).notNull(),
     email: varchar('email', { length: 255 }).unique().notNull(),
     passwordHash: varchar('password_hash', { length: 255 }),
@@ -36,7 +32,6 @@ export const users = pgTable(
       .notNull(),
   },
   (table) => [
-    index('idx_users_org').on(table.orgId),
     index('idx_users_email').on(table.email),
   ],
 );

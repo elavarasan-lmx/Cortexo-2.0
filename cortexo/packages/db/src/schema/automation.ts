@@ -9,7 +9,6 @@ import {
   jsonb,
   index,
 } from 'drizzle-orm/pg-core';
-import { organizations } from './organizations';
 
 // ─── Alert Channels & Rules ────────────────────────────────────────────────
 
@@ -19,9 +18,6 @@ export const alertChannels = pgTable(
     id: uuid('id')
       .primaryKey()
       .defaultRandom(),
-    orgId: uuid('org_id')
-      .references(() => organizations.id)
-      .notNull(),
     name: varchar('name', { length: 100 }).notNull(),
     type: varchar('type', { length: 20 }).notNull(),
     config: jsonb('config').$type<Record<string, unknown>>().default({}),
@@ -34,7 +30,6 @@ export const alertChannels = pgTable(
       .notNull(),
   },
   (table) => [
-    index('idx_alertch_org').on(table.orgId),
     index('idx_alertch_type').on(table.type),
   ],
 );
@@ -48,9 +43,6 @@ export const alertRules = pgTable(
     id: uuid('id')
       .primaryKey()
       .defaultRandom(),
-    orgId: uuid('org_id')
-      .references(() => organizations.id)
-      .notNull(),
     name: varchar('name', { length: 100 }).notNull(),
     condition: varchar('condition', { length: 500 }).notNull(),
     threshold: integer('threshold'),
@@ -63,10 +55,7 @@ export const alertRules = pgTable(
     createdAt: timestamp('created_at')
       .defaultNow()
       .notNull(),
-  },
-  (table) => [
-    index('idx_alertrules_org').on(table.orgId),
-  ],
+  }
 );
 
 export type AlertRule = typeof alertRules.$inferSelect;
@@ -78,9 +67,6 @@ export const alertHistory = pgTable(
     id: uuid('id')
       .primaryKey()
       .defaultRandom(),
-    orgId: uuid('org_id')
-      .references(() => organizations.id)
-      .notNull(),
     ruleId: uuid('rule_id')
       .references(() => alertRules.id),
     channelId: uuid('channel_id')
@@ -95,7 +81,6 @@ export const alertHistory = pgTable(
       .notNull(),
   },
   (table) => [
-    index('idx_alerthistory_org').on(table.orgId),
     index('idx_alerthistory_sent').on(table.sentAt),
   ],
 );
@@ -112,9 +97,6 @@ export const judgeScores = pgTable(
     id: uuid('id')
       .primaryKey()
       .defaultRandom(),
-    orgId: uuid('org_id')
-      .references(() => organizations.id)
-      .notNull(),
     targetType: varchar('target_type', { length: 30 }).notNull(),
     targetId: varchar('target_id', { length: 100 }).notNull(),
     targetName: varchar('target_name', { length: 200 }),
@@ -133,7 +115,6 @@ export const judgeScores = pgTable(
       .notNull(),
   },
   (table) => [
-    index('idx_judgescore_org').on(table.orgId),
     index('idx_judgescore_target').on(table.targetType, table.targetId),
     index('idx_judgescore_overall').on(table.overallScore),
   ],

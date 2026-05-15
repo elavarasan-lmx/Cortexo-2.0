@@ -10,7 +10,6 @@ import {
   index,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
-import { organizations } from './organizations';
 
 /**
  * Projects table — connected repos / client panels.
@@ -22,9 +21,6 @@ export const projects = pgTable(
     id: uuid('id')
       .primaryKey()
       .defaultRandom(),
-    orgId: uuid('org_id')
-      .references(() => organizations.id)
-      .notNull(),
     name: varchar('name', { length: 100 }).notNull(),
     description: text('description'),
     repoProvider: varchar('repo_provider', { length: 20 }).notNull(),
@@ -41,8 +37,7 @@ export const projects = pgTable(
     updatedAt: timestamp('updated_at')
       .defaultNow()
       .notNull(),
-  },
-  (table) => [index('idx_projects_org').on(table.orgId)],
+  }
 );
 
 export type Project = typeof projects.$inferSelect;

@@ -1,8 +1,6 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import { getDb } from '../lib/db.js';
 
-const DEV_ORG_ID = '00000000-0000-0000-0000-000000000000';
-
 /**
  * JWT user payload — the decoded token content attached to every request.
  */
@@ -10,7 +8,6 @@ export interface JwtUser {
   sub: string;
   email: string;
   name: string;
-  orgId: string;
   role: string;
 }
 
@@ -46,7 +43,6 @@ export async function authMiddleware(
             sub: devUser.id,
             email: devUser.email,
             name: devUser.name,
-            orgId: devUser.orgId || DEV_ORG_ID,
             role: devUser.role || 'admin',
           } satisfies JwtUser;
         } else {
@@ -54,7 +50,6 @@ export async function authMiddleware(
             sub: 'dev-user',
             email: 'dev@cortexo.local',
             name: 'Dev User',
-            orgId: DEV_ORG_ID,
             role: 'admin',
           } satisfies JwtUser;
         }
@@ -63,7 +58,6 @@ export async function authMiddleware(
           sub: 'dev-user',
           email: 'dev@cortexo.local',
           name: 'Dev User',
-          orgId: DEV_ORG_ID,
           role: 'admin',
         } satisfies JwtUser;
       }

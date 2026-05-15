@@ -5,7 +5,6 @@ import { eq, sql } from 'drizzle-orm';
 import { projects } from '@cortexo/db/schema';
 import { parsePagination, paginatedResponse } from '../lib/pagination.js';
 import { cacheFetch, cacheInvalidate } from '../lib/redis.js';
-import { getOrgId } from '../lib/request-context.js';
 import { logAudit } from './audit.js';
 import { encrypt, decrypt } from '../lib/crypto.js';
 
@@ -95,20 +94,17 @@ export async function projectRoutes(app: FastifyInstance) {
   // List all projects (paginated, cached, org-isolated)
   app.get('/projects', async (request, reply) => {
     const { page, limit, offset } = parsePagination(request.query as Record<string, unknown>);
-    const orgId = getOrgId(request);
     try {
       const db = await getDb();
-      const cacheKey = `projects:list:${orgId}:p${page}:l${limit}`;
-      const where = eq(projects.orgId, orgId);
+      const cacheKey = `projects:list:p${page}:l${limit}`;
 
       const result = await cacheFetch(cacheKey, async () => {
         const [rows, countResult] = await Promise.all([
           db.select().from(projects)
-            .where(where)
             .orderBy(sql`created_at DESC`)
             .limit(limit)
             .offset(offset),
-          db.select({ count: sql<number>`count(*)` }).from(projects).where(where),
+          db.select({ count: sql<number>`count(*)` }).from(projects),
         ]);
         const total = Number(countResult[0]?.count || 0);
         const decrypted = rows.map(r => decryptProjectRow(r as Record<string, unknown>));
@@ -136,13 +132,11 @@ export async function projectRoutes(app: FastifyInstance) {
 
     try {
       const db = await getDb();
-      const orgId = getOrgId(request);
 
       // Get all projects in this org with their settings
       const allProjects = await db
         .select({ id: projects.id, name: projects.name, settings: projects.settings })
-        .from(projects)
-        .where(eq(projects.orgId, orgId));
+        .from(projects);
 
       const conflicts: Record<string, { field: string; existingProject: string; existingValue: string }> = {};
 
@@ -218,7 +212,6 @@ export async function projectRoutes(app: FastifyInstance) {
       const insertData: Record<string, unknown> = {
         id,
         ...parsed.data,
-        orgId: user?.orgId || getOrgId(request),
         sdkApiKey: sdkKey,
       };
       // Validate serverId reference if present

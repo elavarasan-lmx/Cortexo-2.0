@@ -12,8 +12,6 @@ import {
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { projects } from './projects';
-import { organizations } from './organizations';
-
 /**
  * Errors table — grouped error types (fingerprint-based deduplication).
  * Each unique error fingerprint creates one row; individual occurrences go to error_events.
@@ -26,9 +24,6 @@ export const errors = pgTable(
       .defaultRandom(),
     projectId: uuid('project_id')
       .references(() => projects.id, { onDelete: 'cascade' })
-      .notNull(),
-    orgId: uuid('org_id')
-      .references(() => organizations.id)
       .notNull(),
     fingerprint: varchar('fingerprint', { length: 64 }).notNull(),
     type: varchar('type', { length: 200 }).notNull(),
@@ -122,8 +117,6 @@ export const rootCauses = pgTable(
     projectId: uuid('project_id')
       .references(() => projects.id, { onDelete: 'cascade' })
       .notNull(),
-    orgId: uuid('org_id')
-      .references(() => organizations.id),
     deploymentId: uuid('deployment_id'),
     // ─── Sprint 2 (F8) — expanded fields ─────────────────────────
     summary: text('summary'),                // one-line summary
