@@ -238,7 +238,7 @@ export default function TestingHubPage() {
                   <p style={{ fontSize: '13px' }}>Add a client URL to start testing</p>
                 </div>
               ) : targets.map((t: any) => (
-                <div key={t.id} className="cx-card cx-border" style={{ padding: '20px', transition: 'border-color 200ms' }}>
+                <div key={t.id} className="cx-card cx-border" style={{ display: 'flex', flexDirection: 'column', padding: '20px', transition: 'border-color 200ms' }}>
                   <div className="cx-flex-between" style={{ marginBottom: '10px' }}>
                     <div className="cx-flex cx-items-center cx-gap-10">
                       <div className="cx-flex-center cx-r-8" style={{ width: '36px', height: '36px', background: 'rgba(var(--primary-rgb, 124,58,237), 0.1)' }}>
@@ -259,11 +259,11 @@ export default function TestingHubPage() {
                     </button>
                   </div>
 
-                  <p className="cx-text-muted" style={{ fontSize: '12px', margin: '0 0 14px', fontFamily: "'JetBrains Mono', monospace", wordBreak: 'break-all' }}>
+                  <p className="cx-text-muted" style={{ fontSize: '12px', margin: '0 0 14px', fontFamily: "'JetBrains Mono', monospace", wordBreak: 'break-all', flex: 1 }}>
                     {t.baseUrl}
                   </p>
 
-                  <div className="cx-flex cx-gap-8">
+                  <div className="cx-flex cx-gap-8" style={{ marginTop: 'auto' }}>
                     <button
                       onClick={() => handleRun(t.id)}
                       disabled={runningTarget === t.id || runningFull === t.id || cases.length === 0}

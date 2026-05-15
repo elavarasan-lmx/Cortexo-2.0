@@ -526,6 +526,35 @@ export interface KnowledgeDoc {
   updatedAt?: string;
 }
 
+export interface JudgeScore {
+  id: string;
+  targetType: 'deployment' | 'code-review' | 'error-resolution' | 'agent-task';
+  targetId: string;
+  targetName?: string;
+  overallScore: number;
+  scores: {
+    quality: number;
+    reliability: number;
+    security: number;
+    performance: number;
+    maintainability: number;
+  };
+  grade: string;
+  summary?: string;
+  suggestions?: string[];
+  aiModel?: string;
+  scoredAt: string;
+}
+
+export interface JudgeAggregateStats {
+  totalScored: number;
+  averageScore: number;
+  byType: Record<string, { count: number; avgScore: number }>;
+  gradeDistribution: Record<string, number>;
+  trend: { last7d: number; last30d: number; last90d: number; direction: string };
+  topSuggestions: { suggestion: string; occurrences: number }[];
+}
+
 
 // ─── API Client ─────────────────────────────────────────────────────────────
 
@@ -1055,6 +1084,20 @@ class ApiClient {
     return this.request<Record<string, unknown>[]>('GET', `/testing/history${qs}`);
   }
   runTest(data: Record<string, unknown>)              { return this.request<Record<string, unknown>>('POST', '/testing/run', data); }
+
+  // ─── AI Judge Scores ──────────────────────────────────────────────────────
+  getJudgeScores(params?: { targetType?: string; page?: number; limit?: number }) {
+    const qs = params ? '?' + new URLSearchParams(Object.entries(params).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)])).toString() : '';
+    return this.request<JudgeScore[]>('GET', `/judge-scores${qs}`);
+  }
+  getJudgeScore(id: string)                            { return this.request<JudgeScore>('GET', `/judge-scores/${id}`); }
+  submitJudgeScore(data: { targetType: string; targetId: string; scores: Record<string, number>; summary?: string; suggestions?: string[]; aiModel?: string }) {
+    return this.request<JudgeScore>('POST', '/judge-scores', data);
+  }
+  getJudgeAggregateStats()                             { return this.request<JudgeAggregateStats>('GET', '/judge-scores/stats/aggregate'); }
+  triggerJudgeScore(data: { targetType: string; targetId: string }) {
+    return this.request<{ success: boolean; jobId: string; message: string }>('POST', '/judge-scores/trigger', data);
+  }
 
   // ── File Push (Patch Deploy) ───────────────────────────────
   // Note: getDeployConfigs() is defined in the Deploy Configs section above

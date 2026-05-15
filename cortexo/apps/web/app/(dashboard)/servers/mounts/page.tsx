@@ -202,6 +202,7 @@ export default function ServerMountsPage() {
 
           return (
             <div key={m.id} className="cx-card cx-border"
+              style={{ display: 'flex', flexDirection: 'column' }}
               onMouseEnter={e => { e.currentTarget.style.boxShadow = `0 12px 32px -8px ${accentColor}20, 0 4px 12px rgba(0,0,0,0.15)`; e.currentTarget.style.transform = 'translateY(-2px)'; }}
               onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}
             >
@@ -229,7 +230,7 @@ export default function ServerMountsPage() {
               </div>
 
               {/* Details */}
-              <div style={{ padding:'14px 18px' }}>
+              <div style={{ padding:'14px 18px', flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:12 }}>
                   <div>
                     <span style={{ fontSize:10, fontWeight:600, color:'rgb(var(--text-muted))', textTransform:'uppercase', letterSpacing:'0.05em' }}>Remote Path</span>
@@ -265,7 +266,7 @@ export default function ServerMountsPage() {
                 </div>
 
                 {/* Actions */}
-                <div style={{ display:'flex', gap:8, marginTop:12 }}>
+                <div style={{ display:'flex', gap:8, marginTop:'auto', paddingTop: 12 }}>
                   {isMounted ? (
                     <>
                       <button onClick={() => handleUnmount(m.id)} disabled={!!act}

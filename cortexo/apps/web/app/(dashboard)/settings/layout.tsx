@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
 import {
-  User, Bell, LayoutGrid, Shield, Database, Users, Cog,
+  User, Bell, LayoutGrid, Shield, Database, Users, Cog, Home, ChevronRight,
 } from 'lucide-react';
 
 const tabs = [
@@ -16,6 +16,53 @@ const tabs = [
   { label: 'Base Templates', href: '/settings/profiles', icon: Database },
   { label: 'Modules', href: '/settings/modules', icon: LayoutGrid },
 ];
+
+function Breadcrumbs({ pathname }: { pathname: string }) {
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.length < 2) return null;
+
+  const crumbs: { label: string; href: string }[] = [];
+  let path = '';
+
+  segments.forEach((seg, idx) => {
+    path += `/${seg}`;
+    if (idx > 0) {
+      const tab = tabs.find(t => t.href === path);
+      if (tab) {
+        crumbs.push({ label: tab.label, href: path });
+      } else {
+        crumbs.push({ label: seg.charAt(0).toUpperCase() + seg.slice(1).replace(/-/g, ' '), href: path });
+      }
+    }
+  });
+
+  if (crumbs.length === 0) return null;
+
+  return (
+    <nav style={{
+      display: 'flex', alignItems: 'center', gap: '6px',
+      fontSize: '12px', color: 'rgb(var(--text-muted))',
+      marginBottom: '12px',
+    }}>
+      <Link href="/dashboard" style={{ color: 'rgb(var(--text-muted))', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <Home style={{ width: '14px', height: '14px' }} />
+        Home
+      </Link>
+      <ChevronRight style={{ width: '14px', height: '14px' }} />
+      <Link href="/settings" style={{ color: 'rgb(var(--text-muted))', textDecoration: 'none' }}>Settings</Link>
+      {crumbs.map((crumb, idx) => (
+        <span key={crumb.href} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <ChevronRight style={{ width: '14px', height: '14px' }} />
+          {idx === crumbs.length - 1 ? (
+            <span style={{ color: 'rgb(var(--text-primary))', fontWeight: 600 }}>{crumb.label}</span>
+          ) : (
+            <Link href={crumb.href} style={{ color: 'rgb(var(--text-muted))', textDecoration: 'none' }}>{crumb.label}</Link>
+          )}
+        </span>
+      ))}
+    </nav>
+  );
+}
 
 function SettingsTab({
   tab,
@@ -81,6 +128,9 @@ export default function SettingsLayout({
 
   return (
     <div style={{ maxWidth: '100%' }}>
+      {/* Breadcrumbs */}
+      <Breadcrumbs pathname={pathname} />
+
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{

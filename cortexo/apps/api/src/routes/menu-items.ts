@@ -99,21 +99,24 @@ export async function menuItemRoutes(app: FastifyInstance) {
 
     const defaults = [
       // MAIN
-      { label: 'Dashboard',   href: '/dashboard',      emoji: '◉',  sectionTitle: 'MAIN',           sectionColor: '#818CF8', sortOrder: 1 },
-      { label: 'Projects',    href: '/projects',       emoji: '📁', sectionTitle: 'MAIN',           sectionColor: '#818CF8', sortOrder: 2 },
-      { label: 'Deployments', href: '/deployments',    emoji: '⬡',  sectionTitle: 'MAIN',           sectionColor: '#818CF8', sortOrder: 3 },
-      { label: 'Knowledge',   href: '/knowledge-base', emoji: '📚', sectionTitle: 'MAIN',           sectionColor: '#818CF8', sortOrder: 4 },
+      { label: 'Dashboard',     href: '/dashboard',      emoji: '◉',  sectionTitle: 'MAIN',           sectionColor: '#818CF8', sortOrder: 1 },
+      { label: 'Projects',      href: '/projects',       emoji: '📁', sectionTitle: 'MAIN',           sectionColor: '#818CF8', sortOrder: 2 },
+      { label: 'Deployments',   href: '/deployments',    emoji: '⬡',  sectionTitle: 'MAIN',           sectionColor: '#818CF8', sortOrder: 3 },
+      { label: 'Organizations', href: '/organizations',  emoji: '🏢', sectionTitle: 'MAIN',           sectionColor: '#818CF8', sortOrder: 4 },
+      { label: 'Knowledge',     href: '/knowledge-base', emoji: '📚', sectionTitle: 'MAIN',           sectionColor: '#818CF8', sortOrder: 5 },
+      { label: 'DevOps Docs',   href: '/devops-docs',    emoji: '📄', sectionTitle: 'MAIN',           sectionColor: '#818CF8', sortOrder: 6 },
       // MONITORING
-      { label: 'Heartbeat',   href: '/heartbeat',      emoji: '💓', sectionTitle: 'MONITORING',     sectionColor: '#EF4444', sortOrder: 10 },
-      { label: 'Bug Tracker', href: '/bug-tracker',    emoji: '🐛', sectionTitle: 'MONITORING',     sectionColor: '#EF4444', sortOrder: 11 },
+      { label: 'Bug Tracker',   href: '/bug-tracker',    emoji: '🐛', sectionTitle: 'MONITORING',     sectionColor: '#EF4444', sortOrder: 10 },
+      { label: 'Code Audit',    href: '/code-audit',     emoji: '🔍', sectionTitle: 'MONITORING',     sectionColor: '#EF4444', sortOrder: 11 },
       // INFRASTRUCTURE
-      { label: 'Servers',     href: '/servers',        emoji: '🖥',  sectionTitle: 'INFRASTRUCTURE', sectionColor: '#06B6D4', sortOrder: 20 },
-      { label: 'SSHFS',       href: '/servers/mounts', emoji: '📂', sectionTitle: 'INFRASTRUCTURE', sectionColor: '#06B6D4', sortOrder: 21 },
-      { label: 'Pipelines',   href: '/pipelines',      emoji: '🔀', sectionTitle: 'INFRASTRUCTURE', sectionColor: '#06B6D4', sortOrder: 22 },
+      { label: 'Servers',       href: '/servers',        emoji: '🖥',  sectionTitle: 'INFRASTRUCTURE', sectionColor: '#06B6D4', sortOrder: 20 },
+      { label: 'Pipelines',     href: '/pipelines',      emoji: '🔀', sectionTitle: 'INFRASTRUCTURE', sectionColor: '#06B6D4', sortOrder: 21 },
       // ADMIN
-      { label: 'Audit Log',   href: '/audit-log',      emoji: '📜', sectionTitle: 'ADMIN',          sectionColor: '#6B7280', sortOrder: 30 },
-      { label: 'Testing',     href: '/testing',        emoji: '🧪', sectionTitle: 'ADMIN',          sectionColor: '#6B7280', sortOrder: 31 },
-      { label: 'Settings',    href: '/settings',       emoji: '⚙',  sectionTitle: 'ADMIN',          sectionColor: '#6B7280', sortOrder: 32 },
+      { label: 'Audit Log',     href: '/audit-log',      emoji: '📜', sectionTitle: 'ADMIN',          sectionColor: '#6B7280', sortOrder: 30 },
+      { label: 'Testing',       href: '/testing',        emoji: '🧪', sectionTitle: 'ADMIN',          sectionColor: '#6B7280', sortOrder: 31 },
+      { label: 'Security',      href: '/security',       emoji: '🛡', sectionTitle: 'ADMIN',          sectionColor: '#6B7280', sortOrder: 32 },
+      { label: 'Reports',       href: '/reports',        emoji: '📊', sectionTitle: 'ADMIN',          sectionColor: '#6B7280', sortOrder: 33 },
+      { label: 'Settings',      href: '/settings',       emoji: '⚙',  sectionTitle: 'ADMIN',          sectionColor: '#6B7280', sortOrder: 34 },
     ];
 
     await db.insert(menuItems).values(defaults);

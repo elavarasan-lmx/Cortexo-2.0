@@ -227,7 +227,7 @@ export default function ServersPage() {
           const accentColor = cpuPct > 80 ? '#EF4444' : cpuPct > 60 ? '#F59E0B' : '#10B981';
 
           return (
-            <div key={srv.id} className="cx-card" style={{ borderRadius: '14px', overflow: 'hidden', transition: 'box-shadow 200ms, transform 200ms', position: 'relative' }}
+            <div key={srv.id} className="cx-card" style={{ display: 'flex', flexDirection: 'column', borderRadius: '14px', overflow: 'hidden', transition: 'box-shadow 200ms, transform 200ms', position: 'relative' }}
               onMouseEnter={e => { e.currentTarget.style.boxShadow = `0 12px 32px -8px ${accentColor}20, 0 4px 12px rgba(0,0,0,0.15)`; e.currentTarget.style.transform = 'translateY(-2px)'; }}
               onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}
             >

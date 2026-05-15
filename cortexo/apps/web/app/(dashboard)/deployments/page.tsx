@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable react-hooks/exhaustive-deps */
 
 import {
   Rocket, CheckCircle, XCircle, Clock, Loader2, RotateCcw,
@@ -8,8 +9,8 @@ import {
 } from 'lucide-react';
 import DeployForm, { type DeployFormInitialData } from '@/components/deploy-form';
 import { useModal } from '@/components/modal-provider';
-import { useState, useEffect } from 'react';
-import { Deployment, Project, Server, api } from '@/lib/api';
+import { useState, useEffect, useMemo } from 'react';
+import { Deployment, Project, Server, JudgeScore, api } from '@/lib/api';
 import { useCortexoQuery, useProjectLookup, resolveProjectName, timeAgo, formatDuration } from '@/lib/hooks';
 
 import { useToastStore } from '@/lib/toast-store';
@@ -175,6 +176,18 @@ export default function DeploymentsPage() {
     () => api.getDeployments(),
   );
 
+  // AI Judge scores
+  const { data: judgeScoresRaw } = useCortexoQuery(
+    ['judge-scores'],
+    () => api.getJudgeScores({ targetType: 'deployment' }),
+  );
+  const judgeScoreMap = useMemo(() => {
+    const map = new Map<string, JudgeScore>();
+    const scores = (judgeScoresRaw as any)?.data || judgeScoresRaw || [];
+    (Array.isArray(scores) ? scores : []).forEach((s: JudgeScore) => map.set(s.targetId, s));
+    return map;
+  }, [judgeScoresRaw]);
+
 
   /* ─── Auto-refresh when deploys are running ─── */
   useEffect(() => {
@@ -333,6 +346,7 @@ export default function DeploymentsPage() {
               <th className="cx-fw-600 cx-text-secondary cx-p-16 cx-text-13">Branch</th>
               <th className="cx-fw-600 cx-text-secondary cx-p-16 cx-text-13">Env</th>
               <th className="cx-fw-600 cx-text-secondary cx-p-16 cx-text-13">Status</th>
+              <th className="cx-fw-600 cx-text-secondary cx-p-16 cx-text-13">AI Score</th>
               <th className="cx-fw-600 cx-text-secondary cx-p-16 cx-text-13">Duration</th>
               <th className="cx-fw-600 cx-text-secondary cx-p-16 cx-text-13">Triggered By</th>
               <th className="cx-fw-600 cx-text-secondary cx-p-16 cx-text-13">Time</th>
@@ -378,6 +392,10 @@ export default function DeploymentsPage() {
                       <st.icon style={{ width: '12px', height: '12px' }} className={deploy.status === 'deploying' ? 'cx-spin' : ''} />
                       {st.label}
                     </span>
+                  </td>
+                  {/* AI Judge Grade */}
+                  <td className="cx-p-16">
+                    <AiGradeBadge score={judgeScoreMap.get(deploy.id?.toString()) || judgeScoreMap.get(`DEP-${deploy.id?.toString().substring(0, 4)}`)} />
                   </td>
                   {/* Duration */}
                   <td className="cx-text-secondary cx-p-16 cx-text-13">{deploy.durationMs ? formatDuration(deploy.durationMs) : '—'}</td>
@@ -437,7 +455,7 @@ export default function DeploymentsPage() {
               );
             }) : (
               <tr>
-                <td colSpan={9} style={{ padding: '40px 16px', textAlign: 'center' }}>
+                <td colSpan={10} style={{ padding: '40px 16px', textAlign: 'center' }}>
                   <Rocket className="cx-text-muted" style={{ width: '24px', height: '24px', margin: '0 auto 12px' }} />
                   <p className="cx-fw-600 cx-text-primary" style={{ margin: 0, fontSize: '14px' }}>No deployments found</p>
                   <p className="cx-text-secondary" style={{ margin: '4px 0 0', fontSize: '13px' }}>Deploy your first project to get started.</p>
@@ -458,5 +476,49 @@ export default function DeploymentsPage() {
       {/* Modals */}
       {showDeploy && <DeployForm onClose={() => { setShowDeploy(false); setEditInitialData(undefined); }} onSuccess={() => { setShowDeploy(false); setEditInitialData(undefined); refetch(); toast.success('Deployment Started', 'Your deployment has been triggered.'); }} initialData={editInitialData} />}
     </div>
+  );
+}
+
+/* ─── AI Grade Badge ─── */
+const gradeColors: Record<string, { color: string; bg: string; glow: string }> = {
+  'A':  { color: '#10B981', bg: 'rgba(16,185,129,0.12)',  glow: 'rgba(16,185,129,0.3)' },
+  'A-': { color: '#34D399', bg: 'rgba(52,211,153,0.12)',  glow: 'rgba(52,211,153,0.3)' },
+  'B':  { color: '#F59E0B', bg: 'rgba(245,158,11,0.12)',  glow: 'rgba(245,158,11,0.3)' },
+  'B-': { color: '#FBBF24', bg: 'rgba(251,191,36,0.12)',  glow: 'rgba(251,191,36,0.3)' },
+  'C+': { color: '#F97316', bg: 'rgba(249,115,22,0.12)',  glow: 'rgba(249,115,22,0.3)' },
+  'C':  { color: '#EF4444', bg: 'rgba(239,68,68,0.12)',   glow: 'rgba(239,68,68,0.3)' },
+  'D':  { color: '#DC2626', bg: 'rgba(220,38,38,0.12)',   glow: 'rgba(220,38,38,0.3)' },
+};
+
+function AiGradeBadge({ score }: { score?: JudgeScore }) {
+  if (!score) {
+    return (
+      <span className="cx-text-muted cx-text-11 cx-fw-500" style={{ opacity: 0.5 }}>—</span>
+    );
+  }
+
+  const gc = gradeColors[score.grade] || gradeColors['C'];
+  return (
+    <span
+      title={`AI Score: ${score.overallScore}/100 — ${score.summary || 'No summary'}`}
+      className="cx-flex cx-items-center cx-gap-6 cx-fw-700"
+      style={{
+        display: 'inline-flex',
+        padding: '4px 10px',
+        borderRadius: '8px',
+        fontSize: '12px',
+        backgroundColor: gc.bg,
+        color: gc.color,
+        border: `1px solid ${gc.glow}`,
+        cursor: 'default',
+        letterSpacing: '0.5px',
+      }}
+    >
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={gc.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+      </svg>
+      {score.grade}
+      <span style={{ fontSize: '10px', fontWeight: 500, opacity: 0.7 }}>{score.overallScore}%</span>
+    </span>
   );
 }

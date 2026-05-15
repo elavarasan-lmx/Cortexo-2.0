@@ -45,7 +45,7 @@ export async function moduleDefRoutes(app: FastifyInstance) {
     {
       id: 'customer_registration',
       name: 'Customer Registration',
-      icon: '👤',
+      icon: 'UserCheck',
       description: 'Full customer signup flow: form validation, OTP generation, duplicate checks, final registration',
       category: 'kyc',
       steps: [
@@ -212,7 +212,7 @@ export async function moduleDefRoutes(app: FastifyInstance) {
     {
       id: 'user_login',
       name: 'User Login & Session',
-      icon: '🔐',
+      icon: 'KeyRound',
       description: 'Login flow, session management, password recovery, and logout',
       category: 'auth',
       steps: [
@@ -282,7 +282,7 @@ export async function moduleDefRoutes(app: FastifyInstance) {
     {
       id: 'rate_engine',
       name: 'Rate Engine & Live Prices',
-      icon: '📊',
+      icon: 'BarChart3',
       description: 'Live rate feeds, commodity prices, API rate endpoints',
       category: 'rates',
       steps: [
@@ -331,7 +331,7 @@ export async function moduleDefRoutes(app: FastifyInstance) {
     {
       id: 'trading_booking',
       name: 'Trading & Booking',
-      icon: '💰',
+      icon: 'Wallet',
       description: 'Commodity booking, trade operations, order management (requires auth)',
       category: 'trading',
       steps: [

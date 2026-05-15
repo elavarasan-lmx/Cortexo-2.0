@@ -25,6 +25,10 @@ import {
   ScrollText,
   FlaskConical,
   Settings,
+  Building2,
+  SearchCode,
+  Shield,
+  FileBarChart,
 } from 'lucide-react';
 
 /* ── Lucide icon registry — maps icon name strings to components ── */
@@ -40,6 +44,10 @@ const ICON_MAP: Record<string, React.ComponentType<any>> = {
   ScrollText,
   FlaskConical,
   Settings,
+  Building2,
+  SearchCode,
+  Shield,
+  FileBarChart,
 };
 
 /* ── Nav link — professional icon-based styling ── */

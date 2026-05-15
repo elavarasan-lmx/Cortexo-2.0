@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import {
   Shield, Eye, EyeOff, Save, Trash2, Loader2, CheckCircle, XCircle,
-  GitBranch, Key, Bot, Zap, Lock, Edit3, X, Mail,
+  GitBranch, Key, Bot, Zap, Lock, Edit3, X, Mail, Plus, Copy, Clock,
 } from 'lucide-react';
 import { useModal } from '@/components/modal-provider';
 
@@ -31,6 +31,16 @@ interface SavedCred {
   updatedAt: string;
 }
 
+interface ApiKey {
+  id: string;
+  name: string;
+  key: string;
+  prefix: string;
+  expiresAt: string | null;
+  createdAt: string;
+  lastUsed: string | null;
+}
+
 const categoryMeta: Record<string, { icon: any; label: string; color: string; description: string }> = {
   github:  { icon: GitBranch, label: 'GitHub',     color: '#C9D1D9', description: 'Personal Access Token for repo listing, webhooks, and CI/CD' },
   openai:  { icon: Bot,       label: 'OpenAI',     color: '#10B981', description: 'API key for Knowledge Base AI Assistant and postmortem generation' },
@@ -52,6 +62,15 @@ export default function CredentialsPage() {
   const [saving, setSaving] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
 
+  // API Keys state
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [showNewKeyModal, setShowNewKeyModal] = useState(false);
+  const [newKeyName, setNewKeyName] = useState('');
+  const [newKeyExpiry, setNewKeyExpiry] = useState('90');
+  const [newKeyValue, setNewKeyValue] = useState<string | null>(null);
+  const [creatingKey, setCreatingKey] = useState(false);
+  const [apiKeysLoading, setApiKeysLoading] = useState(true);
+
   const token = typeof window !== 'undefined' ? localStorage.getItem('cortexo_token') : '';
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -71,7 +90,16 @@ export default function CredentialsPage() {
     setLoading(false);
   }
 
-  useEffect(() => { loadCredentials(); }, []);
+  async function loadApiKeys() {
+    try {
+      const res = await fetch(`${API}/api-keys`, { headers });
+      const json = await res.json();
+      setApiKeys(json.keys || []);
+    } catch { setApiKeys([]); }
+    setApiKeysLoading(false);
+  }
+
+  useEffect(() => { loadCredentials(); loadApiKeys(); }, []);
 
   async function handleSave(catId: string, key: string, label: string) {
     const val = values[key];
@@ -104,6 +132,48 @@ export default function CredentialsPage() {
       showToast('Credential deleted');
       await loadCredentials();
     } catch { showToast('Failed to delete', false); }
+  }
+
+  async function handleCreateApiKey() {
+    if (!newKeyName.trim()) return;
+    setCreatingKey(true);
+    try {
+      const res = await fetch(`${API}/api-keys`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ name: newKeyName.trim(), expiresInDays: parseInt(newKeyExpiry) }),
+      });
+      const json = await res.json();
+      if (json.key) {
+        setNewKeyValue(json.key);
+        showToast('API key created successfully');
+        await loadApiKeys();
+      } else {
+        showToast('Failed to create API key', false);
+      }
+    } catch { showToast('Failed to create API key', false); }
+    setCreatingKey(false);
+  }
+
+  async function handleRevokeApiKey(keyId: string) {
+    const ok = await confirmModal({ title: 'Revoke API Key', message: 'This API key will be immediately invalidated. This cannot be undone.', variant: 'danger', confirmText: 'Revoke' });
+    if (!ok) return;
+    try {
+      await fetch(`${API}/api-keys/${keyId}`, { method: 'DELETE', headers });
+      showToast('API key revoked');
+      await loadApiKeys();
+    } catch { showToast('Failed to revoke key', false); }
+  }
+
+  function handleCopyKey(key: string) {
+    navigator.clipboard.writeText(key);
+    showToast('Copied to clipboard');
+  }
+
+  function formatExpiry(dateStr: string | null): string {
+    if (!dateStr) return 'Never';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
   if (loading) {
@@ -317,6 +387,164 @@ export default function CredentialsPage() {
           </div>
         </div>
       )}
+
+      {/* API Keys Section */}
+      <div className="cx-card cx-border" style={{ padding: '24px' }}>
+        <div className="cx-flex-between" style={{ marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+          <div className="cx-flex cx-items-center cx-gap-12">
+            <div style={{
+              width: '40px', height: '40px', borderRadius: '10px',
+              backgroundColor: 'rgba(124, 58, 237, 0.15)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Key style={{ width: '18px', height: '18px', color: '#7C3AED' }} />
+            </div>
+            <div>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>API Keys</h3>
+              <p style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', margin: '2px 0 0' }}>
+                Create and manage API keys for programmatic access
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => { setShowNewKeyModal(true); setNewKeyValue(null); setNewKeyName(''); }}
+            className="cx-btn-primary cx-flex cx-items-center cx-gap-8"
+            style={{ padding: '8px 16px', fontSize: '12px' }}
+          >
+            <Plus style={{ width: '14px', height: '14px' }} />
+            Create API Key
+          </button>
+        </div>
+
+        {/* New Key Modal */}
+        {showNewKeyModal && (
+          <div style={{
+            marginBottom: '20px', padding: '20px',
+            backgroundColor: 'rgba(var(--border), 0.3)', borderRadius: '12px',
+          }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgb(var(--text-secondary))', marginBottom: '6px', display: 'block' }}>Key Name</label>
+                <input
+                  type="text"
+                  value={newKeyName}
+                  onChange={(e) => setNewKeyName(e.target.value)}
+                  placeholder="My API Key"
+                  style={{
+                    width: '100%', padding: '10px 14px', borderRadius: '8px',
+                    border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))',
+                    color: 'rgb(var(--text-primary))', fontSize: '13px',
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 600, color: 'rgb(var(--text-secondary))', marginBottom: '6px', display: 'block' }}>Expires After</label>
+                <select
+                  value={newKeyExpiry}
+                  onChange={(e) => setNewKeyExpiry(e.target.value)}
+                  style={{
+                    width: '100%', padding: '10px 14px', borderRadius: '8px',
+                    border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))',
+                    color: 'rgb(var(--text-primary))', fontSize: '13px', cursor: 'pointer',
+                  }}
+                >
+                  <option value="30">30 days</option>
+                  <option value="60">60 days</option>
+                  <option value="90">90 days</option>
+                  <option value="180">180 days</option>
+                  <option value="365">1 year</option>
+                  <option value="0">Never</option>
+                </select>
+              </div>
+            </div>
+            {newKeyValue ? (
+              <div style={{
+                padding: '16px', backgroundColor: 'rgba(16,185,129,0.1)',
+                borderRadius: '10px', border: '1px solid rgba(16,185,129,0.3)',
+              }}>
+                <p style={{ fontSize: '12px', fontWeight: 600, color: '#10B981', margin: '0 0 8px' }}>
+                  ⚠️ Copy this key now - it won't be shown again!
+                </p>
+                <div className="cx-flex cx-items-center cx-gap-8">
+                  <code style={{
+                    flex: 1, padding: '10px 14px', borderRadius: '8px',
+                    backgroundColor: 'rgb(var(--surface))', fontSize: '12px',
+                    fontFamily: 'monospace', wordBreak: 'break-all',
+                  }}>
+                    {newKeyValue}
+                  </code>
+                  <button
+                    onClick={() => handleCopyKey(newKeyValue)}
+                    className="cx-btn-primary"
+                    style={{ padding: '10px 14px', fontSize: '12px' }}
+                  >
+                    <Copy style={{ width: '14px', height: '14px' }} />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={handleCreateApiKey}
+                disabled={!newKeyName.trim() || creatingKey}
+                className="cx-btn-primary"
+                style={{ padding: '10px 20px', fontSize: '13px', opacity: !newKeyName.trim() || creatingKey ? 0.5 : 1 }}
+              >
+                {creatingKey ? <Loader2 style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} /> : 'Generate Key'}
+              </button>
+            )}
+            <button
+              onClick={() => setShowNewKeyModal(false)}
+              style={{ marginLeft: '8px', padding: '10px 14px', fontSize: '12px', background: 'none', border: '1px solid rgb(var(--border))', borderRadius: '8px', cursor: 'pointer', color: 'rgb(var(--text-muted))' }}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+
+        {/* API Keys List */}
+        {apiKeysLoading ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px' }}>
+            <Loader2 style={{ width: '24px', height: '24px', animation: 'spin 1s linear infinite', color: 'rgb(var(--primary))' }} />
+          </div>
+        ) : apiKeys.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '32px', color: 'rgb(var(--text-muted))', fontSize: '13px' }}>
+            No API keys created yet. Create one to get started.
+          </div>
+        ) : (
+          <div className="cx-flex-col" style={{ gap: '12px' }}>
+            {apiKeys.map(key => (
+              <div key={key.id} className="cx-flex cx-items-center cx-gap-12" style={{
+                padding: '14px 18px', backgroundColor: 'rgba(var(--border), 0.3)', borderRadius: '10px', flexWrap: 'wrap',
+              }}>
+                <div style={{ flex: 1, minWidth: '200px' }}>
+                  <div className="cx-fw-600" style={{ fontSize: '13px', color: 'rgb(var(--text-primary))' }}>{key.name}</div>
+                  <div className="cx-text-muted" style={{ fontSize: '11px', marginTop: '2px' }}>
+                    {key.prefix}•••••••• • Created {new Date(key.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+                <div className="cx-flex cx-items-center cx-gap-8" style={{ flexWrap: 'wrap' }}>
+                  <div className="cx-flex cx-items-center cx-gap-4 cx-text-muted" style={{ fontSize: '11px' }}>
+                    <Clock style={{ width: '12px', height: '12px' }} />
+                    Expires: {formatExpiry(key.expiresAt)}
+                  </div>
+                  {key.lastUsed && (
+                    <div className="cx-text-muted" style={{ fontSize: '11px' }}>Last used: {key.lastUsed}</div>
+                  )}
+                  <button
+                    onClick={() => handleRevokeApiKey(key.id)}
+                    style={{
+                      padding: '6px 12px', fontSize: '11px', color: '#EF4444',
+                      backgroundColor: 'rgba(239,68,68,0.1)', border: 'none', borderRadius: '6px', cursor: 'pointer',
+                    }}
+                  >
+                    Revoke
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

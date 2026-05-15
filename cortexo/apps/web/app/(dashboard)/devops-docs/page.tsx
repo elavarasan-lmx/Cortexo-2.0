@@ -525,7 +525,7 @@ export default function DevOpsDocsPage() {
                 key={String(doc.id)}
                 onClick={() => openDoc(String(doc.id))}
                 className="cx-card cx-flex-col cx-gap-14"
-                style={{ padding: '20px', cursor: 'pointer', transition: 'all 250ms ease' }}
+                style={{ display: 'flex', flexDirection: 'column', padding: '20px', cursor: 'pointer', transition: 'all 250ms ease' }}
                 onMouseEnter={e => {
                   e.currentTarget.style.borderColor = toolColor;
                   e.currentTarget.style.transform = 'translateY(-3px)';
@@ -571,7 +571,7 @@ export default function DevOpsDocsPage() {
                 </div>
 
                 {/* Description */}
-                <p className="cx-text-secondary" style={{ fontSize: '13px', lineHeight: 1.5, margin: 0 }}>
+                <p className="cx-text-secondary" style={{ fontSize: '13px', lineHeight: 1.5, margin: 0, flex: 1 }}>
                   {doc.description}
                 </p>
 

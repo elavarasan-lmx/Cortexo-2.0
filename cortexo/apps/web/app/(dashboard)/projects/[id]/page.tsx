@@ -8,7 +8,7 @@ import {
   ArrowLeft, GitBranch, Loader2,
   CheckCircle, Edit3, Trash2, Save,
   ExternalLink, Copy, Github, Globe, Database, Radio, Server,
-  Eye, EyeOff
+  Eye, EyeOff, Activity, Cpu, HeartPulse
 } from 'lucide-react';
 import { useModal } from '@/components/modal-provider';
 import { useToastStore } from '@/lib/toast-store';
@@ -24,10 +24,17 @@ interface SettingsForm {
   environment: string; serverPath: string; serverId: string;
 }
 
+interface Pm2Info {
+  processes: string[];
+  totalRestarts: number;
+  totalMemoryMB: number;
+  status: string;
+}
+
 function parseSettings(p: Record<string, unknown>): SettingsForm {
   let s: Record<string, unknown> = {};
   try { s = typeof p.settings === 'string' ? JSON.parse(p.settings as string) : (p.settings || {}); } catch { /* */ }
-  const db = (s.database || {}) as Record<string, string>;
+  const db = (s.database || s.db || {}) as Record<string, string>;
   const sk = (s.socket || {}) as Record<string, string>;
   const dp = (s.deploy || {}) as Record<string, string>;
   return {
@@ -35,10 +42,36 @@ function parseSettings(p: Record<string, unknown>): SettingsForm {
     androidVersion: String(s.androidVersion || ''), iosVersion: String(s.iosVersion || ''),
     domain: String(s.domain || ''), webBaseUrl: String(s.webBaseUrl || ''), adminBaseUrl: String(s.adminBaseUrl || ''),
     appBaseUrl: String(s.appBaseUrl || ''), adminUser: String(s.adminUser || ''), adminPassword: String(s.adminPassword || ''),
-    dbHost: db.host || '', dbPort: db.port || '3306', dbName: db.name || '', dbUser: db.user || '', dbPassword: db.password || '',
+    dbHost: db.host || '', dbPort: db.port || '3306', dbName: db.name || db.database || '', dbUser: db.user || db.username || '', dbPassword: db.password || '',
     rateFeed: sk.rateFeed || '4', websocketType: sk.websocketType || '2', socketBaseUrl: sk.socketBaseUrl || '', nativeSocketUrl: sk.nativeSocketUrl || '', wsPort: sk.wsPort || '', socketIoPort: sk.socketIoPort || '',
     environment: dp.environment || 'production', serverPath: dp.serverPath || '', serverId: dp.serverId || '',
   };
+}
+
+function parsePm2(p: Record<string, unknown>): Pm2Info {
+  let s: Record<string, unknown> = {};
+  try { s = typeof p.settings === 'string' ? JSON.parse(p.settings as string) : (p.settings || {}); } catch { /* */ }
+  const pm2 = (s.pm2 || {}) as Record<string, unknown>;
+  return {
+    processes: Array.isArray(pm2.processes) ? pm2.processes : [],
+    totalRestarts: Number(pm2.totalRestarts || 0),
+    totalMemoryMB: Number(pm2.totalMemoryMB || 0),
+    status: String(pm2.status || 'unknown'),
+  };
+}
+
+function healthColor(score: number): string {
+  if (score >= 90) return '#10B981';
+  if (score >= 70) return '#F59E0B';
+  if (score >= 50) return '#F97316';
+  return '#EF4444';
+}
+
+function healthLabel(score: number): string {
+  if (score >= 90) return 'Healthy';
+  if (score >= 70) return 'Good';
+  if (score >= 50) return 'Warning';
+  return 'Critical';
 }
 
 export default function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -71,6 +104,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
   const p = (project as unknown) as Record<string, unknown> | null;
   const s = p ? parseSettings(p) : form;
+  const pm2 = p ? parsePm2(p) : { processes: [], totalRestarts: 0, totalMemoryMB: 0, status: 'unknown' };
+  const health = Number(p?.healthScore || 100);
   const serverName = s.serverId ? serverList.find((sv: any) => String(sv.id) === String(s.serverId))?.name || `Server ${s.serverId}` : '—';
 
   const startEdit = () => {
@@ -149,6 +184,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                   {String(p.repoProvider)}
                 </span>
               ) : null}
+              <span style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, backgroundColor: `${healthColor(health)}15`, color: healthColor(health), border: `1px solid ${healthColor(health)}30` }}>
+                <HeartPulse style={{ width: '11px', height: '11px' }} />
+                {health}% {healthLabel(health)}
+              </span>
             </div>
             {!editing && p.repoUrl ? (
               <a href={String(p.repoUrl)} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'rgb(var(--primary))', textDecoration: 'none' }}>
@@ -260,28 +299,58 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           <div className="cx-row" style={{ borderBottom: "none" }}><span className="cx-label">Native WS</span>{field('nativeSocketUrl', s.nativeSocketUrl, 'ws://domain.com/ws')}</div>
         </div>
 
-        {/* Deploy & SDK */}
-        <div className="cx-card cx-border" style={{ padding: '20px', gridColumn: '1 / -1' }}>
-          <h3 className="cx-sec-head"><Server style={{ width: '14px', height: '14px', color: '#10B981' }} /> Deploy & SDK</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '24px' }}>
-            <div>
-              <div className="cx-row"><span className="cx-label">Environment</span>
-                {editing ? (
-                  <select className="cx-input" style={{ cursor: "pointer" }} value={form.environment} onChange={e => u('environment', e.target.value)}>
-                    <option value="production">Production</option><option value="staging">Staging</option><option value="development">Development</option>
-                  </select>
-                ) : <span className="cx-value" style={{ fontFamily: "inherit", textTransform: "capitalize" }}>{s.environment || '—'}</span>}
+        {/* Deploy & Server */}
+        <div className="cx-card cx-border" style={{ padding: '20px' }}>
+          <h3 className="cx-sec-head"><Server style={{ width: '14px', height: '14px', color: '#10B981' }} /> Deploy & Server</h3>
+          <div className="cx-row"><span className="cx-label">Environment</span>
+            {editing ? (
+              <select className="cx-input" style={{ cursor: "pointer" }} value={form.environment} onChange={e => u('environment', e.target.value)}>
+                <option value="production">Production</option><option value="staging">Staging</option><option value="development">Development</option>
+              </select>
+            ) : <span className="cx-value" style={{ fontFamily: "inherit", textTransform: "capitalize" }}>{s.environment || '—'}</span>}
+          </div>
+          <div className="cx-row"><span className="cx-label">Server</span>
+            <span className="cx-value cx-flex cx-items-center cx-gap-6" style={{ fontFamily: "inherit" }}>
+              <Server style={{ width: '13px', height: '13px', color: '#10B981' }} />
+              {serverName}
+            </span>
+          </div>
+          <div className="cx-row"><span className="cx-label">Server Path</span>{field('serverPath', s.serverPath, '/var/www/html/client')}</div>
+          <div className="cx-row" style={{ borderBottom: 'none' }}><span className="cx-label">Health Score</span>
+            <span className="cx-value" style={{ fontFamily: 'inherit', fontWeight: 600, color: healthColor(health) }}>
+              {health}%
+            </span>
+          </div>
+        </div>
+
+        {/* PM2 Processes */}
+        <div className="cx-card cx-border" style={{ padding: '20px' }}>
+          <h3 className="cx-sec-head"><Cpu style={{ width: '14px', height: '14px', color: '#818CF8' }} /> PM2 Processes</h3>
+          {pm2.processes.length > 0 ? (
+            <>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
+                {pm2.processes.map((proc) => (
+                  <span key={proc} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 500, fontFamily: 'monospace', backgroundColor: 'rgba(16,185,129,0.08)', color: '#10B981', border: '1px solid rgba(16,185,129,0.2)' }}>
+                    <Activity style={{ width: '10px', height: '10px' }} />
+                    {proc}
+                  </span>
+                ))}
               </div>
-              <div className="cx-row"><span className="cx-label">Server</span>
-                <span className="cx-value cx-flex cx-items-center cx-gap-6" style={{ fontFamily: "inherit" }}>
-                  <Server style={{ width: '13px', height: '13px', color: '#10B981' }} />
-                  {serverName}
+              <div className="cx-row"><span className="cx-label">Status</span>
+                <span className="cx-value" style={{ fontFamily: 'inherit', fontWeight: 600, color: pm2.status === 'all_online' ? '#10B981' : '#F59E0B' }}>
+                  {pm2.status === 'all_online' ? 'All Online' : pm2.status}
                 </span>
               </div>
-              <div className="cx-row" style={{ borderBottom: "none" }}><span className="cx-label">Server Path</span>{field('serverPath', s.serverPath, '/var/www/html/client')}</div>
-            </div>
-
-          </div>
+              <div className="cx-row"><span className="cx-label">Total Restarts</span>
+                <span className="cx-value" style={{ fontFamily: 'monospace' }}>{pm2.totalRestarts}</span>
+              </div>
+              <div className="cx-row" style={{ borderBottom: 'none' }}><span className="cx-label">Memory Usage</span>
+                <span className="cx-value" style={{ fontFamily: 'monospace' }}>{pm2.totalMemoryMB} MB</span>
+              </div>
+            </>
+          ) : (
+            <p style={{ fontSize: '13px', color: 'rgb(var(--text-muted))' }}>No PM2 processes configured</p>
+          )}
         </div>
       </div>
     </div>

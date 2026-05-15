@@ -64,6 +64,7 @@ const createProjectSchema = z.object({
   stack: z.string().optional(),
   description: z.string().optional(),
   settings: z.string().optional(),
+  healthScore: z.number().int().min(0).max(100).optional(),
 });
 
 const updateProjectSchema = createProjectSchema.partial();

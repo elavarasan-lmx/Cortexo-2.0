@@ -4,8 +4,18 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Globe, Play, CheckCircle, XCircle, Loader2, Camera, Eye,
   ChevronDown, ChevronRight, Users, ShieldAlert, Monitor,
-  Bug, ExternalLink, CheckCheck, Settings2, RotateCcw
+  Bug, ExternalLink, CheckCheck, Settings2, RotateCcw,
+  UserCheck, KeyRound, BarChart3, Wallet, Package, type LucideIcon
 } from 'lucide-react';
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  UserCheck, KeyRound, BarChart3, Wallet, Package, Monitor,
+};
+
+function FlowIcon({ name, size = 20 }: { name: string; size?: number }) {
+  const Icon = ICON_MAP[name] || Package;
+  return <Icon style={{ width: `${size}px`, height: `${size}px`, color: 'rgb(var(--primary))' }} />;
+}
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/v1';
 
@@ -161,13 +171,14 @@ export default function BrowserTestPage() {
           const hasCustomValues = hasFields && f.fields!.some(fld => customData[fld.key]?.trim());
           return (
             <div key={f.id} className="cx-card cx-border" style={{
+              display: 'flex', flexDirection: 'column',
               opacity: selectedTarget ? 1 : 0.5,
               borderColor: isRunning ? 'rgb(var(--primary))' : isDataOpen ? '#8B5CF6' : undefined,
               boxShadow: isRunning ? '0 0 0 2px rgba(var(--primary), 0.15)' : isDataOpen ? '0 0 0 2px rgba(139,92,246,0.15)' : undefined,
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                 <div>
-                  <div style={{ fontSize: '24px', marginBottom: '6px' }}>{f.icon}</div>
+                  <div style={{ marginBottom: '6px' }}><FlowIcon name={f.icon} size={22} /></div>
                   <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>{f.name}</h3>
                 </div>
                 <div className="cx-flex cx-gap-6">
@@ -204,8 +215,8 @@ export default function BrowserTestPage() {
                   </button>
                 </div>
               </div>
-              <p style={{ fontSize: '12px', color: 'rgb(var(--text-secondary))', margin: '0 0 10px', lineHeight: '1.5' }}>{f.description}</p>
-              <div className="cx-flex cx-gap-10">
+              <p style={{ fontSize: '12px', color: 'rgb(var(--text-secondary))', margin: '0 0 10px', lineHeight: '1.5', flex: 1 }}>{f.description}</p>
+              <div className="cx-flex cx-gap-10" style={{ marginTop: 'auto' }}>
                 <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>{f.stepCount} steps</span>
                 <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>Real Browser</span>
                 <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>Screenshots</span>

@@ -1,0 +1,19 @@
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://opencode.ai/zen",
+    "ANTHROPIC_MODEL": "minimax-m2.5-free",
+    "ANTHROPIC_API_KEY": "sk-tUQl0J46P8gheWjre2I5nsbOVFDAte4eck31OT765gKjx9R1Lf0I2gNxhEu2gw23",
+    "ENABLE_TOOL_SEARCH": "false"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(awk '{print $2}')",
+      "Bash(xargs -r kill)",
+      "Bash(php -r ' *)",
+      "Bash(python3 -c \"import json; f=open\\('scripts/winbull_bug_patterns_v2.json'\\); print\\('OK:', len\\(json.load\\(f\\)['patterns']\\), 'patterns'\\)\")",
+      "Bash(php scripts/winbull_scan_v2.php --fast)",
+      "Bash(pkill -9 -f winbull_scan_v2)"
+    ]
+  },
+  "theme": "dark"
+}

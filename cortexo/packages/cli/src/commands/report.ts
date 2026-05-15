@@ -31,7 +31,8 @@ export function registerReportCommand(parent: Command): void {
     .option('-o, --output <path>', 'Custom output path for the HTML report')
     .option('--title <title>', 'Custom report title')
     .option('--server <server>', 'Server name for context')
-    .action(async (source: string, opts: { type?: string; output?: string; title?: string; server?: string }) => {
+    .option('--push', 'Push report metadata to Cortexo API for dashboard visibility')
+    .action(async (source: string, opts: { type?: string; output?: string; title?: string; server?: string; push?: boolean }) => {
       try {
         const sourcePath = resolve(source);
         if (!existsSync(sourcePath)) {
@@ -82,8 +83,38 @@ export function registerReportCommand(parent: Command): void {
         console.log(chalk.green(`\n✔ Report generated successfully!\n`));
         console.log(chalk.bold(`  📄 ${reportPath}`));
         console.log(chalk.dim(`  Size: ${(statSync(reportPath).size / 1024).toFixed(1)} KB`));
-        console.log(chalk.dim('\n  Open in browser to view. Export to PDF with:'));
-        console.log(chalk.dim(`  cortexo report export-pdf "${reportPath}"`));
+
+        // Push to dashboard API if requested
+        if (opts.push) {
+          try {
+            const apiUrl = process.env.CORTEXO_API_URL || 'http://localhost:4000';
+            const token = process.env.CORTEXO_TOKEN || '';
+            const reportName = opts.title || basename(sourcePath, '.json');
+            const reportType = opts.type || 'test-run';
+
+            const res = await fetch(`${apiUrl}/v1/reports`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              },
+              body: JSON.stringify({ name: reportName, type: reportType }),
+            });
+
+            if (res.ok) {
+              const result = await res.json();
+              console.log(chalk.green(`  ✔ Pushed to dashboard → ID: ${(result as any)?.data?.id?.slice(0, 8)}`));
+            } else {
+              console.warn(chalk.yellow(`  ⚠ API push failed (${res.status}) — report saved locally`));
+            }
+          } catch {
+            console.warn(chalk.yellow('  ⚠ Could not reach API — report saved locally only'));
+          }
+        } else {
+          console.log(chalk.dim('\n  Open in browser to view. Export to PDF with:'));
+          console.log(chalk.dim(`  cortexo report export-pdf "${reportPath}"`));
+          console.log(chalk.dim('  Add --push to sync with dashboard'));
+        }
       } catch (err: any) {
         console.error(chalk.red('✘ Report generation failed:'), err.message);
         process.exit(1);

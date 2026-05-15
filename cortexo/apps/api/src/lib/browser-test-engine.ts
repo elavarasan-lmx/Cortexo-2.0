@@ -59,7 +59,7 @@ async function takeScreenshot(page: Page, name: string): Promise<string> {
 const REGISTRATION_FLOW: TestFlow = {
   id: 'browser_registration',
   name: 'Customer Registration (Browser)',
-  icon: '👤',
+  icon: 'UserCheck',
   description: 'Opens registration page, fills form with test data, submits, and verifies result',
   steps: [
     {
@@ -285,7 +285,7 @@ const REGISTRATION_FLOW: TestFlow = {
 const LOGIN_FLOW: TestFlow = {
   id: 'browser_login',
   name: 'User Login (Browser)',
-  icon: '🔐',
+  icon: 'KeyRound',
   description: 'Opens login page, tests valid/invalid credentials, session handling',
   steps: [
     {
@@ -372,7 +372,7 @@ const LOGIN_FLOW: TestFlow = {
 const HOMEPAGE_FLOW: TestFlow = {
   id: 'browser_homepage',
   name: 'Homepage & Rates (Browser)',
-  icon: '📊',
+  icon: 'BarChart3',
   description: 'Loads homepage, checks rate display, validates API endpoints',
   steps: [
     {

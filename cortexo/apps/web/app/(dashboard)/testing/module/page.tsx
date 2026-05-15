@@ -1,7 +1,16 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Boxes, Play, CheckCircle, XCircle, Loader2, Clock, ShieldAlert, AlertTriangle, ChevronDown, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Boxes, Play, CheckCircle, XCircle, Loader2, Clock, ShieldAlert, AlertTriangle, ChevronDown, ChevronRight, ArrowLeft, UserCheck, KeyRound, BarChart3, Wallet, Package, type LucideIcon } from 'lucide-react';
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  UserCheck, KeyRound, BarChart3, Wallet, Package, Boxes,
+};
+
+function ModuleIcon({ name, size = 20, color }: { name: string; size?: number; color?: string }) {
+  const Icon = ICON_MAP[name] || Package;
+  return <Icon style={{ width: `${size}px`, height: `${size}px`, color: color || 'rgb(var(--primary))' }} />;
+}
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/v1';
 
@@ -120,13 +129,14 @@ export default function ModuleTestPage() {
           const isRunning = running === m.id;
           return (
             <div key={m.id} className="cx-card cx-border" style={{
+              display: 'flex', flexDirection: 'column',
               opacity: selectedTarget ? 1 : 0.5,
               borderColor: isRunning ? 'rgb(var(--primary))' : undefined,
               boxShadow: isRunning ? '0 0 0 2px rgba(var(--primary), 0.15)' : undefined,
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                 <div>
-                  <div style={{ fontSize: '20px', marginBottom: '6px' }}>{m.icon}</div>
+                  <div style={{ marginBottom: '6px' }}><ModuleIcon name={m.icon} size={20} /></div>
                   <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: 0 }}>{m.name}</h3>
                 </div>
                 <button onClick={() => runModule(m.id)} disabled={isRunning || !selectedTarget}
@@ -139,8 +149,8 @@ export default function ModuleTestPage() {
                   {isRunning ? 'Running...' : 'Run'}
                 </button>
               </div>
-              <p style={{ fontSize: '12px', color: 'rgb(var(--text-secondary))', margin: '0 0 12px', lineHeight: '1.5' }}>{m.description}</p>
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <p style={{ fontSize: '12px', color: 'rgb(var(--text-secondary))', margin: '0 0 12px', lineHeight: '1.5', flex: 1 }}>{m.description}</p>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: 'auto' }}>
                 <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>{m.stepCount} steps</span>
                 {m.criticalCount > 0 && <span style={{ fontSize: '11px', color: '#EF4444', fontWeight: 600 }}>{m.criticalCount} critical</span>}
                 {m.highCount > 0 && <span style={{ fontSize: '11px', color: '#F59E0B', fontWeight: 600 }}>{m.highCount} high</span>}
@@ -158,7 +168,7 @@ export default function ModuleTestPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
             <div>
               <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'rgb(var(--text-primary))', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '22px' }}>{result.icon}</span> {result.moduleName} — Results
+                <ModuleIcon name={result.icon} size={22} /> {result.moduleName} — Results
               </h2>
               <p style={{ fontSize: '12px', color: 'rgb(var(--text-muted))', margin: 0 }}>
                 Run #{result.runId} • {(result.durationMs / 1000).toFixed(1)}s total
@@ -270,7 +280,7 @@ export default function ModuleTestPage() {
                 border: '1px solid rgb(var(--border))', backgroundColor: 'transparent', cursor: 'pointer',
                 color: 'rgb(var(--text-primary))', width: '100%', textAlign: 'left',
               }}>
-                <span style={{ fontSize: '16px' }}>{h.icon}</span>
+                <ModuleIcon name={h.icon} size={16} />
                 <span style={{ fontSize: '13px', fontWeight: 600, flex: 1 }}>{h.moduleName}</span>
                 <span style={{ fontSize: '12px', fontWeight: 700, color: h.passRate >= 80 ? '#10B981' : '#EF4444' }}>{h.passRate}%</span>
                 <span style={{ fontSize: '11px', color: 'rgb(var(--text-muted))' }}>{h.passed}/{h.total}</span>
