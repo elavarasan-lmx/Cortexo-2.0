@@ -105,19 +105,19 @@ export function resolveProjectName(
 }
 
 /**
- * Helper: format relative time from ISO date string
+ * Helper: format relative time from ISO date string, Date object, or null.
+ * Canonical implementation — use this instead of local formatRelativeTime copies.
  */
-export function timeAgo(dateStr: string | null | undefined): string {
+export function timeAgo(dateStr: string | Date | null | undefined): string {
   if (!dateStr) return '—';
-  const date = new Date(dateStr);
-  const now = new Date();
-  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
 
-  if (seconds < 60) return 'now';
-  if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)} days ago`;
-  return `${Math.floor(seconds / 604800)} weeks ago`;
+  if (seconds < 60) return 'just now';
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+  return `${Math.floor(seconds / 604800)}w ago`;
 }
 
 /**

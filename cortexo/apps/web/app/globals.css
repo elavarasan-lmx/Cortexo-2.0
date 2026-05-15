@@ -386,8 +386,8 @@ code, pre, .font-mono {
     inset 0 1px 0 rgba(255,255,255,0.03);
 }
 
-/* ── Gradient shimmer on hover ── */
-@keyframes shimmer {
+/* ── Gradient shimmer on hover (uses shimmer-slide to avoid duplicate keyframe) ── */
+@keyframes shimmer-slide {
   0%   { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
@@ -414,7 +414,7 @@ code, pre, .font-mono {
 }
 .shimmer-hover:hover::after {
   opacity: 1;
-  animation: shimmer 1.5s ease-in-out;
+  animation: shimmer-slide 1.5s ease-in-out;
 }
 
 /* ── Glow ring (for buttons, active elements) ── */
@@ -441,6 +441,32 @@ code, pre, .font-mono {
 .stagger-children > *:nth-child(4) { animation-delay: 200ms; }
 .stagger-children > *:nth-child(5) { animation-delay: 250ms; }
 .stagger-children > *:nth-child(6) { animation-delay: 300ms; }
+
+/* ── Premium stagger entrance (cascading blur→reveal) ── */
+@keyframes cx-card-cascade {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+.cx-stagger-enter > * {
+  opacity: 0;
+  animation: cx-card-cascade 400ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.cx-stagger-enter > *:nth-child(1) { animation-delay: 0ms; }
+.cx-stagger-enter > *:nth-child(2) { animation-delay: 60ms; }
+.cx-stagger-enter > *:nth-child(3) { animation-delay: 120ms; }
+.cx-stagger-enter > *:nth-child(4) { animation-delay: 180ms; }
+.cx-stagger-enter > *:nth-child(5) { animation-delay: 240ms; }
+.cx-stagger-enter > *:nth-child(6) { animation-delay: 300ms; }
+.cx-stagger-enter > *:nth-child(7) { animation-delay: 360ms; }
+.cx-stagger-enter > *:nth-child(8) { animation-delay: 420ms; }
 
 /* ── Gradient border card ── */
 .gradient-border {
@@ -541,6 +567,51 @@ code, pre, .font-mono {
   &:hover {
     border-color: rgba(var(--primary), 0.3);
   }
+}
+
+/* ── Reusable interactive element patterns ── */
+
+/* Icon button — for action icons in tables/cards (replaces JS onMouseEnter/Leave) */
+.cx-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: rgb(var(--text-muted));
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+.cx-icon-btn:hover {
+  background: rgb(var(--surface-hover));
+  color: rgb(var(--text-primary));
+}
+.cx-icon-btn--danger:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: #EF4444;
+}
+.cx-icon-btn--primary:hover {
+  background: rgba(var(--primary), 0.08);
+  color: rgb(var(--primary));
+}
+
+/* Row hover — for list/table row items */
+.cx-row-hover {
+  transition: background-color 150ms ease;
+}
+.cx-row-hover:hover {
+  background-color: rgba(var(--text-muted), 0.05);
+}
+
+/* Clickable card — for grid cards with lift effect */
+.cx-card-hover {
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+.cx-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -8px rgba(0, 0, 0, 0.12);
 }
 
 @utility text-2xs {
@@ -1233,15 +1304,22 @@ nextjs-portal {
   transform: translateY(-50%);
 }
 
-/* ── Skeleton loader ── */
+/* ── Skeleton loader (unified shimmer system) ── */
 .cx-skeleton {
-  background-color: rgb(var(--surface-hover));
-  animation: pulse 1.5s ease-in-out infinite;
+  background: linear-gradient(
+    90deg,
+    rgba(var(--border), 0.5) 25%,
+    rgba(var(--border), 0.8) 50%,
+    rgba(var(--border), 0.5) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
 }
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.4; }
-}
+.cx-skeleton-circle { border-radius: 50%; }
+.cx-skeleton-text   { height: 14px; }
+.cx-skeleton-title  { height: 20px; width: 60%; }
+.cx-skeleton-card   { height: 120px; border-radius: 14px; }
 
 /* ── Card ── */
 .cx-card {
@@ -1518,11 +1596,14 @@ nextjs-portal {
   cursor: pointer;
   padding: 4px;
   border-radius: 6px;
-  transition: background-color var(--transition-fast), color var(--transition-fast);
+  transition: background-color var(--transition-fast),
+              color var(--transition-fast),
+              transform var(--transition-fast);
   flex-shrink: 0;
 }
 .cx-icon-btn:hover {
   background-color: rgb(var(--surface-hover));
+  transform: scale(1.08);
 }
 
 /* ── Search input ── */
@@ -1548,11 +1629,14 @@ nextjs-portal {
   color: rgb(var(--text-primary));
   font-size: 13px;
   outline: none;
-  transition: border-color var(--transition-fast);
+  transition: width 300ms cubic-bezier(0.22, 1, 0.36, 1),
+              border-color var(--transition-fast),
+              box-shadow var(--transition-fast);
 }
 .cx-search-input:focus {
   border-color: rgba(var(--primary), 0.5);
-  box-shadow: 0 0 0 3px rgba(var(--primary), 0.08);
+  box-shadow: 0 0 0 3px rgba(var(--primary), 0.1),
+              0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 /* ── Loading spinner (center) ── */
@@ -1727,6 +1811,19 @@ nextjs-portal {
   background-color: rgba(0,0,0,0.5);
   backdrop-filter: blur(4px);
 }
+@keyframes cx-modal-spring {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(16px);
+  }
+  60% {
+    transform: scale(1.02) translateY(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
 .cx-modal {
   width: 100%; max-width: 520px;
   border-radius: 16px;
@@ -1734,6 +1831,7 @@ nextjs-portal {
   background-color: rgb(var(--surface));
   box-shadow: 0 24px 48px rgba(0,0,0,0.3);
   overflow: hidden;
+  animation: cx-modal-spring 350ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 .cx-modal-header {
   padding: 20px 24px 16px;
@@ -1844,3 +1942,185 @@ nextjs-portal {
 /* Layout helpers */
 .cx-overflow-hidden { overflow: hidden; }
 .cx-panel { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+/* ========================================
+   PHASE 7 — MOTION & MICRO-INTERACTION SYSTEM
+   ======================================== */
+
+/* ── Chart line draw animation ── */
+@keyframes cx-line-draw {
+  from { stroke-dashoffset: var(--path-length); }
+  to   { stroke-dashoffset: 0; }
+}
+@keyframes cx-area-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.cx-chart-line {
+  stroke-dasharray: var(--path-length);
+  animation: cx-line-draw 1.2s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+.cx-chart-area {
+  animation: cx-area-fade 800ms ease 400ms both;
+}
+.cx-chart-dot {
+  opacity: 0;
+  animation: cx-card-cascade 300ms ease forwards;
+}
+.cx-chart-dot:nth-child(1) { animation-delay: 300ms; }
+.cx-chart-dot:nth-child(2) { animation-delay: 420ms; }
+.cx-chart-dot:nth-child(3) { animation-delay: 540ms; }
+.cx-chart-dot:nth-child(4) { animation-delay: 660ms; }
+.cx-chart-dot:nth-child(5) { animation-delay: 780ms; }
+.cx-chart-dot:nth-child(6) { animation-delay: 900ms; }
+.cx-chart-dot:nth-child(7) { animation-delay: 1020ms; }
+
+/* ── Live data pulse (for server/gauge elements) ── */
+@keyframes cx-data-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--pulse-color); }
+  50%      { box-shadow: 0 0 8px 2px var(--pulse-color); }
+}
+.cx-live-indicator {
+  --pulse-color: rgba(16, 185, 129, 0.4);
+  animation: cx-data-pulse 2s ease-in-out infinite;
+}
+.cx-live-indicator[data-severity="warning"] {
+  --pulse-color: rgba(245, 158, 11, 0.4);
+}
+.cx-live-indicator[data-severity="critical"] {
+  --pulse-color: rgba(239, 68, 68, 0.4);
+}
+
+/* ── Animated gauge fill ── */
+@keyframes cx-gauge-fill {
+  from { width: 0; }
+  to   { width: var(--fill-pct); }
+}
+.cx-gauge-bar {
+  width: 0;
+  animation: cx-gauge-fill 800ms cubic-bezier(0.22, 1, 0.36, 1) 200ms forwards;
+}
+
+/* ── Activity timeline connector ── */
+.cx-timeline {
+  position: relative;
+  padding-left: 20px;
+}
+.cx-timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(
+    to bottom,
+    rgba(var(--primary), 0.6) 0%,
+    rgba(var(--border), 0.4) 100%
+  );
+  border-radius: 1px;
+}
+.cx-timeline-item {
+  position: relative;
+  padding-left: 20px;
+}
+.cx-timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -16px;
+  top: 14px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid rgb(var(--primary));
+  background: rgb(var(--surface));
+  transition: all var(--transition-fast);
+}
+.cx-timeline-item[data-status="success"]::before {
+  border-color: #10B981;
+  background: #10B981;
+}
+.cx-timeline-item[data-status="failed"]::before {
+  border-color: #EF4444;
+  background: #EF4444;
+}
+.cx-timeline-item[data-status="error"]::before {
+  border-color: #EF4444;
+  background: #EF4444;
+}
+
+/* ── Notification dropdown entrance ── */
+.cx-notification-dropdown {
+  animation: dropdown-enter 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: top right;
+}
+
+/* ── Badge bounce for unread count ── */
+@keyframes cx-badge-bounce {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.15); }
+}
+.cx-badge-unread {
+  animation: cx-badge-bounce 1.5s ease-in-out 3;
+}
+
+/* ── Hover state consolidation ── */
+.cx-card-hover {
+  transition: transform var(--transition-base),
+              box-shadow var(--transition-base),
+              border-color var(--transition-base);
+}
+.cx-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.15);
+  border-color: rgba(var(--primary), 0.2);
+}
+.cx-table-row-hover:hover {
+  background-color: rgba(var(--text-muted), 0.04);
+}
+
+/* ── Quick action button hover ── */
+.cx-quick-action {
+  transition: transform var(--transition-base),
+              box-shadow var(--transition-base),
+              filter var(--transition-base);
+}
+.cx-quick-action:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  filter: brightness(1.1);
+}
+
+/* ── Stat card urgency glow ── */
+.cx-card[data-urgency="high"] {
+  border-color: rgba(239, 68, 68, 0.3);
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.08),
+              0 4px 16px -4px rgba(239, 68, 68, 0.15);
+}
+
+/* ── Toast progress drain bar ── */
+@keyframes cx-toast-drain {
+  from { width: 100%; }
+  to   { width: 0; }
+}
+.cx-toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  border-radius: 0 0 12px 12px;
+  animation: cx-toast-drain var(--toast-duration, 5s) linear forwards;
+}
+.cx-toast-progress[data-type="success"] { background: #10B981; }
+.cx-toast-progress[data-type="error"]   { background: #EF4444; }
+.cx-toast-progress[data-type="warning"] { background: #F59E0B; }
+.cx-toast-progress[data-type="info"]    { background: #3B82F6; }
+
+/* ── Deploy spinner with trail ── */
+@keyframes cx-deploy-spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.cx-deploy-spinner {
+  animation: cx-deploy-spin 0.8s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}

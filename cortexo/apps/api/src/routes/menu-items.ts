@@ -102,7 +102,6 @@ export async function menuItemRoutes(app: FastifyInstance) {
       { label: 'Dashboard',     href: '/dashboard',      emoji: '◉',  sectionTitle: 'MAIN',           sectionColor: '#818CF8', sortOrder: 1 },
       { label: 'Projects',      href: '/projects',       emoji: '📁', sectionTitle: 'MAIN',           sectionColor: '#818CF8', sortOrder: 2 },
       { label: 'Deployments',   href: '/deployments',    emoji: '⬡',  sectionTitle: 'MAIN',           sectionColor: '#818CF8', sortOrder: 3 },
-      { label: 'Organizations', href: '/organizations',  emoji: '🏢', sectionTitle: 'MAIN',           sectionColor: '#818CF8', sortOrder: 4 },
       { label: 'Knowledge',     href: '/knowledge-base', emoji: '📚', sectionTitle: 'MAIN',           sectionColor: '#818CF8', sortOrder: 5 },
       { label: 'DevOps Docs',   href: '/devops-docs',    emoji: '📄', sectionTitle: 'MAIN',           sectionColor: '#818CF8', sortOrder: 6 },
       // MONITORING
@@ -114,8 +113,6 @@ export async function menuItemRoutes(app: FastifyInstance) {
       // ADMIN
       { label: 'Audit Log',     href: '/audit-log',      emoji: '📜', sectionTitle: 'ADMIN',          sectionColor: '#6B7280', sortOrder: 30 },
       { label: 'Testing',       href: '/testing',        emoji: '🧪', sectionTitle: 'ADMIN',          sectionColor: '#6B7280', sortOrder: 31 },
-      { label: 'Security',      href: '/security',       emoji: '🛡', sectionTitle: 'ADMIN',          sectionColor: '#6B7280', sortOrder: 32 },
-      { label: 'Reports',       href: '/reports',        emoji: '📊', sectionTitle: 'ADMIN',          sectionColor: '#6B7280', sortOrder: 33 },
       { label: 'Settings',      href: '/settings',       emoji: '⚙',  sectionTitle: 'ADMIN',          sectionColor: '#6B7280', sortOrder: 34 },
     ];
 

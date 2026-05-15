@@ -31,6 +31,7 @@ export interface Project {
   sdkApiKey?: string | null;
   apiKey?: string | null;
   healthScore?: number | null;
+  status?: 'active' | 'inactive';
   createdAt: string;
   updatedAt?: string | null;
 }

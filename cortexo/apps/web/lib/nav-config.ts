@@ -28,7 +28,6 @@ export const NAVIGATION: NavSection[] = [
       { label: 'Dashboard',      href: '/dashboard',      icon: 'LayoutDashboard' },
       { label: 'Projects',       href: '/projects',       icon: 'FolderKanban' },
       { label: 'Deployments',    href: '/deployments',    icon: 'Rocket' },
-      { label: 'Organizations',  href: '/organizations',  icon: 'Building2' },
       { label: 'Knowledge',      href: '/knowledge-base', icon: 'BookOpen' },
       { label: 'DevOps Docs',    href: '/devops-docs',    icon: 'FileText' },
     ],
@@ -37,7 +36,6 @@ export const NAVIGATION: NavSection[] = [
     title: 'MONITORING', color: '#EF4444',
     items: [
       { label: 'Bug Tracker', href: '/bug-tracker', icon: 'Bug' },
-      { label: 'Code Audit',  href: '/code-audit',  icon: 'SearchCode' },
     ],
   },
   {
@@ -52,8 +50,6 @@ export const NAVIGATION: NavSection[] = [
     items: [
       { label: 'Audit Log', href: '/audit-log', icon: 'ScrollText' },
       { label: 'Testing',   href: '/testing',   icon: 'FlaskConical' },
-      { label: 'Security',  href: '/security',  icon: 'Shield' },
-      { label: 'Reports',   href: '/reports',   icon: 'FileBarChart' },
       { label: 'Settings',  href: '/settings',  icon: 'Settings' },
     ],
   },

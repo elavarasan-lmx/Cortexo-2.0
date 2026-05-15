@@ -87,7 +87,7 @@ export default function SettingsPage() {
 
   async function loadSessions() {
     try {
-      const res = await api.getSessions?.() || { data: [] };
+      const res = await (api as any).getSessions?.() || { data: [] };
       setSessions([
         { id: '1', device: 'Chrome on MacOS', ip: '192.168.1.100', location: 'San Francisco, CA', lastActive: 'Just now', current: true },
         { id: '2', device: 'Safari on iPhone', ip: '192.168.1.101', location: 'San Francisco, CA', lastActive: '2 hours ago', current: false },

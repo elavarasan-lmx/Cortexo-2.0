@@ -3,18 +3,10 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { BookOpen, Search, MessageSquare, Send, Book, FileText, Settings, Bot, User, Loader2, Plus, Edit2, Trash2, X, ChevronDown, Copy, Download, RotateCcw, Sparkles, Clock, Filter, ArrowUpDown, FileJson, FileCode } from 'lucide-react';
 import { KnowledgeDoc, KnowledgeHistoryEntry, KnowledgeProvider, api } from '@/lib/api';
-import { useCortexoQuery } from '@/lib/hooks';
+import { useCortexoQuery, timeAgo as formatRelativeTime } from '@/lib/hooks';
 import Link from 'next/link';
 
-function formatRelativeTime(date: string | Date | null): string {
-  if (!date) return '—';
-  const d = new Date(date);
-  const s = Math.floor((Date.now() - d.getTime()) / 1000);
-  if (s < 60) return 'just now';
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
-  return `${Math.floor(s / 86400)}d ago`;
-}
+
 
 function renderMarkdown(text: string): string {
   // Simple markdown rendering
@@ -446,7 +438,7 @@ export default function KnowledgeBasePage() {
                       </p>
 
                       <div className="cx-flex cx-items-center cx-gap-8 cx-text-muted" style={{ fontSize: '10px', marginBottom: '8px' }}>
-                        <span className="cx-flex cx-items-center cx-gap-4"><Clock style={{ width: '10px', height: '10px' }} />{formatRelativeTime(doc.updatedAt || doc.createdAt)}</span>
+                        <span className="cx-flex cx-items-center cx-gap-4"><Clock style={{ width: '10px', height: '10px' }} />{formatRelativeTime(doc.updatedAt || doc.createdAt || null)}</span>
                       </div>
 
                       <div className="cx-flex cx-gap-6" style={{ flexWrap: 'wrap' }}>

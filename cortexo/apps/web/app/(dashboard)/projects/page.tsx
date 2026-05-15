@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { Project } from '@/lib/api';
-import { useCortexoQuery } from '@/lib/hooks';
+import { useCortexoQuery, timeAgo as formatRelativeTime } from '@/lib/hooks';
 import { useToastStore } from '@/lib/toast-store';
 
 function parseSettings(p: Project) {
@@ -31,15 +31,7 @@ type Filters = {
 
 type SortKey = 'name' | 'createdAt' | 'updatedAt' | 'productType';
 
-function formatRelativeTime(date: string | Date | null): string {
-  if (!date) return '—';
-  const d = new Date(date);
-  const s = Math.floor((Date.now() - d.getTime()) / 1000);
-  if (s < 60) return 'just now';
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
-  return `${Math.floor(s / 86400)}d ago`;
-}
+
 
 export default function ProjectsPage() {
   const router = useRouter();

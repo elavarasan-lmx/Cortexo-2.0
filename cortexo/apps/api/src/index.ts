@@ -32,7 +32,6 @@ import { notificationRoutes } from './routes/notifications.js';
 import { logStreamRoutes } from './routes/log-stream.js';
 
 import { credentialsRoutes } from './routes/credentials.js';
-import { orgRoutes } from './routes/org.js';
 
 import { serverRoutes } from './routes/servers.js';
 import { logViewerRoutes } from './routes/log-viewer.js';
@@ -57,9 +56,6 @@ import { devopsDocsRoutes } from './routes/devops-docs.js';
 import { menuPermissionRoutes } from './routes/menu-permissions.js';
 import { menuItemRoutes } from './routes/menu-items.js';
 import { webhookRoutes } from './routes/webhooks.js';
-import { securityRoutes } from './routes/security.js';
-import { reportRoutes } from './routes/reports.js';
-import { codeAuditRoutes } from './routes/code-audit.js';
 import { usageLimitsPlugin } from './middleware/usage-limits.js';
 import { authMiddleware } from './middleware/auth.js';
 import { getDb } from './lib/db.js';
@@ -246,7 +242,6 @@ async function start() {
   await app.register(logStreamRoutes, { prefix: '/v1' });
 
   await app.register(credentialsRoutes, { prefix: '/v1' });
-  await app.register(orgRoutes, { prefix: '/v1' });
 
   await app.register(serverRoutes, { prefix: '/v1' });
   await app.register(logViewerRoutes, { prefix: '/v1' });
@@ -269,9 +264,6 @@ async function start() {
   await app.register(menuItemRoutes, { prefix: '/v1' });
 
   // ── New dashboard module routes ──
-  await app.register(securityRoutes, { prefix: '/v1' });
-  await app.register(reportRoutes, { prefix: '/v1' });
-  await app.register(codeAuditRoutes, { prefix: '/v1' });
 
   // ── Webhook ingestion (no prefix — lives at /api/webhooks/) ──
   await app.register(webhookRoutes);

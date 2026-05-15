@@ -7,24 +7,17 @@ import { Deployment, Project, Server, TrackedError, JudgeAggregateStats, Notific
 import { useCortexoQuery, useQueryClient } from '@/lib/hooks';
 import Link from 'next/link';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useCountUp } from '@/hooks/useCountUp';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 
 /* ─── Skeleton Components ─── */
-const SkeletonStyle = () => (
-  <style>{`
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-    @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-  `}</style>
-);
-
 function Skeleton({ className, style }: { className?: string; style?: React.CSSProperties }) {
   return (
-    <div className={className} style={{
-      backgroundColor: 'rgb(var(--border))', borderRadius: '6px',
-      animation: 'pulse 1.5s ease-in-out infinite', ...style,
-    }} />
+    <div className={`cx-skeleton ${className || ''}`} style={{ ...style }} />
   );
 }
+
+
 
 function StatCardSkeleton() {
   return (
@@ -192,7 +185,7 @@ export default function DashboardPage() {
         id: `error-${e.id}`,
         type: 'error',
         title: `Error: ${e.message?.substring(0, 40) || 'Unknown error'}`,
-        time: e.createdAt ? new Date(e.createdAt).toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }) : '—',
+        time: e.firstSeenAt ? new Date(e.firstSeenAt).toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true }) : '—',
         icon: Bug,
         color: '#EF4444',
       });
@@ -266,8 +259,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="cx-flex-col cx-gap-24">
-      <SkeletonStyle />
+    <div className="cx-flex-col cx-gap-24 page-enter">
       {/* Header */}
       <div className="cx-flex-between" style={{ flexWrap: 'wrap', gap: '16px' }}>
         <div>
@@ -286,21 +278,17 @@ export default function DashboardPage() {
         </div>
         <div className="cx-flex cx-items-center cx-gap-12">
           {/* Search */}
-          <form onSubmit={handleSearch} style={{ position: 'relative' }}>
-            <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: 'rgb(var(--text-muted))' }} />
-            <input
-              type="text"
-              placeholder="Search projects, deploys..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                padding: '8px 12px 8px 36px', borderRadius: '8px',
-                border: '1px solid rgb(var(--border))',
-                backgroundColor: 'rgb(var(--bg-card))', fontSize: '14px',
-                width: '220px', color: 'rgb(var(--text-primary))',
-              }}
-            />
-          </form>
+            <div className="cx-search-wrap">
+              <Search className="cx-search-icon" />
+              <input
+                type="text"
+                className="cx-search-input"
+                placeholder="Search projects, deploys..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ width: '220px' }}
+              />
+            </div>
 
           {/* Date Range */}
           <div className="cx-flex cx-items-center cx-gap-4" style={{
@@ -332,24 +320,24 @@ export default function DashboardPage() {
             }}
           >
             <Bell style={{ width: '18px', height: '18px', color: 'rgb(var(--text-muted))' }} />
-            {unreadCount > 0 && (
-              <span style={{
-                position: 'absolute', top: '-4px', right: '-4px', minWidth: '18px', height: '18px',
-                borderRadius: '9px', backgroundColor: '#EF4444', color: '#fff', fontSize: '10px',
-                fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px',
-              }}>
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
+              {unreadCount > 0 && (
+                <span className="cx-badge-unread" style={{
+                  position: 'absolute', top: '-4px', right: '-4px', minWidth: '18px', height: '18px',
+                  borderRadius: '9px', backgroundColor: '#EF4444', color: '#fff', fontSize: '10px',
+                  fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px',
+                }}>
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
           </button>
         </div>
       </div>
 
       {/* Notifications Dropdown */}
       {showNotifications && (
-        <div style={{
+        <div className="cx-notification-dropdown" style={{
           position: 'absolute', top: '120px', right: '20px', width: '360px', maxHeight: '400px',
-          overflowY: 'auto', backgroundColor: 'rgb(var(--bg-card))', border: '1px solid rgb(var(--border))',
+          overflowY: 'auto', backgroundColor: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))',
           borderRadius: '12px', boxShadow: '0 8px 32px rgba(0,0,0,0.12)', zIndex: 100, padding: '16px',
         }}>
           <div className="cx-flex-between cx-mb-16">
@@ -386,8 +374,8 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Stat Cards Row - 6 cards now */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
+      {/* Stat Cards Row - 6 cards with staggered entrance */}
+      <div className="cx-stagger-enter" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
         {projectsLoading || deploymentsLoading || serversLoading || errorsLoading ? (
           <>
             <StatCardSkeleton /><StatCardSkeleton /><StatCardSkeleton />
@@ -399,7 +387,7 @@ export default function DashboardPage() {
             <StatCard title="Deployments" value={String(deployCount)} trend={deployTrend} color="#8B5CF6" icon={Rocket} bg="rgba(139,92,246,0.1)" />
             <StatCard title="Success Rate" value={`${successRate}%`} trend={successCount > 0 ? `${successCount} successful` : 'No data'} color="#10B981" icon={CheckCircle} bg="rgba(16,185,129,0.1)" />
             <StatCard title="Active Servers" value={String(activeServers)} trend={`${serverUptime}% uptime`} color="#3B82F6" icon={ServerIcon} bg="rgba(59,130,246,0.1)" />
-            <StatCard title="Open Bugs" value={String(errorCount)} trend={errorTrend} color="#F59E0B" icon={Bug} bg="rgba(245,158,11,0.1)" />
+            <StatCard title="Open Bugs" value={String(errorCount)} trend={errorTrend} color="#F59E0B" icon={Bug} bg="rgba(245,158,11,0.1)" urgency={errorCount > 5 ? 'high' : undefined} />
             <StatCard title="Avg Deploy" value={avgDeployTime} trend="Per deployment" color="#06B6D4" icon={Timer} bg="rgba(6,182,212,0.1)" />
           </>
         )}
@@ -427,16 +415,18 @@ export default function DashboardPage() {
                       <stop offset="100%" stopColor="rgba(139,92,246,0)" />
                     </linearGradient>
                   </defs>
-                  {chartPath.area && <path d={chartPath.area} fill="url(#chartGradient)" />}
-                  {chartPath.line && <path d={chartPath.line} fill="none" stroke="#8B5CF6" strokeWidth="3" />}
+                  {chartPath.area && <path d={chartPath.area} fill="url(#chartGradient)" className="cx-chart-area" />}
+                  {chartPath.line && (
+                    <ChartLine d={chartPath.line} />
+                  )}
                   {chartPath.dots.map((dot, i) => (
                     <circle
                       key={i}
                       cx={dot.x} cy={dot.y} r="4"
                       fill="#8B5CF6"
+                      className="cx-chart-dot"
                       style={{ cursor: 'pointer' }}
-                      onMouseEnter={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
+                      onMouseEnter={() => {
                         setChartTooltip({ show: true, x: dot.x, y: dot.y - 40, value: chartData.counts[i], label: chartData.labels[i] });
                       }}
                     />
@@ -508,9 +498,9 @@ export default function DashboardPage() {
               </button>
             ))}
           </div>
-          <div className="cx-flex-col cx-gap-16">
+          <div className="cx-timeline cx-flex-col cx-gap-16">
             {filteredActivity.slice(0, 6).map((item) => (
-              <ActivityRow key={item.id} icon={item.icon} iconColor={item.color} title={item.title} time={item.time} />
+              <ActivityRow key={item.id} icon={item.icon} iconColor={item.color} title={item.title} time={item.time} status={item.type === 'error' ? 'error' : item.color === '#10B981' ? 'success' : 'deploy'} />
             ))}
             {filteredActivity.length === 0 && (
               <span className="cx-text-13 cx-text-muted" style={{ textAlign: 'center', padding: '20px' }}>No activity</span>
@@ -559,7 +549,7 @@ export default function DashboardPage() {
               </div>
               {(servers as Server[]).slice(0, 3).map((srv: Server) => {
                 const sr = (serverResources || []).find((r: any) => r.serverId === srv.id);
-                const cpu = sr?.cpu || 0;
+                const cpu = Number(sr?.cpu) || 0;
                 return (
                   <div key={srv.id} className="cx-flex-col cx-gap-6">
                     <div className="cx-flex-between">
@@ -573,8 +563,8 @@ export default function DashboardPage() {
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
                       <ResourceBar label="CPU" value={cpu} color="#8B5CF6" />
-                      <ResourceBar label="MEM" value={sr?.memory || 0} color="#3B82F6" />
-                      <ResourceBar label="DISK" value={sr?.disk || 0} color="#10B981" />
+                      <ResourceBar label="MEM" value={Number(sr?.memory) || 0} color="#3B82F6" />
+                      <ResourceBar label="DISK" value={Number(sr?.disk) || 0} color="#10B981" />
                     </div>
                   </div>
                 );
@@ -635,9 +625,12 @@ export default function DashboardPage() {
   );
 }
 
-function StatCard({ title, value, trend, color, icon: Icon, bg }: { title: string; value: string; trend: string; color: string; icon: any; bg: string }) {
+function StatCard({ title, value, trend, color, icon: Icon, bg, urgency }: { title: string; value: string; trend: string; color: string; icon: any; bg: string; urgency?: string }) {
+  const numericVal = parseInt(value) || 0;
+  const displayValue = useCountUp(numericVal);
+  const isNumeric = /^\d+$/.test(value);
   return (
-    <div className="cx-card cx-border cx-flex-col" style={{ borderRadius: '14px', padding: '20px', gap: '12px', position: 'relative', overflow: 'hidden' }}>
+    <div className="cx-card cx-border cx-flex-col" data-urgency={urgency} style={{ borderRadius: '14px', padding: '20px', gap: '12px', position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', backgroundColor: color }} />
       <div className="cx-flex-between">
         <span className="cx-fw-600 cx-text-secondary cx-text-12">{title}</span>
@@ -646,16 +639,16 @@ function StatCard({ title, value, trend, color, icon: Icon, bg }: { title: strin
         </div>
       </div>
       <div className="cx-flex cx-items-center cx-gap-10">
-        <span className="cx-fw-700 cx-text-primary" style={{ fontSize: '28px', lineHeight: 1 }}>{value}</span>
+        <span className="cx-fw-700 cx-text-primary" style={{ fontSize: '28px', lineHeight: 1 }}>{isNumeric ? displayValue : value}</span>
         <span className="cx-fw-600 cx-text-muted cx-text-11" style={{ backgroundColor: 'rgba(var(--text-muted), 0.08)', padding: '3px 8px', borderRadius: '10px' }}>{trend}</span>
       </div>
     </div>
   );
 }
 
-function ActivityRow({ icon: Icon, iconColor, title, time }: { icon: any; iconColor: string; title: string; time: string }) {
+function ActivityRow({ icon: Icon, iconColor, title, time, status }: { icon: any; iconColor: string; title: string; time: string; status?: string }) {
   return (
-    <div className="cx-flex-between">
+    <div className="cx-timeline-item cx-flex-between" data-status={status === 'error' ? 'error' : status === 'success' ? 'success' : undefined}>
       <div className="cx-flex cx-items-center cx-gap-10">
         <div style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: `${iconColor}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Icon style={{ width: '14px', height: '14px', color: iconColor }} />
@@ -669,7 +662,7 @@ function ActivityRow({ icon: Icon, iconColor, title, time }: { icon: any; iconCo
 
 function QuickActionBtn({ title, icon: Icon, bgColor, href, tooltip }: { title: string; icon: any; bgColor: string; href: string; tooltip: string }) {
   return (
-    <Link href={href} className="cx-flex-col cx-flex-center cx-r-12" title={tooltip} style={{ backgroundColor: bgColor, padding: '20px 12px', gap: '10px', textDecoration: 'none', color: '#fff', transition: 'transform 0.2s, box-shadow 0.2s', cursor: 'pointer' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}>
+    <Link href={href} className="cx-quick-action cx-flex-col cx-flex-center cx-r-12" title={tooltip} style={{ backgroundColor: bgColor, padding: '20px 12px', gap: '10px', textDecoration: 'none', color: '#fff', cursor: 'pointer' }}>
       <Icon style={{ width: '22px', height: '22px' }} />
       <span className="cx-fw-600 cx-text-12">{title}</span>
     </Link>
@@ -678,6 +671,7 @@ function QuickActionBtn({ title, icon: Icon, bgColor, href, tooltip }: { title: 
 
 function ResourceBar({ label, value, color }: { label: string; value: number; color: string }) {
   const barColor = value > 80 ? '#EF4444' : value > 60 ? '#F59E0B' : color;
+  const severity = value > 80 ? 'critical' : value > 60 ? 'warning' : undefined;
   return (
     <div className="cx-flex-col cx-gap-2">
       <div className="cx-flex-between">
@@ -685,9 +679,36 @@ function ResourceBar({ label, value, color }: { label: string; value: number; co
         <span className="cx-text-muted cx-text-9">{value.toFixed(0)}%</span>
       </div>
       <div style={{ height: '3px', borderRadius: '2px', backgroundColor: 'rgba(var(--text-muted), 0.1)', overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${Math.min(value, 100)}%`, borderRadius: '2px', backgroundColor: barColor }} />
+        <div
+          className="cx-gauge-bar"
+          data-severity={severity}
+          style={{ height: '100%', borderRadius: '2px', backgroundColor: barColor, '--fill-pct': `${Math.min(value, 100)}%` } as React.CSSProperties}
+        />
       </div>
     </div>
+  );
+}
+
+function ChartLine({ d }: { d: string }) {
+  const pathRef = useRef<SVGPathElement>(null);
+  const [pathLength, setPathLength] = useState(0);
+
+  useEffect(() => {
+    if (pathRef.current) {
+      setPathLength(pathRef.current.getTotalLength());
+    }
+  }, [d]);
+
+  return (
+    <path
+      ref={pathRef}
+      d={d}
+      fill="none"
+      stroke="#8B5CF6"
+      strokeWidth="3"
+      className="cx-chart-line"
+      style={{ '--path-length': pathLength } as React.CSSProperties}
+    />
   );
 }
 
