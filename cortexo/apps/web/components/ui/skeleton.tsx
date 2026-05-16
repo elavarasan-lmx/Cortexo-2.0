@@ -15,6 +15,8 @@ interface SkeletonProps {
   radius?: number;
   /** Custom class for shimmer */
   variant?: 'shimmer' | 'pulse';
+  /** Additional inline styles */
+  style?: React.CSSProperties;
 }
 
 /**
@@ -25,12 +27,14 @@ export function Skeleton({
   height = 16,
   radius = 4,
   variant = 'shimmer',
+  style: extraStyle,
 }: SkeletonProps) {
   const style: React.CSSProperties = {
     width,
     height,
     borderRadius: radius,
     animation: variant === 'shimmer' ? 'skeleton-shimmer 1.5s infinite' : 'skeleton-pulse 2s infinite',
+    ...extraStyle,
   };
 
   return <div className={variant === 'shimmer' ? 'skeleton-shimmer' : 'skeleton-pulse'} style={style} />;

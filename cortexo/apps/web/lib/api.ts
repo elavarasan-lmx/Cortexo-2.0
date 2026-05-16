@@ -592,6 +592,7 @@ class ApiClient {
   private token: string | null = null;
   private refreshToken: string | null = null;
   private isRefreshing = false;
+  private _isRedirecting = false;
   private refreshQueue: Array<{ resolve: (token: string) => void; reject: (err: Error) => void }> = [];
 
   constructor(baseUrl: string) {
@@ -614,15 +615,24 @@ class ApiClient {
     const json = await res.json();
     if (!res.ok) {
       if (res.status === 401 && !_skipRefresh) {
-        // Attempt silent token refresh before kicking to login
-        const refreshed = await this._tryRefresh();
-        if (refreshed) {
-          // Retry the original request with the new token
-          return this.request<T>(method, path, body, true);
+        // Only attempt refresh if we actually had a token
+        const hadToken = !!this.token;
+        if (hadToken) {
+          const refreshed = await this._tryRefresh();
+          if (refreshed) {
+            return this.request<T>(method, path, body, true);
+          }
         }
-        // Refresh failed — clear everything and redirect
+        // Clear stale auth state
         this._clearAuth();
-        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        // Only redirect to /login if:
+        // 1. We previously had a token (session expired, not "never logged in")
+        // 2. We're not already redirecting (prevent concurrent 401s from looping)
+        // 3. We're not already on /login
+        // If the user has a NextAuth session but no API token, we do NOT redirect
+        // — that would create an infinite loop with the NextAuth middleware.
+        if (hadToken && typeof window !== 'undefined' && window.location.pathname !== '/login' && !this._isRedirecting) {
+          this._isRedirecting = true;
           window.location.href = '/login';
         }
       }

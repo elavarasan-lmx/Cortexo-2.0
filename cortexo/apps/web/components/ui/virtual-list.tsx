@@ -244,7 +244,7 @@ interface UseVirtualScrollReturn {
   /** Scroll to index */
   scrollToIndex: (index: number) => void;
   /** Container ref to attach to scrollable element */
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export function useVirtualScroll({
@@ -271,16 +271,18 @@ export function useVirtualScroll({
     }
   };
 
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    setScrollTop((e.target as HTMLDivElement).scrollTop);
+  const handleScroll = () => {
+    if (containerRef.current) {
+      setScrollTop(containerRef.current.scrollTop);
+    }
   };
 
   // Attach scroll handler
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    el.addEventListener('scroll', handleScroll as EventListener);
-    return () => el.removeEventListener('scroll', handleScroll as EventListener);
+    el.addEventListener('scroll', handleScroll);
+    return () => el.removeEventListener('scroll', handleScroll);
   }, []);
 
   return {

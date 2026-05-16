@@ -1,6 +1,7 @@
 'use client';
 
 import { ButtonHTMLAttributes, CSSProperties, forwardRef } from 'react';
+import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline';

@@ -266,6 +266,57 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Benefits Section ── */}
+      <section className="relative py-24 lg:py-32 overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute right-0 top-1/4 h-[400px] w-[400px] rounded-full bg-indigo-600/10 blur-[100px]" />
+          <div className="absolute left-0 bottom-1/4 h-[300px] w-[300px] rounded-full bg-cyan-600/10 blur-[80px]" />
+        </div>
+
+        <div className="mx-auto max-w-7xl px-5 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-80px' }}
+            variants={stagger}
+            className="text-center mb-16"
+            {...motionProps}
+          >
+            <motion.p variants={fadeUp} className="text-sm font-semibold uppercase tracking-widest text-cyan-400 mb-3">
+              Why Choose Logimax
+            </motion.p>
+            <motion.h2 variants={fadeUp} className="text-3xl lg:text-4xl font-bold tracking-tight">
+              Built for modern DevOps teams
+            </motion.h2>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              { title: 'Faster Deploys', desc: 'Reduce deployment time by 70% with automated pipelines', icon: Zap, color: 'indigo' },
+              { title: 'Smarter Debugging', desc: 'AI-powered root cause analysis cuts MTTR by 80%', icon: Search, color: 'cyan' },
+              { title: 'Better Collaboration', desc: 'Unified platform for devs, ops, and security teams', icon: Globe, color: 'violet' },
+            ].map((benefit, idx) => (
+              <motion.div
+                key={benefit.title}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                variants={fadeUp}
+                transition={{ delay: idx * 0.1 }}
+                className="group relative p-8 rounded-2xl border border-white/[0.06] bg-white/[0.02] hover:border-white/[0.15] transition-all duration-500 hover:-translate-y-2"
+              >
+                <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br from-${benefit.color}-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                <div className={`relative inline-flex rounded-xl bg-gradient-to-br from-${benefit.color}-500 to-${benefit.color}-600 p-4 mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                  <benefit.icon className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="relative text-xl font-semibold text-white mb-2 group-hover:text-indigo-300 transition-colors">{benefit.title}</h3>
+                <p className="relative text-slate-400">{benefit.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── How It Works ── */}
       <section id="how-it-works" className="relative py-24 lg:py-32">
         {/* Gradient Divider */}

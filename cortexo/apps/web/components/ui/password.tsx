@@ -59,7 +59,9 @@ export function PasswordStrength({
     met: r.test(password),
   }));
 
-  const strength = calculateStrength(password, requirements);
+  const strength = customRequirements
+    ? requirements.filter((r) => r.met).length
+    : calculateStrength(password, DEFAULT_REQUIREMENTS);
   const level = getStrengthLevel(strength);
   const progress = (strength / requirements.length) * 100;
 

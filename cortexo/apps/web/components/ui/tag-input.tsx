@@ -8,7 +8,8 @@ interface TagInputProps {
   /** Initial tags */
   value?: string[];
   /** Called when tags change */
-  onChange?: (tags: string[]) => /** Placeholder text */
+  onChange?: (tags: string[]) => void;
+  /** Placeholder text */
   placeholder?: string;
   /** Suggestions for autocomplete */
   suggestions?: string[];

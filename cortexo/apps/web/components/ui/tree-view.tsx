@@ -106,7 +106,7 @@ export function TreeView({
     const expanded = isExpanded(node.id);
     const isSelected = selected === node.id;
     const isChecked = checked.includes(node.id);
-    const Icon = node.icon || (hasChildren ? (expanded ? FolderOpen : Folder) : getIcon(node.label));
+    const IconComponent = hasChildren ? (expanded ? FolderOpen : Folder) : getIcon(node.label);
 
     return (
       <div key={node.id}>
@@ -152,7 +152,9 @@ export function TreeView({
 
           {/* Icon */}
           {showIcons && (
-            <Icon size={16} style={{ color: isSelected ? 'rgb(var(--primary))' : 'rgb(var(--text-muted))' }} />
+            node.icon
+              ? <span style={{ display: 'flex', alignItems: 'center' }}>{node.icon}</span>
+              : <IconComponent size={16} style={{ color: isSelected ? 'rgb(var(--primary))' : 'rgb(var(--text-muted))' }} />
           )}
 
           {/* Label */}
