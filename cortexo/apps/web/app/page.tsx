@@ -117,6 +117,20 @@ export default function LandingPage() {
               backgroundSize: '60px 60px',
             }}
           />
+
+          {/* Floating code brackets */}
+          <div className="absolute left-[10%] top-[20%] text-indigo-500/20 animate-float-slow" style={{ animationDuration: '20s' }}>
+            <span className="text-6xl font-mono">{'{'}</span>
+          </div>
+          <div className="absolute right-[15%] top-[30%] text-cyan-500/20 animate-float-medium" style={{ animationDuration: '25s' }}>
+            <span className="text-5xl font-mono">&lt;/&gt;</span>
+          </div>
+          <div className="absolute left-[20%] bottom-[25%] text-violet-500/20 animate-float-fast" style={{ animationDuration: '18s' }}>
+            <span className="text-4xl font-mono">[]</span>
+          </div>
+          <div className="absolute right-[10%] bottom-[20%] text-indigo-500/20 animate-float-medium" style={{ animationDuration: '22s' }}>
+            <span className="text-5xl font-mono">{'()'}</span>
+          </div>
         </div>
 
         <div className="relative mx-auto max-w-7xl px-5 lg:px-8 text-center">
@@ -153,7 +167,7 @@ export default function LandingPage() {
               <Link
                 href="/register"
                 id="hero-cta-primary"
-                className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-8 py-3.5 text-base font-semibold text-white no-underline shadow-xl shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-300 cursor-pointer"
+                className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-8 py-3.5 text-base font-semibold text-white no-underline shadow-xl shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer"
               >
                 Get Started Free
                 <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -161,7 +175,7 @@ export default function LandingPage() {
               <a
                 href="#how-it-works"
                 id="hero-cta-secondary"
-                className="flex items-center gap-2 rounded-xl border border-slate-700 px-8 py-3.5 text-base font-medium text-slate-300 no-underline hover:border-slate-500 hover:text-white transition-all duration-200 cursor-pointer"
+                className="flex items-center gap-2 rounded-xl border border-slate-700 px-8 py-3.5 text-base font-medium text-slate-300 no-underline hover:border-slate-500 hover:text-white hover:bg-white/[0.04] hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
               >
                 See How It Works
               </a>
@@ -253,7 +267,9 @@ export default function LandingPage() {
       </section>
 
       {/* ── How It Works ── */}
-      <section id="how-it-works" className="relative py-24 lg:py-32 border-t border-white/[0.04]">
+      <section id="how-it-works" className="relative py-24 lg:py-32">
+        {/* Gradient Divider */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent" />
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <motion.div
             initial="hidden"
@@ -301,8 +317,110 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Terminal Preview Section ── */}
+      <section className="relative py-24 lg:py-32 border-t border-white/[0.04] overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute top-0 left-1/4 h-[300px] w-[300px] rounded-full bg-indigo-600/10 blur-[80px]" />
+          <div className="absolute bottom-0 right-1/4 h-[300px] w-[300px] rounded-full bg-violet-600/10 blur-[80px]" />
+        </div>
+
+        <div className="mx-auto max-w-5xl px-5 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-80px' }}
+            variants={stagger}
+            className="text-center mb-12"
+            {...motionProps}
+          >
+            <motion.p variants={fadeUp} className="text-sm font-semibold uppercase tracking-widest text-indigo-400 mb-3">
+              See It In Action
+            </motion.p>
+            <motion.h2 variants={fadeUp} className="text-3xl lg:text-4xl font-bold tracking-tight">
+              Watch Logimax DevOps in action
+            </motion.h2>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={scaleIn}
+            {...motionProps}
+          >
+            {/* Terminal Window */}
+            <div className="relative rounded-2xl border border-white/[0.1] bg-[#0a0a12]/90 backdrop-blur-xl overflow-hidden shadow-2xl shadow-indigo-500/10">
+              {/* Terminal Header */}
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.06] bg-white/[0.02]">
+                <div className="flex gap-2">
+                  <div className="h-3 w-3 rounded-full bg-red-500/80" />
+                  <div className="h-3 w-3 rounded-full bg-yellow-500/80" />
+                  <div className="h-3 w-3 rounded-full bg-green-500/80" />
+                </div>
+                <div className="flex-1 text-center">
+                  <span className="text-xs text-slate-500 font-mono">Logimax DevOps Terminal</span>
+                </div>
+                <div className="h-3 w-3 rounded-full bg-slate-700/50" />
+              </div>
+
+              {/* Terminal Content */}
+              <div className="p-4 font-mono text-sm">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-400">➜</span>
+                    <span className="text-slate-400">Running deployment pipeline...</span>
+                  </div>
+                  <div className="pl-4 text-slate-500 text-xs">
+                    <span>→ Cloning repository</span>
+                    <span className="typing-cursor">_</span>
+                  </div>
+                  <div className="pl-4 text-slate-500 text-xs mt-2">
+                    <span>→ Installing dependencies</span>
+                  </div>
+                  <div className="pl-4 text-slate-500 text-xs mt-2">
+                    <span>→ Running tests</span>
+                  </div>
+                  <div className="pl-4 text-green-400 text-xs mt-2">
+                    <span>✓ All tests passed (42/42)</span>
+                  </div>
+                  <div className="pl-4 text-slate-500 text-xs mt-2">
+                    <span>→ Building production bundle</span>
+                  </div>
+                  <div className="pl-4 text-slate-500 text-xs mt-2">
+                    <span>→ Deploying via SSH/SFTP</span>
+                  </div>
+
+                  {/* AI Alert */}
+                  <div className="mt-4 p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
+                    <div className="flex items-center gap-2 text-indigo-400">
+                      <Brain className="h-4 w-4" />
+                      <span className="text-xs font-semibold">AI Analysis Complete</span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Detected 2 potential issues in your recent commit. <span className="text-indigo-300 cursor-pointer hover:underline">View analysis →</span>
+                    </p>
+                  </div>
+
+                  <div className="pl-4 text-green-400 text-xs mt-3">
+                    <span>✓ Deployment successful! (2.3s)</span>
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-3">
+                    <span className="text-cyan-400">➜</span>
+                    <span className="text-slate-400 text-xs">Ready for next command...</span>
+                    <span className="typing-cursor text-slate-400">_</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ── Tech Stack Section ── */}
-      <section id="stack" className="relative py-24 lg:py-32 border-t border-white/[0.04]">
+      <section id="stack" className="relative py-24 lg:py-32">
+        {/* Gradient Divider */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent" />
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <motion.div
             initial="hidden"
@@ -339,9 +457,9 @@ export default function LandingPage() {
               <motion.div
                 key={label}
                 variants={scaleIn}
-                className="group flex flex-col items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-6 hover:border-indigo-500/30 hover:bg-indigo-500/[0.04] transition-all duration-300 cursor-default"
+                className="group flex flex-col items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-6 hover:border-indigo-500/30 hover:bg-indigo-500/[0.04] hover:-translate-y-1 transition-all duration-300 cursor-default"
               >
-                <div className="rounded-lg bg-slate-800/60 p-3 group-hover:bg-indigo-500/10 transition-colors duration-300">
+                <div className="rounded-lg bg-slate-800/60 p-3 group-hover:bg-indigo-500/10 group-hover:scale-110 transition-all duration-300">
                   <Icon className="h-6 w-6 text-slate-400 group-hover:text-indigo-400 transition-colors duration-300" />
                 </div>
                 <div className="text-center">
@@ -383,7 +501,9 @@ export default function LandingPage() {
       </section>
 
       {/* ── FAQ Section ── */}
-      <section id="faq" className="relative py-24 lg:py-32 border-t border-white/[0.04]">
+      <section id="faq" className="relative py-24 lg:py-32">
+        {/* Gradient Divider */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
         <div className="mx-auto max-w-3xl px-5 lg:px-8">
           <motion.div
             initial="hidden"
@@ -427,7 +547,9 @@ export default function LandingPage() {
       </section>
 
       {/* ── Bottom CTA Section ── */}
-      <section className="relative py-24 lg:py-32 border-t border-white/[0.04]">
+      <section className="relative py-24 lg:py-32">
+        {/* Gradient Divider */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent" />
         {/* Background glow */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="absolute left-1/2 top-1/2 h-[400px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-600/10 blur-[120px]" />
@@ -507,15 +629,15 @@ function FeatureCard({
   return (
     <motion.div
       variants={fadeUp}
-      className="group relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 hover:border-white/[0.12] transition-all duration-300 cursor-default"
+      className="group relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 hover:border-white/[0.12] hover:-translate-y-1 transition-all duration-300 cursor-default"
     >
       {/* Hover glow */}
       <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-[0.04] transition-opacity duration-500 pointer-events-none`} />
 
-      <div className={`inline-flex rounded-xl bg-gradient-to-br ${gradient} p-3 shadow-lg mb-4`}>
+      <div className={`inline-flex rounded-xl bg-gradient-to-br ${gradient} p-3 shadow-lg mb-4 group-hover:scale-110 transition-transform duration-300`}>
         <Icon className="h-5 w-5 text-white" />
       </div>
-      <h3 className="mb-2 text-lg font-semibold text-white">{title}</h3>
+      <h3 className="mb-2 text-lg font-semibold text-white group-hover:text-indigo-300 transition-colors duration-300">{title}</h3>
       <p className="text-sm leading-relaxed text-slate-400">{description}</p>
     </motion.div>
   );

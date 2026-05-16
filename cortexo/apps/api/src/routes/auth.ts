@@ -7,6 +7,7 @@ import crypto from 'crypto';
 import type { JwtUser } from '../middleware/auth.js';
 
 // ── Auth Zod Schemas ────────────────────────────────────────────────────────
+const registerSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string().email('Valid email required'),
   password: z.string().min(8, 'Password must be at least 8 characters'),

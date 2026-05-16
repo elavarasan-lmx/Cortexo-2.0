@@ -14,18 +14,8 @@ export function getUser(request: FastifyRequest): JwtUser {
     sub: '00000000-0000-0000-0000-000000000000',
     email: 'dev@cortexo.local',
     name: 'Dev User',
-    orgId: '00000000-0000-0000-0000-000000000000',
     role: 'admin',
   };
-}
-
-/**
- * Get the orgId from the authenticated user.
- * This is the primary function for data isolation — every list query
- * should filter by this value.
- */
-export function getOrgId(request: FastifyRequest): string {
-  return getUser(request).orgId;
 }
 
 /**

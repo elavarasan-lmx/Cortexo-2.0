@@ -63,14 +63,14 @@ export function Avatar({
   const fontSize = FONT_MAP[size];
   const initials = getInitials(name);
 
-  const containerStyle: ReactNode['style'] = {
+  const containerStyle: React.CSSProperties = {
     position: 'relative',
     display: 'inline-flex',
     flexShrink: 0,
     cursor: onClick ? 'pointer' : 'default',
   };
 
-  const avatarStyle: ReactNode['style'] = {
+  const avatarStyle: React.CSSProperties = {
     width: dimension,
     height: dimension,
     borderRadius: '50%',

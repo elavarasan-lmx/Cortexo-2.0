@@ -7,7 +7,6 @@ import crypto from 'crypto';
 import { sendCriticalErrorAlert } from '../lib/email.js';
 import { incrementErrorCount } from '../middleware/usage-limits.js';
 import { parsePagination, paginatedResponse } from '../lib/pagination.js';
-import { getOrgId } from '../lib/request-context.js';
 
 // Post Slack error alert (non-blocking)
 async function postSlackErrorAlert(opts: { errorType: string; message: string; projectName: string; errorId: string; severity: string }) {
@@ -93,16 +92,15 @@ export async function errorRoutes(app: FastifyInstance) {
       projectId?: string; status?: string; severity?: string; module?: string;
     };
     const { page, limit, offset } = parsePagination(request.query as Record<string, unknown>);
-    const orgId = getOrgId(request);
     try {
       const db = await getDb();
-      const conditions = [eq(errors.orgId, orgId)];
+      const conditions: any[] = [];
       if (projectId) conditions.push(eq(errors.projectId, projectId));
       if (status) conditions.push(eq(errors.status, status as any));
       if (severity) conditions.push(eq(errors.severity, severity as any));
       if (module) conditions.push(eq(errors.module, module));
 
-      const where = and(...conditions);
+      const where = conditions.length > 0 ? and(...conditions) : undefined;
 
       const [rows, countResult] = await Promise.all([
         db.select().from(errors)
@@ -122,7 +120,6 @@ export async function errorRoutes(app: FastifyInstance) {
 
   // Module stats — bug counts per module
   app.get('/errors/module-stats', async (request, reply) => {
-    const orgId = getOrgId(request);
     try {
       const db = await getDb();
       const rows = await db.execute(sql`
@@ -135,7 +132,6 @@ export async function errorRoutes(app: FastifyInstance) {
           COUNT(*) FILTER (WHERE severity = 'high') as high,
           MAX(last_seen_at) as last_bug
         FROM errors
-        WHERE org_id = ${orgId}
         GROUP BY module
         ORDER BY total DESC
       `);
@@ -242,7 +238,7 @@ export async function errorRoutes(app: FastifyInstance) {
         return reply.code(401).send({ error: 'Invalid API key' });
       }
 
-      const { id: projectId, orgId } = project;
+      const { id: projectId } = project;
 
       // Fingerprint = sha256(type:file:line) — deduplicates same error location
       const fingerprint = crypto
@@ -274,7 +270,6 @@ export async function errorRoutes(app: FastifyInstance) {
         await db.insert(errors).values({
           id: errorId,
           projectId,
-          orgId,
           fingerprint,
           type: data.type,
           message: data.message,
@@ -550,13 +545,12 @@ export async function errorRoutes(app: FastifyInstance) {
   // Fetch AI Root Cause
   app.get('/errors/:id/root-cause', async (request, reply) => {
     const { id } = request.params as { id: string };
-    const orgId = getOrgId(request);
 
     try {
       const db = await getDb();
       
       const analysis = await db.query.rootCauses.findFirst({
-        where: (rc, { eq, and }) => and(eq(rc.errorId, id), eq(rc.orgId, orgId)),
+        where: (rc, { eq }) => eq(rc.errorId, id),
         orderBy: (rc, { desc }) => [desc(rc.createdAt)]
       });
 

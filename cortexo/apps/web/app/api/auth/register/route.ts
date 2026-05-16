@@ -68,24 +68,6 @@ export async function POST(request: NextRequest) {
     // --- Hash password ---
     const passwordHash = await hash(password, 12);
 
-    // --- Create organization (if provided) ---
-    // Using raw SQL because the Drizzle schema has columns not yet in the DB
-    let orgId: string | null = null;
-    if (orgName && typeof orgName === 'string' && orgName.trim().length > 0) {
-      const orgSlug = orgName
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '');
-
-      const newOrgId = crypto.randomUUID();
-      const uniqueSlug = orgSlug + '-' + newOrgId.slice(0, 8);
-      await db.execute(
-        sql`INSERT INTO organizations (id, name, slug, plan) VALUES (${newOrgId}, ${orgName.trim()}, ${uniqueSlug}, 'free')`
-      );
-      orgId = newOrgId;
-    }
-
     // --- Create user ---
     const userId = crypto.randomUUID();
     await db.insert(users).values({
@@ -93,8 +75,7 @@ export async function POST(request: NextRequest) {
       name: name.trim(),
       email: email.trim().toLowerCase(),
       passwordHash,
-      orgId,
-      role: orgId ? 'admin' : 'member',
+      role: 'member',
       provider: 'credentials',
     });
 

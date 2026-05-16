@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Minus, RefreshCw, ChevronDown, ChevronRight, FileDiff } from 'lucide-react';
+import { Plus, Minus, RefreshCw, ChevronDown, ChevronRight, FileDiff as FileDiffIcon } from 'lucide-react';
 
 /* ─────────────────────────────────────────────────────────────────────────────
    DiffViewer — show changes between two versions
@@ -185,7 +185,7 @@ export function DiffViewer({
         borderBottom: '1px solid rgb(var(--border))',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <FileDiff size={16} style={{ color: 'rgb(var(--primary))' }} />
+          <FileDiffIcon size={16} style={{ color: 'rgb(var(--primary))' }} />
           <span style={{ fontSize: 13, fontWeight: 500 }}>Changes</span>
           <div style={{ display: 'flex', gap: 8, fontSize: 12 }}>
             <span style={{ color: 'rgb(var(--success))' }}>+{stats.additions}</span>

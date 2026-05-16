@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 
 /* ─────────────────────────────────────────────────────────────────────────────
    Markdown — simple markdown preview renderer
@@ -87,7 +87,7 @@ export function Markdown({ children }: MarkdownProps) {
     }
     // Empty line
     else if (line.trim() === '') {
-      elements.push(<Br key={i} />);
+      elements.push(<BR key={i} />);
     }
     // Paragraph
     else {

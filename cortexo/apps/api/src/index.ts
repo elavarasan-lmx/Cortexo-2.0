@@ -51,6 +51,7 @@ import { filePushRoutes } from './routes/file-push.js';
 import { knowledgeRoutes } from './routes/knowledge.js';
 import { testingRoutes } from './routes/testing/index.js';
 import { browserTestRoutes } from './routes/browser-tests.js';
+import { smokeTestRoutes } from './routes/smoke-tests.js';
 import { devopsDocsRoutes } from './routes/devops-docs.js';
 
 import { menuPermissionRoutes } from './routes/menu-permissions.js';
@@ -258,6 +259,7 @@ async function start() {
   await app.register(knowledgeRoutes, { prefix: '/v1' });
   await app.register(testingRoutes, { prefix: '/v1' });
   await app.register(browserTestRoutes, { prefix: '/v1' });
+  await app.register(smokeTestRoutes, { prefix: '/v1' });
   await app.register(devopsDocsRoutes, { prefix: '/v1' });
 
   await app.register(menuPermissionRoutes, { prefix: '/v1' });

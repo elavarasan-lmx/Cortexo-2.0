@@ -556,6 +556,34 @@ export interface JudgeAggregateStats {
   topSuggestions: { suggestion: string; occurrences: number }[];
 }
 
+export interface SmokeTestResult {
+  testType: string;
+  url: string;
+  success: boolean;
+  durationMs: number;
+  timestamp: string;
+  details: Record<string, unknown>;
+  screenshots: string[];
+  errors: string[];
+  runId?: number;
+}
+
+export interface SmokeTestType {
+  id: string;
+  name: string;
+  description: string;
+  requiresBrowser: boolean;
+}
+
+export interface LoginConfig {
+  loginUrl: string;
+  username: string;
+  password: string;
+  userSelector: string;
+  passSelector: string;
+  submitSelector: string;
+}
+
 
 // ─── API Client ─────────────────────────────────────────────────────────────
 
@@ -906,6 +934,14 @@ class ApiClient {
     return this.request<TestExportResult>('POST', `/testing/bugs/${runId}/export${qs}`);
   }
   getExportedTestBugs()                              { return this.request<TestBug[]>('GET', '/testing/bugs/exported'); }
+
+  // ─── Smoke Testing ────────────────────────────────────────────────────────
+  getSmokeTestTypes()                                { return this.request<SmokeTestType[]>('GET', '/smoke-tests/types'); }
+  runSmokeTest(data: { testType: string; targetId?: number; baseUrl?: string; loginConfig?: LoginConfig }) {
+    return this.request<SmokeTestResult>('POST', '/smoke-tests/run', data);
+  }
+  getSmokeTestRuns()                                 { return this.request<any[]>('GET', '/smoke-tests/runs'); }
+  getSmokeTestRun(id: number)                        { return this.request<any>('GET', `/smoke-tests/runs/${id}`); }
 
   // ─── Auth ─────────────────────────────────────────────────────────────────
   async register(data: { name: string; email: string; password: string; orgName?: string }) {

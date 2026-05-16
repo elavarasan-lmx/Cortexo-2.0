@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   FlaskConical, Plus, Trash2, Play, Search, RefreshCw, Loader2,
   CheckCircle, XCircle, Clock, Globe, Server, ArrowRight,
-  AlertTriangle, FolderSearch, Zap, ChevronRight, X,
+  AlertTriangle, FolderSearch, Zap, ChevronRight, X, Flame,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 
@@ -202,6 +202,18 @@ export default function TestingHubPage() {
             <div className="cx-text-secondary" style={{ fontSize: '11px' }}>Business flow test suites — Registration, Login, Trading</div>
           </div>
           <ChevronRight style={{ width: '16px', height: '16px', color: '#10B981' }} />
+        </Link>
+        <Link href="/testing/smoke" className="cx-flex cx-items-center cx-gap-14" style={{
+          padding: '16px 20px', borderRadius: '14px',
+          border: '1px solid rgba(249,115,22,0.25)', backgroundColor: 'rgba(249,115,22,0.06)',
+          textDecoration: 'none', transition: 'all 200ms',
+        }}>
+          <Flame style={{ width: '28px', height: '28px', color: '#F97316' }} />
+          <div style={{ flex: 1 }}>
+            <div className="cx-fw-700 cx-text-primary" style={{ fontSize: '14px' }}>Smoke Testing</div>
+            <div className="cx-text-secondary" style={{ fontSize: '11px' }}>Health probes, login flows, responsive checks & link scanning</div>
+          </div>
+          <ChevronRight style={{ width: '16px', height: '16px', color: '#F97316' }} />
         </Link>
       </div>
 

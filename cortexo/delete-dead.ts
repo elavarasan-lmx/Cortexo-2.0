@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { getDb } from './apps/api/src/lib/db.js';
 import { menuItems } from '@cortexo/db/schema';
 import { inArray } from 'drizzle-orm';

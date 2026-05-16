@@ -23,7 +23,7 @@ export { Ico, MetaText, ChipTag, SectionHead, EmptyState } from './primitives';
 
 export { Input, Textarea, Select } from './input';
 
-export { Table, Pagination, TableSkeleton } from './table';
+export { Table, TableSkeleton } from './table';
 export type { TableColumn } from './table';
 
 export { Tooltip } from './tooltip';
@@ -117,7 +117,7 @@ export type { DataGridColumn } from './data-grid';
 export { Calendar, CalendarView } from './calendar';
 
 // Navigation
-export { Breadcrumb, BreadcrumbSkeleton, Steps } from './breadcrumb';
+export { Breadcrumb } from './breadcrumb';
 
 // Tree View
 export { TreeView, TreeViewSkeleton } from './tree-view';
@@ -149,3 +149,13 @@ export { CodeEditor, CodeBlock, CodePlayground } from './code-editor';
 
 // Diff Viewer
 export { DiffViewer, DiffStats, FileDiff } from './diff-viewer';
+
+// Search
+export { SearchInput, SearchModal } from './search-input';
+
+// Pagination
+export { Pagination, PaginationCompact, PaginationDots } from './pagination';
+
+// Notifications
+export { NotificationProvider, NotificationStack, NotificationBell, useNotification } from './notifications';
+export type { Notification, NotificationType } from './notifications';

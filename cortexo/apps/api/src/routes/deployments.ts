@@ -133,13 +133,12 @@ export async function deploymentRoutes(app: FastifyInstance) {
       projectId?: string; status?: string;
     };
     const { page, limit, offset } = parsePagination(request.query as Record<string, unknown>);
-    const orgId = getOrgId(request);
     try {
       const db = await getDb();
-      const conditions = [eq(deployments.orgId, orgId)];
+      const conditions: any[] = [];
       if (projectId) conditions.push(eq(deployments.projectId, projectId));
       if (status) conditions.push(eq(deployments.status, status as any));
-      const where = and(...conditions);
+      const where = conditions.length > 0 ? and(...conditions) : undefined;
 
       const [rows, countResult] = await Promise.all([
         db.select().from(deployments)
@@ -306,7 +305,6 @@ export async function deploymentRoutes(app: FastifyInstance) {
     }
 
     const user = getUser(request);
-    const orgId = getOrgId(request);
 
     try {
       const db = await getDb();
@@ -374,7 +372,6 @@ export async function deploymentRoutes(app: FastifyInstance) {
       await db.insert(deployments).values({
         id,
         projectId: parsed.data.projectId,
-        orgId,
         deployTargetId: parsed.data.deployTargetId || null,
         environment: parsed.data.environment,
         status: 'running',
@@ -454,7 +451,6 @@ export async function deploymentRoutes(app: FastifyInstance) {
       await db.insert(deployments).values({
         id: rollbackId,
         projectId: original.projectId,
-        orgId: original.orgId,
         deployTargetId: original.deployTargetId,
         environment: original.environment,
         branch: original.branch,

@@ -71,7 +71,6 @@ export async function pipelineRunRoutes(app: FastifyInstance) {
         id: newRunId,
         pipelineId: original.pipelineId,
         projectId: original.projectId,
-        orgId: original.orgId,
         runNumber,
         status: 'queued',
         branch: original.branch,
