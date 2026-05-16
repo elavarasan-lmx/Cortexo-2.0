@@ -662,7 +662,7 @@ export default function NewProjectPage() {
                   <label className="cx-label">Deployment Server</label>
                   <select className="cx-input" style={{ cursor: "pointer" }} value={form.serverId} onChange={e => update('serverId', e.target.value)}>
                     <option value="">Select deployment server...</option>
-                    {allServers.map((s: Record<string, unknown>) => (<option key={String(s.id)} value={String(s.id)}>{String(s.name)} ({String(s.privateIp)})</option>))}
+                    {allServers.map((s: Server) => (<option key={String(s.id)} value={String(s.id)}>{String(s.name)} ({String(s.privateIp)})</option>))}
                     {allServers.length === 0 && <option value="" disabled>No servers configured — add one in Servers page</option>}
                   </select>
                 </div>
@@ -795,7 +795,7 @@ export default function NewProjectPage() {
                 <div><span style={{ fontSize: '14px', fontWeight: 700, color: '#10B981' }}>Ready to Create Project!</span><br/><span style={{ fontSize: '12px', color: 'rgb(var(--text-muted))' }}>No conflicts found. Please review all details before submitting.</span></div>
               </div>
             )}
-            {[{ title: 'Basic Info', items: [['Project', form.name], ['Slug', form.clientSlug], ['Product', form.productType], ['Repo', form.repoUrl || '—'], ['Server', allServers.find((s: Record<string, unknown>) => String(s.id) === form.serverId)?.name as string || '—'], ['Server Path', form.serverPath || '—']] },
+            {[{ title: 'Basic Info', items: [['Project', form.name], ['Slug', form.clientSlug], ['Product', form.productType], ['Repo', form.repoUrl || '—'], ['Server', allServers.find((s: Server) => String(s.id) === form.serverId)?.name as string || '—'], ['Server Path', form.serverPath || '—']] },
               { title: 'Domain & Access', items: [['Domain', form.domain || '—'], ['Admin URL', form.adminBaseUrl || '—'], ['Admin User', form.adminUser || '—']] },
               { title: 'Database', items: [['DB Host', form.dbHost || '—'], ['DB Name', form.dbName || '—'], ['DB User', form.dbUser || '—'], ['DB Port', form.dbPort || '3306']] },
               { title: 'Socket', items: [['WS Port (Native)', form.wsPort || '—'], ['Socket.IO Port (Redis)', form.socketIoPort || '—']] },

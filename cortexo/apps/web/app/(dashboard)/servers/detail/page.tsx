@@ -143,7 +143,7 @@ export default function ServerDetailPage() {
       {/* Quick Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '20px' }}>
         {[
-          { icon: Cpu, label: 'CPU', value: resources ? `${Math.round(cpuUsage)}%` : '—', color: '#3B82F6', sub: s.cpu?.model || `${s.cpu?.cores || '—'} cores` },
+          { icon: Cpu, label: 'CPU', value: resources ? `${Math.round(cpuUsage)}%` : '—', color: '#3B82F6', sub: typeof s.cpu === 'object' ? (s.cpu?.model || `${s.cpu?.cores || '—'} cores`) : (s.cpu || '—') },
           { icon: MemoryStick, label: 'Memory', value: resources ? `${Math.round((memUsed / (memTotal || 1)) * 100)}%` : '—', color: '#F59E0B', sub: resources ? `${memUsed.toFixed(1)}/${memTotal.toFixed(1)}GB` : '—' },
           { icon: HardDrive, label: 'Disk', value: resources ? `${Math.round((diskUsed / (diskTotal || 1)) * 100)}%` : '—', color: '#8B5CF6', sub: resources ? `${diskUsed.toFixed(0)}/${diskTotal.toFixed(0)}GB` : '—' },
           { icon: Globe, label: 'Host', value: s.host || s.ip || '—', color: '#10B981', sub: `Port ${s.port || 22}` },

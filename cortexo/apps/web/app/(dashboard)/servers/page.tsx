@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Server as ServerIcon, Plus, Trash2, Edit3, HardDrive, Cpu, MemoryStick,
   Loader2, RefreshCw, Wifi, WifiOff, Globe, Shield, FolderSync, Plug, X,
-  Search, Activity, AlertCircle, CheckCircle2,
+  Search, Activity, AlertCircle, CheckCircle2, MoreVertical, Terminal, Power, RotateCw,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Server, api } from '@/lib/api';
@@ -45,6 +45,72 @@ export default function ServersPage() {
   const [testingIds, setTestingIds] = useState<Set<number>>(new Set());
   const [testResults, setTestResults] = useState<Record<number, { success: boolean; latencyMs: number; hostname?: string; uptime?: string; error?: string }>>({});
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'name' | 'status' | 'cpu' | 'ram'>('name');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'online' | 'offline' | 'warning'>('all');
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+
+
+  const allServers: Server[] = (servers as Server[]) || [];
+  const allResources: Record<string, unknown>[] = (resources as Record<string, unknown>[]) || [];
+
+  const resourceByIp = allResources.reduce<Record<string, Record<string, unknown>>>((acc, r) => {
+    const ip = r.serverIp as string;
+    if (ip) acc[ip] = r;
+    return acc;
+  }, {});
+
+  // Apply filters and sorting
+  const filteredServers = useMemo(() => {
+    let result = [...allServers];
+
+    // Apply search filter
+    if (searchQuery) {
+      result = result.filter(s =>
+        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.privateIp?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.publicAddress?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      result = result.filter(srv => {
+        const testResult = testResults[srv.id];
+        if (statusFilter === 'online') return testResult?.success;
+        if (statusFilter === 'offline') return testResult && !testResult.success;
+        if (statusFilter === 'warning') {
+          const res = srv.privateIp ? resourceByIp[srv.privateIp] : undefined;
+          const cpuPct = res ? parseFloat(String(res.cpuPercent)) : 0;
+          return cpuPct > 70;
+        }
+        return true;
+      });
+    }
+
+    // Apply sorting
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'status':
+          const aOnline = testResults[a.id]?.success ? 1 : 0;
+          const bOnline = testResults[b.id]?.success ? 1 : 0;
+          return bOnline - aOnline;
+        case 'cpu':
+          const aCpu = a.privateIp ? parseFloat(String(resourceByIp[a.privateIp]?.cpuPercent)) : 0;
+          const bCpu = b.privateIp ? parseFloat(String(resourceByIp[b.privateIp]?.cpuPercent)) : 0;
+          return bCpu - aCpu;
+        case 'ram':
+          const aRam = a.privateIp ? Number(resourceByIp[a.privateIp]?.ramUsedMb) : 0;
+          const bRam = b.privateIp ? Number(resourceByIp[b.privateIp]?.ramUsedMb) : 0;
+          return bRam - aRam;
+        default:
+          return 0;
+      }
+    });
+
+    return result;
+  }, [allServers, searchQuery, statusFilter, sortBy, testResults, resourceByIp]);
 
   const testConnection = async (srv: Server) => {
     setTestingIds(prev => new Set(prev).add(srv.id));
@@ -124,14 +190,6 @@ export default function ServersPage() {
     );
   }
 
-  const allServers: Server[] = (servers as Server[]) || [];
-  const allResources: Record<string, unknown>[] = (resources as Record<string, unknown>[]) || [];
-
-  const resourceByIp = allResources.reduce<Record<string, Record<string, unknown>>>((acc, r) => {
-    const ip = r.serverIp as string;
-    if (ip) acc[ip] = r;
-    return acc;
-  }, {});
 
   return (
     <div>
@@ -151,6 +209,42 @@ export default function ServersPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '13px', color: 'rgb(var(--text-primary))', width: '160px' }}
             />
+          </div>
+
+          {/* Sort Dropdown */}
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+            style={{ background: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', borderRadius: '10px', padding: '10px 12px', fontSize: '13px', color: 'rgb(var(--text-primary))', cursor: 'pointer', outline: 'none' }}
+          >
+            <option value="name">Sort by Name</option>
+            <option value="status">Sort by Status</option>
+            <option value="cpu">Sort by CPU</option>
+            <option value="ram">Sort by RAM</option>
+          </select>
+
+          {/* Status Filter */}
+          <div className="cx-flex cx-gap-2">
+            {(['all', 'online', 'offline', 'warning'] as const).map((status) => (
+              <button
+                key={status}
+                onClick={() => setStatusFilter(status)}
+                className="cx-flex cx-items-center cx-gap-4"
+                style={{
+                  padding: '8px 12px',
+                  fontSize: '12px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  background: statusFilter === status ? 'rgb(var(--primary))' : 'rgb(var(--surface))',
+                  color: statusFilter === status ? '#fff' : 'rgb(var(--text-secondary))',
+                  border: statusFilter === status ? 'none' : '1px solid rgb(var(--border))',
+                  textTransform: 'capitalize',
+                  transition: 'all 200ms',
+                }}
+              >
+                {status}
+              </button>
+            ))}
           </div>
           <Link href="/servers/mounts" className="cx-flex cx-items-center cx-gap-6 cx-btn-secondary cx-text-secondary" style={{ padding: '10px 16px', fontSize: '13px', fontWeight: 500, textDecoration: 'none' }}>
             <FolderSync style={{ width: '14px', height: '14px' }} /> SSHFS Mounts
@@ -257,16 +351,31 @@ export default function ServersPage() {
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '14px' }}>
-        {(searchQuery ? allServers.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()) || s.privateIp?.toLowerCase().includes(searchQuery.toLowerCase()) || s.publicAddress?.toLowerCase().includes(searchQuery.toLowerCase())) : allServers).map((srv: Server) => {
+        {filteredServers.map((srv: Server) => {
           const res = srv.privateIp ? resourceByIp[srv.privateIp] : undefined;
           const hasMetrics = !!res;
           const cpuPct = hasMetrics ? parseFloat(String(res.cpuPercent)) : 0;
           const accentColor = cpuPct > 80 ? '#EF4444' : cpuPct > 60 ? '#F59E0B' : '#10B981';
 
+          // Determine health status
+          const isOnline = testResults[srv.id]?.success;
+          const isHighCpu = cpuPct > 80;
+          const isWarning = cpuPct > 60 && cpuPct <= 80;
+          const healthStatus = !isOnline ? 'offline' : isHighCpu ? 'critical' : isWarning ? 'warning' : 'healthy';
+          const healthConfig = {
+            healthy: { label: 'Healthy', color: '#10B981', bg: 'rgba(16,185,129,0.1)' },
+            warning: { label: 'Warning', color: '#F59E0B', bg: 'rgba(245,158,11,0.1)' },
+            critical: { label: 'Critical', color: '#EF4444', bg: 'rgba(239,68,68,0.1)' },
+            offline: { label: 'Offline', color: '#6B7280', bg: 'rgba(107,114,128,0.1)' },
+          };
+          const health = healthConfig[healthStatus];
+
           return (
-            <div key={srv.id} className="cx-card" style={{ display: 'flex', flexDirection: 'column', borderRadius: '14px', overflow: 'hidden', transition: 'box-shadow 200ms, transform 200ms', position: 'relative' }}
-              onMouseEnter={e => { e.currentTarget.style.boxShadow = `0 12px 32px -8px ${accentColor}20, 0 4px 12px rgba(0,0,0,0.15)`; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-              onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}
+            <motion.div
+              key={srv.id}
+              whileHover={{ y: -2 }}
+              className="cx-card"
+              style={{ display: 'flex', flexDirection: 'column', borderRadius: '14px', overflow: 'hidden', position: 'relative' }}
             >
               <div style={{ height: '3px', backgroundColor: accentColor, position: 'absolute', top: 0, left: 0, right: 0 }} />
 
@@ -276,20 +385,44 @@ export default function ServersPage() {
                     <ServerIcon style={{ width: '20px', height: '20px', color: accentColor }} />
                   </div>
                   <div>
-                    <h3 className="cx-fw-700 cx-text-primary" style={{ fontSize: '15px', margin: 0 }}>{srv.name}</h3>
+                    <div className="cx-flex cx-items-center cx-gap-8">
+                      <Link href={`/servers/detail?id=${srv.id}`} className="cx-fw-700 cx-text-primary" style={{ fontSize: '15px', margin: 0, textDecoration: 'none' }}
+                        onMouseEnter={e => e.currentTarget.style.color = 'rgb(var(--primary))'}
+                        onMouseLeave={e => e.currentTarget.style.color = 'rgb(var(--text-primary))'}
+                      >{srv.name}</Link>
+                      {/* Health Badge */}
+                      <motion.span
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="cx-flex cx-items-center cx-gap-4 cx-fw-600"
+                        style={{
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          fontSize: '10px',
+                          backgroundColor: health.bg,
+                          color: health.color,
+                          border: `1px solid ${health.color}30`,
+                        }}
+                      >
+                        <span style={{
+                          width: '6px',
+                          height: '6px',
+                          borderRadius: '50%',
+                          backgroundColor: health.color,
+                          animation: healthStatus === 'healthy' ? 'pulse 2s infinite' : 'none',
+                        }} />
+                        {health.label}
+                      </motion.span>
+                    </div>
                     <div className="cx-flex cx-items-center cx-gap-6" style={{ marginTop: '4px' }}>
                       <span className="cx-text-muted cx-mono" style={{ fontSize: '12px' }}>{srv.privateIp}</span>
-                      {testResults[srv.id] ? (
+                      {testResults[srv.id]?.success && (
                         <span className="cx-flex cx-items-center cx-gap-3 cx-fw-600" style={{ padding: '1px 6px', borderRadius: '4px', fontSize: '10px',
-                          backgroundColor: testResults[srv.id].success ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
-                          color: testResults[srv.id].success ? '#10B981' : '#EF4444',
+                          backgroundColor: 'rgba(16,185,129,0.1)',
+                          color: '#10B981',
                         }}>
-                          {testResults[srv.id].success ? <Wifi style={{ width: '8px', height: '8px' }} /> : <WifiOff style={{ width: '8px', height: '8px' }} />}
-                          {testResults[srv.id].success ? `${testResults[srv.id].latencyMs}ms` : 'offline'}
-                        </span>
-                      ) : (
-                        <span className="cx-flex cx-items-center cx-gap-3 cx-text-muted" style={{ padding: '1px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 500, backgroundColor: 'rgba(var(--border), 0.3)' }}>
-                          untested
+                          <Wifi style={{ width: '8px', height: '8px' }} />
+                          {testResults[srv.id].latencyMs}ms
                         </span>
                       )}
                     </div>
@@ -300,11 +433,79 @@ export default function ServersPage() {
                     onMouseEnter={e => { e.currentTarget.style.color = 'rgb(var(--primary))'; }}
                     onMouseLeave={e => { e.currentTarget.style.color = 'rgb(var(--text-muted))'; }}
                   >{testingIds.has(srv.id) ? <Loader2 className="cx-spin" style={{ width: '14px', height: '14px' }} /> : <Plug style={{ width: '14px', height: '14px' }} />}</button>
-                  <button title="Edit" onClick={() => openEdit(srv)} className="cx-icon-btn"><Edit3 style={{ width: '14px', height: '14px' }} /></button>
-                  <button title="Delete" onClick={() => setDeleteTarget({ id: srv.id, name: srv.name })} className="cx-icon-btn"
-                    onMouseEnter={e => { e.currentTarget.style.color = '#EF4444'; }}
-                    onMouseLeave={e => { e.currentTarget.style.color = 'rgb(var(--text-muted))'; }}
-                  ><Trash2 style={{ width: '14px', height: '14px' }} /></button>
+
+                  {/* Quick Actions Dropdown */}
+                  <div style={{ position: 'relative' }}>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === srv.id ? null : srv.id); }}
+                      className="cx-icon-btn"
+                    >
+                      <MoreVertical style={{ width: '14px', height: '14px' }} />
+                    </button>
+                    {openMenuId === srv.id && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                        style={{
+                          position: 'absolute',
+                          top: '100%',
+                          right: 0,
+                          marginTop: '4px',
+                          background: 'rgb(var(--surface))',
+                          border: '1px solid rgb(var(--border))',
+                          borderRadius: '10px',
+                          padding: '6px',
+                          minWidth: '160px',
+                          boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+                          zIndex: 50,
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          onClick={() => { setOpenMenuId(null); openEdit(srv); }}
+                          className="cx-flex cx-items-center cx-gap-8"
+                          style={{ width: '100%', padding: '10px 12px', background: 'none', border: 'none', cursor: 'pointer', borderRadius: '6px', color: 'rgb(var(--text-secondary))' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'rgb(var(--surface-hover))'; e.currentTarget.style.color = 'rgb(var(--text-primary))'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'rgb(var(--text-secondary))'; }}
+                        >
+                          <Edit3 style={{ width: '14px', height: '14px' }} />
+                          <span style={{ fontSize: '13px' }}>Edit Server</span>
+                        </button>
+                        <button
+                          onClick={() => { setOpenMenuId(null); }}
+                          className="cx-flex cx-items-center cx-gap-8"
+                          style={{ width: '100%', padding: '10px 12px', background: 'none', border: 'none', cursor: 'pointer', borderRadius: '6px', color: 'rgb(var(--text-secondary))' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'rgb(var(--surface-hover))'; e.currentTarget.style.color = 'rgb(var(--text-primary))'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'rgb(var(--text-secondary))'; }}
+                        >
+                          <Terminal style={{ width: '14px', height: '14px' }} />
+                          <span style={{ fontSize: '13px' }}>SSH Terminal</span>
+                        </button>
+                        <button
+                          onClick={() => { setOpenMenuId(null); collectLiveMetrics(); }}
+                          className="cx-flex cx-items-center cx-gap-8"
+                          style={{ width: '100%', padding: '10px 12px', background: 'none', border: 'none', cursor: 'pointer', borderRadius: '6px', color: 'rgb(var(--text-secondary))' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'rgb(var(--surface-hover))'; e.currentTarget.style.color = 'rgb(var(--text-primary))'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'rgb(var(--text-secondary))'; }}
+                        >
+                          <RotateCw style={{ width: '14px', height: '14px' }} />
+                          <span style={{ fontSize: '13px' }}>Refresh Metrics</span>
+                        </button>
+                        <div style={{ height: '1px', background: 'rgb(var(--border))', margin: '4px 0' }} />
+                        <button
+                          onClick={() => { setOpenMenuId(null); setDeleteTarget({ id: srv.id, name: srv.name }); }}
+                          className="cx-flex cx-items-center cx-gap-8"
+                          style={{ width: '100%', padding: '10px 12px', background: 'none', border: 'none', cursor: 'pointer', borderRadius: '6px', color: '#EF4444' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'none'; }}
+                        >
+                          <Trash2 style={{ width: '14px', height: '14px' }} />
+                          <span style={{ fontSize: '13px' }}>Delete Server</span>
+                        </button>
+                      </motion.div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -323,12 +524,12 @@ export default function ServersPage() {
                   No metrics available
                 </div>
               )}
-            </div>
+            </motion.div>
           );
         })}
 
         {/* Empty State */}
-        {(searchQuery ? allServers.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()) || s.privateIp?.toLowerCase().includes(searchQuery.toLowerCase()) || s.publicAddress?.toLowerCase().includes(searchQuery.toLowerCase())) : allServers).length === 0 && (
+        {filteredServers.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

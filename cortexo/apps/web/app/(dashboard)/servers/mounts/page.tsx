@@ -150,7 +150,8 @@ export default function ServerMountsPage() {
     setViewFile(null);
     try {
       const res = await api.browseServerMount(mountId, path);
-      setBrowseData(res.data);
+      const browseResult = res.data as unknown as { currentPath?: string; parentPath?: string | null; entries: { name: string; type: string; size: number }[] } | undefined;
+      setBrowseData(browseResult ? { currentPath: browseResult.currentPath || path, parentPath: browseResult.parentPath ?? null, entries: browseResult.entries || [] } : null);
     } catch (e) { toast.error('Browse Failed', (e instanceof Error ? e.message : String(e))); setBrowseData(null); }
     setBrowseLoading(false);
   };
@@ -159,7 +160,9 @@ export default function ServerMountsPage() {
     setFileLoading(true);
     try {
       const res = await api.readServerFile(mountId, filePath);
-      setViewFile(res.data);
+      const fileResult = res.data as unknown as { content?: string; encoding?: string; filePath?: string; fileName?: string; lines?: number; size?: number; type?: string } | undefined;
+      const content = fileResult?.content || '';
+      setViewFile(fileResult ? { filePath: fileResult.filePath || filePath, fileName: fileResult.fileName || filePath.split('/').pop() || '', content, lines: fileResult.lines || content.split('\n').length, size: fileResult.size || content.length, type: fileResult.type || 'text' } : null);
     } catch (e) { toast.error('Read Failed', (e instanceof Error ? e.message : String(e))); }
     setFileLoading(false);
   };
@@ -427,7 +430,7 @@ export default function ServerMountsPage() {
               {/* Directory listing */}
               <div style={{ width: viewFile ? 320 : '100%', borderRight: viewFile ? '1px solid rgb(var(--border))' : 'none', overflowY:'auto', flexShrink:0 }}>
                 {browseData?.parentPath !== null && browseData?.currentPath !== '.' && (
-                  <button onClick={() => handleBrowse(browsing.mountId, browsing.mountName, browseData.parentPath)}
+                  <button onClick={() => handleBrowse(browsing.mountId, browsing.mountName, browseData?.parentPath || '.')}
                     style={{ display:'flex', alignItems:'center', gap:8, width:'100%', padding:'10px 16px', border:'none', borderBottom:'1px solid rgb(var(--border))', backgroundColor:'transparent', cursor:'pointer', color:'rgb(var(--primary))', fontSize:13, fontWeight:500 }}>
                     <ArrowLeft style={{ width:14, height:14 }} /> Back
                   </button>

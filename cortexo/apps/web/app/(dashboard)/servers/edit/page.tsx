@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Server, Save, ArrowLeft, Loader2, Trash2, CheckCircle } from 'lucide-react';
+import { Server as ServerIcon, Save, ArrowLeft, Loader2, Trash2, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
+import { api, type Server } from '@/lib/api';
 import { useCortexoQuery } from '@/lib/hooks';
 import { useToastStore } from '@/lib/toast-store';
 import { useModal } from '@/components/modal-provider';
@@ -33,19 +33,19 @@ export default function EditServerPage() {
   // Populate form when server data loads
   useEffect(() => {
     if (serverData) {
-      const s = serverData as Record<string, string | number | undefined>;
+      const s = serverData as unknown as Record<string, string | number | undefined>;
       setForm({
-        name: s.name || '',
-        privateIp: s.privateIp || '',
-        publicAddress: s.publicAddress || '',
+        name: String(s.name || ''),
+        privateIp: String(s.privateIp || ''),
+        publicAddress: String(s.publicAddress || ''),
         sshPort: String(s.sshPort || 22),
-        sshUser: s.sshUser || 'ubuntu',
-        provider: s.provider || 'aws',
-        region: s.region || '',
-        os: s.os || '',
-        sshKeyPath: s.sshKeyPath || '',
-        tags: s.tags || '',
-        description: s.description || '',
+        sshUser: String(s.sshUser || 'ubuntu'),
+        provider: String(s.provider || 'aws'),
+        region: String(s.region || ''),
+        os: String(s.os || ''),
+        sshKeyPath: String(s.sshKeyPath || ''),
+        tags: String(s.tags || ''),
+        description: String(s.description || ''),
       });
     }
   }, [serverData]);
@@ -103,7 +103,7 @@ export default function EditServerPage() {
           <ArrowLeft style={{ width: '14px', height: '14px' }} /> Back to Servers
         </Link>
         <div className="cx-card cx-border" style={{ padding: '60px 24px', marginTop: '16px', textAlign: 'center' }}>
-          <Server style={{ width: '40px', height: '40px', color: 'rgb(var(--text-muted))', margin: '0 auto 16px', opacity: 0.4 }} />
+          <ServerIcon style={{ width: '40px', height: '40px', color: 'rgb(var(--text-muted))', margin: '0 auto 16px', opacity: 0.4 }} />
           <p style={{ fontSize: '15px', fontWeight: 600, color: 'rgb(var(--text-primary))', margin: '0 0 6px' }}>Server not found</p>
           <p style={{ fontSize: '13px', color: 'rgb(var(--text-muted))', margin: 0 }}>Server ID "{serverId}" does not exist</p>
         </div>
@@ -122,7 +122,7 @@ export default function EditServerPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
         <div className="cx-flex cx-items-center cx-gap-12">
           <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'linear-gradient(135deg, #7C3AED, #A855F7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Server style={{ width: '20px', height: '20px', color: '#fff' }} />
+            <ServerIcon style={{ width: '20px', height: '20px', color: '#fff' }} />
           </div>
           <div>
             <h1 style={{ fontSize: '22px', fontWeight: 800, color: 'rgb(var(--text-primary))', margin: 0 }}>Edit Server: {form.name || 'Untitled'}</h1>

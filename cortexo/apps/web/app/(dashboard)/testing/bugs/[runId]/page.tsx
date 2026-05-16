@@ -48,8 +48,8 @@ export default function BugReportPage() {
         api.getTestBugs(runId),
         api.getTestModuleResults(runId),
       ]);
-      setBugData((bugs as { data?: unknown }).data || bugs);
-      setModuleData((modules as { data?: unknown[] }).data || modules || []);
+      setBugData((bugs as unknown as { data?: unknown })?.data || bugs);
+      setModuleData(((modules as unknown as { data?: unknown[] })?.data || modules || []) as unknown[]);
     } catch { /* ignore */ }
     setLoading(false);
   }, [runId]);

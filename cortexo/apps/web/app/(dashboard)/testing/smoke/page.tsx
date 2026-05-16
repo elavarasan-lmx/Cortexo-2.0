@@ -354,7 +354,7 @@ export default function SmokeTestPage() {
                       borderRadius: 4, textTransform: 'uppercase',
                     }}>{runType || 'smoke'}</span>
                     <span style={{ fontSize: 13, color: '#CBD5E1', flex: 1 }}>
-                      {summary.url || '—'}
+                      {String(summary.url || '—')}
                     </span>
                     <span style={{ fontSize: 12, color: '#64748B' }}>
                       {run.durationMs}ms

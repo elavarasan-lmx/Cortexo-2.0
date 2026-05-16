@@ -91,7 +91,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
   // Fetch server name for display
   const { data: servers } = useCortexoQuery(['servers'], () => api.getServers());
-  const serverList = Array.isArray(servers) ? servers : ((servers as { data?: Server[] } | undefined)?.data || []);
+  const serverList: { id: number | string; name: string }[] = Array.isArray(servers) ? (servers as { id: number | string; name: string }[]) : ((servers as unknown as { data?: { id: number | string; name: string }[] })?.data || []);
 
   const [form, setForm] = useState<SettingsForm & { name: string; repoUrl: string; defaultBranch: string }>({
     name: '', repoUrl: '', defaultBranch: 'main',
@@ -106,7 +106,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const s = p ? parseSettings(p) : form;
   const pm2 = p ? parsePm2(p) : { processes: [], totalRestarts: 0, totalMemoryMB: 0, status: 'unknown' };
   const health = Number(p?.healthScore || 100);
-  const serverName = s.serverId ? serverList.find((sv: any) => String(sv.id) === String(s.serverId))?.name || `Server ${s.serverId}` : '—';
+  const serverName = s.serverId ? serverList.find((sv) => String(sv.id) === String(s.serverId))?.name || `Server ${s.serverId}` : '—';
 
   const startEdit = () => {
     if (!p) return;

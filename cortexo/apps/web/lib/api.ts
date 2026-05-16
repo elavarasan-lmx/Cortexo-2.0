@@ -69,6 +69,11 @@ export interface PipelineRun {
   startedAt?: string;
   completedAt?: string;
   logs?: string;
+  stages?: unknown;
+  branch?: string;
+  commitSha?: string;
+  durationMs?: number;
+  runNumber?: number;
   createdAt: string;
 }
 
@@ -197,6 +202,11 @@ export interface Server {
   sshKey?: string;
   status?: string;
   createdAt?: string;
+  label?: string;
+  ip?: string;
+  environment?: string;
+  cpu?: string | { model?: string; cores?: number };
+  os?: string;
 }
 
 export interface ServerMount {
@@ -211,9 +221,12 @@ export interface ServerMount {
   host?: string;
   server?: { ip?: string; name?: string };
   username?: string;
+  sshUser?: string;
   port?: number;
   status: string;
   createdAt?: string;
+  readOnly?: boolean;
+  autoMount?: boolean;
 }
 
 export interface MountFileEntry {
@@ -244,6 +257,9 @@ export interface DeployConfig {
   domain?: string;
   deployPath?: string;
   deployUser?: string;
+  gitRepo?: string;
+  gitBranch?: string;
+  appFramework?: string;
 }
 
 export interface AuditLog {

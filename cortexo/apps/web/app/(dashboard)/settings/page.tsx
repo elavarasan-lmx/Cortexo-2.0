@@ -64,16 +64,17 @@ export default function SettingsPage() {
     setLoadError(null);
     try {
       const res = await api.getMe();
-      const user = (res.data as { user?: UserProfile } | null)?.user || res.data;
+      const raw = res.data as unknown as Record<string, unknown> | null;
+      const user = (raw && typeof raw === 'object' && 'user' in raw ? raw.user : raw) as Record<string, unknown> | null;
       if (user) {
         setProfile({
-          name: user.name || '',
-          email: user.email || '',
-          role: user.role || 'user',
-          avatar: user.avatar || '',
-          createdAt: user.createdAt || user.created_at,
-          lastLogin: user.lastLogin || user.last_login,
-          twoFactorEnabled: user.twoFactorEnabled || user.two_factor_enabled || false,
+          name: String(user.name || ''),
+          email: String(user.email || ''),
+          role: String(user.role || 'user'),
+          avatar: String(user.avatar || ''),
+          createdAt: String(user.createdAt || user.created_at || ''),
+          lastLogin: String(user.lastLogin || user.last_login || ''),
+          twoFactorEnabled: Boolean(user.twoFactorEnabled || user.two_factor_enabled || false),
         });
       }
     } catch (err: unknown) {
