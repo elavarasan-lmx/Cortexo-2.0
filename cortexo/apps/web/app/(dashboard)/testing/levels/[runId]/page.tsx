@@ -43,7 +43,7 @@ export default function LevelResultsPage({ params }: { params: Promise<{ runId: 
 
   useEffect(() => {
     api.getTestLevels(Number(runId)).then(res => {
-      setData((res as any)?.data || res);
+      setData((res as { data?: unknown }).data || res);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [runId]);

@@ -30,13 +30,13 @@ const TEST_TYPES = [
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/v1';
 
 export default function SmokeTestPage() {
-  const [targets, setTargets] = useState<any[]>([]);
+  const [targets, setTargets] = useState<{ id: number; name: string; baseUrl: string }[]>([]);
   const [selectedTarget, setSelectedTarget] = useState<number | null>(null);
   const [customUrl, setCustomUrl] = useState('');
   const [selectedTest, setSelectedTest] = useState('probe');
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<SmokeTestResult | null>(null);
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<{ id: number; runType: string; passed: number; durationMs: number; createdAt: string; summary: Record<string, unknown> }[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedRun, setExpandedRun] = useState<number | null>(null);
 
@@ -76,7 +76,7 @@ export default function SmokeTestPage() {
     setResult(null);
 
     try {
-      const payload: any = {
+      const payload: { testType: string; baseUrl: string; targetId?: number; loginConfig?: LoginConfig } = {
         testType: selectedTest,
         baseUrl: url,
         targetId: selectedTarget || undefined,
@@ -87,18 +87,19 @@ export default function SmokeTestPage() {
       }
 
       const res = await api.runSmokeTest(payload);
-      setResult(res.data || res as any);
+      setResult(res.data ?? null);
       fetchData(); // refresh history
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
       setResult({
         testType: selectedTest,
         url,
         success: false,
         durationMs: 0,
         timestamp: new Date().toISOString(),
-        details: { error: err.message },
+        details: { error: errMsg },
         screenshots: [],
-        errors: [err.message],
+        errors: [errMsg],
       });
     }
     setRunning(false);
@@ -217,7 +218,7 @@ export default function SmokeTestPage() {
                   <input
                     type={field.key === 'password' ? 'password' : 'text'}
                     placeholder={field.placeholder}
-                    value={(loginConfig as any)[field.key]}
+                    value={loginConfig[field.key as keyof LoginConfig]}
                     onChange={(e) => setLoginConfig({ ...loginConfig, [field.key]: e.target.value })}
                     style={{ width: '100%', padding: '8px 12px', background: '#1E293B', border: '1px solid #334155', borderRadius: 6, color: '#F1F5F9', fontSize: 13 }}
                   />
@@ -325,7 +326,7 @@ export default function SmokeTestPage() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {history.slice(0, 20).map((run: any) => {
+            {history.slice(0, 20).map((run) => {
               const summary = run.summary || {};
               const isExpanded = expandedRun === run.id;
               const passed = run.passed > 0;

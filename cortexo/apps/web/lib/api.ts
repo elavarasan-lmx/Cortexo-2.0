@@ -50,12 +50,15 @@ export interface Pipeline {
   id: string;
   projectId: string;
   name: string;
+  description?: string;
   stages?: unknown;
   trigger?: string;
   status?: string;
   isActive?: boolean;
   lastRunStatus?: string;
+  lastRunAt?: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface PipelineRun {
@@ -252,6 +255,7 @@ export interface AuditLog {
   userName?: string;
   description?: string;
   metadata?: Record<string, unknown> | string;
+  ipAddress?: string;
   createdAt: string;
 }
 

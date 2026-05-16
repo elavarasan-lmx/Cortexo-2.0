@@ -31,7 +31,7 @@ const stageColors = [
 ];
 
 /* --- Dropdown Menu Component --- */
-function DropdownMenu({ pipeline, onRefetch }: { pipeline: any; onRefetch: () => void }) {
+function DropdownMenu({ pipeline, onRefetch }: { pipeline: Pipeline; onRefetch: () => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -63,7 +63,7 @@ function DropdownMenu({ pipeline, onRefetch }: { pipeline: any; onRefetch: () =>
     setToggling(true);
     try {
       const newState = !pipeline.isActive;
-      await api.updatePipeline(pipeline.id, { isActive: newState } as any);
+      await api.updatePipeline(pipeline.id, { isActive: newState });
       useToastStore.getState().success(
         newState ? 'Pipeline Activated' : 'Pipeline Deactivated',
         `${pipeline.name} is now ${newState ? 'active' : 'inactive'}`
@@ -156,7 +156,7 @@ export default function PipelinesPage() {
 
   const [runningIds, setRunningIds] = useState<Set<string>>(new Set());
 
-  const handleRun = async (pipeline: any) => {
+  const handleRun = async (pipeline: Pipeline) => {
     setRunningIds(prev => new Set(prev).add(pipeline.id));
     try {
       await api.triggerPipelineRun(pipeline.id);
@@ -180,7 +180,7 @@ export default function PipelinesPage() {
     );
   }
 
-  const allPipelines = (pipelines as any[]) || [];
+  const allPipelines = (pipelines as Pipeline[]) || [];
   const activePipelines   = allPipelines.filter((p: Pipeline) => p.isActive).length;
   const runningPipelines  = allPipelines.filter((p: Pipeline) => p.lastRunStatus === 'running').length;
   const failedPipelines   = allPipelines.filter((p: Pipeline) => p.lastRunStatus === 'failed').length;
@@ -237,10 +237,10 @@ export default function PipelinesPage() {
 
       {/* --- Pipeline cards --- */}
       <div className="cx-flex-col cx-gap-12">
-        {allPipelines.map((pipeline: any) => {
-          const stages = parseJsonField<any[]>(pipeline.stages, []);
+        {allPipelines.map((pipeline: Pipeline) => {
+          const stages = parseJsonField<{ name: string }[]>(pipeline.stages, []);
           const projectName = resolveProjectName(pipeline.projectId, lookup);
-          const lastStatus = runStatus[pipeline.lastRunStatus] || null;
+          const lastStatus = runStatus[pipeline.lastRunStatus ?? ''] || null;
           const accentColor = pipeline.isActive ? 'rgb(var(--primary))' : '#6B7280';
           const isTriggering = runningIds.has(pipeline.id);
 
@@ -312,7 +312,7 @@ export default function PipelinesPage() {
                 {/* --- Stage flow --- */}
                 {stages.length > 0 && (
                   <div className="cx-flex cx-items-center cx-gap-6" style={{ marginTop: '14px', flexWrap: 'wrap' }}>
-                    {stages.map((stage: any, i: number) => {
+                    {stages.map((stage: { name: string }, i: number) => {
                       const sc = stageColors[i % stageColors.length];
                       return (
                         <div key={i} className="cx-flex cx-items-center cx-gap-6">

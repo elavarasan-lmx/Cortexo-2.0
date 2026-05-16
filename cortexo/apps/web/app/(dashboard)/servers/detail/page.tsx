@@ -48,8 +48,8 @@ export default function ServerDetailPage() {
     Promise.all([
       api.getServer(serverId).then(r => setServer(r.data as Server)).catch(() => setError('Server not found')),
       api.getServerResourcesLatest().then(r => {
-        const res = (r.data || []) as any[];
-        setResources(res.find((r: any) => r.serverId === serverId || r.server_id === serverId) || null);
+        const res = (r.data || []) as { serverId?: number; server_id?: number; cpu_percent?: number; cpuPercent?: number; mem_used_gb?: number; memUsedGb?: number; mem_total_gb?: number; memTotalGb?: number; disk_used_gb?: number; diskUsedGb?: number; disk_total_gb?: number; diskTotalGb?: number }[];
+        setResources(res.find((r) => r.serverId === serverId || r.server_id === serverId) || null);
       }).catch(() => {}),
     ]).finally(() => setLoading(false));
   };
@@ -92,7 +92,7 @@ export default function ServerDetailPage() {
     );
   }
 
-  const s = server as any;
+  const s = server;
   const st = statusColors[s.status || 'online'] || statusColors.online;
   const cpuUsage = resources?.cpu_percent || resources?.cpuPercent || 0;
   const memUsed = resources?.mem_used_gb || resources?.memUsedGb || 0;

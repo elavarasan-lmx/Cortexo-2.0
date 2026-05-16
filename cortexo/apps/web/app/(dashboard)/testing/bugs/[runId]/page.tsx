@@ -48,8 +48,8 @@ export default function BugReportPage() {
         api.getTestBugs(runId),
         api.getTestModuleResults(runId),
       ]);
-      setBugData((bugs as any)?.data || bugs);
-      setModuleData((modules as any)?.data || modules || []);
+      setBugData((bugs as { data?: unknown }).data || bugs);
+      setModuleData((modules as { data?: unknown[] }).data || modules || []);
     } catch { /* ignore */ }
     setLoading(false);
   }, [runId]);
@@ -108,7 +108,7 @@ export default function BugReportPage() {
               setExporting(true);
               try {
                 const res = await api.exportTestBugs(runId);
-                setExportResult((res as any)?.data || res);
+                setExportResult((res as { data?: { success?: boolean } }).data || res);
               } catch {
                 setExportResult({ success: false });
               }

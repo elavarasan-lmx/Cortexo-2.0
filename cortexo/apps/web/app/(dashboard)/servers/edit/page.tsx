@@ -33,7 +33,7 @@ export default function EditServerPage() {
   // Populate form when server data loads
   useEffect(() => {
     if (serverData) {
-      const s = serverData as any;
+      const s = serverData as Record<string, string | number | undefined>;
       setForm({
         name: s.name || '',
         privateIp: s.privateIp || '',
@@ -63,7 +63,7 @@ export default function EditServerPage() {
         sshUser: form.sshUser,
         sshKeyPath: form.sshKeyPath,
         description: form.description,
-      } as any);
+      } as Partial<Server> & Record<string, string>);
       toast.success('Server Updated', `${form.name} saved successfully`);
     } catch (err: unknown) {
       toast.error('Save Failed', err instanceof Error ? err.message : 'Could not update server');

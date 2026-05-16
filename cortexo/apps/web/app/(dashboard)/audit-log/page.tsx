@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { AuditLog, api } from '@/lib/api';
 
-const ACTION_ICONS: Record<string, any> = {
+const ACTION_ICONS: Record<string, React.ComponentType<{ style?: React.CSSProperties }>> = {
   file_browse: FolderSync, file_read: Eye, file_modified: Edit3,
   set_readonly: Shield, set_readwrite: Shield,
   deploy_start: Upload, deploy_complete: CheckCircle, deploy_fail: XCircle,
@@ -41,7 +41,7 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function AuditLogPage() {
-  const [logs, setLogs] = useState<any[]>([]);
+  const [logs, setLogs] = useState<AuditLog[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -50,21 +50,21 @@ export default function AuditLogPage() {
   const [resourceFilter, setResourceFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<{ last24h?: number; topUsers?: { userName: string; count: number }[] } | null>(null);
   const limit = 30;
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
     try {
-      const params: any = { page: String(page), limit: String(limit) };
+      const params: Record<string, string> = { page: String(page), limit: String(limit) };
       if (search) params.search = search;
       if (actionFilter) params.action = actionFilter;
       if (resourceFilter) params.resource = resourceFilter;
       if (dateFrom) params.from = new Date(dateFrom).toISOString();
       if (dateTo) params.to = new Date(dateTo + 'T23:59:59').toISOString();
       const res = await api.getAuditLogs(params);
-      setLogs((res as any).data || []);
-      setTotal((res as any).total || 0);
+      setLogs(res.data || []);
+      setTotal(res.total || 0);
     } catch { setLogs([]); }
     setLoading(false);
   }, [page, search, actionFilter, resourceFilter, dateFrom, dateTo]);
@@ -72,7 +72,7 @@ export default function AuditLogPage() {
   const fetchStats = useCallback(async () => {
     try {
       const res = await api.getAuditStats();
-      setStats((res as any).data || res);
+      setStats(res.data || null);
     } catch { /* ignore */ }
   }, []);
 
@@ -112,7 +112,7 @@ export default function AuditLogPage() {
             <div className="cx-label" style={{ marginBottom: '6px' }}>Total Events</div>
             <div className="cx-fw-800 cx-text-28 cx-text-primary">{total}</div>
           </div>
-          {stats.topUsers?.slice(0, 2).map((u: any) => (
+          {stats.topUsers?.slice(0, 2).map((u: { userName: string; count: number }) => (
             <div key={u.userName} className="cx-card-sm cx-border" style={{ padding: '16px 20px' }}>
               <div className="cx-label" style={{ marginBottom: '6px' }}>{u.userName}</div>
               <div className="cx-fw-800 cx-text-28 cx-text-primary">{u.count}</div>
@@ -176,7 +176,7 @@ export default function AuditLogPage() {
         </div>
       ) : (
         <div className="cx-table-wrap">
-          {logs.map((log: any, i: number) => {
+          {logs.map((log: AuditLog, i: number) => {
             const IconComp = ACTION_ICONS[log.action] || Terminal;
             const color = ACTION_COLORS[log.action] || '#94A3B8';
             return (

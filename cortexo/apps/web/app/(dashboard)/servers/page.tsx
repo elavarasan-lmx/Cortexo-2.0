@@ -4,10 +4,12 @@ import { useState } from 'react';
 import {
   Server as ServerIcon, Plus, Trash2, Edit3, HardDrive, Cpu, MemoryStick,
   Loader2, RefreshCw, Wifi, WifiOff, Globe, Shield, FolderSync, Plug, X,
+  Search, Activity, AlertCircle, CheckCircle2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Server, api } from '@/lib/api';
 import { useCortexoQuery } from '@/lib/hooks';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { useToastStore } from '@/lib/toast-store';
 
@@ -42,6 +44,7 @@ export default function ServersPage() {
   const [form, setForm] = useState({ name: '', privateIp: '', publicAddress: '', sshKey: '' });
   const [testingIds, setTestingIds] = useState<Set<number>>(new Set());
   const [testResults, setTestResults] = useState<Record<number, { success: boolean; latencyMs: number; hostname?: string; uptime?: string; error?: string }>>({});
+  const [searchQuery, setSearchQuery] = useState('');
 
   const testConnection = async (srv: Server) => {
     setTestingIds(prev => new Set(prev).add(srv.id));
@@ -138,6 +141,17 @@ export default function ServersPage() {
           <p className="cx-text-secondary" style={{ fontSize: '14px', marginTop: '4px' }}>{allServers.length} servers · resource monitoring & fleet management</p>
         </div>
         <div className="cx-flex cx-gap-8">
+          {/* Search Input */}
+          <div className="cx-flex cx-items-center cx-gap-6" style={{ background: 'rgb(var(--surface))', border: '1px solid rgb(var(--border))', borderRadius: '10px', padding: '8px 12px' }}>
+            <Search style={{ width: '14px', height: '14px', color: 'rgb(var(--text-muted))' }} />
+            <input
+              type="text"
+              placeholder="Search servers..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '13px', color: 'rgb(var(--text-primary))', width: '160px' }}
+            />
+          </div>
           <Link href="/servers/mounts" className="cx-flex cx-items-center cx-gap-6 cx-btn-secondary cx-text-secondary" style={{ padding: '10px 16px', fontSize: '13px', fontWeight: 500, textDecoration: 'none' }}>
             <FolderSync style={{ width: '14px', height: '14px' }} /> SSHFS Mounts
           </Link>
@@ -149,6 +163,24 @@ export default function ServersPage() {
           </button>
         </div>
       </div>
+
+      {/* Search Results Info */}
+      {searchQuery && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="cx-flex cx-items-center cx-gap-6"
+          style={{ marginBottom: '16px', padding: '12px 16px', background: 'rgba(var(--primary), 0.1)', borderRadius: '10px', border: '1px solid rgba(var(--primary), 0.2)' }}
+        >
+          <Search style={{ width: '14px', height: '14px', color: 'rgb(var(--primary))' }} />
+          <span style={{ fontSize: '13px', color: 'rgb(var(--text-secondary))' }}>
+            Showing {allServers.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase())).length} of {allServers.length} servers
+          </span>
+          <button onClick={() => setSearchQuery('')} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'rgb(var(--primary))', cursor: 'pointer', fontSize: '12px' }}>
+            Clear
+          </button>
+        </motion.div>
+      )}
 
       {/* Add Server Modal */}
       {showForm && (
@@ -225,7 +257,7 @@ export default function ServersPage() {
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '14px' }}>
-        {allServers.map((srv: Server) => {
+        {(searchQuery ? allServers.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()) || s.privateIp?.toLowerCase().includes(searchQuery.toLowerCase()) || s.publicAddress?.toLowerCase().includes(searchQuery.toLowerCase())) : allServers).map((srv: Server) => {
           const res = srv.privateIp ? resourceByIp[srv.privateIp] : undefined;
           const hasMetrics = !!res;
           const cpuPct = hasMetrics ? parseFloat(String(res.cpuPercent)) : 0;
@@ -294,6 +326,31 @@ export default function ServersPage() {
             </div>
           );
         })}
+
+        {/* Empty State */}
+        {(searchQuery ? allServers.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()) || s.privateIp?.toLowerCase().includes(searchQuery.toLowerCase()) || s.publicAddress?.toLowerCase().includes(searchQuery.toLowerCase())) : allServers).length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="cx-flex-col cx-items-center cx-justify-center"
+            style={{ padding: '60px 20px', textAlign: 'center' }}
+          >
+            <div className="cx-flex-center cx-r-16" style={{ width: '64px', height: '64px', background: 'linear-gradient(135deg, rgba(var(--primary), 0.1), rgba(var(--agent), 0.1))', marginBottom: '20px' }}>
+              {searchQuery ? <Search style={{ width: '28px', height: '28px', color: 'rgb(var(--primary))' }} /> : <ServerIcon style={{ width: '28px', height: '28px', color: 'rgb(var(--text-muted))' }} />}
+            </div>
+            <h3 className="cx-fw-600 cx-text-primary" style={{ fontSize: '16px', marginBottom: '8px' }}>
+              {searchQuery ? 'No servers found' : 'No servers yet'}
+            </h3>
+            <p className="cx-text-muted" style={{ fontSize: '13px', marginBottom: '20px', maxWidth: '300px' }}>
+              {searchQuery ? `No servers match "${searchQuery}". Try a different search term.` : 'Add your first server to start monitoring your infrastructure.'}
+            </p>
+            {!searchQuery && (
+              <button onClick={() => setShowForm(true)} className="cx-btn-primary cx-flex cx-items-center cx-gap-6" style={{ padding: '10px 20px' }}>
+                <Plus style={{ width: '16px', height: '16px' }} /> Add Server
+              </button>
+            )}
+          </motion.div>
+        )}
       </div>
 
       {/* Edit Server Modal */}

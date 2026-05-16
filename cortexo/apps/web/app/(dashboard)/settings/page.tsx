@@ -64,7 +64,7 @@ export default function SettingsPage() {
     setLoadError(null);
     try {
       const res = await api.getMe();
-      const user = (res.data as any)?.user || res.data;
+      const user = (res.data as { user?: UserProfile } | null)?.user || res.data;
       if (user) {
         setProfile({
           name: user.name || '',
@@ -87,7 +87,7 @@ export default function SettingsPage() {
 
   async function loadSessions() {
     try {
-      const res = await (api as any).getSessions?.() || { data: [] };
+      const res = await (api as { getSessions?: () => Promise<{ data: Session[] }> }).getSessions?.() || { data: [] as Session[] };
       setSessions([
         { id: '1', device: 'Chrome on MacOS', ip: '192.168.1.100', location: 'San Francisco, CA', lastActive: 'Just now', current: true },
         { id: '2', device: 'Safari on iPhone', ip: '192.168.1.101', location: 'San Francisco, CA', lastActive: '2 hours ago', current: false },

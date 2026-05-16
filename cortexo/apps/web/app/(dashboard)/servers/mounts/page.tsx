@@ -63,9 +63,9 @@ export default function ServerMountsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [actionLoading, setActionLoading] = useState<Record<number, string>>({});
   const [browsing, setBrowsing] = useState<{ mountId: number; mountName: string } | null>(null);
-  const [browseData, setBrowseData] = useState<any>(null);
+  const [browseData, setBrowseData] = useState<{ currentPath: string; parentPath: string | null; entries: MountFileEntry[] } | null>(null);
   const [browseLoading, setBrowseLoading] = useState(false);
-  const [viewFile, setViewFile] = useState<any>(null);
+  const [viewFile, setViewFile] = useState<{ filePath: string; fileName: string; content: string; lines: number; size: number; type: string } | null>(null);
   const [fileLoading, setFileLoading] = useState(false);
 
   // Form state
@@ -73,7 +73,7 @@ export default function ServerMountsPage() {
 
   // Read-only mode — backed by DB, enforced at OS level via SSHFS -o ro
   const isReadOnly = (mountId: number) => {
-    const allM = (mounts as any[]) || [];
+    const allM = mounts ?? [];
     const mount = allM.find((m: ServerMount) => m.id === mountId);
     return mount?.readOnly !== false; // default: true
   };
@@ -90,7 +90,7 @@ export default function ServerMountsPage() {
   };
 
   // Audit trail state
-  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [showAudit, setShowAudit] = useState(false);
   const [auditLoading, setAuditLoading] = useState(false);
 
@@ -98,7 +98,7 @@ export default function ServerMountsPage() {
     setAuditLoading(true);
     try {
       const res = await api.getAuditLogs({ resource: 'server_mount', limit: '30' });
-      setAuditLogs((res as any)?.data || (res as any) || []);
+      setAuditLogs(res.data || []);
     } catch { setAuditLogs([]); }
     setAuditLoading(false);
   };
@@ -164,8 +164,8 @@ export default function ServerMountsPage() {
     setFileLoading(false);
   };
 
-  const allMounts = (mounts as any[]) || [];
-  const allServers = (servers as any[]) || [];
+  const allMounts = mounts ?? [];
+  const allServers = servers ?? [];
   const serverMap = allServers.reduce((a: Record<number, Server>, s: Server) => { a[s.id] = s; return a; }, {});
 
   if (loading) {

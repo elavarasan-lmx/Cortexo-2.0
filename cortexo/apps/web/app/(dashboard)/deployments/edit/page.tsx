@@ -17,7 +17,7 @@ export default function EditDeployPage() {
 
   const { data: deployData, isLoading: loading } = useCortexoQuery(
     ['deployment', deployId],
-    () => deployId ? api.getDeployment(deployId) : Promise.resolve({ data: null as any }),
+    () => deployId ? api.getDeployment(deployId) : Promise.resolve({ data: null as null }),
     { enabled: !!deployId }
   );
 
@@ -31,19 +31,19 @@ export default function EditDeployPage() {
 
   useEffect(() => {
     if (deployData) {
-      const d = deployData as any;
+      const d = deployData as unknown as { [k: string]: string | boolean | number | undefined };
       setForm({
-        project: d.projectName || d.project || '',
-        branch: d.branch || 'main',
-        server: d.serverName || d.server || '',
-        environment: d.environment || 'production',
-        buildCmd: d.buildCmd || '',
-        deployCmd: d.deployCmd || '',
-        preDeployHook: d.preDeployHook || '',
-        postDeployHook: d.postDeployHook || '',
-        autoRollback: d.autoRollback ?? true,
-        notifySlack: d.notifySlack ?? true,
-        healthCheck: d.healthCheck || '/api/health',
+        project: String(d.projectName || d.project || ''),
+        branch: String(d.branch || 'main'),
+        server: String(d.serverName || d.server || ''),
+        environment: String(d.environment || 'production'),
+        buildCmd: String(d.buildCmd || ''),
+        deployCmd: String(d.deployCmd || ''),
+        preDeployHook: String(d.preDeployHook || ''),
+        postDeployHook: String(d.postDeployHook || ''),
+        autoRollback: Boolean(d.autoRollback ?? true),
+        notifySlack: Boolean(d.notifySlack ?? true),
+        healthCheck: String(d.healthCheck || '/api/health'),
       });
     }
   }, [deployData]);
@@ -90,7 +90,7 @@ export default function EditDeployPage() {
     );
   }
 
-  const d = deployData as any;
+  const d = deployData as unknown as { [k: string]: string | boolean | number | undefined } | null;
 
   return (
     <div className="cx-flex-col" style={{ gap: '24px' }}>

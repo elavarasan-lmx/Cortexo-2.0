@@ -91,7 +91,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
   // Fetch server name for display
   const { data: servers } = useCortexoQuery(['servers'], () => api.getServers());
-  const serverList = Array.isArray(servers) ? servers : ((servers as any)?.data || []);
+  const serverList = Array.isArray(servers) ? servers : ((servers as { data?: Server[] } | undefined)?.data || []);
 
   const [form, setForm] = useState<SettingsForm & { name: string; repoUrl: string; defaultBranch: string }>({
     name: '', repoUrl: '', defaultBranch: 'main',

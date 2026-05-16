@@ -127,8 +127,8 @@ function CopyBtn({ text }: { text: string }) {
 
 // ─── Main Page ──────────────────────────────────────────────────────
 export default function DevOpsDocsPage() {
-  const [docs, setDocs] = useState<any[]>([]);
-  const [selectedDoc, setSelectedDoc] = useState<any>(null);
+  const [docs, setDocs] = useState<DevopsDoc[]>([]);
+  const [selectedDoc, setSelectedDoc] = useState<(DevopsDoc & { commands?: DevopsDocCommand[]; configSnippets?: DevopsDocSnippet[] }) | null>(null);
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -137,7 +137,7 @@ export default function DevOpsDocsPage() {
   const [bookmarks, setBookmarks] = useState<string[]>([]);
   const [mdCopied, setMdCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'docs' | 'checklists'>('docs');
-  const [checklists, setChecklists] = useState<any[]>([]);
+  const [checklists, setChecklists] = useState<DevopsChecklist[]>([]);
   const [clLoading, setClLoading] = useState(false);
   const [newClient, setNewClient] = useState('');
 
@@ -157,7 +157,7 @@ export default function DevOpsDocsPage() {
         const params: Record<string, string> = {};
         if (searchQuery) params.q = searchQuery;
         if (activeTool) params.tool = activeTool;
-        const res = await api.getDevopsDocs(params) as any;
+        const res = await api.getDevopsDocs(params);
         setDocs(res.data || []);
       } catch { setDocs([]); }
       setLoading(false);
@@ -170,8 +170,8 @@ export default function DevOpsDocsPage() {
   const openDoc = async (id: string) => {
     setDetailLoading(true);
     try {
-      const res = await api.getDevopsDoc(id) as any;
-      setSelectedDoc(res.data);
+      const res = await api.getDevopsDoc(id);
+      setSelectedDoc(res.data ?? null);
     } catch { /* ignore */ }
     setDetailLoading(false);
   };
@@ -183,14 +183,14 @@ export default function DevOpsDocsPage() {
   // Fetch checklists
   const fetchChecklists = useCallback(async () => {
     setClLoading(true);
-    try { const res = await api.getChecklists() as any; setChecklists(res.data || []); } catch { setChecklists([]); }
+    try { const res = await api.getChecklists(); setChecklists(res.data || []); } catch { setChecklists([]); }
     setClLoading(false);
   }, []);
   useEffect(() => { if (activeTab === 'checklists') fetchChecklists(); }, [activeTab, fetchChecklists]);
 
   const createChecklist = async () => {
     if (!newClient.trim()) return;
-    await api.createChecklist({ client_name: newClient.trim() } as any);
+    await api.createChecklist({ client_name: newClient.trim() } as unknown as Omit<DevopsChecklist, 'id' | 'createdAt' | 'updatedAt'>);
     setNewClient('');
     fetchChecklists();
   };
@@ -198,7 +198,7 @@ export default function DevOpsDocsPage() {
     const steps = [...cl.steps];
     steps[stepIdx] = { ...steps[stepIdx], done: !steps[stepIdx].done };
     const allDone = steps.every((s: ChecklistStep) => s.done);
-    await api.updateChecklist(cl.id, { steps, status: allDone ? 'done' : 'in_progress' } as any);
+    await api.updateChecklist(cl.id, { steps, status: allDone ? 'done' : 'in_progress' });
     fetchChecklists();
   };
   const deleteChecklist = async (id: number) => {
@@ -244,12 +244,12 @@ export default function DevOpsDocsPage() {
               {mdCopied ? 'Copied!' : 'Copy MD'}
             </button>
             <button
-              onClick={() => handleBookmark(doc.id)}
-              title={bookmarks.includes(doc.id) ? 'Unpin' : 'Pin to favorites'}
+              onClick={() => handleBookmark(String(doc.id))}
+              title={bookmarks.includes(String(doc.id)) ? 'Unpin' : 'Pin to favorites'}
               className="cx-icon-btn"
-              style={{ color: bookmarks.includes(doc.id) ? '#F59E0B' : 'rgb(var(--text-muted))' }}
+              style={{ color: bookmarks.includes(String(doc.id)) ? '#F59E0B' : 'rgb(var(--text-muted))' }}
             >
-              <Star style={{ width: '20px', height: '20px', fill: bookmarks.includes(doc.id) ? '#F59E0B' : 'none' }} />
+              <Star style={{ width: '20px', height: '20px', fill: bookmarks.includes(String(doc.id)) ? '#F59E0B' : 'none' }} />
             </button>
             <span className="cx-fw-600" style={{ fontSize: '11px', textTransform: 'uppercase', padding: '6px 12px', borderRadius: '8px', color: toolColor, backgroundColor: `${toolColor}18`, whiteSpace: 'nowrap' }}>
               {doc.category}
@@ -261,14 +261,14 @@ export default function DevOpsDocsPage() {
         <div className="cx-table-wrap" style={{ marginBottom: '28px' }}>
           <div className="cx-flex cx-items-center cx-gap-10" style={{ padding: '16px 20px', borderBottom: '1px solid rgb(var(--border))' }}>
             <Terminal style={{ width: '18px', height: '18px', color: toolColor }} />
-            <h2 className="cx-fw-700 cx-text-primary" style={{ fontSize: '16px', margin: 0 }}>Commands ({doc.commands.length})</h2>
+            <h2 className="cx-fw-700 cx-text-primary" style={{ fontSize: '16px', margin: 0 }}>Commands ({doc.commands?.length ?? 0})</h2>
           </div>
           <div>
             {(doc.commands as DevopsDocCommand[] | undefined)?.map((cmd, i: number) => (
               <div
                 key={i}
                 className="cx-flex cx-items-center cx-gap-12"
-                style={{ padding: '12px 20px', borderBottom: i < doc.commands.length - 1 ? '1px solid rgba(var(--border), 0.5)' : 'none', transition: 'background 150ms' }}
+                style={{ padding: '12px 20px', borderBottom: i < (doc.commands?.length ?? 0) - 1 ? '1px solid rgba(var(--border), 0.5)' : 'none', transition: 'background 150ms' }}
                 onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(var(--surface-hover), 0.5)')}
                 onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
               >
@@ -285,13 +285,13 @@ export default function DevOpsDocsPage() {
           <div className="cx-table-wrap" style={{ marginBottom: '28px' }}>
             <div className="cx-flex cx-items-center cx-gap-10" style={{ padding: '16px 20px', borderBottom: '1px solid rgb(var(--border))' }}>
               <FileCode2 style={{ width: '18px', height: '18px', color: toolColor }} />
-              <h2 className="cx-fw-700 cx-text-primary" style={{ fontSize: '16px', margin: 0 }}>Config Snippets ({doc.configSnippets.length})</h2>
+              <h2 className="cx-fw-700 cx-text-primary" style={{ fontSize: '16px', margin: 0 }}>Config Snippets ({doc.configSnippets?.length ?? 0})</h2>
             </div>
             {(doc.configSnippets as DevopsDocSnippet[] | undefined)?.map((snip, i: number) => {
               const key = `${doc.id}-snip-${i}`;
               const expanded = expandedSnippets[key] !== false;
               return (
-                <div key={i} style={{ borderBottom: i < doc.configSnippets.length - 1 ? '1px solid rgba(var(--border), 0.5)' : 'none' }}>
+                <div key={i} style={{ borderBottom: i < (doc.configSnippets?.length ?? 0) - 1 ? '1px solid rgba(var(--border), 0.5)' : 'none' }}>
                   <button
                     onClick={() => toggleSnippet(key)}
                     className="cx-flex cx-items-center cx-gap-10 cx-fw-600 cx-text-primary"

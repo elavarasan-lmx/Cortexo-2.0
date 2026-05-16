@@ -41,7 +41,7 @@ export default function ProjectKnowledgeTab() {
     ['project-files', currentDir], () => api.browseProjectFiles('winbull-staging', currentDir),
   );
 
-  const files: ProjectFileEntry[] = Array.isArray(filesData) ? filesData : (filesData as any)?.data || filesData || [];
+  const files: ProjectFileEntry[] = Array.isArray(filesData) ? filesData : (filesData as { data?: ProjectFileEntry[] } | undefined)?.data || filesData || [];
 
   const handleDirClick = (dirPath: string) => {
     setDirHistory(prev => [...prev, currentDir]);
@@ -62,8 +62,8 @@ export default function ProjectKnowledgeTab() {
     setSelectedFile(filePath);
     setLoadingFile(true);
     try {
-      const res = await api.readProjectFile(filePath, 'winbull-staging') as any;
-      setFileContent(res?.data || res);
+      const res = await api.readProjectFile(filePath, 'winbull-staging') as unknown as { data?: ProjectFileContent };
+      setFileContent(res?.data ?? null);
     } catch { setFileContent(null); }
     setLoadingFile(false);
   };
@@ -78,10 +78,10 @@ export default function ProjectKnowledgeTab() {
         question: projectQuestion,
         projectId: 'winbull-staging',
         fileContext: selectedFile || undefined,
-      }) as any;
+      }) as { data?: { answer?: string }; answer?: string };
       setProjectAnswer(res?.data?.answer || res?.answer || 'No response');
-    } catch (err: any) {
-      setProjectAnswer(`Error: ${err.message}`);
+    } catch (err: unknown) {
+      setProjectAnswer(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
     setAskingProject(false);
   };

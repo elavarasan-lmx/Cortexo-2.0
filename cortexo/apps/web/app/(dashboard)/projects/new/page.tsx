@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, FolderGit2, Loader2, ArrowLeft, ArrowRight, Github, Search, Trash2, GitBranch, ChevronDown, AlertTriangle, X } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api, type Server, type CreateProjectInput } from '@/lib/api';
 import { useCortexoQuery } from '@/lib/hooks';
 import { useModal } from '@/components/modal-provider';
 
@@ -59,7 +59,7 @@ export default function NewProjectPage() {
   const [isClient, setIsClient] = useState(false);
 
   const { data: servers } = useCortexoQuery(['servers'], () => api.getServers());
-  const allServers = (servers as any[]) || [];
+  const allServers: Server[] = (servers as Server[]) || [];
 
   const [form, setForm] = useState(DEFAULT_FORM);
 
@@ -249,8 +249,8 @@ export default function NewProjectPage() {
         repoProvider,
         defaultBranch: form.branch,
         description: `${form.productType === 'trade' ? 'Trade' : 'Lite'} | ${form.clientSlug} | ${form.domain || '—'}`,
-      } as any);
-      const projId = (projResult as any).data.id;
+      } satisfies CreateProjectInput);
+      const projId = projResult.data?.id ?? '';
 
       // Save all client config into project settings JSON
       const settings = {
@@ -264,10 +264,10 @@ export default function NewProjectPage() {
         broadcast: { client: form.bcClient, username: form.bcUsername, password: form.bcPassword, updateTime: form.bcUpdateTime },
         deploy: { environment: form.environment, serverPath: form.serverPath, serverId: form.serverId },
       };
-      await api.updateProject(projId, { settings: JSON.stringify(settings) } as any);
+      await api.updateProject(projId, { settings: JSON.stringify(settings) } as Partial<CreateProjectInput> & { settings: string });
 
       if (form.serverId) {
-        await (api as any).createDeployConfig({
+        await api.createDeployConfig({
           projectId: projId, serverId: parseInt(form.serverId), deployPath: form.serverPath,
           deployUser: form.serverUser, gitRepo: form.repoUrl || undefined, gitBranch: form.branch || 'development', appFramework: form.environment,
         });

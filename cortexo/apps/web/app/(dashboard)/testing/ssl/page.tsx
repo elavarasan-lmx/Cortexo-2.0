@@ -54,10 +54,10 @@ export default function SslMonitorPage() {
     setSummary(null);
     try {
       api.loadToken();
-      const res = await api.sslScan() as any;
+      const res = await api.sslScan();
       const data = res?.data || [];
-      const sum = res?.summary || { total: 0, valid: 0, expiring: 0, expired: 0, error: 0 };
-      setDomains(data);
+      const sum = (res as { summary?: Summary })?.summary || { total: 0, valid: 0, expiring: 0, expired: 0, error: 0 };
+      setDomains(data as SslResult[]);
       setSummary(sum);
     } catch {
       setDomains([]);
@@ -72,7 +72,7 @@ export default function SslMonitorPage() {
     setManualResult(null);
     try {
       api.loadToken();
-      const res = await api.sslCheckDomain(manualDomain.trim()) as any;
+      const res = await api.sslCheckDomain(manualDomain.trim());
       setManualResult({ ...res.data, clientName: 'Manual Check' } as SslResult);
     } catch {
       setManualResult({ domain: manualDomain, clientName: 'Manual Check', valid: false, expiresAt: null, daysLeft: null, issuer: null, subject: null, serialNumber: null, protocol: null, error: 'API request failed', status: 'error' });

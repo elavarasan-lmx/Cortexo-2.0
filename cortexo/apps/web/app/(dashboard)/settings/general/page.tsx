@@ -55,7 +55,7 @@ export default function GeneralSettingsPage() {
     (async () => {
       try {
         const res = await api.getCredentials();
-        const creds = (res.data as any)?.credentials || {};
+        const creds = (res.data as { credentials?: Record<string, string> } | null)?.credentials || {};
         setSettings({
           platformName: creds.PLATFORM_NAME || PLATFORM_DEFAULTS.name,
           shortName: creds.PLATFORM_SHORT_NAME || PLATFORM_DEFAULTS.shortName,

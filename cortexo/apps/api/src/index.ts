@@ -32,6 +32,7 @@ import { notificationRoutes } from './routes/notifications.js';
 import { logStreamRoutes } from './routes/log-stream.js';
 
 import { credentialsRoutes } from './routes/credentials.js';
+import { apiKeyRoutes } from './routes/api-keys.js';
 
 import { serverRoutes } from './routes/servers.js';
 import { logViewerRoutes } from './routes/log-viewer.js';
@@ -244,6 +245,7 @@ async function start() {
   await app.register(logStreamRoutes, { prefix: '/v1' });
 
   await app.register(credentialsRoutes, { prefix: '/v1' });
+  await app.register(apiKeyRoutes, { prefix: '/v1' });
 
   await app.register(serverRoutes, { prefix: '/v1' });
   await app.register(logViewerRoutes, { prefix: '/v1' });

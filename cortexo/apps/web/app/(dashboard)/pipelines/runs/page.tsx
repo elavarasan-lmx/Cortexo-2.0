@@ -6,7 +6,7 @@ import { useCortexoQuery, timeAgo, formatDuration, parseJsonField } from '@/lib/
 import { Pipeline, PipelineRun, api } from '@/lib/api';
 import { LiveLogViewer } from '@/components/live-log-viewer';
 
-const statusConfig: Record<string, { icon: any; color: string; bg: string; label: string }> = {
+const statusConfig: Record<string, { icon: React.ComponentType<{ style?: React.CSSProperties }>; color: string; bg: string; label: string }> = {
   success: { icon: CheckCircle, color: '#10B981', bg: 'rgba(16, 185, 129, 0.1)', label: 'Success' },
   failed:  { icon: XCircle, color: '#EF4444', bg: 'rgba(239, 68, 68, 0.1)', label: 'Failed' },
   running: { icon: Loader2, color: '#818CF8', bg: 'rgba(129, 140, 248, 0.1)', label: 'Running' },
@@ -27,7 +27,7 @@ export default function PipelineRunsPage() {
     try { await api.retryPipelineRun(runId); refetch(); } catch { } finally { setRetrying(null); }
   }
 
-  const safeRuns = (runs as any[]) || [];
+  const safeRuns = (runs as PipelineRun[]) || [];
   const stats = {
     total: safeRuns.length,
     success: safeRuns.filter((r: PipelineRun) => r.status === 'success').length,
@@ -119,10 +119,10 @@ export default function PipelineRunsPage() {
       {/* ─── Run List ─── */}
       {!loading && safeRuns.length > 0 && (
         <div className="cx-flex-col" style={{ gap: "8px" }}>
-          {safeRuns.map((run: any) => {
+          {safeRuns.map((run: PipelineRun) => {
             const cfg = statusConfig[run.status] || statusConfig.queued;
             const Icon = cfg.icon;
-            const stages = parseJsonField<any[]>(run.stages, []);
+            const stages = parseJsonField<{ name: string; status: string; durationMs?: number }[]>(run.stages, []);
             const isRetrying = retrying === run.id;
             const isShowingLogs = showLogs === run.id;
             return (
@@ -179,7 +179,7 @@ export default function PipelineRunsPage() {
                     </div>
                     {stages.length > 0 && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap', marginTop: '6px' }}>
-                        {stages.map((stage: any, i: number) => {
+                        {stages.map((stage: { name: string; status: string; durationMs?: number }, i: number) => {
                           const stageColor = stage.status === 'success' ? '#10B981' : stage.status === 'failed' ? '#EF4444' : '#818CF8';
                           return (
                             <span key={i} style={{

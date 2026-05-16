@@ -26,7 +26,7 @@ export default function TestRunDetailPage() {
     setLoading(true);
     try {
       const res = await api.getTestRun(runId);
-      setData((res as any)?.data || res);
+      setData((res as { data?: unknown }).data || res);
     } catch { /* ignore */ }
     setLoading(false);
   }, [runId]);

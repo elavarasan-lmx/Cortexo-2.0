@@ -183,7 +183,7 @@ export default function DeploymentsPage() {
   );
   const judgeScoreMap = useMemo(() => {
     const map = new Map<string, JudgeScore>();
-    const scores = (judgeScoresRaw as any)?.data || judgeScoresRaw || [];
+    const scores = Array.isArray(judgeScoresRaw) ? judgeScoresRaw : [];
     (Array.isArray(scores) ? scores : []).forEach((s: JudgeScore) => map.set(s.targetId, s));
     return map;
   }, [judgeScoresRaw]);
@@ -206,7 +206,7 @@ export default function DeploymentsPage() {
     );
   }
 
-  const allDeploys = (deployments as any[]) || [];
+  const allDeploys = (deployments as Deployment[]) || [];
 
   // Date range filter
   const now = new Date();

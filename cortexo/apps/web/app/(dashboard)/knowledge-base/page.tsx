@@ -105,7 +105,7 @@ export default function KnowledgeBasePage() {
       const res = await api.askKnowledge({
         question: userMessage.content,
         provider: selectedProvider || undefined,
-      }) as any;
+      }) as unknown as { data?: { answer?: string; id?: string; sourcesUsed?: string[] }; answer?: string; sources?: string[] };
       if (res && (res.data || res.answer)) {
         const answer = res.data?.answer || res.answer;
         setMessages(prev => [...prev, {
@@ -384,7 +384,7 @@ export default function KnowledgeBasePage() {
                   <option key={cat} value={cat}>{cat} ({count})</option>
                 ))}
               </select>
-              <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', color: 'rgb(var(--text-primary))', fontSize: '12px', cursor: 'pointer' }}>
+              <select value={sortBy} onChange={e => setSortBy(e.target.value as 'updatedAt' | 'createdAt' | 'title')} style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid rgb(var(--border))', backgroundColor: 'rgb(var(--surface))', color: 'rgb(var(--text-primary))', fontSize: '12px', cursor: 'pointer' }}>
                 <option value="updatedAt">Last Updated</option>
                 <option value="createdAt">Date Created</option>
                 <option value="title">Title</option>
