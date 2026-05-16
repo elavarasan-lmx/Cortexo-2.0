@@ -24,3 +24,11 @@ export function getUser(request: FastifyRequest): JwtUser {
 export function getUserId(request: FastifyRequest): string {
   return getUser(request).sub;
 }
+
+/**
+ * Get the orgId from the authenticated user.
+ * Defaults to 'default' for single-org deployments.
+ */
+export function getOrgId(request: FastifyRequest): string {
+  return getUser(request).orgId || 'default';
+}

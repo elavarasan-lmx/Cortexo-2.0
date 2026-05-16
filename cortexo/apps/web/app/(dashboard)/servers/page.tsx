@@ -38,24 +38,28 @@ export default function ServersPage() {
   const [saving, setSaving] = useState(false);
   const [collecting, setCollecting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
-  const [editTarget, setEditTarget] = useState<any | null>(null);
+  const [editTarget, setEditTarget] = useState<{ id: number; name: string; privateIp: string; publicAddress: string; sshKey: string } | null>(null);
   const [form, setForm] = useState({ name: '', privateIp: '', publicAddress: '', sshKey: '' });
   const [testingIds, setTestingIds] = useState<Set<number>>(new Set());
   const [testResults, setTestResults] = useState<Record<number, { success: boolean; latencyMs: number; hostname?: string; uptime?: string; error?: string }>>({});
 
-  const testConnection = async (srv: any) => {
+  const testConnection = async (srv: Server) => {
     setTestingIds(prev => new Set(prev).add(srv.id));
     try {
       const res = await api.testServerConnection(srv.id);
-      setTestResults(prev => ({ ...prev, [srv.id]: res.data as any }));
-      if ((res.data as any)?.success) {
-        useToastStore.getState().success('Connected', `${srv.name} — ${(res.data as any).latencyMs}ms`);
-      } else {
-        useToastStore.getState().error('Failed', (res.data as any)?.error || 'Connection failed');
+      const result = res.data;
+      if (result) {
+        setTestResults(prev => ({ ...prev, [srv.id]: result }));
+        if (result.success) {
+          useToastStore.getState().success('Connected', `${srv.name} — ${result.latencyMs}ms`);
+        } else {
+          useToastStore.getState().error('Failed', result.error || 'Connection failed');
+        }
       }
-    } catch (err: any) {
-      setTestResults(prev => ({ ...prev, [srv.id]: { success: false, latencyMs: 0, error: err.message } }));
-      useToastStore.getState().error('Failed', err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Connection failed';
+      setTestResults(prev => ({ ...prev, [srv.id]: { success: false, latencyMs: 0, error: message } }));
+      useToastStore.getState().error('Failed', message);
     }
     setTestingIds(prev => { const n = new Set(prev); n.delete(srv.id); return n; });
   };
@@ -73,7 +77,7 @@ export default function ServersPage() {
     if (!form.name) return;
     setSaving(true);
     try {
-      await api.createServer(form as any);
+      await api.createServer({ name: form.name, privateIp: form.privateIp, publicAddress: form.publicAddress, sshKey: form.sshKey });
       setForm({ name: '', privateIp: '', publicAddress: '', sshKey: '' });
       setShowForm(false);
       await refetch();
@@ -93,7 +97,7 @@ export default function ServersPage() {
     } catch (err) { console.error(err); useToastStore.getState().error('Failed', 'Could not delete server'); }
   };
 
-  const openEdit = (srv: any) => {
+  const openEdit = (srv: Server) => {
     setEditTarget({ id: srv.id, name: srv.name, privateIp: srv.privateIp || '', publicAddress: srv.publicAddress || '', sshKey: srv.sshKey || '' });
   };
 
@@ -117,11 +121,12 @@ export default function ServersPage() {
     );
   }
 
-  const allServers = (servers as any[]) || [];
-  const allResources = (resources as any[]) || [];
+  const allServers: Server[] = (servers as Server[]) || [];
+  const allResources: Record<string, unknown>[] = (resources as Record<string, unknown>[]) || [];
 
-  const resourceByIp = allResources.reduce((acc: Record<string, any>, r: any) => {
-    acc[r.serverIp] = r;
+  const resourceByIp = allResources.reduce<Record<string, Record<string, unknown>>>((acc, r) => {
+    const ip = r.serverIp as string;
+    if (ip) acc[ip] = r;
     return acc;
   }, {});
 
@@ -220,10 +225,10 @@ export default function ServersPage() {
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '14px' }}>
-        {allServers.map((srv: any) => {
-          const res = resourceByIp[srv.privateIp];
+        {allServers.map((srv: Server) => {
+          const res = srv.privateIp ? resourceByIp[srv.privateIp] : undefined;
           const hasMetrics = !!res;
-          const cpuPct = hasMetrics ? parseFloat(res.cpuPercent) : 0;
+          const cpuPct = hasMetrics ? parseFloat(String(res.cpuPercent)) : 0;
           const accentColor = cpuPct > 80 ? '#EF4444' : cpuPct > 60 ? '#F59E0B' : '#10B981';
 
           return (
@@ -274,11 +279,11 @@ export default function ServersPage() {
               {hasMetrics ? (
                 <div style={{ padding: '14px 18px' }}>
                   <MetricBar label="CPU" value={cpuPct} max={100} unit="%" color="#818CF8" />
-                  <MetricBar label="RAM" value={res.ramUsedMb} max={res.ramTotalMb} unit="MB" color="#10B981" />
-                  <MetricBar label="Disk" value={parseFloat(res.diskUsedGb)} max={parseFloat(res.diskTotalGb)} unit="GB" color="#F59E0B" />
+                  <MetricBar label="RAM" value={Number(res.ramUsedMb) || 0} max={Number(res.ramTotalMb) || 0} unit="MB" color="#10B981" />
+                  <MetricBar label="Disk" value={parseFloat(String(res.diskUsedGb))} max={parseFloat(String(res.diskTotalGb))} unit="GB" color="#F59E0B" />
                   <div className="cx-flex-between cx-text-muted" style={{ marginTop: '8px', fontSize: '10px' }}>
-                    <span>Load: {res.loadAvg}</span>
-                    <span>Uptime: {Math.round(res.uptimeHours / 24)}d</span>
+                    <span>Load: {String(res.loadAvg)}</span>
+                    <span>Uptime: {Math.round(Number(res.uptimeHours) / 24)}d</span>
                   </div>
                 </div>
               ) : (
@@ -310,12 +315,12 @@ export default function ServersPage() {
             <div style={{ padding: '20px 24px' }}>
               <div className="cx-flex-col" style={{ gap: '14px' }}>
                 <div className="cx-grid-2-sm">
-                  <div><label className="cx-label">Server Name *</label><input value={editTarget.name} onChange={e => setEditTarget((p: any) => ({ ...p, name: e.target.value }))} className="cx-input cx-mono" autoFocus /></div>
-                  <div><label className="cx-label">Private IP *</label><input value={editTarget.privateIp} onChange={e => setEditTarget((p: any) => ({ ...p, privateIp: e.target.value }))} className="cx-input cx-mono" /></div>
+                  <div><label className="cx-label">Server Name *</label><input value={editTarget.name} onChange={e => setEditTarget(p => p ? ({ ...p, name: e.target.value }) : p)} className="cx-input cx-mono" autoFocus /></div>
+                  <div><label className="cx-label">Private IP *</label><input value={editTarget.privateIp} onChange={e => setEditTarget(p => p ? ({ ...p, privateIp: e.target.value }) : p)} className="cx-input cx-mono" /></div>
                 </div>
                 <div className="cx-grid-2-sm">
-                  <div><label className="cx-label">Public Address</label><input value={editTarget.publicAddress} onChange={e => setEditTarget((p: any) => ({ ...p, publicAddress: e.target.value }))} className="cx-input cx-mono" /></div>
-                  <div><label className="cx-label">SSH Key Path</label><input value={editTarget.sshKey} onChange={e => setEditTarget((p: any) => ({ ...p, sshKey: e.target.value }))} className="cx-input cx-mono" /></div>
+                  <div><label className="cx-label">Public Address</label><input value={editTarget.publicAddress} onChange={e => setEditTarget(p => p ? ({ ...p, publicAddress: e.target.value }) : p)} className="cx-input cx-mono" /></div>
+                  <div><label className="cx-label">SSH Key Path</label><input value={editTarget.sshKey} onChange={e => setEditTarget(p => p ? ({ ...p, sshKey: e.target.value }) : p)} className="cx-input cx-mono" /></div>
                 </div>
               </div>
             </div>

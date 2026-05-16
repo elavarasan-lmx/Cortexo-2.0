@@ -25,7 +25,7 @@ export async function executeDeployAsync(
   deploymentId: string,
   creds: SSHCredentials,
   opts: DeployOptions,
-  user: { sub: string; name: string; orgId: string },
+  user: { sub: string; name: string; orgId?: string },
   targetName: string,
 ) {
   try {

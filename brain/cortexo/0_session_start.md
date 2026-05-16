@@ -113,17 +113,29 @@ cortexo/
 
 | Module | Frontend Route | Backend Route | Key File |
 |--------|---------------|---------------|----------|
-| Dashboard | `dashboard/` | aggregated | `page.tsx` |
+| Dashboard | `dashboard/` | aggregated | `page.tsx` + `components/` (modularized May 15) |
 | Projects | `projects/` | `projects.ts` (14KB) | CRUD |
 | Deployments | `deployments/` | `deployments.ts` (28KB) | SSH deploy |
 | Servers | `servers/` | `servers.ts` (13KB) | Infrastructure |
 | Pipelines | `pipelines/` | `pipelines.ts` (8KB) | CI/CD builder |
 | Bug Tracker | `bug-tracker/` | `errors.ts` (24KB) | Error monitoring |
-| Testing Hub | `testing/` | `testing.ts` (87KB!) | 3-level engine |
+| Testing Hub | `testing/` | `testing.ts` (87KB!) | 3-level engine + smoke module |
 | Knowledge Base | `knowledge-base/` | `knowledge.ts` (16KB) | AI Q&A |
 | DevOps Docs | `devops-docs/` | `devops-docs.ts` (90KB!) | Runbook hub |
 | Audit Log | `audit-log/` | `audit.ts` (6KB) | Activity trail |
 | Settings | `settings/` | multiple routes | 6 sub-tabs |
+
+### Dashboard Component Split (May 15-16)
+The dashboard page was modularized from a single god-component into:
+```
+dashboard/
+├── page.tsx                  ← Orchestrator (layout + data fetching)
+└── components/
+    ├── index.ts              ← Barrel export
+    ├── stat-cards.tsx        ← KPI stat cards row
+    ├── deployment-chart.tsx  ← Deployment activity chart
+    └── activity-feed.tsx     ← Recent activity feed
+```
 
 ---
 
@@ -199,4 +211,31 @@ useAutoLoadToken()
 
 ---
 
-*Last updated: 2026-05-13*
+## Cross-References
+
+- **Winbull Brain**: `brain/winbull/` — The primary platform Cortexo manages
+- **Winbull Deploy Automation**: `apps/api/src/routes/winbull-deploy.ts` (23KB)
+- **Winbull Configs Schema**: `packages/db/src/schema/winbull-configs.ts`
+- **Ruby Staging Brain**: `brain/ruby/0_session_start.md`
+- **MKR Silver Brain**: `brain/mkrsilver/0_session_start.md`
+- **Infrastructure Map**: `brain/infrastructure.md`
+- **Client Roster**: `brain/clients.md`
+- **Diagnostic Playbook**: `brain/cortexo/_SYSTEM/DIAGNOSTIC_PLAYBOOK.md`
+
+---
+
+## Update Log
+
+| Date | Change |
+|------|--------|
+| 2026-05-13 | Initial brain created |
+| 2026-05-15 | Dashboard modularized: stat-cards, deployment-chart, activity-feed components extracted |
+| 2026-05-15 | Dead schemas removed: reports, organizations, security, code-audit |
+| 2026-05-15 | `as any` cleanup across projects, servers, testing, knowledge-base modules |
+| 2026-05-16 | Auto-refresh infinite redirect loop fixed (UNSAFE_DEV_AUTH env guard) |
+| 2026-05-16 | Smoke testing module UI integrated with Testing Hub |
+| 2026-05-16 | Cross-references + Diagnostic Playbook added |
+
+---
+
+*Last updated: 2026-05-16*

@@ -13,7 +13,10 @@ import { authConfig } from './auth.config';
 // The API (apps/api/src/index.ts) has a matching check that calls process.exit(1)
 // in production. This side prints a loud banner so the Next.js console also shows
 // the warning — both processes need to scream so no one misses it.
-if (process.env.UNSAFE_DEV_AUTH === 'true') {
+// NOTE: Skip during `next build` — Next.js forces NODE_ENV=production at build
+//       time even for dev builds, which would falsely trigger the crash guard.
+const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
+if (process.env.UNSAFE_DEV_AUTH === 'true' && !isBuildPhase) {
   if (process.env.NODE_ENV === 'production') {
     // In production on the web side we can't easily abort startup,
     // but we make it impossible to miss in logs / crash reporters.

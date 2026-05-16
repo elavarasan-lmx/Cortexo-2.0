@@ -527,6 +527,44 @@ export interface KnowledgeDoc {
   updatedAt?: string;
 }
 
+// ─── Project Knowledge ────────────────────────────────────────────────────────
+export interface ProjectSource {
+  id: string;
+  name: string;
+  path: string;
+  description: string;
+  stack: string[];
+  modules: ProjectModule[];
+  fileCount?: number;
+  accessible?: boolean;
+  lastScanned?: string;
+}
+
+export interface ProjectModule {
+  name: string;
+  path: string;
+  description: string;
+  fileCount?: number;
+}
+
+export interface ProjectFileEntry {
+  name: string;
+  path: string;
+  type: 'file' | 'directory';
+  size?: number;
+  extension?: string;
+}
+
+export interface ProjectFileContent {
+  name: string;
+  path: string;
+  content: string;
+  size: number;
+  extension: string;
+  language: string;
+  lastModified: string;
+}
+
 export interface JudgeScore {
   id: string;
   targetType: 'deployment' | 'code-review' | 'error-resolution' | 'agent-task';
@@ -1098,6 +1136,20 @@ class ApiClient {
   askKnowledge(data: { question: string; provider?: string }) { return this.request<KnowledgeAnswer>('POST', '/knowledge/ask', data); }
   submitKnowledgeFeedback(id: string, data: Record<string, unknown>) {
     return this.request<{ success: boolean }>('POST', `/knowledge/feedback/${id}`, data);
+  }
+
+  // ─── Project Knowledge ──────────────────────────────────────────────────────
+  getProjectSources()                               { return this.request<ProjectSource[]>('GET', '/project-knowledge/projects'); }
+  getProjectSummary(projectId = 'winbull-staging')   { return this.request<ProjectSource>('GET', `/project-knowledge/summary?projectId=${projectId}`); }
+  browseProjectFiles(projectId = 'winbull-staging', dir = '') {
+    const qs = `?projectId=${projectId}${dir ? `&dir=${encodeURIComponent(dir)}` : ''}`;
+    return this.request<ProjectFileEntry[]>('GET', `/project-knowledge/browse${qs}`);
+  }
+  readProjectFile(file: string, projectId = 'winbull-staging') {
+    return this.request<ProjectFileContent>('GET', `/project-knowledge/read?projectId=${projectId}&file=${encodeURIComponent(file)}`);
+  }
+  askProjectKnowledge(data: { question: string; projectId?: string; provider?: string; fileContext?: string }) {
+    return this.request<KnowledgeAnswer>('POST', '/project-knowledge/ask', data);
   }
 
   // ─── DevOps Docs ──────────────────────────────────────────────────────────

@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { BookOpen, Search, MessageSquare, Send, Book, FileText, Settings, Bot, User, Loader2, Plus, Edit2, Trash2, X, ChevronDown, Copy, Download, RotateCcw, Sparkles, Clock, Filter, ArrowUpDown, FileJson, FileCode } from 'lucide-react';
+import { BookOpen, Search, MessageSquare, Send, Book, FileText, Settings, Bot, User, Loader2, Plus, Edit2, Trash2, X, ChevronDown, Copy, Download, RotateCcw, Sparkles, Clock, Filter, ArrowUpDown, FileJson, FileCode, FolderGit2 } from 'lucide-react';
 import { KnowledgeDoc, KnowledgeHistoryEntry, KnowledgeProvider, api } from '@/lib/api';
 import { useCortexoQuery, timeAgo as formatRelativeTime } from '@/lib/hooks';
 import Link from 'next/link';
+import ProjectKnowledgeTab from './ProjectKnowledgeTab';
 
 
 
@@ -30,7 +31,7 @@ const STARTER_QUESTIONS = [
 ];
 
 export default function KnowledgeBasePage() {
-  const [activeTab, setActiveTab] = useState<'qa' | 'docs'>('qa');
+  const [activeTab, setActiveTab] = useState<'qa' | 'docs' | 'project'>('qa');
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'updatedAt' | 'createdAt' | 'title'>('updatedAt');
@@ -265,6 +266,9 @@ export default function KnowledgeBasePage() {
           <button onClick={() => setActiveTab('docs')} className="cx-flex cx-items-center cx-gap-6 cx-fw-600" style={{ padding: '6px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '13px', backgroundColor: activeTab === 'docs' ? 'rgba(var(--primary), 0.1)' : 'transparent', color: activeTab === 'docs' ? 'rgb(var(--primary))' : 'rgb(var(--text-secondary))' }}>
             <Book style={{ width: '14px', height: '14px' }} /> Documentation
           </button>
+          <button onClick={() => setActiveTab('project')} className="cx-flex cx-items-center cx-gap-6 cx-fw-600" style={{ padding: '6px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '13px', backgroundColor: activeTab === 'project' ? 'rgba(var(--primary), 0.1)' : 'transparent', color: activeTab === 'project' ? 'rgb(var(--primary))' : 'rgb(var(--text-secondary))' }}>
+            <FolderGit2 style={{ width: '14px', height: '14px' }} /> Project Knowledge
+          </button>
         </div>
       </div>
 
@@ -366,7 +370,7 @@ export default function KnowledgeBasePage() {
               </form>
             </div>
           </>
-        ) : (
+        ) : activeTab === 'docs' ? (
           // Documentation
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             <div className="cx-flex cx-items-center cx-gap-12 cx-p-20 cx-border-b" style={{ flexWrap: 'wrap' }}>
@@ -452,7 +456,9 @@ export default function KnowledgeBasePage() {
               )}
             </div>
           </div>
-        )}
+        ) : activeTab === 'project' ? (
+          <ProjectKnowledgeTab />
+        ) : null}
       </div>
 
       {showDocModal && (

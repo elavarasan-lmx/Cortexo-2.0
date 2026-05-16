@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
-import { api } from './api';
+import { api, type Project } from './api';
 
 // ─── TanStack Query ──────────────────────────────────────────────────────────
 
@@ -53,8 +53,8 @@ export function useProjectLookup() {
   );
   const lookup = useMemo(() => {
     const map = new Map<string, { name: string; repoUrl?: string }>();
-    (projects || []).forEach((p: any) => {
-      map.set(p.id, { name: p.name, repoUrl: p.repoUrl });
+    (projects || []).forEach((p: Project) => {
+      map.set(p.id, { name: p.name, repoUrl: p.repoUrl ?? undefined });
     });
     return map;
   }, [projects]);

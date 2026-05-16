@@ -149,3 +149,17 @@ Customer logs in (mobile = username)
 | 2026-05-12 | Artifact 9 — Admin Form Fields (all 10 admin forms) |
 | 2026-05-12 | Artifact 3 — General Settings full field map |
 | 2026-05-12 | TDS/TCS bug documented (tcs_value key mismatch) |
+| 2026-05-16 | Cross-references added to Cortexo, Ruby, MKR brains |
+
+---
+
+## Cross-References
+
+- **Cortexo Brain**: `brain/cortexo/` — The DevOps platform that deploys Winbull
+- **Cortexo Deploy Route**: `cortexo/apps/api/src/routes/winbull-deploy.ts` (23KB)
+- **Cortexo Winbull Configs**: `cortexo/packages/db/src/schema/winbull-configs.ts`
+- **Ruby Staging Brain**: `brain/ruby/0_session_start.md` — Cloned from Winbull codebase
+- **MKR Silver Brain**: `brain/mkrsilver/0_session_start.md` — Flutter app using Winbull backend
+- **Infrastructure Map**: `brain/infrastructure.md` — All servers, RDS, Redis
+- **Client Roster**: `brain/clients.md` — All 6 clients mapped to servers
+

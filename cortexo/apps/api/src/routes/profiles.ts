@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { getDb } from '../lib/db.js';
 import { eq } from 'drizzle-orm';
 import { sourceProfiles, dbProfiles, clientGitProfiles, clientDbProfiles } from '@cortexo/db/schema';
-import { getOrgId } from '../lib/request-context.js';
+// orgId removed — these profile tables don't have org scoping yet
 
 const sourceSchema = z.object({
   name: z.string().min(1),
@@ -86,7 +86,7 @@ export async function profileRoutes(app: FastifyInstance) {
     try {
       const db = await getDb();
       const id = crypto.randomUUID();
-      await db.insert(sourceProfiles).values({ id, orgId: getOrgId(req), ...parsed.data });
+      await db.insert(sourceProfiles).values({ id, ...parsed.data });
       return { data: { id, ...parsed.data, message: 'Source profile created' } };
     } catch (err) {
       app.log.error(err);
@@ -156,7 +156,7 @@ export async function profileRoutes(app: FastifyInstance) {
     try {
       const db = await getDb();
       const id = crypto.randomUUID();
-      await db.insert(dbProfiles).values({ id, orgId: getOrgId(req), ...parsed.data });
+      await db.insert(dbProfiles).values({ id, ...parsed.data });
       return { data: { id, ...parsed.data, message: 'DB profile created' } };
     } catch (err) {
       app.log.error(err);
@@ -213,7 +213,7 @@ export async function profileRoutes(app: FastifyInstance) {
     try {
       const db = await getDb();
       const id = crypto.randomUUID();
-      await db.insert(clientGitProfiles).values({ id, orgId: getOrgId(req), ...parsed.data });
+      await db.insert(clientGitProfiles).values({ id, ...parsed.data });
       return { data: { id, ...parsed.data, message: 'Client git profile created' } };
     } catch (err) {
       app.log.error(err);
@@ -270,7 +270,7 @@ export async function profileRoutes(app: FastifyInstance) {
     try {
       const db = await getDb();
       const id = crypto.randomUUID();
-      await db.insert(clientDbProfiles).values({ id, orgId: getOrgId(req), ...parsed.data });
+      await db.insert(clientDbProfiles).values({ id, ...parsed.data });
       return { data: { id, ...parsed.data, message: 'Client DB profile created' } };
     } catch (err) {
       app.log.error(err);

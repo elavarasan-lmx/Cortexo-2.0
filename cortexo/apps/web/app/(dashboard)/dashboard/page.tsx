@@ -10,51 +10,14 @@ import Link from 'next/link';
 import { useCountUp } from '@/hooks/useCountUp';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 
-/* ─── Skeleton Components ─── */
-function Skeleton({ className, style }: { className?: string; style?: React.CSSProperties }) {
-  return (
-    <div className={`cx-skeleton ${className || ''}`} style={{ ...style }} />
-  );
-}
-
-
-
-function StatCardSkeleton() {
-  return (
-    <div className="cx-card cx-border cx-flex-col" style={{ borderRadius: '14px', padding: '24px', gap: '16px' }}>
-      <div className="cx-flex-between">
-        <Skeleton style={{ width: '80px', height: '14px' }} />
-        <Skeleton style={{ width: '36px', height: '36px', borderRadius: '10px' }} />
-      </div>
-      <div className="cx-flex cx-items-center cx-gap-12">
-        <Skeleton style={{ width: '60px', height: '32px' }} />
-        <Skeleton style={{ width: '60px', height: '20px', borderRadius: '12px' }} />
-      </div>
-    </div>
-  );
-}
-
-function ChartSkeleton() {
-  return (
-    <div className="cx-card cx-border" style={{ padding: '24px' }}>
-      <div className="cx-flex-between cx-mb-24">
-        <Skeleton style={{ width: '180px', height: '16px' }} />
-        <Skeleton style={{ width: '80px', height: '24px', borderRadius: '12px' }} />
-      </div>
-      <Skeleton style={{ height: '240px' }} />
-    </div>
-  );
-}
+import { StatCard, StatCardSkeleton, Skeleton } from './components/stat-cards';
+import { ChartSkeleton, ChartLine } from './components/deployment-chart';
+import { ActivityRow } from './components/activity-feed';
 
 type DateRange = '7d' | '30d' | '90d';
+interface ChartTooltip { show: boolean; x: number; y: number; value: number; label: string; }
 
-interface ChartTooltip {
-  show: boolean;
-  x: number;
-  y: number;
-  value: number;
-  label: string;
-}
+
 
 export default function DashboardPage() {
   const [dateRange, setDateRange] = useState<DateRange>('7d');
@@ -145,8 +108,16 @@ export default function DashboardPage() {
   const successCount = (filteredDeployments || []).filter((d: Deployment) => d.status === 'success').length;
   const successRate = deployCount > 0 ? Math.round((successCount / deployCount) * 100) : 100;
 
-  // Avg deploy time (mock for now - would need actual timing data)
-  const avgDeployTime = '2.4m';
+  // Avg deploy time — calculated from real deployment durationMs
+  const avgDeployTime = useMemo(() => {
+    const completed = (filteredDeployments || []).filter(
+      (d: Deployment) => d.durationMs && d.durationMs > 0
+    );
+    if (completed.length === 0) return '—';
+    const avgMs = completed.reduce((sum: number, d: Deployment) => sum + (d.durationMs || 0), 0) / completed.length;
+    if (avgMs < 60_000) return `${Math.round(avgMs / 1000)}s`;
+    return `${(avgMs / 60_000).toFixed(1)}m`;
+  }, [filteredDeployments]);
 
   // Uptime calculation
   const serverUptime = totalServers > 0 ? Math.round((activeServers / totalServers) * 100) : 100;
@@ -407,7 +378,7 @@ export default function DashboardPage() {
                   {chartData.counts.reduce((a, b) => a + b, 0)} deploys
                 </span>
               </div>
-              <div style={{ height: '240px', width: '100%', position: 'relative' }} onMouseLeave={() => setChartTooltip(t => ({ ...t, show: false }))}>
+              <div style={{ height: '240px', width: '100%', position: 'relative' }} onMouseLeave={() => setChartTooltip((t: ChartTooltip) => ({ ...t, show: false }))}>
                 <svg viewBox="0 0 800 240" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
                   <defs>
                     <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
@@ -510,7 +481,7 @@ export default function DashboardPage() {
       </div>
 
       {/* AI Quality Intelligence */}
-      <AiQualityWidget stats={(judgeStatsRaw as any)?.data || judgeStatsRaw} />
+      <AiQualityWidget stats={judgeStatsRaw} />
 
       {/* Bottom Layout */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
@@ -545,7 +516,7 @@ export default function DashboardPage() {
                 )}
               </div>
               {(servers as Server[]).slice(0, 3).map((srv: Server) => {
-                const sr = (serverResources || []).find((r: any) => r.serverId === srv.id);
+                const sr = (serverResources || []).find((r: Record<string, unknown>) => r.serverId === srv.id);
                 const cpu = Number(sr?.cpu) || 0;
                 return (
                   <div key={srv.id} className="cx-flex-col cx-gap-6">
@@ -621,41 +592,7 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-function StatCard({ title, value, trend, color, icon: Icon, bg, urgency }: { title: string; value: string; trend: string; color: string; icon: any; bg: string; urgency?: string }) {
-  const numericVal = parseInt(value) || 0;
-  const displayValue = useCountUp(numericVal);
-  const isNumeric = /^\d+$/.test(value);
-  return (
-    <div className="cx-card cx-border cx-flex-col" data-urgency={urgency} style={{ borderRadius: '14px', padding: '20px', gap: '12px', position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', backgroundColor: color }} />
-      <div className="cx-flex-between">
-        <span className="cx-fw-600 cx-text-secondary cx-text-12">{title}</span>
-        <div className="cx-flex-center cx-r-10" style={{ width: '32px', height: '32px', backgroundColor: bg }}>
-          <Icon style={{ width: '16px', height: '16px', color }} />
-        </div>
-      </div>
-      <div className="cx-flex cx-items-center cx-gap-10">
-        <span className="cx-fw-700 cx-text-primary" style={{ fontSize: '28px', lineHeight: 1 }}>{isNumeric ? displayValue : value}</span>
-        <span className="cx-fw-600 cx-text-muted cx-text-11" style={{ backgroundColor: 'rgba(var(--text-muted), 0.08)', padding: '3px 8px', borderRadius: '10px' }}>{trend}</span>
-      </div>
-    </div>
-  );
-}
-
-function ActivityRow({ icon: Icon, iconColor, title, time, status }: { icon: any; iconColor: string; title: string; time: string; status?: string }) {
-  return (
-    <div className="cx-timeline-item cx-flex-between" data-status={status === 'error' ? 'error' : status === 'success' ? 'success' : undefined}>
-      <div className="cx-flex cx-items-center cx-gap-10">
-        <div style={{ width: '28px', height: '28px', borderRadius: '6px', backgroundColor: `${iconColor}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon style={{ width: '14px', height: '14px', color: iconColor }} />
-        </div>
-        <span className="cx-text-primary cx-fw-500 cx-text-13" style={{ lineHeight: 1.3 }}>{title}</span>
-      </div>
-      <span className="cx-text-11 cx-text-muted">{time}</span>
-    </div>
-  );
-}
+/* StatCard, ActivityRow, ChartLine → moved to ./components/ */
 
 function QuickActionBtn({ title, icon: Icon, bgColor, href, tooltip }: { title: string; icon: any; bgColor: string; href: string; tooltip: string }) {
   return (
@@ -686,28 +623,6 @@ function ResourceBar({ label, value, color }: { label: string; value: number; co
   );
 }
 
-function ChartLine({ d }: { d: string }) {
-  const pathRef = useRef<SVGPathElement>(null);
-  const [pathLength, setPathLength] = useState(0);
-
-  useEffect(() => {
-    if (pathRef.current) {
-      setPathLength(pathRef.current.getTotalLength());
-    }
-  }, [d]);
-
-  return (
-    <path
-      ref={pathRef}
-      d={d}
-      fill="none"
-      stroke="#8B5CF6"
-      strokeWidth="3"
-      className="cx-chart-line"
-      style={{ '--path-length': pathLength } as React.CSSProperties}
-    />
-  );
-}
 
 function AiQualityWidget({ stats }: { stats?: JudgeAggregateStats }) {
   if (!stats) return null;
@@ -784,7 +699,7 @@ function AiQualityWidget({ stats }: { stats?: JudgeAggregateStats }) {
 
         <div className="cx-flex-col cx-gap-12">
           <h3 className="cx-fw-600 cx-text-secondary cx-text-12" style={{ margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>By Category</h3>
-          {Object.entries(stats.byType || {}).map(([type, data]: [string, any]) => {
+          {Object.entries(stats.byType || {}).map(([type, data]: [string, { count: number; avgScore: number }]) => {
             const barColor = data.avgScore >= 80 ? '#10B981' : data.avgScore >= 60 ? '#F59E0B' : '#EF4444';
             return (
               <div key={type} className="cx-flex-col cx-gap-4">
@@ -816,7 +731,7 @@ function AiQualityWidget({ stats }: { stats?: JudgeAggregateStats }) {
 
         <div className="cx-flex-col cx-gap-10">
           <h3 className="cx-fw-600 cx-text-secondary cx-text-12" style={{ margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Top Suggestions</h3>
-          {(stats.topSuggestions || []).slice(0, 5).map((s: any, i: number) => (
+          {(stats.topSuggestions || []).slice(0, 5).map((s: { suggestion: string; occurrences: number }, i: number) => (
             <div key={i} className="cx-flex cx-items-center cx-gap-8">
               <span className="cx-flex-center cx-fw-700" style={{ minWidth: '20px', height: '20px', borderRadius: '6px', backgroundColor: 'rgba(139,92,246,0.12)', color: '#8B5CF6', fontSize: '10px' }}>
                 {s.occurrences}

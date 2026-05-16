@@ -139,6 +139,7 @@ export async function notificationRoutes(app: FastifyInstance) {
  * Helper: create a notification in the DB (called internally).
  */
 export async function createNotification(data: {
+  orgId?: string;
   userId?: string;
   type: string;
   title: string;

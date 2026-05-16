@@ -7,7 +7,7 @@ import {
   CheckCircle, XCircle, Clock, Globe, Server, ArrowRight,
   AlertTriangle, FolderSearch, Zap, ChevronRight, X, Flame,
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api, TestTarget, TestCase, TestRun, TestScanResult } from '@/lib/api';
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -25,15 +25,15 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 export default function TestingHubPage() {
 
-  const [targets, setTargets] = useState<any[]>([]);
-  const [cases, setCases] = useState<any[]>([]);
-  const [runs, setRuns] = useState<any[]>([]);
+  const [targets, setTargets] = useState<TestTarget[]>([]);
+  const [cases, setCases] = useState<TestCase[]>([]);
+  const [runs, setRuns] = useState<TestRun[]>([]);
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
   const [runningTarget, setRunningTarget] = useState<number | null>(null);
   const [runningFull, setRunningFull] = useState<number | null>(null);
-  const [scanResult, setScanResult] = useState<any>(null);
-  const [runResult, setRunResult] = useState<any>(null);
+  const [scanResult, setScanResult] = useState<{ discovered: number; inserted: number; skipped: number } | null>(null);
+  const [runResult, setRunResult] = useState<{ targetName: string; passed: number; failed: number; total: number; durationMs: number; runId: number } | null>(null);
 
   // Add target modal
   const [showAdd, setShowAdd] = useState(false);
@@ -53,9 +53,9 @@ export default function TestingHubPage() {
         api.getTestCases(),
         api.getTestRuns(),
       ]);
-      setTargets((t as any)?.data || t || []);
-      setCases((c as any)?.data || c || []);
-      setRuns((r as any)?.data || r || []);
+      setTargets(t.data || []);
+      setCases(c.data || []);
+      setRuns(r.data || []);
     } catch { /* ignore */ }
     setLoading(false);
   }, []);
@@ -80,7 +80,8 @@ export default function TestingHubPage() {
     setScanning(true); setScanResult(null);
     try {
       const res = await api.scanProject();
-      setScanResult((res as any)?.data || res);
+      const d = res.data;
+      setScanResult(d ? { discovered: d.discovered || 0, inserted: (d as unknown as { inserted: number }).inserted || 0, skipped: (d as unknown as { skipped: number }).skipped || 0 } : null);
       fetchAll();
     } catch { /* ignore */ }
     setScanning(false);
@@ -90,7 +91,8 @@ export default function TestingHubPage() {
     setRunningTarget(targetId); setRunResult(null);
     try {
       const res = await api.runTests(targetId);
-      setRunResult((res as any)?.data || res);
+      const d = res.data as TestRun & { targetName?: string; runId?: number };
+      setRunResult(d ? { targetName: d.targetName || '', passed: d.passed || 0, failed: d.failed || 0, total: d.totalCases || 0, durationMs: d.durationMs || 0, runId: d.runId || d.id || 0 } : null);
       fetchAll();
     } catch { /* ignore */ }
     setRunningTarget(null);
@@ -100,17 +102,19 @@ export default function TestingHubPage() {
     setRunningFull(targetId); setRunResult(null);
     try {
       const res = await api.runFullTests(targetId);
-      setRunResult((res as any)?.data || res);
+      const d = res.data as TestRun & { targetName?: string; runId?: number };
+      setRunResult(d ? { targetName: d.targetName || '', passed: d.passed || 0, failed: d.failed || 0, total: d.totalCases || 0, durationMs: d.durationMs || 0, runId: d.runId || d.id || 0 } : null);
       fetchAll();
     } catch { /* ignore */ }
     setRunningFull(null);
   };
 
-  const filteredCases = caseFilter ? cases.filter((c: any) => c.category === caseFilter) : cases;
-  const categoryGroups = cases.reduce((acc: any, c: any) => {
-    acc[c.category] = (acc[c.category] || 0) + 1;
+  const filteredCases = caseFilter ? cases.filter((c: TestCase) => c.category === caseFilter) : cases;
+  const categoryGroups = cases.reduce<Record<string, number>>((acc, c: TestCase) => {
+    const cat = c.category || 'uncategorized';
+    acc[cat] = (acc[cat] || 0) + 1;
     return acc;
-  }, {} as Record<string, number>);
+  }, {});
 
   // inputStyle replaced by cx-search-input class
   // btnStyle replaced by inline bg-color only (cx-btn-primary sets the rest)
@@ -249,7 +253,7 @@ export default function TestingHubPage() {
                   <p className="cx-fw-600" style={{ fontSize: '15px' }}>No test targets configured</p>
                   <p style={{ fontSize: '13px' }}>Add a client URL to start testing</p>
                 </div>
-              ) : targets.map((t: any) => (
+              ) : targets.map((t: TestTarget) => (
                 <div key={t.id} className="cx-card cx-border" style={{ display: 'flex', flexDirection: 'column', padding: '20px', transition: 'border-color 200ms' }}>
                   <div className="cx-flex-between" style={{ marginBottom: '10px' }}>
                     <div className="cx-flex cx-items-center cx-gap-10">
@@ -326,7 +330,7 @@ export default function TestingHubPage() {
                     color: caseFilter === cat ? CATEGORY_COLORS[cat] : 'rgb(var(--text-muted))',
                     cursor: 'pointer', textTransform: 'capitalize',
                   }}>
-                    {cat} ({count as number})
+                    {cat} ({count})
                   </button>
                 ))}
               </div>
@@ -340,8 +344,8 @@ export default function TestingHubPage() {
                 </div>
               ) : (
                 <div className="cx-table-wrap">
-                  {filteredCases.map((tc: any, i: number) => {
-                    const catColor = CATEGORY_COLORS[tc.category] || '#94A3B8';
+                  {filteredCases.map((tc: TestCase, i: number) => {
+                    const catColor = CATEGORY_COLORS[tc.category || ''] || '#94A3B8';
                     return (
                       <div key={tc.id} className="cx-flex cx-items-center cx-gap-12" style={{
                         padding: '10px 16px',
@@ -361,7 +365,7 @@ export default function TestingHubPage() {
                         <span className="cx-mono cx-text-primary" style={{ flex: 1, fontSize: '12px' }}>
                           {tc.endpoint}
                         </span>
-                        <span className="cx-text-muted" style={{ fontSize: '11px' }}>{tc.priority}</span>
+                        <span className="cx-text-muted" style={{ fontSize: '11px' }}>{tc.level}</span>
                       </div>
                     );
                   })}
@@ -381,8 +385,9 @@ export default function TestingHubPage() {
                 </div>
               ) : (
                 <div className="cx-table-wrap">
-                  {runs.map((r: any, i: number) => {
-                    const passRate = r.total > 0 ? Math.round((r.passed / r.total) * 100) : 0;
+                  {runs.map((r: TestRun & { targetName?: string; runType?: string; total?: number }, i: number) => {
+                    const total = r.total ?? r.totalCases;
+                    const passRate = total > 0 ? Math.round((r.passed / total) * 100) : 0;
                     const isGood = r.failed === 0;
                     return (
                       <Link key={r.id} href={r.runType === 'full' ? `/testing/levels/${r.id}` : `/testing/runs/${r.id}`}

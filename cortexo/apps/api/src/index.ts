@@ -53,6 +53,7 @@ import { testingRoutes } from './routes/testing/index.js';
 import { browserTestRoutes } from './routes/browser-tests.js';
 import { smokeTestRoutes } from './routes/smoke-tests.js';
 import { devopsDocsRoutes } from './routes/devops-docs.js';
+import { projectKnowledgeRoutes } from './routes/project-knowledge.js';
 
 import { menuPermissionRoutes } from './routes/menu-permissions.js';
 import { menuItemRoutes } from './routes/menu-items.js';
@@ -261,6 +262,7 @@ async function start() {
   await app.register(browserTestRoutes, { prefix: '/v1' });
   await app.register(smokeTestRoutes, { prefix: '/v1' });
   await app.register(devopsDocsRoutes, { prefix: '/v1' });
+  await app.register(projectKnowledgeRoutes, { prefix: '/v1' });
 
   await app.register(menuPermissionRoutes, { prefix: '/v1' });
   await app.register(menuItemRoutes, { prefix: '/v1' });

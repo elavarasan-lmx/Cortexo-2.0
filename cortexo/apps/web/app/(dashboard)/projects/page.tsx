@@ -231,7 +231,7 @@ export default function ProjectsPage() {
         s.domain || '',
         s.clientSlug || '',
         s.productType || '',
-        (s.database as any)?.name || '',
+        ((s.database as Record<string, unknown> | undefined)?.name as string) || '',
         s.adminUser || '',
         s.androidVersion || '',
         s.iosVersion || '',

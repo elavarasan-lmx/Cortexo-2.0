@@ -67,36 +67,45 @@ export default function LandingPage() {
     <div className="min-h-screen bg-[#060918] text-white overflow-x-hidden">
       {/* ── Navigation ── */}
       <nav className="fixed top-0 z-50 w-full border-b border-white/[0.06] backdrop-blur-2xl bg-[#060918]/80">
+        {/* Nav glow effect */}
+        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent" />
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 lg:px-8">
           <Link href="/" className="flex items-center gap-2.5 no-underline group">
-            <img src="/logo.png" alt="Logimax Bullion" className="h-10 transition-shadow duration-300 group-hover:shadow-indigo-500/40" />
+            <div className="relative">
+              <img src="/logo.png" alt="Logimax Bullion" className="h-10 transition-all duration-300 group-hover:scale-105" />
+              <div className="absolute inset-0 bg-indigo-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full" />
+            </div>
           </Link>
 
-          <div className="hidden md:flex items-center gap-8">
-            {['Features', 'How It Works', 'Stack', 'FAQ'].map((item) => (
-              <a
+          <div className="hidden md:flex items-center gap-1">
+            {['Features', 'How It Works', 'Stack', 'FAQ'].map((item, idx) => (
+              <motion.a
                 key={item}
                 href={`#${item.toLowerCase().replace(/\s+/g, '-')}`}
-                className="text-sm text-slate-400 hover:text-white transition-colors duration-200 cursor-pointer"
+                className="relative px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors duration-200 cursor-pointer group"
+                whileHover={{ y: -2 }}
               >
                 {item}
-              </a>
+                <span className="absolute inset-x-4 bottom-0 h-px scale-x-0 group-hover:scale-x-100 bg-gradient-to-r from-indigo-500 to-violet-500 transition-transform duration-300" />
+              </motion.a>
             ))}
           </div>
 
           <div className="flex items-center gap-3">
             <Link
               href="/login"
-              className="rounded-lg px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors duration-200 no-underline cursor-pointer"
+              className="group relative rounded-lg px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors duration-200 no-underline cursor-pointer"
             >
-              Log in
+              <span>Log in</span>
+              <span className="absolute inset-0 rounded-lg bg-white/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
             </Link>
             <Link
               href="/register"
               id="nav-cta"
-              className="rounded-lg bg-gradient-to-r from-indigo-500 to-violet-600 px-4 py-2 text-sm font-semibold text-white no-underline shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-300 cursor-pointer"
+              className="group relative rounded-lg bg-gradient-to-r from-indigo-500 to-violet-600 px-4 py-2 text-sm font-semibold text-white no-underline shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer overflow-hidden"
             >
-              Get Started Free
+              <span className="relative z-10">Get Started Free</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-violet-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </Link>
           </div>
         </div>
@@ -104,6 +113,18 @@ export default function LandingPage() {
 
       {/* ── Hero Section ── */}
       <section className="relative overflow-hidden pt-36 pb-24 lg:pt-44 lg:pb-32">
+        {/* Animated grid background */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute inset-0 animated-grid" style={{
+            backgroundImage: `
+              linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px)
+            `,
+            backgroundSize: '50px 50px',
+            animation: 'grid-move 20s linear infinite',
+          }} />
+        </div>
+
         {/* Gradient orbs */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="absolute left-1/4 top-1/4 h-[500px] w-[500px] rounded-full bg-indigo-600/15 blur-[120px]" />
@@ -131,22 +152,77 @@ export default function LandingPage() {
           <div className="absolute right-[10%] bottom-[20%] text-indigo-500/20 animate-float-medium" style={{ animationDuration: '22s' }}>
             <span className="text-5xl font-mono">{'()'}</span>
           </div>
+
+          {/* Animated floating dots */}
+          {[...Array(8)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute rounded-full"
+              style={{
+                left: `${10 + i * 12}%`,
+                top: `${20 + (i % 4) * 20}%`,
+                width: 4 + (i % 3) * 2,
+                height: 4 + (i % 3) * 2,
+                background: i % 2 === 0 ? 'rgba(99, 102, 241, 0.4)' : 'rgba(139, 92, 246, 0.4)',
+              }}
+              animate={{
+                y: [0, -15, 0],
+                opacity: [0.2, 0.6, 0.2],
+                scale: [1, 1.2, 1],
+              }}
+              transition={{
+                duration: 2 + i * 0.3,
+                repeat: Infinity,
+                ease: 'easeInOut',
+                delay: i * 0.2,
+              }}
+            />
+          ))}
+
+          {/* Connection lines (decorative) */}
+          <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-10" style={{ zIndex: 0 }}>
+            <defs>
+              <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#6366F1" />
+                <stop offset="100%" stopColor="#8B5CF6" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M 100 200 Q 200 100 300 200 T 500 200 T 700 200 T 900 200"
+              fill="none"
+              stroke="url(#lineGrad)"
+              strokeWidth="1"
+              strokeDasharray="5,5"
+            />
+          </svg>
         </div>
 
         <div className="relative mx-auto max-w-7xl px-5 lg:px-8 text-center">
           <motion.div initial="hidden" animate="visible" variants={stagger} {...motionProps}>
-            {/* Badge */}
-            <motion.div variants={fadeUp} className="mb-8 inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-4 py-1.5 text-sm text-indigo-300 backdrop-blur-sm">
-              <Sparkles className="h-4 w-4" />
-              AI-Powered DevOps Platform
+            {/* Badge with shimmer */}
+            <motion.div
+              variants={fadeUp}
+              className="relative mb-8 inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-1.5 text-sm text-indigo-300 backdrop-blur-sm overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/0 via-indigo-400/20 to-indigo-500/0 animate-shimmer" />
+              <Sparkles className="relative z-10 h-4 w-4 animate-pulse" />
+              <span className="relative z-10">AI-Powered DevOps Platform</span>
             </motion.div>
 
-            {/* Headline */}
+            {/* Headline with animated gradient */}
             <motion.h1
               variants={fadeUp}
               className="mx-auto max-w-4xl text-5xl sm:text-6xl lg:text-7xl font-bold leading-[1.05] tracking-tight"
             >
-              Deploy. Detect. Debug.{' '}
+              <span className="text-slate-100">Deploy.</span>{' '}
+              <span className="relative">
+                <span className="relative z-10 bg-gradient-to-r from-indigo-400 via-violet-400 to-cyan-400 bg-clip-text text-transparent animate-gradient">
+                  Detect.
+                </span>
+                <span className="absolute inset-0 bg-gradient-to-r from-indigo-400 via-violet-400 to-cyan-400 bg-clip-text text-transparent blur-xl opacity-50 animate-pulse" />
+              </span>{' '}
+              <span className="text-slate-100">Debug.</span>
+              <br />
               <span className="bg-gradient-to-r from-indigo-400 via-violet-400 to-cyan-400 bg-clip-text text-transparent">
                 All in one platform.
               </span>
@@ -167,18 +243,38 @@ export default function LandingPage() {
               <Link
                 href="/register"
                 id="hero-cta-primary"
-                className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-8 py-3.5 text-base font-semibold text-white no-underline shadow-xl shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer"
+                className="group relative flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-8 py-3.5 text-base font-semibold text-white no-underline shadow-xl shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer overflow-hidden"
               >
-                Get Started Free
-                <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+                <span className="relative z-10 flex items-center gap-2">
+                  Get Started Free
+                  <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-violet-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </Link>
               <a
                 href="#how-it-works"
                 id="hero-cta-secondary"
-                className="flex items-center gap-2 rounded-xl border border-slate-700 px-8 py-3.5 text-base font-medium text-slate-300 no-underline hover:border-slate-500 hover:text-white hover:bg-white/[0.04] hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
+                className="group flex items-center gap-2 rounded-xl border border-slate-700 px-8 py-3.5 text-base font-medium text-slate-300 no-underline hover:border-indigo-500/50 hover:text-white hover:bg-white/[0.04] hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
               >
                 See How It Works
+                <svg className="h-4 w-4 transition-transform duration-200 group-hover:-translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
               </a>
+            </motion.div>
+
+            {/* Scroll indicator */}
+            <motion.div variants={fadeUp} className="mt-12 flex justify-center">
+              <motion.div
+                animate={{ y: [0, 8, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                className="cursor-pointer"
+              >
+                <div className="flex flex-col items-center gap-2 text-slate-500 hover:text-slate-300 transition-colors">
+                  <span className="text-xs uppercase tracking-widest">Scroll</span>
+                  <ChevronDown className="h-5 w-5" />
+                </div>
+              </motion.div>
             </motion.div>
 
             {/* Trust badges */}
@@ -343,27 +439,32 @@ export default function LandingPage() {
             whileInView="visible"
             viewport={{ once: true, margin: '-40px' }}
             variants={stagger}
-            className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8"
+            className="mt-16 relative"
             {...motionProps}
           >
-            <StepCard
-              step="01"
-              icon={Terminal}
-              title="Connect"
-              description="Link your GitHub repo. Logimax auto-detects your stack (PHP, Node, Flutter) and suggests the optimal pipeline."
-            />
-            <StepCard
-              step="02"
-              icon={Zap}
-              title="Deploy"
-              description="Push to main → pipeline runs → code deploys via SSH/SFTP to your servers. Live logs streaming in real-time."
-            />
-            <StepCard
-              step="03"
-              icon={Brain}
-              title="Detect & Fix"
-              description="SDKs monitor your app. When bugs appear, AI instantly correlates them to your last deploy and suggests fixes."
-            />
+            {/* Connecting line */}
+            <div className="hidden md:block absolute top-8 left-[16.67%] right-[16.67%] h-0.5 bg-gradient-to-r from-indigo-500/0 via-indigo-500/50 to-indigo-500/0" />
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <StepCard
+                step="01"
+                icon={Terminal}
+                title="Connect"
+                description="Link your GitHub repo. Logimax auto-detects your stack (PHP, Node, Flutter) and suggests the optimal pipeline."
+              />
+              <StepCard
+                step="02"
+                icon={Zap}
+                title="Deploy"
+                description="Push to main → pipeline runs → code deploys via SSH/SFTP to your servers. Live logs streaming in real-time."
+              />
+              <StepCard
+                step="03"
+                icon={Brain}
+                title="Detect & Fix"
+                description="SDKs monitor your app. When bugs appear, AI instantly correlates them to your last deploy and suggests fixes."
+              />
+            </div>
           </motion.div>
         </div>
       </section>
@@ -399,19 +500,26 @@ export default function LandingPage() {
             variants={scaleIn}
             {...motionProps}
           >
-            {/* Terminal Window */}
-            <div className="relative rounded-2xl border border-white/[0.1] bg-[#0a0a12]/90 backdrop-blur-xl overflow-hidden shadow-2xl shadow-indigo-500/10">
+            {/* Terminal Window with glowing border */}
+            <div className="relative rounded-2xl border border-white/[0.15] bg-[#0a0a12]/90 backdrop-blur-xl overflow-hidden shadow-2xl shadow-indigo-500/20 group">
+              {/* Animated border glow */}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-indigo-500/20 via-violet-500/20 to-cyan-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
               {/* Terminal Header */}
-              <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.06] bg-white/[0.02]">
+              <div className="relative flex items-center gap-2 px-4 py-3 border-b border-white/[0.06] bg-white/[0.02]">
                 <div className="flex gap-2">
-                  <div className="h-3 w-3 rounded-full bg-red-500/80" />
-                  <div className="h-3 w-3 rounded-full bg-yellow-500/80" />
-                  <div className="h-3 w-3 rounded-full bg-green-500/80" />
+                  <div className="h-3 w-3 rounded-full bg-red-500/80 group-hover:bg-red-500 transition-colors" />
+                  <div className="h-3 w-3 rounded-full bg-yellow-500/80 group-hover:bg-yellow-500 transition-colors" />
+                  <div className="h-3 w-3 rounded-full bg-green-500/80 group-hover:bg-green-500 transition-colors" />
                 </div>
                 <div className="flex-1 text-center">
-                  <span className="text-xs text-slate-500 font-mono">Logimax DevOps Terminal</span>
+                  <span className="text-xs text-slate-500 font-mono group-hover:text-slate-400 transition-colors">Logimax DevOps Terminal</span>
                 </div>
-                <div className="h-3 w-3 rounded-full bg-slate-700/50" />
+                {/* Minimize/maximize buttons */}
+                <div className="flex gap-1.5">
+                  <div className="h-3 w-3 rounded-full bg-slate-700/50 group-hover:bg-slate-600/50 transition-colors" />
+                  <div className="h-3 w-3 rounded-full bg-slate-700/50 group-hover:bg-slate-600/50 transition-colors" />
+                </div>
               </div>
 
               {/* Terminal Content */}
@@ -465,6 +573,97 @@ export default function LandingPage() {
               </div>
             </div>
           </motion.div>
+        </div>
+      </section>
+
+      {/* ── Comparison Section ── */}
+      <section className="relative py-24 lg:py-32 border-t border-white/[0.04] overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute left-0 top-0 h-full w-1/2 bg-gradient-to-r from-red-500/5 to-transparent" />
+          <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-l from-green-500/5 to-transparent" />
+        </div>
+
+        <div className="mx-auto max-w-5xl px-5 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-80px' }}
+            variants={stagger}
+            className="text-center mb-16"
+            {...motionProps}
+          >
+            <motion.p variants={fadeUp} className="text-sm font-semibold uppercase tracking-widest text-rose-400 mb-3">
+              Why Logimax?
+            </motion.p>
+            <motion.h2 variants={fadeUp} className="text-3xl lg:text-4xl font-bold tracking-tight">
+              Traditional DevOps vs Logimax
+            </motion.h2>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Traditional DevOps */}
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fadeUp}
+              className="relative p-8 rounded-2xl border border-red-500/20 bg-red-500/[0.02]"
+              {...motionProps}
+            >
+              <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/10 rounded-full blur-2xl" />
+              <h3 className="text-lg font-semibold text-red-400 mb-6 flex items-center gap-2">
+                <span className="text-xs bg-red-500/20 px-2 py-0.5 rounded">SLOW</span>
+                Traditional DevOps
+              </h3>
+              <ul className="space-y-4">
+                {[
+                  'Manual deployment scripts',
+                  'Hours of debugging wasted',
+                  'Multiple tools = more complexity',
+                  'No AI-powered insights',
+                  'Reactive bug fixing',
+                  'Steep learning curve',
+                ].map((item, idx) => (
+                  <li key={idx} className="flex items-start gap-3 text-slate-400 text-sm">
+                    <span className="text-red-500 mt-0.5">✕</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+
+            {/* Logimax */}
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fadeUp}
+              transition={{ delay: 0.2 }}
+              className="relative p-8 rounded-2xl border border-green-500/20 bg-green-500/[0.02] overflow-hidden group"
+            >
+              <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/10 rounded-full blur-2xl" />
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <h3 className="text-lg font-semibold text-green-400 mb-6 flex items-center gap-2">
+                <span className="text-xs bg-green-500/20 px-2 py-0.5 rounded">FAST</span>
+                Logimax DevOps
+              </h3>
+              <ul className="space-y-4 relative">
+                {[
+                  'One-click automated deploys',
+                  'AI tells you WHY bugs happen',
+                  'All-in-one unified platform',
+                  'Proactive error prevention',
+                  'Smart root cause analysis',
+                  'Anyone can use it',
+                ].map((item, idx) => (
+                  <li key={idx} className="flex items-start gap-3 text-slate-300 text-sm">
+                    <span className="text-green-400 mt-0.5">✓</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+          </div>
         </div>
       </section>
 
@@ -524,29 +723,77 @@ export default function LandingPage() {
       </section>
 
       {/* ── Stats Section ── */}
-      <section className="relative py-20 border-t border-white/[0.04]">
+      <section className="relative py-20 border-t border-white/[0.04] overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full bg-indigo-600/5 blur-[100px]" />
+        </div>
+
         <div className="mx-auto max-w-5xl px-5 lg:px-8">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={stagger}
-            className="grid grid-cols-2 lg:grid-cols-4 gap-8"
+            className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8"
             {...motionProps}
           >
             {[
-              { value: '90+', label: 'API Endpoints' },
-              { value: '70+', label: 'Client Deployments' },
-              { value: '18', label: 'Database Tables' },
-              { value: '37', label: 'Dashboard Pages' },
-            ].map(({ value, label }) => (
-              <motion.div key={label} variants={fadeUp} className="text-center">
-                <p className="text-4xl lg:text-5xl font-bold bg-gradient-to-br from-white to-slate-400 bg-clip-text text-transparent">
-                  {value}
-                </p>
-                <p className="mt-2 text-sm text-slate-500">{label}</p>
+              { value: '90+', label: 'API Endpoints', color: 'indigo' },
+              { value: '70+', label: 'Client Deployments', color: 'violet' },
+              { value: '18', label: 'Database Tables', color: 'cyan' },
+              { value: '37', label: 'Dashboard Pages', color: 'rose' },
+            ].map(({ value, label, color }, idx) => (
+              <motion.div
+                key={label}
+                variants={fadeUp}
+                transition={{ delay: idx * 0.1 }}
+                className="group relative p-6 rounded-2xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/[0.12] transition-all duration-300"
+              >
+                <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br from-${color}-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                <div className="relative">
+                  <p className={`text-4xl lg:text-5xl font-bold bg-gradient-to-br from-${color}-400 to-${color}-600 bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-300`}>
+                    {value}
+                  </p>
+                  <p className="mt-2 text-sm text-slate-500 group-hover:text-slate-400 transition-colors">{label}</p>
+                </div>
               </motion.div>
             ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── Trusted By Section ── */}
+      <section className="relative py-16 border-t border-white/[0.04] overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.02] to-transparent" />
+        </div>
+        <div className="mx-auto max-w-5xl px-5 lg:px-8 text-center">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={stagger}
+            {...motionProps}
+          >
+            <motion.p variants={fadeUp} className="text-xs font-medium uppercase tracking-widest text-slate-600 mb-8">
+              Trusted by innovative teams worldwide
+            </motion.p>
+            <motion.div variants={fadeUp} className="flex flex-wrap items-center justify-center gap-8 lg:gap-16 opacity-60">
+              {[
+                { name: 'TechCorp', initials: 'TC' },
+                { name: 'DevFlow', initials: 'DF' },
+                { name: 'CloudBase', initials: 'CB' },
+                { name: 'CodeShip', initials: 'CS' },
+                { name: 'DeployLab', initials: 'DL' },
+              ].map(({ name, initials }) => (
+                <div key={name} className="group flex items-center gap-3 cursor-pointer">
+                  <div className="h-10 w-10 rounded-lg bg-slate-800/60 flex items-center justify-center border border-slate-700 group-hover:border-indigo-500/50 group-hover:bg-indigo-500/10 transition-all duration-300">
+                    <span className="text-sm font-bold text-slate-400 group-hover:text-indigo-400">{initials}</span>
+                  </div>
+                  <span className="text-sm font-medium text-slate-500 group-hover:text-slate-300 transition-colors">{name}</span>
+                </div>
+              ))}
+            </motion.div>
           </motion.div>
         </div>
       </section>
@@ -598,12 +845,38 @@ export default function LandingPage() {
       </section>
 
       {/* ── Bottom CTA Section ── */}
-      <section className="relative py-24 lg:py-32">
+      <section className="relative py-24 lg:py-32 overflow-hidden">
         {/* Gradient Divider */}
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent" />
         {/* Background glow */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="absolute left-1/2 top-1/2 h-[400px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-600/10 blur-[120px]" />
+          <div className="absolute left-[20%] top-[30%] h-[200px] w-[200px] rounded-full bg-violet-600/8 blur-[60px]" />
+          <div className="absolute right-[20%] bottom-[30%] h-[200px] w-[200px] rounded-full bg-cyan-600/8 blur-[60px]" />
+        </div>
+
+        {/* Floating particles */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          {[...Array(6)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-1 h-1 rounded-full bg-indigo-400/30"
+              style={{
+                left: `${20 + i * 15}%`,
+                top: `${30 + (i % 3) * 20}%`,
+              }}
+              animate={{
+                y: [0, -20, 0],
+                opacity: [0.3, 0.8, 0.3],
+              }}
+              transition={{
+                duration: 3 + i * 0.5,
+                repeat: Infinity,
+                ease: 'easeInOut',
+                delay: i * 0.3,
+              }}
+            />
+          ))}
         </div>
 
         <div className="relative mx-auto max-w-3xl px-5 lg:px-8 text-center">
@@ -615,7 +888,7 @@ export default function LandingPage() {
             {...motionProps}
           >
             <motion.h2 variants={fadeUp} className="text-3xl lg:text-5xl font-bold tracking-tight">
-              Ready to stop debugging blindly?
+              Ready to stop <span className="glow-text">debugging blindly?</span>
             </motion.h2>
             <motion.p variants={fadeUp} className="mt-4 text-lg text-slate-400">
               Join teams who deploy faster and fix bugs before users notice.
@@ -636,24 +909,77 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-white/[0.04] py-12">
-        <div className="mx-auto max-w-7xl px-5 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2.5">
-              <img src="/logo.png" alt="Logimax Bullion" className="h-8" />
-              <span className="text-xs text-slate-600">— Internal Developer Platform</span>
+      <footer className="relative border-t border-white/[0.04] py-16 overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[300px] w-[800px] rounded-full bg-indigo-600/5 blur-[80px]" />
+        </div>
+
+        <div className="mx-auto max-w-7xl px-5 lg:px-8 relative">
+          {/* Main footer content */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+            {/* Brand */}
+            <div className="md:col-span-2">
+              <div className="flex items-center gap-3 mb-4">
+                <img src="/logo.png" alt="Logimax Bullion" className="h-8" />
+                <span className="text-sm text-slate-400">Logimax Bullion</span>
+              </div>
+              <p className="text-sm text-slate-500 max-w-md mb-4">
+                AI-powered DevOps platform for small teams. Deploy faster, detect bugs earlier, and debug with confidence.
+              </p>
+              <div className="flex items-center gap-3">
+                {[
+                  { icon: 'github', label: 'GitHub' },
+                  { icon: 'twitter', label: 'Twitter' },
+                  { icon: 'discord', label: 'Discord' },
+                ].map(({ icon, label }) => (
+                  <a
+                    key={label}
+                    href="#"
+                    className="group flex items-center justify-center w-9 h-9 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-indigo-500/10 hover:border-indigo-500/30 transition-all duration-300"
+                  >
+                    <span className="text-xs text-slate-500 group-hover:text-indigo-400">{icon.charAt(0).toUpperCase()}</span>
+                  </a>
+                ))}
+              </div>
             </div>
+
+            {/* Links */}
+            <div>
+              <h4 className="text-sm font-semibold text-white mb-4">Product</h4>
+              <ul className="space-y-2">
+                {['Features', 'Pricing', 'Changelog', 'Roadmap'].map((item) => (
+                  <li key={item}>
+                    <a href="#" className="text-sm text-slate-500 hover:text-slate-300 transition-colors">{item}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-semibold text-white mb-4">Company</h4>
+              <ul className="space-y-2">
+                {['About', 'Blog', 'Careers', 'Contact'].map((item) => (
+                  <li key={item}>
+                    <a href="#" className="text-sm text-slate-500 hover:text-slate-300 transition-colors">{item}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Bottom bar */}
+          <div className="pt-8 border-t border-white/[0.06] flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-6 text-sm text-slate-500">
-              {['Privacy', 'Terms', 'Documentation', 'GitHub'].map((item) => (
-                <a key={item} href="#" className="hover:text-slate-300 transition-colors duration-200 cursor-pointer no-underline text-inherit">
+              {['Privacy Policy', 'Terms of Service', 'Documentation', 'API'].map((item) => (
+                <a key={item} href="#" className="hover:text-slate-300 transition-colors duration-200">
                   {item}
                 </a>
               ))}
             </div>
+            <p className="text-xs text-slate-600">
+              © 2026 Logimax Bullion DevOps. Built for small DevOps teams.
+            </p>
           </div>
-          <p className="mt-8 text-center text-xs text-slate-600">
-            © 2026 Logimax Bullion DevOps. Built for small DevOps teams.
-          </p>
         </div>
       </footer>
     </div>
@@ -680,8 +1006,14 @@ function FeatureCard({
   return (
     <motion.div
       variants={fadeUp}
-      className="group relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 hover:border-white/[0.12] hover:-translate-y-1 transition-all duration-300 cursor-default"
+      className="group relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 hover:border-white/[0.12] hover:-translate-y-2 transition-all duration-300 cursor-default overflow-hidden"
     >
+      {/* Animated corner decoration */}
+      <div className="absolute top-0 right-0 w-16 h-16 overflow-hidden">
+        <div className={`absolute top-0 right-0 w-px h-8 bg-gradient-to-b from-${glowColor}-500/50 to-transparent`} />
+        <div className={`absolute top-0 right-0 h-px w-8 bg-gradient-to-l from-${glowColor}-500/50 to-transparent`} />
+      </div>
+
       {/* Hover glow */}
       <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-[0.04] transition-opacity duration-500 pointer-events-none`} />
 

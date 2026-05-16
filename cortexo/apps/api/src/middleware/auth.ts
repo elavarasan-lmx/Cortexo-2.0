@@ -9,6 +9,7 @@ export interface JwtUser {
   email: string;
   name: string;
   role: string;
+  orgId?: string;
 }
 
 /**
